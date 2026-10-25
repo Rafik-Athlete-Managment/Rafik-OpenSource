@@ -57,6 +57,7 @@ import {
   delivery,
   deliveryCommand,
   workoutSchedulingCommand,
+  workoutAgenda,
   institutionSession,
   institutionSessionHistory,
   sessionCommand,
@@ -728,7 +729,9 @@ const server = createServer(async (req, res) => {
                     [role(url.searchParams.get("view"))],
                     (tx, self) => catalog(tx, id, self),
                   )
-                : null;
+                : domain === "workout-scheduling"
+                  ? await workoutAgenda(who, id, url.searchParams)
+                  : null;
         if (value === null) throw new ApiError(405, "method_not_allowed");
         send(res, 200, value);
         return;

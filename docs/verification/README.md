@@ -1,5 +1,17 @@
 # Verification record
 
+## Individual workout web integration — 25 October 2026
+
+The focused disposable sequence API case passed concurrent binding, assignment independence, exact completion/skip retry, correction without double advancement, repeated cycles, rescheduling, ending/pausing, bounded agenda pagination and current participation restrictions on overdue starts. Administrator scheduling was checked without enrolling the administrator as a coach. Agenda reads expose only general restriction state. The two Swagger tests passed canonical-contract serving and local/native-marker/production restrictions.
+
+Eight focused browser cases passed across desktop Chromium and phone WebKit: occurrence-bound coach start, attributed recording and athlete access, lost-response exact retry/history, measurement-aware seconds/metres, delayed acknowledgment after leaving, scheduling and future-start explanations in English and Arabic, and the linked calendar's plan-workout action. Layout and Axe checks passed for the inspected scheduling/recording states. English/light and Arabic/dark scheduling screenshots were inspected; untranslated names were adjusted to inherit the RTL layout while retaining their own text direction. This is representative state coverage, not a platform-wide accessibility or visual acceptance claim.
+
+The final scheduling case was rerun in both engines after the refresh/recovery refinements: an aborted refresh retained the prior workout, explicit refresh recovered, and the linked event offered plan-workout navigation rather than a generic completion action. Final English/light desktop and Arabic/dark desktop/phone screenshots were inspected. Frontend/backend types, both source inventories and maintained documentation links passed; the compact [check receipt](receipts/workout-web-2026-10-25.json) records commands, coverage and source hashes.
+
+An initial run used an outdated profile-tab assumption, then fixture cleanup failed on sequence foreign keys and contaminated that disposable run. The fixture now deletes only its own sequence/recurrence records before its own institution; the repaired run passed. A subsequent build found a formatted multiline Vue handler that needed a named function. Those failed runs are not acceptance evidence. Preview/user data was not reset.
+
+Weekly recurrence, automatic/rest-day preparation, historical occurrence reconciliation, paused-editor recovery usability, group exercise results and Android offline workout capture remain pending. No native rebuild, physical-device check, full browser suite or migration against user data was run. Use the [founder walkthrough](../testing/founder-validation-beta3.md) for the scoped handoff.
+
 ## Founder-validation corrections — 25 October 2026
 
 Focused disposable API checks passed program publication/assignment/recording/history and rejected unassigned athlete library/detail reads; communication checks passed authorized athlete initiation, duplicate-pair reuse, invalid-recipient rejection, distinct two-person group channels and repeated group opening; the service/calendar suite passed assigned-coach group discovery, no edit grant, unstarted-group removal after opening, assessments/corrections and atomic calendar collisions. Existing institution data was not reset or migrated by these checks. Two obsolete published-library expectations and a group fixture that had put coaches outside the API's combined member list were corrected rather than weakening authorization.

@@ -80,6 +80,36 @@ export type FieldFinishCommand = {
 }
 export type FieldCommand = FieldAttendanceCommand | FieldResultCommand | FieldFinishCommand
 
+/** Server-derived sequence state; clients must not select a different plan day. */
+export type WorkoutAgendaItem = {
+  assignment_id: string
+  member_id: string
+  member_name: string
+  title: string
+  goal: string | null
+  cursor: number
+  day: { id: string; name: string; nameAr?: string } | null
+  state: 'unscheduled' | 'scheduled' | 'ready' | 'overdue' | 'in_progress' | 'paused'
+  blocked: 'participation_unavailable' | 'assignment_unavailable' | 'no_workout_days' | null
+  occurrence: {
+    id: string
+    revision: number
+    starts_at: string
+    ends_at: string
+    timezone: string
+    training_date: string
+  } | null
+  session: { id: string; recorded_mode: string } | null
+  can_start: boolean
+  can_schedule: boolean
+}
+export type WorkoutAgenda = {
+  items: WorkoutAgendaItem[]
+  total: number
+  offset: number
+  limit: number
+}
+
 export type AthletePlanStatus = 'active' | 'upcoming' | 'expired' | 'ended'
 export type AthletePlanSummary = {
   id: string

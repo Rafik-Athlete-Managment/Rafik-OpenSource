@@ -17,6 +17,7 @@ import type { Institution, Member, Role, Sport } from './types'
 import './institution.css'
 import FollowUpPanel from './FollowUpPanel.vue'
 import UpcomingSessions from './UpcomingSessions.vue'
+import WorkoutAgenda from './WorkoutAgenda.vue'
 import BrandingSettings from './BrandingSettings.vue'
 import SportsSettings from './SportsSettings.vue'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
@@ -519,6 +520,7 @@ onMounted(async () => {
             >
           </div>
           <FollowUpPanel v-if="view !== 'trainee'" />
+          <WorkoutAgenda due :limit="4" />
           <UpcomingSessions />
           <section v-if="view === 'trainee' || !data.summary.trainees" class="panel">
             <h2>

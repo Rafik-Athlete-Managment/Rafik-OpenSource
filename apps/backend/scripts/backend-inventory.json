@@ -632,11 +632,11 @@
     {
       "anchor": "programMatch",
       "path": "/v1/institution/workout-scheduling",
-      "methods": ["POST"],
-      "handlers": ["workoutSchedulingCommand"],
-      "purpose": "Fixed-time sequence binding/reschedule/skip; no worker or new UI yet",
+      "methods": ["GET", "POST"],
+      "handlers": ["workoutAgenda", "workoutSchedulingCommand"],
+      "purpose": "Scoped next-workout projection and fixed-time sequence binding/reschedule/skip",
       "access": "Current signed-in institution membership; handler enforces its role/subject scope",
-      "clients": "Web program/athlete recording; future Android workout capture"
+      "clients": "Web coach dashboard, athlete plans and athlete training; future Android capture"
     },
     {
       "anchor": "previousMatch",

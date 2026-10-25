@@ -34,7 +34,7 @@ This page is the index for maintained Rafik documentation. The root [README](../
 
 ## Development and quality
 
-- [Beta.3 founder validation corrections](testing/founder-validation-beta3.md): focused role walkthroughs, issue disposition and work reserved for subsequent beta.3 slices.
+- [Beta.3 founder validation corrections](testing/founder-validation-beta3.md): role walkthroughs for corrections and individual workout scheduling/start/resume, issue disposition and remaining beta.3 slices.
 
 - [Development setup and workflows](development/README.md): prerequisites, local setup, common change workflows and troubleshooting.
 - [Android coach field development](development/android.md): native build setup, Windows startup helper and path/concurrency troubleshooting, attendance/scores, history, recovery sharing, English/Arabic and disposable API/queue acceptance.

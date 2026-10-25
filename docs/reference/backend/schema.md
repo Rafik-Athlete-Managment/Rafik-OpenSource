@@ -1031,7 +1031,7 @@ CREATE UNIQUE INDEX institution_injury_permissions_pkey ON public.institution_in
 Athlete-authored non-diagnostic participation restrictions; not general administrator-visible medical records.
 
 - Prisma model: `institution_injury_records`; domain: Health and privacy; treatment: **retain-current**.
-- Direct server source references: [server/injuries.ts](../../../apps/backend/server/injuries.ts), [server/injury-retention.ts](../../../apps/backend/server/injury-retention.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/injuries.ts](../../../apps/backend/server/injuries.ts), [server/injury-retention.ts](../../../apps/backend/server/injury-retention.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.institution_injury_access_log](schema.md#publicinstitution_injury_access_log), [public.institution_injury_history](schema.md#publicinstitution_injury_history), [public.institution_injury_operations](schema.md#publicinstitution_injury_operations).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 

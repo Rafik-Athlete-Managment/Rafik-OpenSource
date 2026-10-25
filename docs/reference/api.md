@@ -1,5 +1,13 @@
 # API conventions
 
+## Individual workout agenda — unreleased beta.3
+
+`GET /v1/institution/workout-scheduling?view=trainer` returns `{items,total,offset,limit}`. Optional `assignment`, athlete-name `search`, `offset`, bounded `limit` (1–100; default 10), and `due=true` narrow the projection. Due includes unresolved occurrences on/before the signed-in account's local day and unfinished older unlinked records. Stable assignment creation/ID order is used within the requested scope, not urgency ranking. Reads never create occurrences.
+
+Each item contains assignment/athlete identity, title/goal, sequence cursor, next immutable day, state (`unscheduled`, `scheduled`, `ready`, `overdue`, `in_progress`, `paused`), general `blocked` reason, current occurrence/session and `can_start`/`can_schedule`. These flags describe the read snapshot; writes always reauthorize and recheck current state. Trainers receive primary-athlete plans and only the relevant sport plans for supporting links; athletes receive their own assignments. Administrators can schedule/review, but do not receive coach recording actions. Canonical shapes are in the [shared contracts](../../packages/shared/src/contracts.ts) and [OpenAPI](../../apps/backend/openapi.json).
+
+The web uses existing POST scheduling commands and passes `occurrence_id` when starting a session. New UI work is fixed-time only; weekly recurrence/worker preparation, additional group workout capture and Android recording remain pending.
+
 ## Unreleased beta.3 founder-validation corrections
 
 `GET /v1/institution/communication?view=...&contacts=true` returns `self: { id, roles }` and minimal `members: [{ id, name, roles, active }]`. Athlete contacts are active assigned primary/supporting coaches; coach contacts retain training scope; administrators can contact active institution members. This does not grant access to the staff people directory. Athlete `create` commands require a two-person pair including self and an authorized coach, with that coach as sole manager. Normal conversation list responses also include `groups: [{ id, name }]` for staff-authorized groups without an existing linked channel. Existing pair/group uniqueness and replay checks remain. New group channels remain distinct from private pairs even with two participants. Opening an existing nonprivate group channel can visibly join its currently authorized staff member without granting management or changing other historical participants; existing private-pair audiences cannot be expanded this way.

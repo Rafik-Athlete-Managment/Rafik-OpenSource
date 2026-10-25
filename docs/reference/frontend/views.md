@@ -194,8 +194,8 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/training` Embedded screen; no independent route.
 - **Purpose:** Browse-first active/expired athlete program assignments with search, pagination and selected assignment preview.
 - **Access:** Administrators and training-authorized coaches; supporting links follow the training-scope contract.
-- **Opens:** `/assessments/:member`, `/members/:member`, `/plans`, `/plans/:id`, `/workouts`
-- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/record/:session`, `/review/:id`, `/settings`, `/workout/:id`, `/workouts`
+- **Opens:** `/assessments/:member`, `/members/:member`, `/plans`, `/plans/:id`, `/record/:session`, `/review/:id`, `/training`, `/workout/:id`, `/workouts`
+- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/record/:session`, `/review/:id`, `/schedule/:id`, `/settings`, `/training`, `/workout/:id`, `/workouts`
 - **Embedded by:** `features/institution/TrainingRoute.vue`
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -216,10 +216,10 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Source:** [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue)
 - **Folder:** `features/institution`
 - **URL(s):** `/training` Embedded screen; no independent route.
-- **Purpose:** Athlete assigned plan/day selection, start-workout action, recorded results and assessment links.
+- **Purpose:** Athlete next-workout agenda and access to unsynced device records; no arbitrary plan-day chooser.
 - **Access:** Athlete self through TrainingRoute; authorization for any subject remains server-owned.
-- **Opens:** `/assessments/:member`, `/plans`, `/plans/:id`, `/review/:id`, `/workout/:id`
-- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/record/:session`, `/review/:id`, `/settings`, `/workout/:id`, `/workouts`
+- **Opens:** `/record/:session`, `/review/:id`, `/training`, `/workout/:id`, `/workouts`
+- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/record/:session`, `/review/:id`, `/schedule/:id`, `/settings`, `/training`, `/workout/:id`, `/workouts`
 - **Embedded by:** `features/institution/TrainingRoute.vue`
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -278,7 +278,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/activity`, `/dashboard`, `/institution-settings`, `/people`
 - **Purpose:** Role dashboard and route-selected People, Activity and Institution settings sections, invitations and close-institution confirmation.
 - **Access:** Dashboard: all members. People: administrators and coaches with scoped roster. Activity/settings: administrator router gate; branding has a stricter initial-admin check.
-- **Opens:** `/access`, `/analytics`, `/members/:member`, `/messages/:channel?`, `/people`, `/review/:id`, `/schedule`, `/schedule/:id`, `/schedule/new`, `/training`, `/workouts`
+- **Opens:** `/access`, `/analytics`, `/members/:member`, `/messages/:channel?`, `/people`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/:id`, `/schedule/new`, `/training`, `/workout/:id`, `/workouts`
 - **Opened from views:** `/`, `/access`, `/analytics`, `/help`, `/invitation/:token`, `/local-preview`, `/login`, `/members/:member`, `/notifications`, `/password-setup/:token`, `/setup`, `/support`
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
@@ -291,7 +291,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Coach recording of an assigned athlete workout with actual measurement-aware results.
 - **Access:** Administrators or training-authorized coaches; selected assignment/session permission is checked by API.
 - **Opens:** `/record/:session`, `/training`
-- **Opened from views:** `/members/:member`
+- **Opened from views:** `/members/:member`, `/training`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -314,7 +314,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/schedule/:id`
 - **Purpose:** Scheduled event detail, roster attendance, assessment scores, completion, correction history and makeup links.
 - **Access:** Administrators, designated coach staff and participating athletes receive different authorized projections/actions.
-- **Opens:** `/feedback`, `/schedule`, `/schedule/new`
+- **Opens:** `/feedback`, `/schedule`, `/schedule/new`, `/training`
 - **Opened from views:** `/dashboard`, `/events`, `/notifications`, `/schedule`, `/schedule/new`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
@@ -435,8 +435,8 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/training`
 - **Purpose:** Role dispatcher to athlete training or staff athlete-plan index.
 - **Access:** Institution members; athlete self screen versus authorized staff browse screen.
-- **Opens:** `/assessments/:member`, `/members/:member`, `/plans`, `/plans/:id`, `/review/:id`, `/workout/:id`, `/workouts`
-- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/record/:session`, `/review/:id`, `/settings`, `/workout/:id`, `/workouts`
+- **Opens:** `/assessments/:member`, `/members/:member`, `/plans`, `/plans/:id`, `/record/:session`, `/review/:id`, `/training`, `/workout/:id`, `/workouts`
+- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/record/:session`, `/review/:id`, `/schedule/:id`, `/settings`, `/workout/:id`, `/workouts`
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 

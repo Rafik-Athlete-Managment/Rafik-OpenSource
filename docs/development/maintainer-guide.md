@@ -1,5 +1,11 @@
 # Maintainer guide
 
+## Individual workout web integration
+
+Use `WorkoutAgenda.vue` for dashboard discovery and assignment scheduling. Derive sequence state from the scheduling GET projection; do not reintroduce client-side plan-day eligibility algorithms. The same occurrence identity must reach session start. Preserve existing device drafts and uncertain commands, and guard delayed navigation after acknowledgment. Focused API coverage runs with `npm run test:workout-sequence`; the delegated-workout browser spec exercises the web integration through the isolated-browser wrapper. Neither check establishes Android or automatic recurrence acceptance.
+
+From the repository root, the focused rendered command is `node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --project=chromium --project=webkit-phone --max-failures=1`. It requires the local Docker database and uses a separate migrated database/API/production preview, leaving user preview data intact. Tests that bind occurrences must remove their own sequence/recurrence rows before their own institution; do not weaken production foreign keys for fixture cleanup.
+
 ## Founder validation corrections
 
 Use the [focused founder walkthrough](../testing/founder-validation-beta3.md) when handing this slice back for acceptance. Contact discovery belongs to communication, not the people directory. Supporting-coach sport/specialty is a permission boundary, even though the coach picker no longer requires a sport filter first. Keep current immutable reference exercise IDs and source/media attribution when curating the library. Extend shared workout progression and event command services for later scheduling/attendance work.

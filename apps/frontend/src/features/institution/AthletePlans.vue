@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PhTray } from '@phosphor-icons/vue'
 import AthleteSearch from '../../components/AthleteSearch.vue'
+import WorkoutAgenda from './WorkoutAgenda.vue'
 import { useListPageSize } from '../../lib/list-page-size'
 import PageHeading from '../../components/PageHeading.vue'
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
@@ -247,6 +248,7 @@ onUnmounted(() => {
           <p class="small-print">
             {{ detail.start_date }} — {{ detail.end_date || l('No end date', 'دون تاريخ انتهاء') }}
           </p>
+          <WorkoutAgenda :key="detail.id" :assignment="detail.id" />
           <details v-for="day in prescription()?.days || []" :key="day.id" class="plan-day">
             <summary>
               {{ locale === 'ar' ? day.nameAr || day.name : day.name }} ·

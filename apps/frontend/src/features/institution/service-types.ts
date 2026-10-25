@@ -46,6 +46,7 @@ export type CalendarEvent = {
   revision: number
   series_id: string
   definition: Drill[] | null
+  workout_snapshot?: { assignment_id?: string } | null
   people?: EventPerson[]
 }
 export type AssessmentResult = {

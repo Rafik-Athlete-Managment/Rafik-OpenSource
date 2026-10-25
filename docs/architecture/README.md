@@ -1,5 +1,11 @@
 # Rafik architecture
 
+## Individual workout web projection — unreleased beta.3
+
+`GET /v1/institution/workout-scheduling` projects the next non-rest day and unresolved occurrence for each authorized assignment. It does not allocate work or advance progression. Pagination and athlete-name filtering happen after institution/role/plan-sport scope is applied in SQL. The dashboard requests due work; plan details request one assignment; athletes receive only their own assignments. General participation restrictions expose no injury-record identifiers or sensitive details.
+
+The shared web WorkoutAgenda uses existing exact-receipt schedule/reschedule/skip and session-start commands. Recording receives the occurrence identity; server start time and sequence checks remain authoritative. Existing unfinished unlinked records are surfaced for recovery and block scheduling in that assignment. Older unlinked start compatibility remains until historical occurrence reconciliation; it is not the new UI's creation path. Recurrence, automatic preparation, group prescription/results and native workout recording remain later beta.3 slices.
+
 ## Program and conversation visibility
 
 Athletes browse only programs with an assignment to their own institution membership. Read-only details and version requests are constrained to their assigned immutable versions; staff publication does not grant athlete-wide library access. Browser staff-route guards complement server authorization.

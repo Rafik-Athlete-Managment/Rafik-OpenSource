@@ -339,7 +339,24 @@ onMounted(load)
           class="text-link"
           >{{ l('Rate your session (optional)', 'قيّم جلستك (اختياري)') }}</RouterLink
         >
-        <div v-if="view !== 'trainee' && data.event.state === 'scheduled'" class="event-tools">
+        <RouterLink
+          v-if="data.event.workout_snapshot?.assignment_id"
+          class="button secondary"
+          :to="
+            view === 'trainee'
+              ? '/training'
+              : '/training?assignment=' + data.event.workout_snapshot.assignment_id
+          "
+          >{{ l('Open plan workouts', 'فتح تمارين الخطة') }}</RouterLink
+        >
+        <div
+          v-if="
+            view !== 'trainee' &&
+            data.event.state === 'scheduled' &&
+            !data.event.workout_snapshot?.assignment_id
+          "
+          class="event-tools"
+        >
           <button
             v-if="!started"
             class="text-link"
@@ -593,7 +610,11 @@ onMounted(load)
             >
           </article>
           <button
-            v-if="writable && data.event.state === 'scheduled'"
+            v-if="
+              writable &&
+              data.event.state === 'scheduled' &&
+              !data.event.workout_snapshot?.assignment_id
+            "
             class="button"
             :disabled="locked"
             @click="run({ action: 'finish' })"

@@ -363,6 +363,34 @@ export function errorMessage(error: unknown): string {
       'Local simulation is disabled on this backend.',
       'المحاكاة المحلية معطلة في هذا الخادم.',
     ],
+    previous_workout_unresolved: [
+      'Finish or explicitly skip the previous workout in this plan first.',
+      'أكمل التمرين السابق في هذه الخطة أو تخطّه صراحةً أولاً.',
+    ],
+    legacy_workout_unresolved: [
+      'Resume the unfinished workout before scheduling another in this plan.',
+      'تابع التمرين غير المنجز قبل جدولة تمرين آخر في هذه الخطة.',
+    ],
+    workout_not_started_yet: [
+      'Recording opens at the scheduled start time.',
+      'يفتح التسجيل عند موعد البدء المحدد.',
+    ],
+    workout_not_actionable: [
+      'This workout is not ready to start. Open the plan to check its schedule and status.',
+      'هذا التمرين غير جاهز للبدء. افتح الخطة لمراجعة الموعد والحالة.',
+    ],
+    participation_unavailable: [
+      'Training is currently restricted. Contact your coach.',
+      'المشاركة في التدريب مقيدة حالياً. تواصل مع مدربك.',
+    ],
+    sequence_conflict: [
+      'The plan has progressed. Refresh before continuing.',
+      'تقدمت الخطة. حدّث الصفحة قبل المتابعة.',
+    ],
+    workout_already_recorded_for_date: [
+      'This workout is already recorded on that date. Choose another date.',
+      'تم تسجيل هذا التمرين في ذلك التاريخ. اختر تاريخاً آخر.',
+    ],
     invalid_group_assignment: [
       'Select up to 50 of your active athletes in this group.',
       'اختر حتى ٥٠ من الرياضيين النشطين في هذه المجموعة.',

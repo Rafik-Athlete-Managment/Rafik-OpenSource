@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Connect individual workout progression to the web dashboard and athlete plans: discover due/overdue work, schedule/reschedule or skip with a reason, and start or resume the occurrence-bound workout. Athletes see the scheduled-time explanation instead of an arbitrary day chooser. Weekly recurrence, worker scheduling and group/native workout capture remain pending.
+
 - Restrict athlete program browsing to assigned immutable versions; block staff-only web routes before rendering.
 - Restore assigned coach group visibility and athlete-to-coach conversation initiation; show unstarted group conversations alongside new contacts without duplicating existing group channels.
 - Save primary/supporting coach selection without a second save button, collapse successful invitations, label exercise video availability, and expose participation-status navigation to staff.

@@ -360,13 +360,13 @@ Athlete self/delegated actual logging with exact history/retry.
 - Handler: [sessionCommand](../../../apps/backend/server/programming.ts).
 - Source-derived table touches (including known called helpers/SQL functions): [public.institution_assignments](schema.md#publicinstitution_assignments), [public.institution_audit_events](schema.md#publicinstitution_audit_events), [public.institution_coaching_links](schema.md#publicinstitution_coaching_links), [public.institution_events](schema.md#publicinstitution_events), [public.institution_injury_records](schema.md#publicinstitution_injury_records), [public.institution_members](schema.md#publicinstitution_members), [public.institution_operations](schema.md#publicinstitution_operations), [public.institution_session_history](schema.md#publicinstitution_session_history), [public.institution_sessions](schema.md#publicinstitution_sessions), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions), [public.profiles](schema.md#publicprofiles).
 
-### POST /v1/institution/workout-scheduling
+### GET / POST /v1/institution/workout-scheduling
 
-Fixed-time sequence binding/reschedule/skip; no worker or new UI yet.
+Scoped next-workout projection and fixed-time sequence binding/reschedule/skip.
 
 - Authority: Current signed-in institution membership; handler enforces its role/subject scope.
-- Apps/workflow: Web program/athlete recording; future Android workout capture.
-- Handler: [workoutSchedulingCommand](../../../apps/backend/server/programming.ts).
+- Apps/workflow: Web coach dashboard, athlete plans and athlete training; future Android capture.
+- Handler: [workoutAgenda](../../../apps/backend/server/programming.ts), [workoutSchedulingCommand](../../../apps/backend/server/programming.ts).
 - Source-derived table touches (including known called helpers/SQL functions): [public.institution_assignments](schema.md#publicinstitution_assignments), [public.institution_audit_events](schema.md#publicinstitution_audit_events), [public.institution_coaching_links](schema.md#publicinstitution_coaching_links), [public.institution_event_people](schema.md#publicinstitution_event_people), [public.institution_events](schema.md#publicinstitution_events), [public.institution_injury_records](schema.md#publicinstitution_injury_records), [public.institution_members](schema.md#publicinstitution_members), [public.institution_operations](schema.md#publicinstitution_operations), [public.institution_sessions](schema.md#publicinstitution_sessions), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions), [public.profiles](schema.md#publicprofiles).
 
 ### GET /v1/workouts/{id}/previous

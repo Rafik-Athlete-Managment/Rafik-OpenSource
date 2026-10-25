@@ -8,6 +8,7 @@ import {
   stopAssignmentWork,
 } from "./workout-sequence.ts";
 import { pageSize } from "./pagination.ts";
+import type { WorkoutAgenda, WorkoutAgendaItem } from "@rafik/shared/contracts";
 import { pageOffset } from "./service-definitions.ts";
 import { usableExerciseAsset } from "./assets.ts";
 import media from "../content/exercise-media.json" with { type: "json" };
@@ -1440,6 +1441,207 @@ export async function previousInstitutionPerformance(
    WHERE h.institution_id=${s.institution_id}::uuid AND h.member_id=${self.id}::uuid AND h.completed_at<${s.started_at}
   ) SELECT DISTINCT ON(exercise_id) exercise_id,completed_at,coalesce((SELECT original||jsonb_build_object('exerciseId',alt->>'exerciseId','info',alt->'info') FROM jsonb_array_elements(coalesce(original->'alternatives','[]')) alt WHERE alt->>'exerciseId'=exercise_id),original) AS prescription,entries
     FROM actual WHERE entries IS NOT NULL AND exercise_id=ANY(${wanted}::text[]) ORDER BY exercise_id,completed_at DESC,id DESC LIMIT 48`;
+  });
+}
+
+/** Bounded, read-only projection. All roster filtering happens before pagination. */
+export async function workoutAgenda(
+  actor: Actor,
+  institution: string,
+  query: URLSearchParams,
+): Promise<WorkoutAgenda> {
+  const view = role(query.get("view"));
+  const profile = await asActor(actor, (tx) =>
+    tx.profiles.findUnique({
+      where: { id: actor.id },
+      select: { timezone: true },
+    }),
+  );
+  return scoped(actor, institution, [view], async (tx, self) => {
+    const search = (query.get("search") || "").trim().slice(0, 100);
+    const now = new Date();
+    const today = new Date(
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: profile?.timezone || "UTC",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(now) + "T00:00:00Z",
+    );
+    const assignment = query.get("assignment");
+    const scope: Prisma.institution_assignmentsWhereInput = {
+      institution_id: institution,
+      ...(assignment ? { id: uuid(assignment) } : {}),
+      OR: [
+        { state: "active" },
+        { institution_workout_positions: { some: { state: "paused" } } },
+      ],
+      ...(view === "trainee"
+        ? { member_id: self.id }
+        : view === "trainer"
+          ? assignmentScope(
+              self.id,
+              await supportingLinks(tx, institution, self.id),
+            )
+          : {}),
+      institution_members_institution_assignments_institution_id_member_idToinstitution_members:
+        {
+          active: true,
+          ...(search
+            ? { name: { contains: search, mode: "insensitive" } }
+            : {}),
+        },
+      ...(query.get("due") === "true"
+        ? {
+            AND: [
+              {
+                OR: [
+                  {
+                    institution_workout_positions: {
+                      some: {
+                        state: { in: ["pending", "paused"] },
+                        institution_events: { training_date: { lte: today } },
+                      },
+                    },
+                  },
+                  {
+                    institution_sessions: {
+                      some: { completed_at: null, occurrence_id: null },
+                    },
+                  },
+                ],
+              },
+              ...(view === "trainer"
+                ? [
+                    assignmentScope(
+                      self.id,
+                      await supportingLinks(tx, institution, self.id),
+                    ),
+                  ]
+                : []),
+            ],
+          }
+        : {}),
+    };
+    const offset = pageOffset(query.get("offset")),
+      limit = pageSize(query, 10);
+    const rows = await tx.institution_assignments.findMany({
+      where: scope,
+      skip: offset,
+      take: limit,
+      orderBy: [{ created_at: "asc" }, { id: "asc" }],
+      include: {
+        institution_versions: { select: { title: true, prescription: true } },
+        institution_members_institution_assignments_institution_id_member_idToinstitution_members:
+          { select: { name: true } },
+        institution_workout_positions: {
+          where: { state: { in: ["pending", "paused"] } },
+          take: 1,
+          include: { institution_events: true, institution_sessions: true },
+        },
+        institution_sessions: {
+          where: { completed_at: null, occurrence_id: null },
+          orderBy: [{ started_at: "asc" }, { id: "asc" }],
+          take: 1,
+        },
+      },
+    });
+    const restrictions = await tx.institution_injury_records.findMany({
+      where: {
+        institution_id: institution,
+        athlete_member_id: { in: rows.map((a) => a.member_id) },
+        state: "active",
+        participation: "unavailable",
+        effective_from: { lte: today },
+      },
+      select: { athlete_member_id: true },
+    });
+    return {
+      total: await tx.institution_assignments.count({ where: scope }),
+      offset,
+      limit,
+      items: rows.map((a): WorkoutAgendaItem => {
+        const position = a.institution_workout_positions[0],
+          occurrence = position?.institution_events;
+        const session =
+          position?.institution_sessions || a.institution_sessions[0];
+        const days = (
+          (a.institution_versions.prescription as any).days || []
+        ).filter((d: any) => !d.restDay);
+        const day =
+          days.find(
+            (d: any) => d.id === (position?.day_id || session?.day_id),
+          ) || days[a.sequence_cursor % days.length];
+        const blocked = restrictions.some(
+          (r) => r.athlete_member_id === a.member_id,
+        )
+          ? "participation_unavailable"
+          : a.state !== "active" ||
+              a.start_date > today ||
+              (a.end_date && a.end_date < today)
+            ? "assignment_unavailable"
+            : !day
+              ? "no_workout_days"
+              : null;
+        const state =
+          position?.state === "paused"
+            ? "paused"
+            : session
+              ? "in_progress"
+              : !occurrence
+                ? "unscheduled"
+                : occurrence.starts_at > now
+                  ? "scheduled"
+                  : occurrence.ends_at < now
+                    ? "overdue"
+                    : "ready";
+        return {
+          assignment_id: a.id,
+          member_id: a.member_id,
+          member_name:
+            a
+              .institution_members_institution_assignments_institution_id_member_idToinstitution_members
+              .name,
+          title: a.institution_versions.title,
+          goal: a.goal,
+          cursor: a.sequence_cursor,
+          day: day ? { id: day.id, name: day.name, nameAr: day.nameAr } : null,
+          state,
+          blocked,
+          occurrence: occurrence
+            ? {
+                id: occurrence.id,
+                revision: occurrence.revision,
+                starts_at: occurrence.starts_at.toISOString(),
+                ends_at: occurrence.ends_at.toISOString(),
+                timezone: occurrence.timezone,
+                training_date: occurrence.training_date
+                  .toISOString()
+                  .slice(0, 10),
+              }
+            : null,
+          session: session
+            ? { id: session.id, recorded_mode: session.recorded_mode }
+            : null,
+          can_start:
+            !blocked &&
+            !!occurrence &&
+            occurrence.state === "scheduled" &&
+            occurrence.starts_at <= now &&
+            position?.state === "pending" &&
+            !session &&
+            view !== "admin",
+          can_schedule:
+            view !== "trainee" &&
+            a.state === "active" &&
+            !!day &&
+            !(a.end_date && a.end_date < today) &&
+            blocked !== "participation_unavailable" &&
+            !position &&
+            !session,
+        };
+      }),
+    };
   });
 }
 

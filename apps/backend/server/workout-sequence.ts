@@ -142,6 +142,7 @@ export async function scheduleIndividualWorkout(
       id: { in: [...staff, athlete.id] },
       institution_id: institution,
       active: true,
+      OR: [{ id: athlete.id }, { roles: { has: "trainer" } }],
     },
     select: { id: true, user_id: true },
   });
@@ -367,7 +368,14 @@ export async function workoutStartContext(
     tx,
     institution,
     assignment.member_id,
-    occurrence.training_date,
+    new Date(
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: occurrence.timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date()) + "T00:00:00Z",
+    ),
   );
   return { position, occurrence };
 }

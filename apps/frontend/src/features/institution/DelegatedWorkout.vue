@@ -4,7 +4,7 @@ import { institutionContext } from '../../app/institution'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { AthletePlanPage } from '@rafik/shared/contracts'
+import type { AthletePlanPage, WorkoutAgenda } from '@rafik/shared/contracts'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage, dateLabel, locale } from '../../lib/i18n'
 import { exerciseName } from '../../lib/prescriptions'
@@ -52,6 +52,7 @@ const loading = ref(true),
   note = ref(''),
   history = ref<Version[]>([])
 const get = <T,>(path: string) => request<T>(path, { feedback: 'none' })
+const nextWorkout = ref<WorkoutAgenda['items'][number]>()
 async function load() {
   loading.value = true
   error.value = ''
@@ -61,6 +62,12 @@ async function load() {
         `${ws}/athlete-plans?view=${view}&assignment=${encodeURIComponent(String(route.query.assignment))}`,
       )
       plan.value = page.items[0] as typeof plan.value
+      const agenda = await get<WorkoutAgenda>(
+        `${ws}/workout-scheduling?view=${view}&assignment=${encodeURIComponent(String(route.query.assignment))}`,
+      )
+      if (disposed) return
+      nextWorkout.value = agenda.items[0]
+      if (!nextWorkout.value?.can_start) throw new Error('workout_not_actionable')
     } else {
       session.value = await get<Delegated>(`/v1/workouts/${sessionId.value}?view=${view}`)
       entries.value = session.value.entries.map((e) => ({ ...e }))
@@ -76,7 +83,10 @@ async function load() {
   }
 }
 const days = computed(
-  () => plan.value?.version.prescription?.days.filter((d: PlanDay) => !d.restDay) || [],
+  () =>
+    plan.value?.version.prescription?.days.filter(
+      (d: PlanDay) => nextWorkout.value?.can_start && d.id === nextWorkout.value.day?.id,
+    ) || [],
 )
 // Navigate only after the start command has fully settled: the page may remount on a route
 // change, and a new instance must not adopt the still-saved start command as pending.
@@ -119,6 +129,7 @@ async function start(day: PlanDay) {
     id,
     assignment_id: plan.value!.id,
     day_id: day.id,
+    occurrence_id: nextWorkout.value?.occurrence?.id,
   })
   // The write stands even if the coach left; only move them if this screen is still current.
   if (started.value && !starting.state.pending && !disposed && route.fullPath === origin)

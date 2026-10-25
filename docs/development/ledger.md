@@ -1,5 +1,13 @@
 # Current delivery ledger
 
+## Individual workout web cutover — 25 October 2026
+
+Added a bounded, authorization-scoped GET projection beside the existing workout scheduling commands. Dashboard due-work discovery includes today, overdue and unfinished older records without requiring athlete selection. A shared WorkoutAgenda renders immutable next-day identity, start-time/restriction explanations, occurrence-bound start, resume/review, scheduling, rescheduling and staff skip with a reason. Athlete plan details and profile links lead to this flow; athlete training no longer offers arbitrary plan days. Existing unsynced institutional browser records stay reachable. Administrator actions remain scheduling/review; delegated recording remains the coach role.
+
+This is the first web integration slice. Weekly recurrence materialization, automatic/rest-day worker scheduling, historical occurrence reconciliation, group exercise capture and Android offline workout capture are not enabled. The focused verification record and role-based founder guide distinguish this scope from remaining beta.3 work. No schema migration or generated database type change is needed for the read projection.
+
+The paired English/Arabic landing guidance is on the existing unmerged documentation PR at `d94a0cc`. The focused sequence API and eight delegated/scheduling browser cases passed; fixture cleanup now handles only its own sequence rows before deleting its institution. No release or APK was published.
+
 ## Founder validation corrections — 25 October 2026
 
 Addressed assignment-scoped athlete program reads, staff-route guards, assigned-group visibility, scoped athlete-to-coach messaging, unstarted group discovery, immediate coach selection, invitation success presentation, exercise video indicators, stable message typing/Enter behavior, workout departure warnings/rest reset, staff participation navigation and food-entry grouping/dialog/library defaults. Supporting-coach sport remains an authorization scope: one eligible scope saves immediately; multiple scopes require an explicit choice. Automatic group scheduling, the new workout launch/progression UI and a staged bulk attendance/results flow remain subsequent beta.3 work. Reference-library curation is tracked separately rather than deleting published exercise identities or adding an external API dependency. Focused verification and its limits are recorded in verification; founder steps are in the testing guide.

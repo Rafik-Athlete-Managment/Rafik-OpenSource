@@ -372,9 +372,9 @@ onMounted(load)
                 <RouterLink
                   v-if="relation === 'primary' || (relation === 'supporting' && plan.sport)"
                   class="text-link"
-                  :to="base + '/record/new?assignment=' + plan.id"
-                  :aria-label="l('Record a session for ', 'تسجيل حصة لـ ') + plan.version.title"
-                  >{{ l('Record a session', 'تسجيل حصة') }}</RouterLink
+                  :to="base + '/training?assignment=' + plan.id"
+                  :aria-label="l('Manage workouts for ', 'إدارة تمارين ') + plan.version.title"
+                  >{{ l('Manage workouts', 'إدارة التمارين') }}</RouterLink
                 >
                 <small
                   >{{ formatDate(plan.start_date, locale) }} —

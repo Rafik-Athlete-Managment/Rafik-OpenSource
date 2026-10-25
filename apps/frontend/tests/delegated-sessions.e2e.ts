@@ -5,6 +5,8 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
 import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
+import { testPreview } from './local-config'
+test.use({ baseURL: testPreview, serviceWorkers: 'block' })
 
 async function inspect(page: Page, name: string, info: { project: { name: string } }) {
   expect(await layoutIssues(page)).toEqual([])
@@ -17,8 +19,31 @@ async function inspect(page: Page, name: string, info: { project: { name: string
 }
 
 type Fixture = Awaited<ReturnType<typeof institutionFixture>>
+async function bindNext(f: Fixture, member: string) {
+  const assignment = (
+    await f.call(f.coach, `/v1/institution/athlete-plans?view=trainer&member=${member}`)
+  ).items[0].id
+  const next = (
+    await f.call(
+      f.coach,
+      `/v1/institution/workout-scheduling?view=trainer&assignment=${assignment}`,
+    )
+  ).items[0]
+  const start = new Date(Date.now() - 120000)
+  await f.call(f.coach, '/v1/institution/workout-scheduling', {
+    operation: randomUUID(),
+    action: 'schedule-workout',
+    view: 'trainer',
+    assignment_id: assignment,
+    cursor: next.cursor,
+    starts_at: start.toISOString(),
+    ends_at: new Date(start.getTime() + 3600000).toISOString(),
+    timezone: 'UTC',
+  })
+  return assignment
+}
 /** Institution with a primary coach, an athlete and one assigned plan built from `days`. */
-async function institution(f: Fixture, name: string, adapt?: (plan: any) => void) {
+async function institution(f: Fixture, name: string, adapt?: (plan: any) => void, bind = true) {
   const institution = randomUUID(),
     endpoint = `/v1/institution`,
     today = new Date().toISOString().slice(0, 10)
@@ -74,6 +99,7 @@ async function institution(f: Fixture, name: string, adapt?: (plan: any) => void
     schedule_mode: 'flexible',
     members: [{ id: athlete.id, revision: athlete.revision, replaces: null }],
   })
+  if (bind) await bindNext(f, athlete.id)
   return { institution, endpoint, athlete, plan, base: `` }
 }
 
@@ -145,13 +171,14 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
       members: [{ id: athlete.id, revision: athlete.revision, replaces: null }],
     })
 
-    // Coach starts from the athlete profile and records under their own name.
+    await bindNext(f, athlete.id)
+    // Coach starts from the athlete profile's plan agenda under their own name.
     const base = ``
     await f.login(page, f.coach, `${base}/athletes/${athlete.id}`)
-    await page.getByRole('link', { name: 'Record a session for Track block' }).click()
-    await expect(page.getByText('under your own name', { exact: false })).toBeVisible()
+    await page.getByRole('tab', { name: 'Plans', exact: true }).click()
+    await page.getByRole('link', { name: 'Manage workouts for Track block' }).click()
     const firstDay = plan.days.find((d: any) => !d.restDay)
-    await page.getByRole('button', { name: 'Record ' + firstDay.name, exact: true }).click()
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click()
     await expect(page).toHaveURL(/\/record\/[a-f0-9-]{36}$/)
     await expect(page.getByText('Recorded on behalf of')).toBeVisible()
     const firstSet = page.locator('.delegated-set').first()
@@ -216,8 +243,9 @@ test('coach-recorded timed and distance sets require actual seconds and metres',
     })
     const day = plan.days[0]
     await f.login(page, f.coach, `${base}/athletes/${athlete.id}`)
-    await page.getByRole('link', { name: 'Record a session for Track block' }).click()
-    await page.getByRole('button', { name: 'Record ' + day.name, exact: true }).click()
+    await page.getByRole('tab', { name: 'Plans', exact: true }).click()
+    await page.getByRole('link', { name: 'Manage workouts for Track block' }).click()
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click()
     await expect(page).toHaveURL(/\/record\/[a-f0-9-]{36}$/)
     const timed = page.locator('.delegated-set').nth(day.exercises[0].sets)
     const distance = page
@@ -292,6 +320,61 @@ test('a delayed start acknowledgment keeps the write but never pulls the coach b
     )
     expect(history.sessions).toHaveLength(1)
     expect(history.sessions[0].recorded_mode).toBe('delegated')
+  } finally {
+    await f.cleanup()
+  }
+})
+
+test('coach schedules from a plan; athlete sees the future-start explanation in English and Arabic', async ({
+  page,
+}, info) => {
+  test.setTimeout(180000)
+  const f = await institutionFixture()
+  try {
+    const { athlete } = await institution(f, 'Madar scheduled', undefined, false)
+    const assignment = (
+      await f.call(f.coach, '/v1/institution/athlete-plans?view=trainer&member=' + athlete.id)
+    ).items[0].id
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
+    })
+    await f.login(page, f.coach, '/training?assignment=' + assignment)
+    const agenda = page.getByRole('region', { name: 'Next workouts', exact: true })
+    await agenda.getByRole('button', { name: 'Schedule workout', exact: true }).click()
+    await agenda
+      .getByLabel('Date and time', { exact: true })
+      .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))
+    await agenda.getByLabel('Duration (minutes)', { exact: true }).fill('45')
+    await agenda.getByRole('button', { name: 'Save schedule', exact: true }).click()
+    await expect(agenda.getByText('Recording opens at the scheduled start time.')).toBeVisible()
+    await page.route('**/v1/institution/workout-scheduling?**', (route) => route.abort('failed'))
+    await agenda.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
+    await expect(agenda.getByRole('alert')).toBeVisible()
+    await expect(agenda.getByText('Recording opens at the scheduled start time.')).toBeVisible()
+    await page.unroute('**/v1/institution/workout-scheduling?**')
+    await agenda.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
+    await expect(agenda.getByRole('alert')).toHaveCount(0)
+    await inspect(page, 'schedule-future', info)
+    const occurrence = (
+      await f.call(
+        f.coach,
+        '/v1/institution/workout-scheduling?view=trainer&assignment=' + assignment,
+      )
+    ).items[0].occurrence
+    await page.goto('/schedule/' + occurrence.id)
+    await expect(page.getByRole('link', { name: 'Open plan workouts', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Complete session', exact: true })).toHaveCount(0)
+    await f.login(page, f.client, '/training')
+    await expect(page.getByText('Recording opens at the scheduled start time.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toHaveCount(0)
+    await inspect(page, 'athlete-wait-en', info)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'dark')
+    })
+    await page.reload()
+    await expect(page.getByText('يفتح التسجيل عند موعد البدء المحدد.')).toBeVisible()
+    await inspect(page, 'athlete-wait-ar', info)
   } finally {
     await f.cleanup()
   }

@@ -46,6 +46,15 @@ const slot = (days: number) => {
     timezone: "UTC",
   };
 };
+async function agenda(auth: string, view = "trainer", query = "") {
+  const response = await fetch(
+    base + `/workout-scheduling?view=${view}${query}`,
+    { headers: { Cookie: auth, "x-rafik-client": "web" } },
+  );
+  const data = await response.json();
+  assert.equal(response.status, 200, JSON.stringify(data));
+  return data;
+}
 after(async () => {
   await db.$disconnect();
 });
@@ -116,6 +125,18 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     firstResult.data,
   );
   const a = firstResult.data;
+  const due = await agenda(auth, "trainer", "&due=true&limit=1");
+  assert.equal(due.total, 1);
+  assert.equal(due.items[0].assignment_id, assignment);
+  assert.equal(due.items[0].state, "overdue");
+  assert.equal(due.items[0].can_start, true);
+  const own = await agenda(athleteAuth, "trainee", `&assignment=${assignment}`);
+  assert.equal(own.items[0].occurrence.id, a.occurrence.id);
+  assert.equal(own.items[0].can_schedule, false);
+  assert.equal(
+    (await agenda(auth, "trainer", "&search=does-not-exist")).total,
+    0,
+  );
   assert.equal(a.position.position, 0);
   assert.equal(
     (
@@ -136,6 +157,16 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     }),
   );
   assert.equal(independent.status, 200, JSON.stringify(independent));
+  const secondPage = await agenda(auth, "trainer", "&limit=1&offset=1");
+  assert.equal(secondPage.total, 2);
+  assert.equal(secondPage.items[0].assignment_id, other.id);
+  const future = await agenda(
+    athleteAuth,
+    "trainee",
+    `&assignment=${other.id}`,
+  );
+  assert.equal(future.items[0].state, "scheduled");
+  assert.equal(future.items[0].can_start, false);
   const early = await call(
     auth,
     "/sessions",
@@ -241,6 +272,11 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     }),
   );
   assert.equal(next.status, 200, JSON.stringify(next));
+  assert.equal(
+    (await agenda(auth, "trainer", `&assignment=${assignment}`)).items[0]
+      .cursor,
+    1,
+  );
   assert.notEqual(next.data.position.day_id, a.position.day_id);
   assert.equal(
     (
@@ -348,24 +384,52 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     "cancelled",
   );
   // A current cannot-train flag blocks scheduling with a general explanation only.
-  await db.institution_assignments.update({
-    where: { id: other.id },
-    data: { state: "active" },
+  const restrictedAssignment = await db.institution_assignments.create({
+    data: {
+      id: randomUUID(),
+      institution_id: institution,
+      member_id: athlete,
+      version_id: otherVersion.id,
+      created_by: coach,
+      start_date: startDate,
+      schedule_mode: "flexible",
+    },
   });
+  const oldDue = await call(
+    await cookie("11000000-0000-4000-8000-000000000001"),
+    "/workout-scheduling",
+    operation("schedule-workout", {
+      view: "admin",
+      assignment_id: restrictedAssignment.id,
+      cursor: 0,
+      ...slot(-0.2),
+    }),
+  );
+  assert.equal(oldDue.status, 200, JSON.stringify(oldDue));
+  const staff = await db.institution_event_people.findMany({
+    where: { event_id: oldDue.data.occurrence.id, duty: "staff" },
+  });
+  assert.deepEqual(
+    staff.map((p) => p.member_id),
+    [coach],
+    "administrator scheduling must not enroll the administrator as a coach",
+  );
   const restriction = await db.institution_injury_records.create({
     data: {
       id: randomUUID(),
       institution_id: institution,
       athlete_member_id: athlete,
       participation: "unavailable",
-      effective_from: startDate,
+      effective_from: new Date(
+        new Date().toISOString().slice(0, 10) + "T00:00:00Z",
+      ),
     },
   });
   const blocked = await call(
     auth,
     "/workout-scheduling",
     operation("schedule-workout", {
-      assignment_id: other.id,
+      assignment_id: restrictedAssignment.id,
       cursor: 0,
       ...slot(1),
     }),
@@ -373,6 +437,30 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
   assert.equal(blocked.status, 409);
   assert.equal(blocked.data.message, "participation_unavailable");
   assert.ok(!JSON.stringify(blocked).includes(restriction.id));
+  const restricted = await agenda(
+    athleteAuth,
+    "trainee",
+    `&assignment=${restrictedAssignment.id}`,
+  );
+  assert.equal(restricted.items[0].blocked, "participation_unavailable");
+  assert.equal(restricted.items[0].can_start, false);
+  assert.ok(!JSON.stringify(restricted).includes(restriction.id));
+  const restrictedStart = await call(
+    auth,
+    "/sessions",
+    operation("start", {
+      id: randomUUID(),
+      assignment_id: restrictedAssignment.id,
+      day_id: oldDue.data.position.day_id,
+      occurrence_id: oldDue.data.occurrence.id,
+    }),
+  );
+  assert.equal(restrictedStart.status, 409);
+  assert.equal(
+    restrictedStart.data.message,
+    "participation_unavailable",
+    "an overdue date must not bypass today's restriction",
+  );
   await db.institution_members.update({
     where: { id: coach },
     data: { active: false },

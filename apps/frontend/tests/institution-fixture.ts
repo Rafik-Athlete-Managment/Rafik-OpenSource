@@ -91,7 +91,7 @@ export async function institutionFixture() {
         }
       }
       sql(
-        `delete from public.institutions where created_by='${p.id}'; delete from identity.users where id='${p.id}';`,
+        `BEGIN; delete from public.institution_workout_positions where institution_id in (select id from public.institutions where created_by='${p.id}'); delete from public.institution_workout_recurrences where institution_id in (select id from public.institutions where created_by='${p.id}'); delete from public.institutions where created_by='${p.id}'; delete from identity.users where id='${p.id}'; COMMIT;`,
       )
     }
   }

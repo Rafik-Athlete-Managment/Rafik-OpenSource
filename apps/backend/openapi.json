@@ -357,6 +357,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
           "401": {
             "$ref": "#/components/responses/ApiError"
           },
@@ -364,9 +367,6 @@
             "$ref": "#/components/responses/ApiError"
           },
           "404": {
-            "$ref": "#/components/responses/ApiError"
-          },
-          "400": {
             "$ref": "#/components/responses/ApiError"
           }
         }
@@ -466,6 +466,92 @@
           },
           "409": {
             "description": "Stale cursor/revision, unresolved predecessor, participation restriction, calendar collision, or a date/day identity already recorded."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Coach field work"
+        ],
+        "summary": "Read authorized next-workout state without choosing an athlete first",
+        "description": "Unreleased beta.3 web integration. Read-only projection; never allocates a sequence position. Returns next immutable plan day, pending occurrence, resumable record, general participation restriction and action flags. Coach scope is primary athletes plus supporting sport-specific plans. Athlete scope is own assignments. due=true includes today/overdue unresolved occurrences and unfinished older records, in the signed-in account timezone. Recurrence and automatic scheduling remain pending.",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "admin",
+                "trainer",
+                "trainee"
+              ]
+            }
+          },
+          {
+            "name": "assignment",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "due",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WorkoutAgenda: items, total, offset and bounded limit. Each item contains assignment_id, member_id/name, title, goal, cursor, next day, state, general blocked reason, occurrence, session, can_start and can_schedule. Shared TypeScript shape: packages/shared/src/contracts.ts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutAgenda"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign-in required"
+          },
+          "403": {
+            "description": "Current institution membership/role unavailable"
           }
         }
       }
@@ -1275,6 +1361,204 @@
               }
             }
           }
+        ]
+      },
+      "WorkoutAgendaItem": {
+        "type": "object",
+        "properties": {
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member_name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cursor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "day": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "nameAr": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "unscheduled",
+              "scheduled",
+              "ready",
+              "overdue",
+              "in_progress",
+              "paused"
+            ]
+          },
+          "blocked": {
+            "anyOf": [
+              {
+                "enum": [
+                  "participation_unavailable",
+                  "assignment_unavailable",
+                  "no_workout_days"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "occurrence": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "revision": {
+                    "type": "integer"
+                  },
+                  "starts_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "ends_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "timezone": {
+                    "type": "string"
+                  },
+                  "training_date": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "required": [
+                  "id",
+                  "revision",
+                  "starts_at",
+                  "ends_at",
+                  "timezone",
+                  "training_date"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "session": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "recorded_mode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "recorded_mode"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "can_start": {
+            "type": "boolean"
+          },
+          "can_schedule": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "assignment_id",
+          "member_id",
+          "member_name",
+          "title",
+          "goal",
+          "cursor",
+          "day",
+          "state",
+          "blocked",
+          "occurrence",
+          "session",
+          "can_start",
+          "can_schedule"
+        ]
+      },
+      "WorkoutAgenda": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkoutAgendaItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
         ]
       }
     },

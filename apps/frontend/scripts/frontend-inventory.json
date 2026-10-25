@@ -149,7 +149,7 @@
     "access": "Administrators can inspect/manage institutional people. Coaches can inspect their authorized athletes, not a staff directory; sensitive sections retain separate API restrictions."
   },
   "features/institution/AthleteTraining.vue": {
-    "purpose": "Athlete assigned plan/day selection, start-workout action, recorded results and assessment links.",
+    "purpose": "Athlete next-workout agenda and access to unsynced device records; no arbitrary plan-day chooser.",
     "access": "Athlete self through TrainingRoute; authorization for any subject remains server-owned.",
     "screen": true
   },
@@ -318,5 +318,8 @@
   "features/training/WorkoutPage.vue": {
     "purpose": "Athlete's institutional workout recorder with measured actuals, local persistence, exact sync, conflict recovery and completion summary.",
     "access": "Signed-in institutional athlete owning the workout; server and local owner/workspace checks remain authoritative."
+  },
+  "features/institution/WorkoutAgenda.vue": {
+    "purpose": "Shared read-only next-workout projection, fixed-time scheduling/reschedule/skip and occurrence-bound start/resume with durable command recovery."
   }
 }
