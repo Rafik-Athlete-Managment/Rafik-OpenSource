@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { measureFields, measureLimits, hasActualResult } from '../../lib/set-measures'
 import ExerciseDemo from '../../components/ExerciseDemo.vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import {
   PhArrowLeft,
@@ -46,12 +46,43 @@ const correcting = ref(false)
 const savingLocal = ref(0)
 const noteDraft = ref<string>()
 onBeforeRouteLeave(async () => {
+  if (
+    session.value?.status === 'in_progress' &&
+    !window.confirm(
+      language(
+        'Leave this workout? Saved progress stays available so you can resume.',
+        'هل تريد مغادرة التمرين؟ يبقى التقدم المحفوظ متاحاً للمتابعة.',
+      ),
+    )
+  )
+    return false
   await mutation
 })
 const owner = computed(() => user.value!.id)
 const session = computed(() => row.value?.session)
 const returnPath = '/training'
 const current = computed(() => session.value?.prescription.exercises[selected.value])
+watch(
+  () => current.value?.key,
+  (key, previous) => {
+    if (key && previous && key !== previous && row.value?.restUntil) {
+      mutation = mutation.then(async () => {
+        try {
+          row.value = await editLocalSession(id, (local) => {
+            local.restUntil = undefined
+          })
+        } catch (cause) {
+          error.value = errorMessage(cause)
+        }
+      })
+    }
+  },
+)
+function warnBeforeUnload(event: BeforeUnloadEvent) {
+  if (session.value?.status !== 'in_progress') return
+  event.preventDefault()
+  event.returnValue = ''
+}
 const groupBounds = computed(() => {
   const list = session.value?.prescription.exercises || [],
     label = current.value?.group
@@ -331,10 +362,12 @@ onMounted(() => {
     now.value = Date.now()
   }, 1000)
   window.addEventListener('online', sync)
+  window.addEventListener('beforeunload', warnBeforeUnload)
 })
 onUnmounted(() => {
   clearInterval(clock)
   window.removeEventListener('online', sync)
+  window.removeEventListener('beforeunload', warnBeforeUnload)
 })
 function correctSets() {
   correcting.value = true

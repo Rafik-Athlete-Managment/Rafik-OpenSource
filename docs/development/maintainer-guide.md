@@ -1,5 +1,9 @@
 # Maintainer guide
 
+## Founder validation corrections
+
+Use the [focused founder walkthrough](../testing/founder-validation-beta3.md) when handing this slice back for acceptance. Contact discovery belongs to communication, not the people directory. Supporting-coach sport/specialty is a permission boundary, even though the coach picker no longer requires a sport filter first. Keep current immutable reference exercise IDs and source/media attribution when curating the library. Extend shared workout progression and event command services for later scheduling/attendance work.
+
 ## Progression service workflow
 
 Run `npm run test:workout-sequence` from the root with local Docker available. It starts its own migrated/seeded database and API, exercises sequence concurrency and the full bind/start/save/skip/end journey, then removes only its own database/files. `workout-sequence.ts` is the transactional domain service; `programming.ts` supplies existing authority/receipts. Extend these shared paths rather than adding another worker or native write implementation. Keep exact receipt responses and native attendance commands unchanged.

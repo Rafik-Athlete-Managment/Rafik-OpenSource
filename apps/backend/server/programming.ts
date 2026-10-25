@@ -104,6 +104,17 @@ async function programAccess(
   )
     throw new ApiError(403, "program_unavailable");
   if (write && view === "trainee") throw new ApiError(403, "forbidden");
+  if (
+    view === "trainee" &&
+    !(await tx.institution_assignments.findFirst({
+      where: {
+        institution_id: id,
+        member_id: self.id,
+        institution_versions: { program_id: p.id },
+      },
+    }))
+  )
+    throw new ApiError(403, "program_unavailable");
   return p;
 }
 /**
@@ -284,12 +295,28 @@ export async function programs(
         editable =
           view === "admin" || (view === "trainer" && p.created_by === self.id);
       const versions = await tx.institution_versions.findMany({
-        where: { program_id: p.id },
+        where: {
+          program_id: p.id,
+          ...(view === "trainee"
+            ? {
+                ...(requestedVersion ? { id: requestedVersion.id } : {}),
+                institution_assignments: {
+                  some: { institution_id: id, member_id: self.id },
+                },
+              }
+            : {}),
+        },
         orderBy: { revision: "desc" },
         take: editable ? 50 : 1,
       });
       if (!editable && !versions.length)
         throw new ApiError(404, "program_unavailable");
+      if (
+        view === "trainee" &&
+        requestedVersion &&
+        !versions.some((v) => v.id === requestedVersion.id)
+      )
+        throw new ApiError(403, "program_unavailable");
       return {
         version: requestedVersion,
         program: editable
@@ -313,7 +340,16 @@ export async function programs(
         ? {}
         : view === "trainer"
           ? { OR: [{ created_by: self.id }, { listed: true }] }
-          : { listed: true, institution_versions: { some: {} } }),
+          : {
+              listed: true,
+              institution_versions: {
+                some: {
+                  institution_assignments: {
+                    some: { institution_id: id, member_id: self.id },
+                  },
+                },
+              },
+            }),
     };
     const [list, total] = await Promise.all([
       tx.institution_programs.findMany({
@@ -322,7 +358,18 @@ export async function programs(
         skip: offset,
         take,
         include: {
-          institution_versions: { orderBy: { revision: "desc" }, take: 1 },
+          institution_versions: {
+            where:
+              view === "trainee"
+                ? {
+                    institution_assignments: {
+                      some: { institution_id: id, member_id: self.id },
+                    },
+                  }
+                : {},
+            orderBy: { revision: "desc" },
+            take: 1,
+          },
         },
       }),
       tx.institution_programs.count({ where }),

@@ -272,6 +272,17 @@ router.beforeEach(async (to, from) => {
     const institution = contexts.value.find((c) => c.kind === 'institution')
     if (!institution) return '/access'
     if (to.meta.adminOnly && institution.role !== 'admin') return '/dashboard'
+    if (
+      institution.role === 'trainee' &&
+      (['/people', '/analytics', '/groups', '/assessment-templates', '/exercises'].some(
+        (path) => to.path === path || to.path.startsWith(path + '/'),
+      ) ||
+        to.path.startsWith('/deliver/') ||
+        to.path.startsWith('/record/') ||
+        to.path === '/plans/new' ||
+        to.path === '/schedule/new')
+    )
+      return '/dashboard'
   }
 })
 export const safeNext = (value: unknown, fallback = '/dashboard') =>

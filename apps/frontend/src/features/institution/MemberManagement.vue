@@ -71,6 +71,17 @@ const command = useCommand<'member'>(
 const locked = computed(() => command.state.busy || !!command.state.pending || !command.state.ready)
 const run = (args: Record<string, unknown>) =>
   command.run('member', { operation: crypto.randomUUID(), ...args })
+function selectPrimary(ids: string[]) {
+  const selected = ids[0] || ''
+  if (locked.value || selected === (props.member.trainer_id || '')) return
+  trainer.value = selected
+  void run({
+    action: 'assign-trainer',
+    id: props.member.id,
+    revision: props.member.revision,
+    trainer: selected || null,
+  })
+}
 function resetPassword() {
   const token = [...crypto.getRandomValues(new Uint8Array(32))]
     .map((x) => x.toString(16).padStart(2, '0'))
@@ -147,14 +158,7 @@ function resetPassword() {
       <form
         v-if="member.active && member.roles.includes('trainee')"
         class="form-stack panel management-card primary-coach-card"
-        @submit.prevent="
-          run({
-            action: 'assign-trainer',
-            id: member.id,
-            revision: member.revision,
-            trainer: trainer || null,
-          })
-        "
+        @submit.prevent
       >
         <SectionHeader
           :title="l('Primary coach', 'المدرب الأساسي')"
@@ -173,7 +177,7 @@ function resetPassword() {
           :label="l('Choose primary coach', 'اختيار المدرب الأساسي')"
           :model-value="trainer ? [trainer] : []"
           :exclude-ids="[member.id]"
-          @update:model-value="trainer = $event[0] || ''"
+          @update:model-value="selectPrimary"
           ><template #default="{ member: coach }"
             ><small class="coach-specialties">{{
               (coach.sports || [])
@@ -184,9 +188,6 @@ function resetPassword() {
             }}</small></template
           ></MemberPicker
         >
-        <button class="button secondary">
-          {{ l('Update primary coach', 'تحديث المدرب الأساسي') }}
-        </button>
       </form>
       <div
         v-if="member.active && member.roles.includes('trainee')"

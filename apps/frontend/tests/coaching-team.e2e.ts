@@ -3,6 +3,8 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
 import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
+import { testPreview } from './local-config'
+test.use({ baseURL: testPreview })
 
 async function inspect(page: Page, name: string, info: { project: { name: string } }) {
   expect(await layoutIssues(page)).toEqual([])
@@ -87,10 +89,8 @@ test('admin builds a coaching team; a supporting coach sees training only until 
     const manageUrl = page.url()
     const team = page.locator('.coaching-team')
     await expect(team.getByText('None yet.')).toBeVisible()
-    // The sport comes first; the coach list is then filtered to coaches who cover it.
-    await team.getByLabel('Sport or specialty they cover').selectOption({ label: 'Football' })
+    // Choosing a coach with one eligible scope saves immediately.
     await team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }).check()
-    await team.getByRole('button', { name: 'Add supporting coach', exact: true }).click()
     await expect(team.locator('.coaching-links li')).toContainText(
       'Supporting Coach With A Long Name · Football',
     )

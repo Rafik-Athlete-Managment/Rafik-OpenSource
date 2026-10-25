@@ -51,13 +51,48 @@ test("organization agenda and assessor-led results preserve each participant, co
       view: "admin",
       id: randomUUID(),
       name: "Morning group",
-      members: [a.id, b.id],
+      members: [a.id, b.id, staff.id],
       revision: 0,
       archived: false,
     });
     assert.equal(
       (await call(admin, `/v1/institution/services`, group)).status,
       200,
+    );
+    const assignedGroups = await call(
+      trainer,
+      `/v1/institution/services?view=trainer&kind=groups`,
+    );
+    assert.equal(assignedGroups.status, 200, JSON.stringify(assignedGroups));
+    assert.equal(
+      assignedGroups.data.items.find(
+        (item: { id: string }) => item.id === group.id,
+      )?.canEdit,
+      false,
+    );
+    const pendingGroups = await call(
+      trainer,
+      `/v1/institution/communication?view=trainer`,
+    );
+    assert.ok(
+      pendingGroups.data.groups.some(
+        (item: { id: string }) => item.id === group.id,
+      ),
+    );
+    const groupChat = await call(
+      trainer,
+      `/v1/institution/communication`,
+      operation("open-group", { id: group.id, view: "trainer" }),
+    );
+    assert.equal(groupChat.status, 200, JSON.stringify(groupChat));
+    const openedGroups = await call(
+      trainer,
+      `/v1/institution/communication?view=trainer`,
+    );
+    assert.ok(
+      !openedGroups.data.groups.some(
+        (item: { id: string }) => item.id === group.id,
+      ),
     );
     const create = operation("create", {
       id: randomUUID(),

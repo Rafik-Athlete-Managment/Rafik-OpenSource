@@ -119,11 +119,11 @@
   },
   "features/coaching/PlanEditor.vue": {
     "purpose": "Program draft editor and immutable-version preview, prescription structure, cover, publication and assignment links.",
-    "access": "Administrators/coaches edit within program ownership rules; athletes can read authorized published versions, not drafts."
+    "access": "Administrators/coaches edit within program ownership rules; athletes read only their own assigned immutable versions, not staff drafts or unassigned versions."
   },
   "features/coaching/PlansPage.vue": {
     "purpose": "Paginated/searchable program library and entry to create, preview or edit.",
-    "access": "Current institutional members; athletes receive only their authorized library/read view, staff authoring remains gated."
+    "access": "Current institutional members; athletes receive only their own assigned immutable versions, staff authoring remains gated."
   },
   "features/coaching/PrescriptionFields.vue": {
     "purpose": "Measurement-aware sets, reps, load, duration, distance, effort and per-set prescription controls."
@@ -165,7 +165,7 @@
   },
   "features/institution/ChannelsPage.vue": {
     "purpose": "Conversation directory, unified people/thread search and selection without a separate start page.",
-    "access": "Institution members see their own channels; staff can initiate authorized conversations. Administrators do not gain unrelated private-pair access."
+    "access": "Institution members see their own channels; staff can initiate authorized conversations and athletes can initiate pairs with active assigned coaches. Administrators do not gain unrelated private-pair access."
   },
   "features/institution/ChannelThread.vue": {
     "purpose": "Message timeline, pagination, per-thread draft, attachment staging, send and participant controls.",
@@ -173,7 +173,7 @@
     "screen": true
   },
   "features/institution/CoachingTeam.vue": {
-    "purpose": "Supporting-coach links, specialty/sport selection and link removal with acknowledged revision-safe commands."
+    "purpose": "Coach-first supporting selection with immediate acknowledged writes, optional filters, explicit access scope when ambiguous and revision-safe link removal."
   },
   "features/institution/DashboardPage.vue": {
     "purpose": "Role dashboard and route-selected People, Activity and Institution settings sections, invitations and close-institution confirmation.",

@@ -51,6 +51,15 @@ export async function serviceCatalog(
     }
     const filter = {
       ...where,
+      ...(view === "trainer"
+        ? {
+            created_by: undefined,
+            OR: [
+              { created_by: self.id },
+              { institution_group_members: { some: { member_id: self.id } } },
+            ],
+          }
+        : {}),
       name: { contains: search, mode: "insensitive" as const },
     };
     const [items, total] = await Promise.all([
@@ -80,6 +89,7 @@ export async function serviceCatalog(
     return {
       items: items.map((g) => ({
         ...g,
+        canEdit: view === "admin" || g.created_by === self.id,
         institution_group_members: undefined,
         members: g.institution_group_members.map((x) => x.institution_members),
       })),

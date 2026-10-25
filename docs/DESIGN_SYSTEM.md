@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+Founder-validation refinements (25 October 2026): simple coach selections save on toggle with existing durable command/recovery handling; do not add a second save button. Optional coach filters stay collapsed, while permission scope remains explicit when ambiguous. New conversation contacts/groups share one collapsible directory, with a short start hint and no success toast merely for opening a conversation. Message draft persistence must not shift the composer; Enter sends and Shift+Enter inserts a newline, respecting IME composition. Food recording uses the shared bounded Reka dialog, retains recovery controls inside the dialog, starts blank entries with the food library, and groups recorded foods under meal headings. Group athlete/coach pickers use a two-column layout where space allows and stack on phones.
+
 Rafik should feel like one university sports workspace: calm, legible, practical and recognizably Rafik. Preserve the logo, green identity, existing fonts, English/Arabic support, theme customization and role-specific navigation. Improve consistency rather than introducing a different visual identity.
 
 Visual work must preserve API contracts, routes, permissions, one-role memberships, exact commands, revision checks, recoverable drafts, immutable program versions and offline/acknowledgment distinctions. Do not move business rules into reusable form controls. No new component library, font family or global store is required.

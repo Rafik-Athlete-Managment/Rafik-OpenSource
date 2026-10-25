@@ -3,11 +3,19 @@ import { institutionContext } from '../../app/institution'
 
 import { PhTray } from '@phosphor-icons/vue'
 import PageHeading from '../../components/PageHeading.vue'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from 'reka-ui'
 import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { user, profile, contexts } from '../../app/auth'
 import { request } from '../../lib/backend'
-import { language as l, errorMessage, dateLabel } from '../../lib/i18n'
+import { language as l, errorMessage, dateLabel, locale } from '../../lib/i18n'
 import { localDate } from '../../lib/dates'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
 import { useCommand } from '../../lib/commands'
@@ -209,6 +217,7 @@ async function load(reset = false, offset = 0, historyOffset = 0, removedOffset 
         editor.value = draft.editor
         editFocus.value = draft.editFocus || 'plan'
         mealEditor.value = draft.mealEditor
+        if (mealEditor.value) section.value = 'diary'
         restored.value = true
       }
     }
@@ -343,7 +352,11 @@ async function editMeal(item?: Meal, food?: PlannedFood) {
   mealEditor.value = true
   section.value = 'diary'
   await nextTick()
-  document.querySelector<HTMLInputElement>('.org-meal-editor input')?.focus()
+  document
+    .querySelector<HTMLInputElement>(
+      !meal.value.food.name ? '.org-meal-editor .food-picker input' : '.org-meal-editor input',
+    )
+    ?.focus()
 }
 const totals = computed(() => nutrientTotals((data.value?.meals || []).map((m) => m.food)))
 const planTotals = computed(() => nutrientTotals(data.value?.current?.meals || []))
@@ -362,6 +375,22 @@ const mealLabel = (v: string) =>
     dinner: l('Dinner', 'العشاء'),
     snack: l('Snack', 'وجبة خفيفة'),
   })[v]
+const mealsByType = computed(() =>
+  ['breakfast', 'lunch', 'dinner', 'snack']
+    .map((kind) => ({
+      kind,
+      items: data.value?.meals.filter((item) => item.food.meal === kind) || [],
+    }))
+    .filter((group) => group.items.length),
+)
+const exampleMealsByType = computed(() =>
+  ['breakfast', 'lunch', 'dinner', 'snack']
+    .map((kind) => ({
+      kind,
+      items: data.value?.current?.meals.filter((food) => food.meal === kind) || [],
+    }))
+    .filter((group) => group.items.length),
+)
 const shortDate = (value: string) => dateLabel(value.slice(0, 10))
 const author = (id: string) =>
   data.value?.authors.find((a) => a.id === id)?.name || l('Former member', 'عضو سابق')
@@ -396,7 +425,7 @@ onBeforeUnmount(() => {
         {{ l('Refresh', 'تحديث') }}
       </button>
     </PageHeading>
-    <CommandStatus v-if="!loading" :command="command" />
+    <CommandStatus v-if="!loading && !mealEditor" :command="command" />
     <p v-if="!draftError && (hasPlanDraft || hasMealDraft)" class="small-print" role="status">
       {{
         savingDraft
@@ -641,30 +670,36 @@ onBeforeUnmount(() => {
                   )
                 }}
               </p>
-              <article v-for="(food, i) in data.current.meals" :key="i" class="org-food-row">
-                <div>
-                  <small>{{ mealLabel(food.meal) }}</small
-                  ><strong dir="auto">{{ food.name }}</strong
-                  ><span
-                    >{{ food.quantity }} {{ food.unit }} ·
-                    {{
-                      food.nutrients.kcal == null
-                        ? l('Energy unknown', 'الطاقة غير معروفة')
-                        : Math.round((food.nutrients.kcal * food.quantity) / food.basis) +
-                          ' ' +
-                          unit('kcal')
-                    }}</span
+              <section
+                v-for="group in exampleMealsByType"
+                :key="group.kind"
+                :aria-label="mealLabel(group.kind)"
+              >
+                <h3>{{ mealLabel(group.kind) }}</h3>
+                <article v-for="(food, i) in group.items" :key="i" class="org-food-row">
+                  <div>
+                    <strong dir="auto">{{ food.name }}</strong
+                    ><span
+                      >{{ food.quantity }} {{ food.unit }} ·
+                      {{
+                        food.nutrients.kcal == null
+                          ? l('Energy unknown', 'الطاقة غير معروفة')
+                          : Math.round((food.nutrients.kcal * food.quantity) / food.basis) +
+                            ' ' +
+                            unit('kcal')
+                      }}</span
+                    >
+                  </div>
+                  <button
+                    v-if="trainee && canWrite"
+                    class="text-link"
+                    :disabled="locked"
+                    @click="editMeal(undefined, food)"
                   >
-                </div>
-                <button
-                  v-if="trainee && canWrite"
-                  class="text-link"
-                  :disabled="locked"
-                  @click="editMeal(undefined, food)"
-                >
-                  {{ l('Record this food', 'تسجيل هذا الطعام') }}
-                </button>
-              </article>
+                    {{ l('Record this food', 'تسجيل هذا الطعام') }}
+                  </button>
+                </article>
+              </section>
               <p v-if="data.current.meals.length" class="small-print">
                 {{ l('Example day energy', 'طاقة المثال اليومي') }}:
                 {{ planTotals.kcal.value ?? '—' }} {{ unit('kcal') }}
@@ -765,88 +800,128 @@ onBeforeUnmount(() => {
                   }}</small>
                 </div>
               </div>
-              <form
-                v-if="mealEditor && trainee"
-                class="form-stack org-meal-editor"
-                @invalid.capture="revealInvalid"
-                @submit.prevent="send('meal', { ...meal, logged_on: date })"
-              >
-                <fieldset :disabled="locked">
-                  <legend>
-                    <h3>
+              <DialogRoot v-if="trainee" v-model:open="mealEditor"
+                ><DialogPortal
+                  ><DialogOverlay class="ui-dialog-overlay" /><DialogContent
+                    class="ui-dialog"
+                    :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+                    @interact-outside="locked && $event.preventDefault()"
+                    @escape-key-down="locked && $event.preventDefault()"
+                  >
+                    <DialogTitle>{{
+                      meal.revision
+                        ? l('Correct food entry', 'تصحيح مدخل الطعام')
+                        : l('Record food', 'تسجيل طعام')
+                    }}</DialogTitle>
+                    <DialogDescription>{{
+                      l(
+                        'Choose a reference food or enter your own, then record the amount eaten.',
+                        'اختر طعاماً مرجعياً أو أدخله يدوياً، ثم سجّل الكمية المتناولة.',
+                      )
+                    }}</DialogDescription>
+                    <CommandStatus :command="command" />
+                    <p v-if="draftError" role="alert" class="notice error">{{ draftError }}</p>
+                    <p v-else-if="hasMealDraft" role="status" class="small-print">
                       {{
-                        meal.revision
-                          ? l('Correct food entry', 'تصحيح مدخل الطعام')
-                          : l('Record food', 'تسجيل طعام')
+                        savingDraft
+                          ? l('Saving draft…', 'جارٍ حفظ المسودة…')
+                          : l('Draft saved on this device.', 'المسودة محفوظة على هذا الجهاز.')
                       }}
-                    </h3>
-                  </legend>
-                  <MealFields v-model="meal.food" /><label
-                    >{{ l('Note (optional)', 'ملاحظة (اختياري)')
-                    }}<textarea v-model="meal.note" rows="2" maxlength="2000" />
-                  </label>
-                  <div class="button-row">
-                    <button type="submit" class="button">
-                      {{ l('Save food entry', 'حفظ مدخل الطعام') }}</button
-                    ><button type="button" class="button secondary" @click="mealEditor = false">
-                      {{ l('Close editor', 'إغلاق المحرر') }}
-                    </button>
-                  </div>
-                </fieldset>
-              </form>
+                    </p>
+                    <form
+                      class="form-stack org-meal-editor"
+                      @invalid.capture="revealInvalid"
+                      @submit.prevent="send('meal', { ...meal, logged_on: date })"
+                    >
+                      <fieldset :disabled="locked">
+                        <legend class="sr-only">
+                          <h3>
+                            {{
+                              meal.revision
+                                ? l('Correct food entry', 'تصحيح مدخل الطعام')
+                                : l('Record food', 'تسجيل طعام')
+                            }}
+                          </h3>
+                        </legend>
+                        <MealFields v-model="meal.food" /><label
+                          >{{ l('Note (optional)', 'ملاحظة (اختياري)')
+                          }}<textarea v-model="meal.note" rows="2" maxlength="2000" />
+                        </label>
+                        <div class="button-row">
+                          <button type="submit" class="button">
+                            {{ l('Save food entry', 'حفظ مدخل الطعام') }}</button
+                          ><button
+                            type="button"
+                            class="button secondary"
+                            @click="mealEditor = false"
+                          >
+                            {{ l('Close editor', 'إغلاق المحرر') }}
+                          </button>
+                        </div>
+                      </fieldset>
+                    </form>
+                  </DialogContent></DialogPortal
+                ></DialogRoot
+              >
               <p v-if="!data.meals.length" class="empty-state-note">
                 {{ l('No food recorded for this date.', 'لم يُسجل طعام لهذا التاريخ.') }}
               </p>
-              <article v-for="item in data.meals" :key="item.id" class="org-food-row">
-                <div>
-                  <small>{{ mealLabel(item.food.meal) }}</small
-                  ><strong dir="auto">{{ item.food.name }}</strong
-                  ><span
-                    >{{ item.food.quantity }} {{ item.food.unit }} ·
-                    {{
-                      item.food.nutrients.kcal == null
-                        ? l('Energy unknown', 'الطاقة غير معروفة')
-                        : Math.round(
-                            (item.food.nutrients.kcal * item.food.quantity) / item.food.basis,
-                          ) +
-                          ' ' +
-                          unit('kcal')
-                    }}</span
-                  >
-                  <p v-if="item.note" dir="auto">{{ item.note }}</p>
-                  <small>{{ item.food.source }}</small>
-                </div>
-                <div class="org-food-actions">
-                  <button
-                    v-if="trainee && canWrite"
-                    class="text-link"
-                    :disabled="locked"
-                    @click="editMeal(item)"
-                  >
-                    {{ l('Correct', 'تصحيح') }}</button
-                  ><button class="text-link" :disabled="locked" @click="showChanges(item.id)">
-                    {{ l('Changes', 'التغييرات') }}</button
-                  ><button
-                    v-if="trainee && canWrite"
-                    class="text-link"
-                    :disabled="locked"
-                    @click="removeId = item.id"
-                  >
-                    {{ l('Remove', 'إزالة') }}</button
-                  ><template v-if="removeId === item.id"
-                    ><span>{{ l('Remove this entry?', 'إزالة هذا المدخل؟') }}</span
-                    ><button
-                      class="button small secondary"
-                      :disabled="locked"
-                      @click="send('remove', { id: item.id, revision: item.revision })"
+              <section
+                v-for="group in mealsByType"
+                :key="group.kind"
+                :aria-label="mealLabel(group.kind)"
+              >
+                <h3>{{ mealLabel(group.kind) }}</h3>
+                <article v-for="item in group.items" :key="item.id" class="org-food-row">
+                  <div>
+                    <strong dir="auto">{{ item.food.name }}</strong
+                    ><span
+                      >{{ item.food.quantity }} {{ item.food.unit }} ·
+                      {{
+                        item.food.nutrients.kcal == null
+                          ? l('Energy unknown', 'الطاقة غير معروفة')
+                          : Math.round(
+                              (item.food.nutrients.kcal * item.food.quantity) / item.food.basis,
+                            ) +
+                            ' ' +
+                            unit('kcal')
+                      }}</span
                     >
-                      {{ l('Confirm removal', 'تأكيد الإزالة') }}</button
-                    ><button class="text-link" @click="removeId = ''">
-                      {{ l('Cancel', 'إلغاء') }}
-                    </button></template
-                  >
-                </div>
-              </article>
+                    <p v-if="item.note" dir="auto">{{ item.note }}</p>
+                    <small>{{ item.food.source }}</small>
+                  </div>
+                  <div class="org-food-actions">
+                    <button
+                      v-if="trainee && canWrite"
+                      class="text-link"
+                      :disabled="locked"
+                      @click="editMeal(item)"
+                    >
+                      {{ l('Correct', 'تصحيح') }}</button
+                    ><button class="text-link" :disabled="locked" @click="showChanges(item.id)">
+                      {{ l('Changes', 'التغييرات') }}</button
+                    ><button
+                      v-if="trainee && canWrite"
+                      class="text-link"
+                      :disabled="locked"
+                      @click="removeId = item.id"
+                    >
+                      {{ l('Remove', 'إزالة') }}</button
+                    ><template v-if="removeId === item.id"
+                      ><span>{{ l('Remove this entry?', 'إزالة هذا المدخل؟') }}</span
+                      ><button
+                        class="button small secondary"
+                        :disabled="locked"
+                        @click="send('remove', { id: item.id, revision: item.revision })"
+                      >
+                        {{ l('Confirm removal', 'تأكيد الإزالة') }}</button
+                      ><button class="text-link" @click="removeId = ''">
+                        {{ l('Cancel', 'إلغاء') }}
+                      </button></template
+                    >
+                  </div>
+                </article>
+              </section>
               <label class="check-label"
                 ><input
                   type="checkbox"

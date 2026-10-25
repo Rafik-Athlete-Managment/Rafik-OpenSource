@@ -1,14 +1,20 @@
 # API conventions
 
+## Unreleased beta.3 founder-validation corrections
+
+`GET /v1/institution/communication?view=...&contacts=true` returns `self: { id, roles }` and minimal `members: [{ id, name, roles, active }]`. Athlete contacts are active assigned primary/supporting coaches; coach contacts retain training scope; administrators can contact active institution members. This does not grant access to the staff people directory. Athlete `create` commands require a two-person pair including self and an authorized coach, with that coach as sole manager. Normal conversation list responses also include `groups: [{ id, name }]` for staff-authorized groups without an existing linked channel. Existing pair/group uniqueness and replay checks remain. New group channels remain distinct from private pairs even with two participants. Opening an existing nonprivate group channel can visibly join its currently authorized staff member without granting management or changing other historical participants; existing private-pair audiences cannot be expanded this way.
+
+Athlete program list/detail/version reads require their own institutional assignment. They return assigned immutable versions, not unrelated listed programs or newer unassigned versions. Assigned group membership grants coach read/open-conversation access, not edit authority; group results include `canEdit`.
+
 ## Unreleased beta.3 individual workout scheduling
 
 `POST /v1/institution/workout-scheduling` requires current administrator/trainer membership and authority for the assignment's athlete and sport. Every request includes `operation`, `view`, `action` and `assignment_id`. Native bearer requests use `X-Rafik-Client: android`; existing browser sessions use `web` and existing origin rules.
 
-| Action | Additional fields | Behavior |
-| --- | --- | --- |
-| `schedule-workout` | `cursor`, `starts_at`, `ends_at`, `timezone`; optional `location` | Bind the next non-rest cycle day; return occurrence and position without advancing. |
-| `reschedule-workout` | `occurrence_id`, `revision`, `starts_at`, `ends_at`, `timezone` | Move unstarted pending work; keep the same sequence identity. |
-| `skip-workout` | `occurrence_id`, `revision`, nonblank `reason` | Resolve pending/paused work and advance its assignment once. |
+| Action               | Additional fields                                                 | Behavior                                                                            |
+| -------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `schedule-workout`   | `cursor`, `starts_at`, `ends_at`, `timezone`; optional `location` | Bind the next non-rest cycle day; return occurrence and position without advancing. |
+| `reschedule-workout` | `occurrence_id`, `revision`, `starts_at`, `ends_at`, `timezone`   | Move unstarted pending work; keep the same sequence identity.                       |
+| `skip-workout`       | `occurrence_id`, `revision`, nonblank `reason`                    | Resolve pending/paused work and advance its assignment once.                        |
 
 Use offset-bearing timestamps, a valid IANA timezone and a duration no longer than eight hours. `cursor` is the assignment's current `sequence_cursor`; it starts at zero. A pending predecessor, unlinked unfinished historical workout, stale cursor/revision, collision or cannot-train status prevents binding. An explicit booking can use a rest day but does not override a participation restriction. Same assignment/date/day results retain their historical uniqueness. Exact retries return the original response only after current authority is checked. Errors use the existing `{message}` envelope.
 
@@ -272,14 +278,14 @@ Canonical scope is `/v1/institution`, with `/v1/institution/context` for discove
 
 All require the signed-in account and normal origin/client-header rules. There is no generic SQL/table transport.
 
-| Endpoint | Behavior |
-| --- | --- |
-| `POST /v1/account/profile` | Initialize own profile with optional `p_name`, `p_locale`, `p_timezone`; existing profile values are preserved. |
-| `PUT /v1/account/profile` | Update own `p_name`, `p_locale`, `p_units`, `p_timezone` with existing validation. |
-| `GET /v1/account/export` | Own profile, support reports and subject-scoped institution export; no removed personal/team/business arrays. Browser download also includes that owner's local drafts. |
-| `GET /v1/account/deletion` | Last-admin preflight. |
-| `POST /v1/account/deletion` | `{confirmation:"DELETE"}`; rechecks under institution locks and preserves institution-owned history. |
-| `GET /v1/support?offset=0` | Own support reports, 100 per page, ordered by update time and ID. |
-| `POST /v1/support` | `{action:"create_support_case",args:{p_id,p_subject,p_detail}}` or `{action:"update_support_case",args:{p_id,p_revision,p_state}}`. Keep the same ID/payload on uncertain retry. Reporter cannot set operator replies. |
+| Endpoint                    | Behavior                                                                                                                                                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/account/profile`  | Initialize own profile with optional `p_name`, `p_locale`, `p_timezone`; existing profile values are preserved.                                                                                                        |
+| `PUT /v1/account/profile`   | Update own `p_name`, `p_locale`, `p_units`, `p_timezone` with existing validation.                                                                                                                                     |
+| `GET /v1/account/export`    | Own profile, support reports and subject-scoped institution export; no removed personal/team/business arrays. Browser download also includes that owner's local drafts.                                                |
+| `GET /v1/account/deletion`  | Last-admin preflight.                                                                                                                                                                                                  |
+| `POST /v1/account/deletion` | `{confirmation:"DELETE"}`; rechecks under institution locks and preserves institution-owned history.                                                                                                                   |
+| `GET /v1/support?offset=0`  | Own support reports, 100 per page, ordered by update time and ID.                                                                                                                                                      |
+| `POST /v1/support`          | `{action:"create_support_case",args:{p_id,p_subject,p_detail}}` or `{action:"update_support_case",args:{p_id,p_revision,p_state}}`. Keep the same ID/payload on uncertain retry. Reporter cannot set operator replies. |
 
 The old `/v1/account/institution` remains a current subject-only institutional projection, not a legacy alias. See ADR 0030 for the destructive migration and complete client upgrade policy.

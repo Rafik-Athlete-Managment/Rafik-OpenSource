@@ -15,6 +15,7 @@ export type AssessmentTemplate = {
   archived: boolean
 }
 export type TrainingGroup = {
+  canEdit?: boolean
   id: string
   name: string
   members: Member[]

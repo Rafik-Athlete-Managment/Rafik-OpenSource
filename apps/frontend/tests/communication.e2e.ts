@@ -3,6 +3,10 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
 import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
+import { testPreview } from './local-config'
+// Request fault injection must bypass the production service worker. Offline
+// shell behavior has separate acceptance; it is not established by this test.
+test.use({ baseURL: testPreview, serviceWorkers: 'block' })
 test('organization conversations preserve scope, compact layout, drafts and exact send recovery; notification links reach the right context', async ({
   page,
   browser,
@@ -35,7 +39,7 @@ test('organization conversations preserve scope, compact layout, drafts and exac
         response.request().method() === 'GET',
     )
     await f.login(page, f.owner, base)
-    await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()
+    await page.locator('.conversation-contacts > summary').click()
     await expect(page.getByRole('button', { name: 'New conversation', exact: true })).toHaveCount(0)
     await initialList
     const athlete = page
@@ -70,20 +74,51 @@ test('organization conversations preserve scope, compact layout, drafts and exac
     await page
       .getByRole('textbox', { name: 'Write a message', exact: true })
       .fill('Let us review your first week together.')
-    await expect(page.getByText('Draft saved on this device', { exact: true })).toBeVisible()
+    await expect(page.getByText('Draft saved on this device', { exact: true })).toHaveCount(0)
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve, reject) => {
+              const open = indexedDB.open('rafik-revamp', 1)
+              open.onerror = () => reject(open.error)
+              open.onsuccess = () => {
+                const db = open.result,
+                  read = db.transaction('drafts').objectStore('drafts').getAll()
+                read.onerror = () => {
+                  db.close()
+                  reject(read.error)
+                }
+                read.onsuccess = () => {
+                  const saved = read.result.some(
+                    (draft) => draft.value?.text === 'Let us review your first week together.',
+                  )
+                  db.close()
+                  resolve(saved)
+                }
+              }
+            }),
+        ),
+      )
+      .toBe(true)
     await page.reload()
     await expect(page.getByRole('textbox', { name: 'Write a message', exact: true })).toHaveValue(
       'Let us review your first week together.',
     )
-    let lost = false
+    let lost = false,
+      loseAcknowledgment = true
     await page.route(`**/v1/institution/communication`, async (r) => {
       if (
-        !lost &&
+        loseAcknowledgment &&
         r.request().method() === 'POST' &&
         r.request().postDataJSON()?.action === 'send'
       ) {
-        lost = true
-        await r.fetch()
+        // WebKit may retry an aborted POST internally. Keep the acknowledgment
+        // unavailable until the explicit user retry, while applying only once.
+        if (!lost) {
+          lost = true
+          await r.fetch()
+        }
         await r.abort('failed')
       } else await r.continue()
     })
@@ -92,6 +127,7 @@ test('organization conversations preserve scope, compact layout, drafts and exac
       page.getByRole('button', { name: 'Retry saved change', exact: true }),
     ).toBeEnabled()
     await page.reload()
+    loseAcknowledgment = false
     await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
     await expect(page.getByRole('textbox', { name: 'Write a message', exact: true })).toHaveValue(
       '',
@@ -123,20 +159,25 @@ test('organization conversations preserve scope, compact layout, drafts and exac
     ).toHaveCount(1)
     await client.getByRole('button', { name: /^Participants/ }).click()
     await expect(
-      client.locator('.channel-people').getByText('R4 Owner · manager', { exact: true }),
+      client
+        .locator('.channel-people')
+        .getByText('Madar communication test · manager', { exact: true }),
     ).toBeVisible()
     await client.getByRole('button', { name: /^Participants/ }).click()
     await client
       .getByRole('textbox', { name: 'Write a message', exact: true })
       .fill('The first session felt clear, thank you.')
-    await client.getByRole('button', { name: 'Send message', exact: true }).click()
+    const composer = client.getByRole('textbox', { name: 'Write a message', exact: true })
+    await composer.press('Shift+Enter')
+    await expect(composer).toHaveValue('The first session felt clear, thank you.\n')
+    await composer.press('Enter')
     await expect(client.getByRole('textbox', { name: 'Write a message', exact: true })).toHaveValue(
       '',
     )
     expect(await layoutIssues(client)).toEqual([])
     expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([])
     await client.screenshot({
-      path: info.outputPath('organization-conversation.png'),
+      path: `artifacts/founder-conversation-${info.project.name}.png`,
       fullPage: true,
     })
     await client.goto(`/messages`)

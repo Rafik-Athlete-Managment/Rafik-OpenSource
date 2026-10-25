@@ -185,6 +185,7 @@ async function afterMembers() {
 }
 defineExpose({ refresh: () => load() })
 function send() {
+  if (locked.value || (!text.value.trim() && !attachments.value.length)) return
   return command.run('send', {
     action: 'send',
     id: props.id,
@@ -379,9 +380,6 @@ onUnmounted(() => {
     </button>
     <form v-if="data && !editing" class="message-compose" @submit.prevent="send">
       <CommandStatus :command="command" :show-notice="false" />
-      <small v-if="(text || attachments.length) && draftSaved && !locked" role="status">{{
-        l('Draft saved on this device', 'حُفظت المسودة على هذا الجهاز')
-      }}</small>
       <p v-if="draftError" role="alert" class="notice error">{{ draftError }}</p>
       <p v-if="data.channel.archived" class="notice">
         {{
@@ -439,6 +437,14 @@ onUnmounted(() => {
           maxlength="4000"
           rows="2"
           :placeholder="l('Write a message…', 'اكتب رسالة…')"
+          @keydown="
+            (event) => {
+              if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+                event.preventDefault()
+                void send()
+              }
+            }
+          "
         />
         <ResourceUpload
           :key="uploadVersion"

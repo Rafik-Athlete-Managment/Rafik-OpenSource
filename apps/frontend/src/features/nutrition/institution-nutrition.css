@@ -120,6 +120,17 @@
   background: var(--tint);
   border-radius: 0.6rem;
 }
+.ui-dialog .org-meal-editor {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+.ui-dialog .org-meal-editor > fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
 .org-plan-history {
   border-bottom: 1px solid var(--line);
   padding-block: 1rem;

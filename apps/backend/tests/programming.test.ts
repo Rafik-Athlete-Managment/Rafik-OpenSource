@@ -114,17 +114,18 @@ test("organization publication, actuals, reassignment and exact replay preserve 
       ).status,
       403,
     );
-    // ADR 0020 publishes immutable versions to the institution library.
-    // Athletes may read that version, but cannot edit it or browse staff's
-    // authoring catalog; unpublished drafts remain covered by the prior test.
+    // Athlete program browsing is assignment-scoped, including direct URLs.
     const library = await call(
       client,
       `/v1/institution/programs?view=trainee&program=${pid}`,
     );
-    assert.equal(library.status, 200, JSON.stringify(library));
-    assert.equal(library.data.editable, false);
-    assert.deepEqual(library.data.program.draft, version.prescription);
-    assert.deepEqual(library.data.catalog, []);
+    assert.equal(library.status, 403, JSON.stringify(library));
+    const unassignedList = await call(
+      client,
+      `/v1/institution/programs?view=trainee`,
+    );
+    assert.equal(unassignedList.status, 200);
+    assert.equal(unassignedList.data.items.length, 0);
     assert.equal(
       (
         await call(
@@ -158,6 +159,13 @@ test("organization publication, actuals, reassignment and exact replay preserve 
     r = await call(trainer, `/v1/institution/delivery`, assign);
     assert.equal(r.status, 200, JSON.stringify(r));
     const assignment = r.data[0];
+    const assignedProgram = await call(
+      client,
+      `/v1/institution/programs?view=trainee&program=${pid}`,
+    );
+    assert.equal(assignedProgram.status, 200, JSON.stringify(assignedProgram));
+    assert.equal(assignedProgram.data.editable, false);
+    assert.deepEqual(assignedProgram.data.catalog, []);
     const sessionId = randomUUID(),
       start = operation("start", {
         view: "trainee",
@@ -361,7 +369,7 @@ test("bulk delivery is atomic; internal catalog never grants edit or personal ex
           `/v1/institution/programs?view=trainee&program=${p.id}`,
         )
       ).status,
-      200,
+      403,
     );
     assert.equal(
       (await call(client, `/v1/institution/catalog?view=trainee`)).status,

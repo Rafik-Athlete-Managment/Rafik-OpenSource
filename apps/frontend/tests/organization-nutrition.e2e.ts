@@ -3,6 +3,8 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
 import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
+import { testPreview } from './local-config'
+test.use({ baseURL: testPreview, serviceWorkers: 'block' })
 async function fixture() {
   const f = await institutionFixture(),
     id = randomUUID()
@@ -285,12 +287,19 @@ test('organization nutrition entry, editor and diary stay readable in both langu
 
 test('trainee food draft survives date changes and an uncertain save without duplicate consumption', async ({
   page,
-}) => {
+}, info) => {
+  test.setTimeout(90000)
   const f = await fixture()
   try {
     await f.login(page, f.client, `${f.base}/nutrition`)
     await page.getByRole('button', { name: 'Food diary', exact: true }).click()
     await page.getByRole('button', { name: 'Record food', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: 'Record food', exact: true })).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Find a food', exact: true })).toBeVisible()
+    await page.screenshot({
+      path: `artifacts/founder-food-dialog-${info.project.name}.png`,
+      fullPage: true,
+    })
     await page.getByLabel('Food name', { exact: true }).fill('Home lunch')
     await page.getByLabel('Amount eaten', { exact: true }).fill('2')
     await expect(

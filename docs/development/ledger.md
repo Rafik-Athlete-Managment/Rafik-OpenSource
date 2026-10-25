@@ -1,9 +1,18 @@
 # Current delivery ledger
 
+## Founder validation corrections — 25 October 2026
+
+Addressed assignment-scoped athlete program reads, staff-route guards, assigned-group visibility, scoped athlete-to-coach messaging, unstarted group discovery, immediate coach selection, invitation success presentation, exercise video indicators, stable message typing/Enter behavior, workout departure warnings/rest reset, staff participation navigation and food-entry grouping/dialog/library defaults. Supporting-coach sport remains an authorization scope: one eligible scope saves immediately; multiple scopes require an explicit choice. Automatic group scheduling, the new workout launch/progression UI and a staged bulk attendance/results flow remain subsequent beta.3 work. Reference-library curation is tracked separately rather than deleting published exercise identities or adding an external API dependency. Focused verification and its limits are recorded in verification; founder steps are in the testing guide.
+
+Six affected API cases and the coaching, messaging and food-recovery browser journeys passed across Chromium/WebKit runs; verification records precise source/state limits. The paired English/Arabic landing update is on its existing unmerged documentation PR at `40577a0`. Neither release PR was merged and no APK was rebuilt.
+
+## Founder validation handoffs — 25 October 2026
+
+Founder requested role-based walkthroughs at future validation milestones. Recorded the convention in root AGENTS.md: scoped prerequisites, ordered steps, expected results, permissions, persistence and relevant regression checks, with clear deferred scope and failure reporting. Documentation-only change; no tests run.
+
 ## Breaking retirement — 23 October 2026
 
 Founder approved removing all retired routes/storage before customer adoption, explicitly including business and standalone assignments. Added ADR 0030, forward deletion, current account/support services, canonical-only web/API routing, reference exercise separation, and current-only file recovery/orphan metadata. The populated retirement verifier preserved complete snapshots of 44 current tables and exact receipts. Focused API checks exposed and corrected legacy calendar collision SQL, profile/catalog RLS dependencies and void-result handling. Final populated retirement, institutional API cases, 44 frontend units and native HTTP/SQLite replay checks passed. The Chromium production-preview journey passed setup, profile/support persistence, canonical navigation and rejected old browser routes; English desktop and Arabic phone dark screenshots were inspected. Paired landing API/deployment guidance is pushed to its draft PR. No preview reset, release merge or APK build was performed; wider beta.3 features and physical upgrade acceptance remain separate work.
-
 
 ## Backend CI and contributor coordination review — 23 October 2026
 

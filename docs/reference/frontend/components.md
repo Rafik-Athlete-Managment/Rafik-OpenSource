@@ -384,7 +384,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 
 - **Source:** [features/institution/CoachingTeam.vue](../../../apps/frontend/src/features/institution/CoachingTeam.vue)
 - **Kind:** Reusable/domain component.
-- **Purpose:** Supporting-coach links, specialty/sport selection and link removal with acknowledged revision-safe commands.
+- **Purpose:** Coach-first supporting selection with immediate acknowledged writes, optional filters, explicit access scope when ambiguous and revision-safe link removal.
 - **Direct rendered consumers:** [features/institution/MemberManagement.vue](../../../apps/frontend/src/features/institution/MemberManagement.vue)
 - **Views using it:** `/members/:member`
 

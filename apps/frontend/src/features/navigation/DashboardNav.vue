@@ -62,6 +62,7 @@ const groups = computed(() =>
               ['/training', l('Athlete plans', 'خطط الرياضيين'), PhBarbell],
               ['/workouts', l('Workout history', 'سجل التمارين'), PhClockCounterClockwise],
               ['/nutrition', l('Nutrition plans', 'خطط التغذية'), PhBowlFood],
+              ['/injuries', l('Injury status', 'حالة الإصابة'), PhListChecks],
               ['/schedule', l('Schedule', 'الجدول'), PhCalendarBlank],
               ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
             ],
@@ -89,7 +90,10 @@ const groups = computed(() =>
               ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
               ['/analytics', l('Analytics', 'التحليلات'), PhChartLine],
               ...(props.role === 'trainer'
-                ? [['/feedback', l('My feedback', 'تقييماتي'), PhClipboardText]]
+                ? [
+                    ['/injuries', l('Injury status', 'حالة الإصابة'), PhListChecks],
+                    ['/feedback', l('My feedback', 'تقييماتي'), PhClipboardText],
+                  ]
                 : []),
             ],
           },

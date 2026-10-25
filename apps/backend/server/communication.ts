@@ -9,7 +9,7 @@ import {
   type Role,
   access,
 } from "./institution.ts";
-import { role, recipient } from "./programming.ts";
+import { role, recipient, coaches } from "./programming.ts";
 import { ids, pageOffset } from "./service-definitions.ts";
 type Self = Awaited<ReturnType<typeof access>>;
 function messageAssets(input: Record<string, unknown>): string[] {
@@ -75,6 +75,49 @@ export async function communication(
 ) {
   const view = role(q.get("view"));
   return scoped(actor, id, [view], async (tx, self) => {
+    if (q.get("contacts") === "true") {
+      const links =
+        view === "trainee"
+          ? await tx.institution_coaching_links.findMany({
+              where: {
+                institution_id: id,
+                athlete_member_id: self.id,
+                ended_at: null,
+              },
+              select: { coach_member_id: true },
+            })
+          : [];
+      const candidates = await tx.institution_members.findMany({
+        where: {
+          institution_id: id,
+          active: true,
+          id: { not: self.id },
+          ...(view === "trainee"
+            ? {
+                roles: { has: "trainer" },
+                OR: [
+                  { id: self.trainer_id || self.id },
+                  { id: { in: links.map((link) => link.coach_member_id) } },
+                ],
+              }
+            : view === "trainer"
+              ? {
+                  OR: [
+                    { trainer_id: self.id },
+                    {
+                      coaching_as_athlete: {
+                        some: { coach_member_id: self.id, ended_at: null },
+                      },
+                    },
+                  ],
+                }
+              : {}),
+        },
+        select: { id: true, name: true, roles: true, active: true },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+      });
+      return { self: { id: self.id, roles: self.roles }, members: candidates };
+    }
     if (q.get("id")) {
       const c = await channelAccess(tx, id, self, q.get("id")!, view),
         before = q.get("before");
@@ -163,8 +206,18 @@ export async function communication(
         ON other.channel_id = c.id AND other.member_id <> ${self.id}::uuid
       WHERE c.institution_id = ${id}::uuid AND c.private_pair = true`;
     // Management discovery exposes channel metadata only; it cannot disclose message previews/counts before joining.
+    const groups =
+      view === "trainee"
+        ? []
+        : await tx.$queryRaw<{ id: string; name: string }[]>`
+      SELECT g.id,g.name FROM public.institution_groups g
+      WHERE g.institution_id=${id}::uuid AND NOT g.archived AND g.name ILIKE ${search}
+      AND (${view === "admin"} OR g.created_by=${self.id}::uuid OR EXISTS (SELECT 1 FROM public.institution_group_members gm WHERE gm.group_id=g.id AND gm.member_id=${self.id}::uuid))
+      AND NOT EXISTS (SELECT 1 FROM public.institution_channels c WHERE c.institution_id=g.institution_id AND c.conversation_group_id=g.id)
+      ORDER BY g.name,g.id`;
     return {
       self: self.id,
+      groups,
       directPeople: directPeople.map((person) => person.member_id),
       items: list.slice(0, 25).map((c) => ({
         ...c,
@@ -182,6 +235,7 @@ async function selectedPeople(
   self: Self,
   view: Role,
   input: Record<string, unknown>,
+  group = false,
 ) {
   const members = ids(input.members, 100),
     managers = ids(input.managers, 8);
@@ -207,7 +261,19 @@ async function selectedPeople(
     (!members.includes(self.id) || !managers.includes(self.id))
   )
     throw new ApiError(400, "invalid_recipients");
-  if (view === "trainer")
+  if (view === "trainee") {
+    const other = people.find((person) => person.id !== self.id);
+    if (
+      members.length !== 2 ||
+      !members.includes(self.id) ||
+      !other?.roles.includes("trainer") ||
+      !(await coaches(tx, self, other.id, "training")) ||
+      managers.length !== 1 ||
+      managers[0] !== other.id
+    )
+      throw new ApiError(403, "invalid_recipients");
+  }
+  if (view === "trainer" && !group)
     for (const m of people)
       if (m.id !== self.id)
         await recipient(tx, id, self, view, m.id, true, "training");
@@ -257,12 +323,22 @@ export async function communicationCommand(
       }
     }
     if (action === "open-group") {
+      if (view === "trainee") throw new ApiError(403, "forbidden");
       const group = await tx.institution_groups.findFirst({
         where: {
           id: key,
           institution_id: id,
           archived: false,
-          ...(view === "admin" ? {} : { created_by: self.id }),
+          ...(view === "admin"
+            ? {}
+            : {
+                OR: [
+                  { created_by: self.id },
+                  {
+                    institution_group_members: { some: { member_id: self.id } },
+                  },
+                ],
+              }),
         },
         include: {
           institution_group_members: {
@@ -272,21 +348,29 @@ export async function communicationCommand(
       });
       if (!group) throw new ApiError(404, "group_unavailable");
       const members = [
-        self.id,
-        ...group.institution_group_members
-          .filter((member) => member.institution_members.active)
-          .map((member) => member.member_id),
+        ...new Set([
+          self.id,
+          ...group.institution_group_members
+            .filter((member) => member.institution_members.active)
+            .map((member) => member.member_id),
+        ]),
       ];
       if (new Set(members).size < 2)
         throw new ApiError(400, "invalid_recipients");
-      await selectedPeople(tx, id, self, view, {
-        members,
-        managers: [self.id],
-      });
+      await selectedPeople(
+        tx,
+        id,
+        self,
+        view,
+        {
+          members,
+          managers: [self.id],
+        },
+        true,
+      );
       return;
     }
     if (action === "create") {
-      if (view === "trainee") throw new ApiError(403, "forbidden");
       await selectedPeople(tx, id, self, view, input);
     } else
       await channelAccess(
@@ -310,7 +394,18 @@ export async function communicationCommand(
             id: key,
             institution_id: id,
             archived: false,
-            ...(view === "admin" ? {} : { created_by: self.id }),
+            ...(view === "admin"
+              ? {}
+              : {
+                  OR: [
+                    { created_by: self.id },
+                    {
+                      institution_group_members: {
+                        some: { member_id: self.id },
+                      },
+                    },
+                  ],
+                }),
           },
           include: {
             institution_group_members: {
@@ -322,29 +417,59 @@ export async function communicationCommand(
         });
         if (!group) throw new ApiError(404, "group_unavailable");
         const members = [
-            self.id,
-            ...group.institution_group_members
-              .filter((member) => member.institution_members.active)
-              .map((member) => member.member_id),
+            ...new Set([
+              self.id,
+              ...group.institution_group_members
+                .filter((member) => member.institution_members.active)
+                .map((member) => member.member_id),
+            ]),
           ],
-          { managers } = await selectedPeople(tx, id, self, view, {
-            members,
-            managers: [self.id],
-          });
-        const pairKey =
-          members.length === 2 ? [...members].sort().join(":") : null;
+          { managers } = await selectedPeople(
+            tx,
+            id,
+            self,
+            view,
+            {
+              members,
+              managers: [self.id],
+            },
+            true,
+          );
         let channel = await tx.institution_channels.findFirst({
           where: { institution_id: id, conversation_group_id: group.id },
         });
-        if (!channel && pairKey)
-          channel = await tx.institution_channels.findFirst({
-            where: { institution_id: id, private_pair_key: pairKey },
-          });
         if (channel) {
-          if (
-            channel.archived ||
-            (!channel.conversation_group_id && !channel.private_pair_key)
-          )
+          if (channel.private_pair)
+            await channelAccess(tx, id, self, channel.id, view);
+          else if (
+            !(await tx.institution_channel_members.findUnique({
+              where: {
+                channel_id_member_id: {
+                  channel_id: channel.id,
+                  member_id: self.id,
+                },
+              },
+            }))
+          ) {
+            if (
+              (await tx.institution_channel_members.count({
+                where: { channel_id: channel.id },
+              })) >= 100
+            )
+              throw new ApiError(400, "invalid_recipients");
+            await tx.institution_channel_members.create({
+              data: {
+                institution_id: id,
+                channel_id: channel.id,
+                member_id: self.id,
+                manager: false,
+              },
+            });
+            await event(tx, actor, id, "conversation_joined", channel.id, {
+              member: self.id,
+            });
+          }
+          if (channel.archived)
             channel = await tx.institution_channels.update({
               where: { id: channel.id },
               data: {
@@ -363,7 +488,7 @@ export async function communicationCommand(
               (id, institution_id, title, created_by, private_pair, private_pair_key, conversation_group_id)
             VALUES
               (${channelId}::uuid, ${id}::uuid, ${group.name}, ${self.id}::uuid,
-               ${!!pairKey}, ${pairKey}, ${group.id}::uuid)
+               false, NULL, ${group.id}::uuid)
             ON CONFLICT DO NOTHING
             RETURNING id`;
         if (inserted.length) {
@@ -387,10 +512,7 @@ export async function communicationCommand(
         channel = await tx.institution_channels.findFirst({
           where: {
             institution_id: id,
-            OR: [
-              { conversation_group_id: group.id },
-              ...(pairKey ? [{ private_pair_key: pairKey }] : []),
-            ],
+            conversation_group_id: group.id,
           },
         });
         if (!channel) throw new ApiError(409, "conversation_conflict");
@@ -409,7 +531,10 @@ export async function communicationCommand(
           view,
           input,
         );
-        if (!members.includes(self.id) || !managers.includes(self.id))
+        if (
+          !members.includes(self.id) ||
+          (view !== "trainee" && !managers.includes(self.id))
+        )
           throw new ApiError(400, "invalid_recipients");
         const privatePair = members.length === 2,
           pairKey = privatePair ? [...members].sort().join(":") : null;

@@ -1,5 +1,11 @@
 # Rafik architecture
 
+## Program and conversation visibility
+
+Athletes browse only programs with an assignment to their own institution membership. Read-only details and version requests are constrained to their assigned immutable versions; staff publication does not grant athlete-wide library access. Browser staff-route guards complement server authorization.
+
+Conversation contact discovery uses the communication service, independently of the staff people directory. Athletes can initiate private pairs with their active primary/supporting coaches; the coach is the manager. Pair uniqueness and exact command receipts remain authoritative. Coaches can discover groups they created or belong to, but assigned membership alone does not grant group editing. Unstarted group discovery excludes groups already linked to a channel. Opening an authorized group derives participants from its current active roster; individual conversation privacy remains separate.
+
 ## Individual sequence transaction service
 
 `server/workout-sequence.ts` owns fixed-time individual binding, start eligibility, completion resolution, skip, rescheduling and assignment shutdown. The programming command layer supplies existing plan-specific authority and exact operation receipts. Every request rechecks membership and primary/supporting-coach scope before replay. Institutional mutation locking and an assignment row lock serialize binding/resolution; the cursor changes in the same transaction as its resolution, event state, audit and receipt. Slot creation/rescheduling never advances the cursor. Non-rest days repeat in published array order.

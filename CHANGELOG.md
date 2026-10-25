@@ -2,12 +2,19 @@
 
 ## Unreleased
 
+- Restrict athlete program browsing to assigned immutable versions; block staff-only web routes before rendering.
+- Restore assigned coach group visibility and athlete-to-coach conversation initiation; show unstarted group conversations alongside new contacts without duplicating existing group channels.
+- Save primary/supporting coach selection without a second save button, collapse successful invitations, label exercise video availability, and expose participation-status navigation to staff.
+- Stabilize message typing, support Enter to send and Shift+Enter for newlines, reset exercise rest timers on exercise changes, and warn before leaving unfinished workouts.
+- Move food recording into an accessible dialog, start new entries with the food library, group diary entries by meal, and use two columns for group participant selection where space allows.
+
+- Standardize founder-validation handoffs with scoped role-based walkthroughs, expected results and failure-report guidance.
+
 ### Breaking retirement
 
 - Remove 37 retired personal/team/business/file-store tables and exclusive SQL functions through a forward migration; preserve current institution data, histories and receipts.
 - Remove generic commands/queries/files, published-client aliases and old browser redirects. Replace current profile, support and account lifecycle dependencies with explicit endpoints.
 - Require coordinated backend/web/Android upgrade for beta.3; published beta.2 clients are unsupported. Keep the signing key and encrypted institutional queue identities.
-
 
 - Fix disposable backend SQL rehearsals to translate historical role/coaching migration identifiers into the current institution schema without changing deployed migrations.
 

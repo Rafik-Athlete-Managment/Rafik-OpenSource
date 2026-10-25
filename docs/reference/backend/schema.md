@@ -637,7 +637,7 @@ CREATE UNIQUE INDEX institution_private_pair_unique ON public.institution_channe
 Primary/supporting coach relationships with sport scope and attribution/history.
 
 - Prisma model: `institution_coaching_links`; domain: Institution and operations; treatment: **retain-current**.
-- Direct server source references: [server/assets.ts](../../../apps/backend/server/assets.ts), [server/coaching-links.ts](../../../apps/backend/server/coaching-links.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/program-media.ts](../../../apps/backend/server/program-media.ts), [server/programming.ts](../../../apps/backend/server/programming.ts).
+- Direct server source references: [server/assets.ts](../../../apps/backend/server/assets.ts), [server/coaching-links.ts](../../../apps/backend/server/coaching-links.ts), [server/communication.ts](../../../apps/backend/server/communication.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/program-media.ts](../../../apps/backend/server/program-media.ts), [server/programming.ts](../../../apps/backend/server/programming.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -819,7 +819,7 @@ CREATE UNIQUE INDEX institution_exercises_pkey ON public.institution_exercises U
 Current institution group membership; does not rewrite historical event rosters.
 
 - Prisma model: `institution_group_members`; domain: Institution and operations; treatment: **retain-current**.
-- Direct server source references: [server/service-catalog.ts](../../../apps/backend/server/service-catalog.ts).
+- Direct server source references: [server/communication.ts](../../../apps/backend/server/communication.ts), [server/service-catalog.ts](../../../apps/backend/server/service-catalog.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 

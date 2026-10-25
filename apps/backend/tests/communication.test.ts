@@ -64,11 +64,86 @@ test("organization conversation scope, participation, read cursors and replay re
     assert.equal(direct.status, 200);
     assert.equal(duplicateDirect.status, 200);
     assert.equal(duplicateDirect.data.id, direct.data.id);
+    const athleteContacts = await call(
+      client,
+      `/v1/institution/communication?view=trainee&contacts=true`,
+    );
+    assert.equal(athleteContacts.status, 200);
+    assert.deepEqual(
+      athleteContacts.data.members.map((p: { id: string }) => p.id),
+      [staff.id],
+    );
+    const athleteDirect = await call(
+      client,
+      `/v1/institution/communication`,
+      operation("create", {
+        id: randomUUID(),
+        view: "trainee",
+        title: "My coach",
+        members: [trainee.id, staff.id],
+        managers: [staff.id],
+      }),
+    );
+    assert.equal(athleteDirect.status, 200, JSON.stringify(athleteDirect));
+    assert.equal(athleteDirect.data.id, direct.data.id);
+    const wrongAthlete = await call(
+      client,
+      `/v1/institution/communication`,
+      operation("create", {
+        id: randomUUID(),
+        view: "trainee",
+        title: "Other athlete",
+        members: [trainee.id, second.id],
+        managers: [trainee.id],
+      }),
+    );
+    assert.ok([400, 403].includes(wrongAthlete.status));
     const directList = await call(
       trainer,
       `/v1/institution/communication?view=trainer`,
     );
     assert.ok(directList.data.directPeople.includes(trainee.id));
+    const oneAthleteGroup = randomUUID();
+    assert.equal(
+      (
+        await call(
+          trainer,
+          `/v1/institution/services`,
+          operation("group", {
+            id: oneAthleteGroup,
+            view: "trainer",
+            name: "Individual squad discussion",
+            members: [trainee.id],
+            revision: 0,
+            archived: false,
+          }),
+        )
+      ).status,
+      200,
+    );
+    const groupPair = await call(
+      trainer,
+      `/v1/institution/communication`,
+      operation("open-group", { id: oneAthleteGroup, view: "trainer" }),
+    );
+    assert.equal(groupPair.status, 200, JSON.stringify(groupPair));
+    assert.notEqual(groupPair.data.id, direct.data.id);
+    assert.equal(groupPair.data.private_pair, false);
+    const groupPairAgain = await call(
+      trainer,
+      `/v1/institution/communication`,
+      operation("open-group", { id: oneAthleteGroup, view: "trainer" }),
+    );
+    assert.equal(groupPairAgain.data.id, groupPair.data.id);
+    const afterGroup = await call(
+      trainer,
+      `/v1/institution/communication?view=trainer`,
+    );
+    assert.ok(
+      !afterGroup.data.groups.some(
+        (group: { id: string }) => group.id === oneAthleteGroup,
+      ),
+    );
     const groupId = randomUUID();
     assert.equal(
       (

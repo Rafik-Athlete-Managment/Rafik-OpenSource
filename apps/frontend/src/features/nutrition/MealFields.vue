@@ -5,7 +5,7 @@ import type { PlannedFood, CatalogFood } from './model'
 import FoodPicker from './FoodPicker.vue'
 import NutrientFields from './NutrientFields.vue'
 const model = defineModel<PlannedFood>({ required: true })
-const library = ref(false)
+const library = ref(!model.value.name)
 function select(food: CatalogFood) {
   model.value = {
     ...model.value,
@@ -28,7 +28,11 @@ function unitChanged() {
 <template>
   <div class="form-stack">
     <button type="button" class="text-link" :aria-expanded="library" @click="library = !library">
-      {{ l('Choose from food library', 'اختيار من مكتبة الطعام') }}
+      {{
+        library
+          ? l('Use manual entry', 'إدخال يدوي')
+          : l('Choose from food library', 'اختيار من مكتبة الطعام')
+      }}
     </button>
     <FoodPicker v-if="library" @select="select" />
     <label

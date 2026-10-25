@@ -438,12 +438,20 @@ function removeDay() {
     >
     <PageHeading class="page-heading heading-actions">
       <div>
-        <p class="overline">{{ language('Plan studio', 'تصميم الخطة') }}</p>
+        <p class="overline">
+          {{
+            context.view === 'trainee'
+              ? language('My program', 'برنامجي')
+              : language('Plan studio', 'تصميم الخطة')
+          }}
+        </p>
         <h1>
           {{
             isNew
               ? language('Create a program', 'إنشاء برنامج')
-              : language('Edit program', 'تعديل البرنامج')
+              : editable
+                ? language('Edit program', 'تعديل البرنامج')
+                : language('Program details', 'تفاصيل البرنامج')
           }}
         </h1>
       </div>

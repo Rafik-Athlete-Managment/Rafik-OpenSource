@@ -268,6 +268,7 @@ const command = useCommand<'organization'>(
   async (_, result, args) => {
     if (args.action === 'invite') {
       inviteLink.value = location.origin + '/invitation/' + args.token
+      inviting.value = false
       email.value = ''
       roles.value = ['trainee']
       inviteSports.value = []

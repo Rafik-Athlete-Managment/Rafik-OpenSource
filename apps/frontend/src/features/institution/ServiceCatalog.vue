@@ -341,28 +341,29 @@ onMounted(initialize)
             {{ l('Add drill', 'إضافة اختبار') }}
           </button></template
         >
-        <MemberPicker
-          v-else
-          :institution="id"
-          :view="view"
-          role="trainee"
-          v-model="draft.members"
-          :label="l('Find athletes', 'البحث عن رياضيين')"
-          @options="organization!.members = $event"
-        />
-        <MemberPicker
-          v-if="!templates && view === 'admin'"
-          :institution="id"
-          :view="view"
-          role="trainer"
-          v-model="draft.coaches"
-          :label="l('Add coaches to this group', 'إضافة مدربين إلى هذه المجموعة')"
-          @options="
-            organization!.members = [
-              ...new Map([...organization!.members, ...$event].map((m) => [m.id, m])).values(),
-            ]
-          "
-        />
+        <div v-else class="service-field-row">
+          <MemberPicker
+            :institution="id"
+            :view="view"
+            role="trainee"
+            v-model="draft.members"
+            :label="l('Find athletes', 'البحث عن رياضيين')"
+            @options="organization!.members = $event"
+          />
+          <MemberPicker
+            v-if="!templates && view === 'admin'"
+            :institution="id"
+            :view="view"
+            role="trainer"
+            v-model="draft.coaches"
+            :label="l('Add coaches to this group', 'إضافة مدربين إلى هذه المجموعة')"
+            @options="
+              organization!.members = [
+                ...new Map([...organization!.members, ...$event].map((m) => [m.id, m])).values(),
+              ]
+            "
+          />
+        </div>
         <label v-if="draft.revision" class="check-label"
           ><input v-model="draft.archived" type="checkbox" />{{
             l('Archive from new scheduling', 'أرشفة من الجدولة الجديدة')
@@ -477,7 +478,12 @@ onMounted(initialize)
                 {{ l('Open group conversation', 'فتح محادثة المجموعة') }}
               </RouterLink>
             </div>
-            <button class="button secondary small" @click="edit(item)" :disabled="locked">
+            <button
+              v-if="item.canEdit !== false"
+              class="button secondary small"
+              @click="edit(item)"
+              :disabled="locked"
+            >
               {{ l('Edit', 'تعديل') }}
             </button>
           </article>

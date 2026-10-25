@@ -145,7 +145,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Folder:** `features/coaching`
 - **URL(s):** `/plans/:id`
 - **Purpose:** Program draft editor and immutable-version preview, prescription structure, cover, publication and assignment links.
-- **Access:** Administrators/coaches edit within program ownership rules; athletes can read authorized published versions, not drafts.
+- **Access:** Administrators/coaches edit within program ownership rules; athletes read only their own assigned immutable versions, not staff drafts or unassigned versions.
 - **Opens:** `/deliver/:id`, `/exercises`, `/plans`, `/plans/:id`
 - **Opened from views:** `/plans`, `/training`
 - **Embedded by:** Router.
@@ -157,7 +157,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Folder:** `features/coaching`
 - **URL(s):** `/plans`
 - **Purpose:** Paginated/searchable program library and entry to create, preview or edit.
-- **Access:** Current institutional members; athletes receive only their authorized library/read view, staff authoring remains gated.
+- **Access:** Current institutional members; athletes receive only their own assigned immutable versions, staff authoring remains gated.
 - **Opens:** `/plans/:id`, `/training`
 - **Opened from views:** `/deliver/:id`, `/plans/:id`, `/training`
 - **Embedded by:** Router.
@@ -265,7 +265,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Folder:** `features/institution`
 - **URL(s):** `/messages/:channel?`
 - **Purpose:** Conversation directory, unified people/thread search and selection without a separate start page.
-- **Access:** Institution members see their own channels; staff can initiate authorized conversations. Administrators do not gain unrelated private-pair access.
+- **Access:** Institution members see their own channels; staff can initiate authorized conversations and athletes can initiate pairs with active assigned coaches. Administrators do not gain unrelated private-pair access.
 - **Opens:** `/messages/:channel?`
 - **Opened from views:** `/members/:member`, `/notifications`, `/people`
 - **Embedded by:** Router.

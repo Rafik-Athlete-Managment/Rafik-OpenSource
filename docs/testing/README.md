@@ -1,5 +1,11 @@
 # Testing
 
+## Founder validation
+
+Use the [beta.3 correction walkthrough](founder-validation-beta3.md) for the current administrator, coach and athlete handoff. It separates implemented fixes from scheduling/attendance/content follow-up. Automated focused coverage and remaining rendered/device limits are recorded in [verification](../verification/README.md).
+
+Messaging/nutrition request-fault browser specs use the frozen preview and block service workers so Playwright can intercept the actual requests in both engines. Their result does not establish service-worker/offline-shell behavior, which requires its separate acceptance.
+
 ## Individual sequence API
 
 `npm run test:workout-sequence` uses the isolated API harness. Coverage includes concurrent binding, independent assignments, unchanged exact retries, athlete denial of staff scheduling, bound-start requirements, completion/correction, explicit skip reasons, cycle repetition, rescheduling without consumption, cancellation/pause on assignment end, a generic participation restriction and revoked receipt access. The existing delegated-session regression covers unaffected unlinked coach logging/corrections. These are server checks; no browser/native acceptance or recurring-worker/DST claim follows.

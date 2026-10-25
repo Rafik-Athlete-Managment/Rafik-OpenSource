@@ -11,7 +11,8 @@ import {
   ComboboxRoot,
   ComboboxTrigger,
 } from 'reka-ui'
-import { PhCaretDown, PhCheck } from '@phosphor-icons/vue'
+import { PhCaretDown, PhCheck, PhVideoCamera } from '@phosphor-icons/vue'
+import { videoForExercise } from '../lib/exercise-media'
 import type { Exercise, ExerciseKind } from '../lib/domain'
 import {
   categoryLabel,
@@ -341,6 +342,12 @@ function select(value: unknown) {
                 >
                   <span class="exercise-picker-copy">
                     <strong dir="auto">{{ exerciseName(exercise) }}</strong>
+                    <span
+                      v-if="videoForExercise(exercise) || exercise.media_type?.startsWith('video/')"
+                      :title="language('Video available', 'يتوفر فيديو')"
+                      :aria-label="language('Video available', 'يتوفر فيديو')"
+                      ><PhVideoCamera :size="18" aria-hidden="true"
+                    /></span>
                     <small>
                       {{ equipmentName(exercise) || language('No equipment', 'بدون معدات') }} ·
                       {{ kindName(exercise.kind) }}

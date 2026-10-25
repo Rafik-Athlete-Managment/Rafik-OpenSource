@@ -22,12 +22,14 @@ type Channel = {
   last_body: string | null
   archived: boolean
 }
+type Contact = Pick<Member, 'id' | 'name' | 'roles' | 'active'>
 const thread = ref<InstanceType<typeof ChannelThread>>()
 async function refresh() {
   await Promise.all([load(), loadPeople(), thread.value?.refresh()])
 }
 const items = ref<Channel[]>([]),
-  people = ref<Member[]>([]),
+  groups = ref<{ id: string; name: string }[]>([]),
+  people = ref<Contact[]>([]),
   directPeople = ref<string[]>([]),
   institutionSelf = ref<Institution['self']>(),
   search = ref(String(route.query.search || '')),
@@ -54,11 +56,13 @@ async function load(append = false) {
       items: Channel[]
       next: number | null
       directPeople: string[]
+      groups: { id: string; name: string }[]
     }>(
       `/v1/institution/communication?view=${view}&search=${encodeURIComponent(search.value)}&offset=${append ? next.value || 0 : 0}&manage=${manage.value}`,
     )
     items.value = append ? [...items.value, ...result.items] : result.items
     directPeople.value = result.directPeople
+    groups.value = result.groups
     next.value = result.next
   } catch (e) {
     error.value = errorMessage(e)
@@ -71,7 +75,9 @@ async function loadPeople() {
   peopleLoading.value = true
   peopleError.value = ''
   try {
-    const result = await request<Institution>(`/v1/institution?view=${view}`)
+    const result = await request<Institution>(
+      `/v1/institution/communication?view=${view}&contacts=true`,
+    )
     institutionSelf.value = result.self
     people.value = result.members
   } catch (e) {
@@ -107,12 +113,12 @@ const direct = useCommand<'direct'>(
     }),
   { successToast: false },
 )
-const openDirect = (person: Member) =>
+const openDirect = (person: Contact) =>
   direct.run('direct', {
     id: crypto.randomUUID(),
     title: person.name,
     members: [institutionSelf.value!.id, person.id],
-    managers: [institutionSelf.value!.id],
+    managers: [view === 'trainee' ? person.id : institutionSelf.value!.id],
     action: 'create',
     view,
     operation: crypto.randomUUID(),
@@ -120,7 +126,7 @@ const openDirect = (person: Member) =>
 watch(
   [() => route.query.to, () => peopleLoading.value],
   ([target, isLoading]) => {
-    if (!target || isLoading || view === 'trainee') return
+    if (!target || isLoading) return
     const person = people.value.find((member) => member.id === String(target) && member.active)
     if (person) void openDirect(person)
   },
@@ -137,7 +143,15 @@ const openGroup = useCommand<'open-group'>(
       method: 'POST',
       body: JSON.stringify(args),
     }),
+  { successToast: false },
 )
+const startGroup = (group: string) =>
+  openGroup.run('open-group', {
+    id: group,
+    view,
+    action: 'open-group',
+    operation: crypto.randomUUID(),
+  })
 watch(
   [() => route.query.group, () => openGroup.state.ready],
   ([group, ready]) => {
@@ -198,12 +212,10 @@ watch(
           >
         </form>
         <div class="conversation-directory">
-          <section
-            v-if="view !== 'trainee'"
-            class="conversation-contacts"
-            aria-labelledby="contact-heading"
-          >
-            <h2 id="contact-heading">{{ l('People', 'الأشخاص') }}</h2>
+          <details class="conversation-contacts" aria-labelledby="contact-heading">
+            <summary id="contact-heading">
+              {{ l('Start a conversation', 'ابدأ محادثة') }} ({{ contacts.length + groups.length }})
+            </summary>
             <p v-if="peopleLoading" role="status" class="small-print">
               {{ l('Loading people…', 'جارٍ تحميل الأشخاص…') }}
             </p>
@@ -214,7 +226,7 @@ watch(
               </button>
             </p>
             <p
-              v-else-if="!contacts.length && !items.length && !search && !loading"
+              v-else-if="!contacts.length && !groups.length && !items.length && !search && !loading"
               class="small-print"
             >
               {{
@@ -246,9 +258,26 @@ watch(
                     )
                     .join(' · ')
                 }}</small>
+                <small>{{ l('Start your conversation', 'ابدأ محادثتك') }}</small>
               </span>
             </button>
-          </section>
+            <button
+              v-for="group in groups"
+              :key="group.id"
+              type="button"
+              class="conversation-person contact-person"
+              :disabled="openGroup.state.busy || !!openGroup.state.pending"
+              @click="startGroup(group.id)"
+            >
+              <span class="avatar">{{ group.name.slice(0, 1) }}</span>
+              <span class="grow"
+                ><strong dir="auto">{{ group.name }}</strong
+                ><small>{{
+                  l('Group · Start your conversation', 'مجموعة · ابدأ محادثتك')
+                }}</small></span
+              >
+            </button>
+          </details>
           <h2 class="conversation-section-title">{{ l('Conversations', 'المحادثات') }}</h2>
           <p v-if="loading && !items.length" role="status" class="notice">
             {{ l('Loading…', 'جارٍ التحميل…') }}
@@ -260,14 +289,6 @@ watch(
                   search
                     ? l('No matching conversations.', 'لا توجد محادثات مطابقة.')
                     : l('No conversations yet.', 'لا توجد محادثات بعد.')
-                }}
-              </p>
-              <p v-if="view === 'trainee'" class="small-print">
-                {{
-                  l(
-                    'Ask your coach to start a conversation with you.',
-                    'اطلب من مدربك بدء محادثة معك.',
-                  )
                 }}
               </p>
             </div>
