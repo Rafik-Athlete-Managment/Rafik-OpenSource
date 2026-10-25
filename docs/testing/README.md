@@ -1,8 +1,8 @@
 # Testing
 
-## Founder validation
+## Manual instance validation
 
-Use the [beta.3 correction walkthrough](founder-validation-beta3.md) for the current administrator, coach and athlete handoff. It separates implemented fixes from scheduling/attendance/content follow-up. Automated focused coverage and remaining rendered/device limits are recorded in [verification](../verification/README.md).
+The [instance validation walkthrough](instance-validation.md) is the single source of truth for manual administrator, coach and athlete checks. Update its steps in place; handoffs and landing link to it instead of maintaining copies. It separates implemented fixes from scheduling/attendance/content follow-up. Automated focused coverage and remaining rendered/device limits are recorded in [verification](../verification/README.md).
 
 Messaging/nutrition request-fault browser specs use the frozen preview and block service workers so Playwright can intercept the actual requests in both engines. Their result does not establish service-worker/offline-shell behavior, which requires its separate acceptance.
 
@@ -74,7 +74,7 @@ For direct `test:e2e:running` diagnostics, first start the local API and web dev
 ## Coverage boundaries
 
 - Browser emulation does not prove physical phone behavior, native app behavior or assistive technology behavior on hardware.
-- Automated checks do not establish that a coach or athlete can complete a task without help. Use the [local coach walkthrough](coach-walkthrough.md) for a personal first pass; it is not a substitute for university review or external user observation.
+- Automated checks do not establish that a coach or athlete can complete a task without help. Use the [instance validation walkthrough](instance-validation.md) for a personal first pass; it is not a substitute for university review or external user observation.
 - Local Compose results do not establish remote CI, production alert delivery, or safe hosted upgrades/rollback.
 - Current workflow acceptance and its exact source/device limits are in [verification](../verification/README.md); machine-readable outputs stay under [`../verification/receipts/`](../verification/receipts/). The former R-phase feature map is preserved in the [archive](../archive/README.md).
 - Still needed outside automated local tests: physical phone and assistive-technology checks, university coach/athlete task observation, alert delivery, and a disposable production-profile upgrade/rollback rehearsal. See [known issues](../known-issues/README.md).

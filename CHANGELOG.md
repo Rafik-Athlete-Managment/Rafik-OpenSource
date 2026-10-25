@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Consolidate manual role walkthroughs into one version-scoped instance validation guide; contributor handoffs and landing refer to it rather than duplicating steps.
+
 - Let authorized coaches finish unfinished athlete-started workouts with preserved origin, completion attribution and exact retry. Allow empty optional review feedback, including reviews of valid zero-load/bodyweight results. Add exercise, duration, prescribed-set and declared muscle-focus previews to athlete workout cards.
 
 - Move assigned-plan review to dedicated pages with icon actions and an embedded adaptation editor based on the assigned version. Replace the athlete workout list with preview cards and a single heading/action toolbar. Standardize cancellation, removal and deletion controls in accessible red styling.

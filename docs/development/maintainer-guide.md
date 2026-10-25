@@ -12,7 +12,7 @@ From the repository root, the focused rendered command is `node apps/frontend/sc
 
 ## Founder validation corrections
 
-Use the [focused founder walkthrough](../testing/founder-validation-beta3.md) when handing this slice back for acceptance. Contact discovery belongs to communication, not the people directory. Supporting-coach sport/specialty is a permission boundary, even though the coach picker no longer requires a sport filter first. Keep current immutable reference exercise IDs and source/media attribution when curating the library. Extend shared workout progression and event command services for later scheduling/attendance work.
+Update the [canonical instance validation walkthrough](../testing/instance-validation.md) whenever implemented workflows change. It is the single source of truth for manual role checks; link to the affected section from founder handoffs and landing instead of creating another walkthrough. Published guidance must use the matching release tag; unreleased guidance must be labelled. Contact discovery belongs to communication, not the people directory. Supporting-coach sport/specialty is a permission boundary, even though the coach picker no longer requires a sport filter first. Keep current immutable reference exercise IDs and source/media attribution when curating the library. Extend shared workout progression and event command services for later scheduling/attendance work.
 
 ## Progression service workflow
 

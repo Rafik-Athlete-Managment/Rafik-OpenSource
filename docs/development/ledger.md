@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Canonical instance validation — 25 October 2026
+
+Founder clarified that walkthroughs must have one source of truth, rather than merely a shared style. Consolidated the older local coach setup, assessment/attachment and participation checks into `docs/testing/instance-validation.md`, alongside current administrator/coach/athlete checks. Removed the two competing walkthrough files and updated maintained links. The guide distinguishes unreleased beta.3 from matching release-tag guidance; landing refers readers to it without copying procedures. Paired English/Arabic landing references were pushed to draft PR #34 at `2000cef`. Documentation links passed; no runtime checks were repeated. This is documentation-only; no application behavior changed.
+
 ## Coach completion and richer workout previews — 25 October 2026
 
 Founder extended the presentation corrections to request exercise/duration/muscle previews and coach completion of athlete-started work. The bounded agenda projection now includes immutable prescription preview metadata, with at most five exercise names and four declared muscle groups; frequency ranks metadata, not physiological load. Cards reuse authorized cover rendering where supplied and keep recording controls ahead of secondary details on phones.

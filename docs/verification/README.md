@@ -1,5 +1,9 @@
 # Verification record
 
+## Canonical validation guide — 25 October 2026
+
+Documentation-only consolidation: local setup, role checks, assessment/attachment checks and optional participation checks now live in the single [instance validation walkthrough](../testing/instance-validation.md). Maintained references were updated and the two former walkthrough files removed. `npm run docs:check` passed two fixtures, 1,958 local links and 613 heading links across 74 maintained documents. No application tests or browser runs were needed for this documentation change. Paired English/Arabic landing links were pushed to existing draft PR #34 at `2000cef`; the linked unreleased guide is explicitly distinguished from installed release-tag documentation. Both release PRs remain unmerged.
+
 ## Assigned-plan presentation and coach completion — 25 October 2026
 
 Focused API checks passed coach completion of athlete-started work, preserved starter/mode and completion attribution, exact retry, rejection of new coach edits to completed self-recorded actuals, supporting-coach review and optional blank feedback with zero external load. The sequence case passed independently, including bounded immutable-snapshot preview metadata. These fixtures require separate disposable databases; an initial combined invocation invalidated the sequence fixture and was not counted as acceptance.
@@ -18,7 +22,7 @@ The final scheduling case was rerun in both engines after the refresh/recovery r
 
 An initial run used an outdated profile-tab assumption, then fixture cleanup failed on sequence foreign keys and contaminated that disposable run. The fixture now deletes only its own sequence/recurrence records before its own institution; the repaired run passed. A subsequent build found a formatted multiline Vue handler that needed a named function. Those failed runs are not acceptance evidence. Preview/user data was not reset.
 
-Weekly recurrence, automatic/rest-day preparation, historical occurrence reconciliation, paused-editor recovery usability, group exercise results and Android offline workout capture remain pending. No native rebuild, physical-device check, full browser suite or migration against user data was run. Use the [founder walkthrough](../testing/founder-validation-beta3.md) for the scoped handoff.
+Weekly recurrence, automatic/rest-day preparation, historical occurrence reconciliation, paused-editor recovery usability, group exercise results and Android offline workout capture remain pending. No native rebuild, physical-device check, full browser suite or migration against user data was run. Use the [founder walkthrough](../testing/instance-validation.md) for the scoped handoff.
 
 ## Founder-validation corrections — 25 October 2026
 

@@ -34,7 +34,7 @@ This page is the index for maintained Rafik documentation. The root [README](../
 
 ## Development and quality
 
-- [Beta.3 founder validation corrections](testing/founder-validation-beta3.md): role walkthroughs for corrections and individual workout scheduling/start/resume, issue disposition and remaining beta.3 slices.
+- [Instance validation walkthrough](testing/instance-validation.md): single source of truth for manual administrator, coach and athlete checks, setup, expected results and version-specific boundaries.
 
 - [Development setup and workflows](development/README.md): prerequisites, local setup, common change workflows and troubleshooting.
 - [Android coach field development](development/android.md): native build setup, Windows startup helper and path/concurrency troubleshooting, attendance/scores, history, recovery sharing, English/Arabic and disposable API/queue acceptance.
@@ -42,7 +42,6 @@ This page is the index for maintained Rafik documentation. The root [README](../
 - [Maintainer guide](development/maintainer-guide.md): repository map, profile/invitation workflows and shared pagination conventions.
 - [Current delivery ledger](development/ledger.md): current stage and recent implementation outcomes; not a phase-history archive.
 - [Testing strategy](testing/README.md): test layers, focused commands, fixtures and evidence boundaries.
-- [Local coach walkthrough](testing/coach-walkthrough.md): account setup, programs/assignments, athlete recording, scheduled events/results, messages/attachments and optional participation status with synthetic data.
 - [Verification summary](verification/README.md): actual checks, dates, coverage and known limits.
 
 ## Operations and release

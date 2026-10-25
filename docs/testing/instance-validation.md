@@ -1,8 +1,41 @@
-# Beta.3 founder validation corrections
+# Instance validation walkthrough
 
-Status: implemented on the working release branch; founder validation pending. These checks cover the current corrections, not whole-release acceptance. Use synthetic records and separate browser profiles for administrator, coach and athlete. Keep existing data; do not reset or seed the instance.
+This is the single source of truth for manual administrator, coach and athlete validation walkthroughs, for founder acceptance and institution owners checking their own installation. Update the relevant steps here when implemented workflows change; other guides and landing link here rather than copying the procedures. Automated evidence belongs in [verification](../verification/README.md), not in a parallel walkthrough.
+
+**Version scope:** current unreleased beta.3 release branch. These steps include changes not present in published beta.2. Use the document from the same release tag or source commit as your installation; passing this checklist does not establish whole-release acceptance or institutional live-data approval.
+
+Use synthetic records and separate browser profiles for administrator, coach and athlete. Keep existing data; do not reset or seed the instance. On a hosted installation, open your instance URL and skip the local startup commands below. Record the deployed version/commit, browser/device, language/theme and each checked result as passed, failed or not checked. Only run sections implemented in that version.
+
+## Start the local app
+
+From the repository root, with Docker running, start the local database and apply pending migrations:
+
+```sh
+npm run backend:start
+npm run web-env
+```
+
+Start the API and web app in separate terminals:
+
+```sh
+npm run start:api
+```
+
+```sh
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. A fresh database opens the first-run super-admin setup form; complete it with synthetic details. A database seeded with sample accounts opens sign-in instead. The first-run journey can be exercised safely with `npm run test:e2e --workspace @rafik/frontend -- onboarding.e2e.ts --empty-database`; the isolated runner creates and removes its own database. Do not run `npm run seed:local` against a database that already contains data. The [development guide](../development/README.md) covers setup and troubleshooting.
+
+## Prepare accounts and access
+
+Use an empty synthetic institution or your existing local demo; do not reset another dataset. In **People & access**, invite a coach and at least two athletes using separate synthetic email identifiers. Redeem each single-use link and set passwords. Assign the coach responsibility for the athletes. Each membership has one role; use separate accounts to review different dashboards.
 
 ## Administrator
+
+### Prepare an assigned program
+
+Create an empty program, add real exercises and prescriptions, review and publish it. Choose Assign this program for a synthetic athlete with an assigned coach. Confirm the published version is fixed and assignment is explicit. The assigned coach should find it in Athlete plans; an unrelated coach must not acquire assignment or recording authority. Use this record for the scheduling and recording checks below.
 
 ### Assigned-plan presentation
 
@@ -20,6 +53,10 @@ Use an active synthetic athlete with a published assigned plan and primary coach
 6. Add exercises to a program. Available videos should have a video-camera indicator; still illustrations must not receive that indicator.
 
 ## Coach
+
+### Events, assessments and attachments
+
+Create a scheduled assessment or group training event with synthetic participants. For an assessment, select a template and event staff, verify timezone/start time, then open it after its start. Record attendance and applicable results with units, correct a result and inspect its history; confirm unassigned coaches remain denied. Complete only after required entries are confirmed. In Messages, send several harmless image/document attachments: inspect pending previews, send, confirm they clear and downloads work; interrupted retries must not duplicate the conversation or attachment set. These are current per-person saves, not the deferred bulk attendance flow.
 
 ### Finish athlete-started work and review bodyweight results
 
@@ -50,6 +87,28 @@ Open Your workouts with one future scheduled plan and one actionable plan. The f
 4. Open an existing in-progress workout. Start a rest timer and switch exercises: the previous timer should clear. Try navigating away and cancel the warning; you should remain in the workout. Accept it, reopen the workout and confirm saved progress remains.
 5. Record food. A dialog should open with the reference library available first for a blank entry; manual entry remains available. Save breakfast and lunch entries: each meal should have one section heading. Correct an entry, close/reopen its draft and confirm its values remain.
 6. Open Injury status. Complete consent prerequisites where enabled, report participation status, correct it and close it. Staff roles retain their existing distinct permissions; this is not a clinical injury record.
+
+## Optional participation-status walkthrough
+
+Use a synthetic institution and athlete records. The first-run form creates the initial institution and super admin; subsequent users are added by an administrator through one-time invitation links.
+
+1. Sign in and confirm the institution and active role.
+2. As an administrator, open **Injury status** and configure consent prerequisites for a synthetic athlete. For a minor, use only the guardian-authorization attestation; do not enter guardian documents or real personal data. Confirm the administrator cannot see injury status.
+3. Sign out. Sign in as that athlete, review the consent and assent prompt, and record a synthetic participation status. Then try reviewing, correcting, closing, withdrawing consent, and exporting the record. Note confusing wording, lost input, or unclear confirmation.
+4. Sign out and sign in as the athlete’s designated coach. Open **Injury status** and verify that only the current participation status and effective date are visible. Confirm that unassigned athletes, prior history, and health details are not exposed, and that the coach cannot create or change the record.
+5. Return to the athlete account, correct or withdraw the record, then refresh the coach view. Confirm the change is reflected and withdrawn status is hidden.
+6. Note any blocked step, confusing wording, unexpected access, lost data, or unclear confirmation. Include the active role, screen, and steps that led to it.
+
+Do not try to simulate the 12-month deletion by changing clocks or editing the database. Retention scheduling and database recovery are operational checks documented in the [verification record](../verification/README.md), not part of this manual UI walkthrough.
+
+## What this walkthrough does not establish
+
+- Completing it does not establish university privacy/security approval or authorize real athlete data.
+- Invitation links are not delivered by email and do not verify an email address; share them only with their intended users.
+- It does not test production deployment, retention alerts, physical devices, or an unaided external user.
+- Seeded or manually created synthetic records are not evidence of real-world use.
+
+Record observations without names, contact details, or health information. Send the steps and issue you observed back for review; automated tests and this walkthrough do not substitute for university policy or security review.
 
 ## Deferred work and boundaries
 
