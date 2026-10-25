@@ -586,7 +586,7 @@ onBeforeUnmount(() => {
               <button v-else class="button" type="submit">
                 {{ l('Review plan', 'مراجعة الخطة') }}
               </button>
-              <button type="button" class="text-link" @click="discardPlan">
+              <button type="button" class="text-link danger-action" @click="discardPlan">
                 {{ l('Discard draft and load latest plan', 'تجاهل المسودة وتحميل أحدث خطة') }}
               </button>
             </fieldset>
@@ -902,7 +902,7 @@ onBeforeUnmount(() => {
                       {{ l('Changes', 'التغييرات') }}</button
                     ><button
                       v-if="trainee && canWrite"
-                      class="text-link"
+                      class="text-link danger-action"
                       :disabled="locked"
                       @click="removeId = item.id"
                     >
@@ -910,12 +910,12 @@ onBeforeUnmount(() => {
                     ><template v-if="removeId === item.id"
                       ><span>{{ l('Remove this entry?', 'إزالة هذا المدخل؟') }}</span
                       ><button
-                        class="button small secondary"
+                        class="button small secondary danger-action"
                         :disabled="locked"
                         @click="send('remove', { id: item.id, revision: item.revision })"
                       >
                         {{ l('Confirm removal', 'تأكيد الإزالة') }}</button
-                      ><button class="text-link" @click="removeId = ''">
+                      ><button class="text-link danger-action" @click="removeId = ''">
                         {{ l('Cancel', 'إلغاء') }}
                       </button></template
                     >

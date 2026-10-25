@@ -1456,7 +1456,7 @@ CREATE UNIQUE INDEX institution_nutrition_sharing_pkey ON public.institution_nut
 Exact actor/institution-scoped command payload and response receipts.
 
 - Prisma model: `institution_operations`; domain: Institution and operations; treatment: **retain-current**.
-- Direct server source references: [server/institution.ts](../../../apps/backend/server/institution.ts).
+- Direct server source references: [server/institution.ts](../../../apps/backend/server/institution.ts), [server/programming.ts](../../../apps/backend/server/programming.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 

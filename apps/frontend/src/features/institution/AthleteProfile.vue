@@ -372,7 +372,7 @@ onMounted(load)
                 <RouterLink
                   v-if="relation === 'primary' || (relation === 'supporting' && plan.sport)"
                   class="text-link"
-                  :to="base + '/training?assignment=' + plan.id"
+                  :to="base + '/training/' + plan.id"
                   :aria-label="l('Manage workouts for ', 'إدارة تمارين ') + plan.version.title"
                   >{{ l('Manage workouts', 'إدارة التمارين') }}</RouterLink
                 >

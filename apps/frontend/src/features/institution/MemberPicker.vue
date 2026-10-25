@@ -166,7 +166,7 @@ onUnmounted(() => {
         ><button
           type="button"
           :disabled="disabled || requiredIds.includes(id)"
-          class="text-link"
+          class="text-link danger-action"
           @click="toggle(id)"
           :aria-label="l('Remove', 'إزالة') + ' ' + (chosen.find((m) => m.id === id)?.name || id)"
         >

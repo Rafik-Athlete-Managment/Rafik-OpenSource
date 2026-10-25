@@ -4,6 +4,10 @@ Status: implemented on the working release branch; founder validation pending. T
 
 ## Administrator
 
+### Assigned-plan presentation
+
+Open Athlete plans, search/page the directory and select a plan. Expect a dedicated page with one plan title and labelled icon actions; the back link restores directory filters/page size/offset. Choose Adapt this program: the editor appears in that same page and says Adapt program. Save a distinctly named draft, reload and confirm recovery; View assigned plan still shows the unchanged assigned version. Publish/assign only when you intentionally want to test a new assignment or replacement. End plan is red. Check a Cancel and Delete/Remove action in light/dark mode; regular navigation and cancelled-event labels must retain ordinary styling.
+
 ### Individual workout scheduling
 
 Use an active synthetic athlete with a published assigned plan and primary coach. Open Athlete plans and select the assignment (or follow Manage workouts from the athlete profile). In Next workouts, choose Schedule workout, set the date/time, timezone and duration, then save. Expect one scheduled occurrence after reload. Reschedule it before recording and confirm the same workout remains selected. Skip with a reason: expect the next plan workout to become available for scheduling; the skipped occurrence remains historical. Administrators should not see Start workout or acquire delegated coach privileges.
@@ -16,6 +20,10 @@ Use an active synthetic athlete with a published assigned plan and primary coach
 6. Add exercises to a program. Available videos should have a video-camera indicator; still illustrations must not receive that indicator.
 
 ## Coach
+
+### Finish athlete-started work and review bodyweight results
+
+Have a synthetic athlete start a scheduled workout and leave it unfinished. As its authorized coach, open the plan's Resume workout action, or open the history review and choose Continue workout for athlete. Record an actual completed strength set with zero external load and positive reps, then Finish session. Expect the same workout ID, the athlete retained as original starter, and the coach identified in completion/history. Open Review workout, leave optional feedback empty and save: review should succeed without changing the actuals. Reopen as the athlete and check the coach completion notice. A stale athlete/device write must conflict rather than overwrite the coach's save. Unlinked coaches must remain denied, and new coach edits to completed self-logged actuals remain blocked.
 
 ### Due workouts and recording
 
@@ -31,6 +39,8 @@ Use an active synthetic athlete with a published assigned plan and primary coach
 ## Athlete
 
 ### Scheduled workout access
+
+The athlete training screen should have one Your workouts heading, adjacent filled Refresh workouts and outlined Workout history buttons, and distinct preview cards. Start/Resume stays visible without hover on phones and when using a keyboard. A copied staff `/training/:assignment` link must return the athlete to their dashboard before displaying staff detail.
 
 Open Your workouts with one future scheduled plan and one actionable plan. The future card explains that recording opens at the scheduled start time and has no Start button. Start the actionable workout, leave and resume the same record; unfinished work in another plan must not block it. An unscheduled plan explains that a coach must schedule it. Device records with pending edits remain linked under Work saved on this device even if the server read fails. Reload after acknowledged completion and confirm progression changed once. Weekly automatic scheduling, group exercise results and Android workout capture are outside this validation slice.
 

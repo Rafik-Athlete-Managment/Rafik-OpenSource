@@ -141,7 +141,7 @@ test('organization program authoring, reviewed delivery, recording and feedback 
       .filter({ hasText: 'Three-day foundation' })
       .getByRole('button', { name: 'View assigned plan' })
       .click()
-    await page.getByRole('link', { name: 'Adapt this program', exact: true }).click()
+    await page.getByRole('button', { name: 'Adapt this program', exact: true }).click()
     await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
       'Three-day foundation adapted',
     )

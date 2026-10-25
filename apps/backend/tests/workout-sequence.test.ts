@@ -133,6 +133,10 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
   const own = await agenda(athleteAuth, "trainee", `&assignment=${assignment}`);
   assert.equal(own.items[0].occurrence.id, a.occurrence.id);
   assert.equal(own.items[0].can_schedule, false);
+  assert.ok(own.items[0].preview.exercise_count > 0);
+  assert.ok(own.items[0].preview.prescribed_sets > 0);
+  assert.ok(own.items[0].preview.exercises.length <= 5);
+  assert.ok(own.items[0].preview.muscle_focus.length <= 4);
   assert.equal(
     (await agenda(auth, "trainer", "&search=does-not-exist")).total,
     0,

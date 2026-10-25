@@ -129,7 +129,7 @@ These labels describe people. On their own they grant no access; Release 1b uses
 - **Start for an athlete:** `POST /v1/institution/sessions` `start` with `view: "trainer"` starts a session for the athlete who owns `assignment_id`. The coach needs plan authority: primary, or supporting for the plan's sport.
   - The session records `recorded_mode: "delegated"` and `recorded_by`/`recorded_by_name` (the coach member).
   - The athlete stays the subject (`member_id`, `client_id`). Operation receipts carry the coach.
-- **Coach saves:** `save` with `view: "trainer"` is allowed only on delegated sessions, and authority is rechecked on every save and retry. Coaches cannot edit sessions the athlete logged. Entries use the same measurements as athlete sets: strength records `load`/`reps`; timed and distance record `seconds`/`metres`; `effort` is optional. A completed set needs a positive actual result.
+- **Coach saves:** `save` with `view: "trainer"` is allowed on delegated records and unfinished athlete-started records, with plan-specific authority rechecked on every save/retry. Preserve the original recording mode and starter. First completion adds completion member/name/role to the document. New coach edits to completed self-logged actuals remain forbidden; the exact acknowledged completion can still replay its receipt. Entries use the same measurements as athlete sets: strength records `load`/`reps`; timed and distance record `seconds`/`metres`; `effort` is optional. A completed set needs a positive actual result.
 - **Athlete corrections:** the athlete can save (correct) any of their sessions.
 - **History:** every start and save writes an `institution_session_history` version. `GET /v1/workouts/:id/history?view=` returns versions oldest first, each with `actor_name` and `by` (`athlete` or `coach`), under the same read authorization as the session.
 - **Analytics:** `summary.coach_recorded` counts completed delegated sessions in the window.
@@ -297,3 +297,9 @@ All require the signed-in account and normal origin/client-header rules. There i
 | `POST /v1/support`          | `{action:"create_support_case",args:{p_id,p_subject,p_detail}}` or `{action:"update_support_case",args:{p_id,p_revision,p_state}}`. Keep the same ID/payload on uncertain retry. Reporter cannot set operator replies. |
 
 The old `/v1/account/institution` remains a current subject-only institutional projection, not a legacy alias. See ADR 0030 for the destructive migration and complete client upgrade policy.
+
+## Workout preview and coach completion — unreleased beta.3
+
+Agenda items include optional `preview`: planned minutes (unknown remains null), total exercises/prescribed sets, up to five exercise names/sets/types, up to four declared muscle groups and an optional authorized cover ID. Groups are ranked by exercise-metadata frequency, not physiological load. The same immutable assigned snapshot supplies the preview. Current workout reads and agenda session summaries expose `can_record` for authorized coach continuation. This is a snapshot flag; writes recheck current authority and lifecycle.
+
+Completed self-logged actuals remain protected from new coach edits. Completion origin is preserved in `recorded_mode`; `completed_by`, `completed_by_name` and `completed_by_role` separately identify the first finisher. Optional review feedback may be empty and is bounded to 2,000 characters; review never rejects a valid result merely for zero external load. See [ADR 0031](../decisions/ADR-0031-coach-completion-of-athlete-started-workouts.md).

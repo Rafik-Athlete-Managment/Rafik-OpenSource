@@ -271,7 +271,7 @@ onMounted(initialize)
               draft.revision ? l('Edit details', 'تعديل التفاصيل') : l('Set it up', 'إعداد جديد')
             }}
           </h2>
-          <button type="button" class="text-link" @click="close">
+          <button type="button" class="text-link danger-action" @click="close">
             {{ l('Discard changes', 'تجاهل التغييرات') }}
           </button>
         </div>
@@ -293,7 +293,7 @@ onMounted(initialize)
               <h3>{{ l('Drill', 'اختبار') }} {{ index + 1 }}</h3>
               <button
                 type="button"
-                class="text-link"
+                class="text-link danger-action"
                 :disabled="draft.definition.length === 1"
                 @click="draft.definition.splice(index, 1)"
               >

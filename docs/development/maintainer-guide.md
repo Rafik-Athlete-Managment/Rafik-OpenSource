@@ -1,5 +1,9 @@
 # Maintainer guide
 
+## Assigned-plan details and adaptation
+
+`AssignedPlanPage.vue` owns `/training/:assignment`; AthletePlans owns only the directory. Keep directory query state on its detail/back links. PlanEditor accepts an assigned snapshot for embedded adaptation, with a separate assignment/version draft key. Do not fork a second prescription editor or load the current mutable program draft as the assigned baseline. Publishing and assigning/replacing remain separate operations. Use `danger-action` for red cancellation/removal controls and `danger-button` for destructive primary buttons; do not infer danger styling from visible text at runtime.
+
 ## Individual workout web integration
 
 Use `WorkoutAgenda.vue` for dashboard discovery and assignment scheduling. Derive sequence state from the scheduling GET projection; do not reintroduce client-side plan-day eligibility algorithms. The same occurrence identity must reach session start. Preserve existing device drafts and uncertain commands, and guard delayed navigation after acknowledgment. Focused API coverage runs with `npm run test:workout-sequence`; the delegated-workout browser spec exercises the web integration through the isolated-browser wrapper. Neither check establishes Android or automatic recurrence acceptance.
@@ -215,3 +219,5 @@ Use `institution_id` and canonical `/v1/institution` routes in maintained code. 
 ## Breaking retirement in beta.3
 
 Use explicit `/v1/account/profile`, `/v1/account/export`, `/v1/account/deletion` and `/v1/support` services. Generic command/query/file gateways and published workspace/organization aliases are removed. Reference exercise metadata is `reference_exercises`; custom exercises and athlete assignments remain institutional. Current fixtures seed institution examples directly, with no personal plans/teams/business simulation. Run `npm run test:retired-domains` for populated deletion/preservation and `npm run test:institution-api` for canonical lifecycle/removed-route checks. Historical migration files stay immutable; see ADR 0030 and the coordinated upgrade warning in operations.
+
+Run delegated-session and seeded workout-sequence API suites through separate isolated-api invocations. The delegated single-institution fixture removes the seed institution and cannot share its database with the sequence seed fixture. This is fixture isolation, not a reason to reset preview data.

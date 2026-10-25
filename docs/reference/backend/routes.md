@@ -394,7 +394,7 @@ Authorized immutable prescription/actual workout document.
 - Authority: Current signed-in institution membership; handler enforces its role/subject scope.
 - Apps/workflow: Web athlete logger and coach review; compatibility path retained.
 - Handler: [institutionSession](../../../apps/backend/server/programming.ts).
-- Source-derived table touches (including known called helpers/SQL functions): [public.institution_assignments](schema.md#publicinstitution_assignments), [public.institution_coaching_links](schema.md#publicinstitution_coaching_links), [public.institution_members](schema.md#publicinstitution_members), [public.institution_sessions](schema.md#publicinstitution_sessions).
+- Source-derived table touches (including known called helpers/SQL functions): [public.institution_assignments](schema.md#publicinstitution_assignments), [public.institution_coaching_links](schema.md#publicinstitution_coaching_links), [public.institution_members](schema.md#publicinstitution_members), [public.institution_sessions](schema.md#publicinstitution_sessions), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions).
 
 ### GET / PUT /v1/assets/{id}
 

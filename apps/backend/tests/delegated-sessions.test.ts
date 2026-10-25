@@ -267,25 +267,68 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     "receipts carry the coach, not the athlete",
   );
 
-  // A coach cannot edit a session the athlete logged themself.
+  // A coach may finish an athlete-started workout, preserving origin and exact retry.
   const own = await start(athlete, "trainee", footballPlan, plan.days[1].id);
   assert.equal(own.status, 200, JSON.stringify(own));
+  const finishOwn = operation("save", {
+    view: "trainer",
+    id: own.data.id,
+    revision: 1,
+    entries: own.data.entries.map((e: any) => ({
+      ...e,
+      load: 0,
+      reps: 10,
+      completed: true,
+    })),
+    note: "Coach finished athlete-started work",
+    complete: true,
+  });
+  const finishedOwn = await call(primary, ws + "/sessions", finishOwn);
+  assert.equal(finishedOwn.status, 200, JSON.stringify(finishedOwn));
+  assert.equal(finishedOwn.data.recorded_mode, "self");
+  assert.equal(finishedOwn.data.completed_by_role, "trainer");
+  assert.equal(finishedOwn.data.completed_by, p.id);
+  assert.deepEqual(
+    (await call(primary, ws + "/sessions", finishOwn)).data,
+    finishedOwn.data,
+  );
   assert.equal(
     (
-      await call(
-        primary,
-        ws + "/sessions",
-        operation("save", {
-          view: "trainer",
-          id: own.data.id,
-          revision: 1,
-          entries: own.data.entries,
-          note: "",
-          complete: false,
-        }),
-      )
+      await call(primary, ws + "/sessions", {
+        ...finishOwn,
+        operation: randomUUID(),
+        revision: 2,
+      })
     ).status,
     403,
+    "new coach corrections to completed self-logged actuals remain protected",
+  );
+  const reviewZero = operation("review", {
+    view: "trainer",
+    id: own.data.id,
+    revision: 2,
+    note: "",
+  });
+  const reviewedZero = await call(support, ws + "/sessions", reviewZero);
+  assert.equal(reviewedZero.status, 200, JSON.stringify(reviewedZero));
+  assert.ok(reviewedZero.data.reviewed_at);
+  assert.equal(reviewedZero.data.coach_note, "");
+  assert.equal(
+    reviewedZero.data.entries[0].load,
+    0,
+    "zero load is valid for bodyweight work",
+  );
+  assert.deepEqual(
+    (await call(support, ws + "/sessions", reviewZero)).data,
+    reviewedZero.data,
+  );
+  const ownHistory = await call(
+    athlete,
+    "/v1/workouts/" + own.data.id + "/history?view=trainee",
+  );
+  assert.deepEqual(
+    ownHistory.data.items.map((h: any) => h.by),
+    ["athlete", "coach"],
   );
 
   // The athlete corrects the delegated record; every version stays attributed.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Let authorized coaches finish unfinished athlete-started workouts with preserved origin, completion attribution and exact retry. Allow empty optional review feedback, including reviews of valid zero-load/bodyweight results. Add exercise, duration, prescribed-set and declared muscle-focus previews to athlete workout cards.
+
+- Move assigned-plan review to dedicated pages with icon actions and an embedded adaptation editor based on the assigned version. Replace the athlete workout list with preview cards and a single heading/action toolbar. Standardize cancellation, removal and deletion controls in accessible red styling.
+
 - Connect individual workout progression to the web dashboard and athlete plans: discover due/overdue work, schedule/reschedule or skip with a reason, and start or resume the occurrence-bound workout. Athletes see the scheduled-time explanation instead of an arbitrary day chooser. Weekly recurrence, worker scheduling and group/native workout capture remain pending.
 
 - Restrict athlete program browsing to assigned immutable versions; block staff-only web routes before rendering.

@@ -52,6 +52,11 @@ const router = createRouter({
       meta: { private: true, institution: true },
     },
     {
+      path: '/training/:assignment',
+      component: () => import('../features/institution/AssignedPlanPage.vue'),
+      meta: { private: true, institution: true, staff: true },
+    },
+    {
       path: '/events',
       component: () => import('../features/institution/ScheduledEvents.vue'),
       meta: { private: true, institution: true },
@@ -272,6 +277,7 @@ router.beforeEach(async (to, from) => {
     const institution = contexts.value.find((c) => c.kind === 'institution')
     if (!institution) return '/access'
     if (to.meta.adminOnly && institution.role !== 'admin') return '/dashboard'
+    if (to.meta.staff && institution.role === 'trainee') return '/dashboard'
     if (
       institution.role === 'trainee' &&
       (['/people', '/analytics', '/groups', '/assessment-templates', '/exercises'].some(

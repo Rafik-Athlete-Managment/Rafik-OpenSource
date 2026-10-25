@@ -134,7 +134,7 @@ onMounted(load)
                 :disabled="locked"
               /><button class="button small" :disabled="locked || !editName.trim()">
                 {{ l('Save', 'حفظ') }}</button
-              ><button type="button" class="text-link" @click="editing = ''">
+              ><button type="button" class="text-link danger-action" @click="editing = ''">
                 {{ l('Cancel', 'إلغاء') }}
               </button>
             </form>

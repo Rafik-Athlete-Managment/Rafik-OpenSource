@@ -21,6 +21,7 @@
   --motion-panel: 200ms;
   --motion-ease: ease-out;
   --danger-action: #b42332;
+  --danger-ink: light-dark(#b42332, #ffadb4);
   --on-danger: #fff;
   --success: var(--accent);
   --success-bg: var(--tint);
@@ -140,8 +141,22 @@ input[type='radio'] {
 .institution-settings-grid .panel h3 {
   margin-block-end: var(--space-2);
 }
+.button.danger-button,
+.button.danger-action:not(.secondary),
 .institution-close-dialog .institution-danger-button {
   background: var(--danger-action);
+  color: var(--on-danger);
+  border-color: var(--danger-action);
+}
+.button.danger-action.secondary,
+.text-link.danger-action,
+.danger-action:not(.button) {
+  color: var(--danger-ink);
+  border-color: var(--danger-ink);
+}
+.button.danger-action:hover:not(:disabled),
+.button.danger-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger-action), black 12%);
   color: var(--on-danger);
 }
 .member-management .management-card {

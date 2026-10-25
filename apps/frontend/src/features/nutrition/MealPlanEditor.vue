@@ -117,7 +117,7 @@ function add() {
       </label>
       <button
         type="button"
-        class="text-link"
+        class="text-link danger-action"
         :aria-label="l('Remove ', 'حذف ') + item.name"
         @click="model = model.filter((_, index) => index !== i)"
       >

@@ -198,7 +198,7 @@ onMounted(async () => {
           </fieldset>
           <p v-for="id in missing" :key="id" class="notice">
             {{ l('A selected person is unavailable.', 'أحد الأشخاص المحددين غير متاح.') }}
-            <button type="button" class="text-link" @click="remove(id)">
+            <button type="button" class="text-link danger-action" @click="remove(id)">
               {{ l('Remove', 'إزالة') }}
             </button>
           </p>

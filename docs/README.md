@@ -94,3 +94,5 @@ Historical phase records and superseded documents are linked from the [archive i
 - [ADR 0028 — Explicit backend compatibility](decisions/ADR-0028-explicit-backend-compatibility.md): allowlists, historical retention and simulator retirement.
 
 - [ADR 0029 — Institution identifiers](decisions/ADR-0029-institution-identifiers.md): physical renames, canonical APIs and published-client upgrade compatibility.
+
+- [Coach completion policy](decisions/ADR-0031-coach-completion-of-athlete-started-workouts.md): unfinished athlete-started work, original attribution, exact retries and optional review feedback.

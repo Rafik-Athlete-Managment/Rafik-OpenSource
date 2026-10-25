@@ -409,7 +409,7 @@ onUnmounted(() => {
               </div>
               <button
                 type="button"
-                class="attachment-remove"
+                class="attachment-remove danger-action"
                 :disabled="locked"
                 :aria-label="l('Remove attachment', 'إزالة المرفق')"
                 :title="l('Remove attachment', 'إزالة المرفق')"

@@ -345,7 +345,7 @@ onMounted(load)
           :to="
             view === 'trainee'
               ? '/training'
-              : '/training?assignment=' + data.event.workout_snapshot.assignment_id
+              : '/training/' + data.event.workout_snapshot.assignment_id
           "
           >{{ l('Open plan workouts', 'فتح تمارين الخطة') }}</RouterLink
         >
@@ -373,7 +373,7 @@ onMounted(load)
             {{ l('Reassign staff', 'إعادة تعيين الموظفين') }}</button
           ><button
             v-if="!data.results.length"
-            class="text-link"
+            class="text-link danger-action"
             @click="cancelOpen = !cancelOpen"
             :disabled="locked"
           >
@@ -473,7 +473,7 @@ onMounted(load)
             }}
           </p>
           <button
-            class="button"
+            class="button danger-action"
             :disabled="locked"
             @click="run({ action: 'cancel', future_series: futureSeries })"
           >

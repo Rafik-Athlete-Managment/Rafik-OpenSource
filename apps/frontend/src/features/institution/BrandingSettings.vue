@@ -141,7 +141,7 @@ async function save() {
             <div v-if="logoPreview" class="brand-preview">
               <img :src="logoPreview" alt="" /><button
                 type="button"
-                class="text-link"
+                class="text-link danger-action"
                 @click="removeLogo"
               >
                 {{ l('Remove custom logo', 'إزالة الشعار المخصص') }}

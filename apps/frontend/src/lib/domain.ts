@@ -162,6 +162,10 @@ export interface Session {
   recorded_mode?: 'self' | 'delegated'
   recorded_by?: string | null
   recorded_by_name?: string | null
+  can_record?: boolean
+  completed_by?: string
+  completed_by_name?: string
+  completed_by_role?: 'trainer' | 'trainee'
 }
 export interface PendingOperation {
   id: string

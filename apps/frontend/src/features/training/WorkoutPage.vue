@@ -380,6 +380,18 @@ function correctSets() {
       ><PhArrowLeft :size="18" class="directional" aria-hidden="true" />{{ t('today') }}</RouterLink
     ><PageState :loading="loading" :error="!row ? error : ''" @retry="load"
       ><template v-if="row && session">
+        <p
+          v-if="session.recorded_mode !== 'delegated' && session.completed_by_role === 'trainer'"
+          class="notice"
+          role="note"
+        >
+          {{
+            language(
+              `Completed by ${session.completed_by_name || 'your coach'}. You started this workout; its changes remain attributed in the record history.`,
+              `أكمل التمرين ${session.completed_by_name || 'مدربك'}. أنت من بدأ هذا التمرين؛ وتبقى التعديلات منسوبة لأصحابها في السجل.`,
+            )
+          }}
+        </p>
         <p v-if="session.recorded_mode === 'delegated'" class="notice" role="note" dir="auto">
           {{
             language(

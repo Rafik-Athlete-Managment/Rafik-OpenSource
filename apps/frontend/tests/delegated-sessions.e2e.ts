@@ -12,6 +12,10 @@ async function inspect(page: Page, name: string, info: { project: { name: string
   expect(await layoutIssues(page)).toEqual([])
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
   await page.screenshot({
+    path: `artifacts/r1e-${name}-${info.project.name}-viewport.png`,
+    animations: 'disabled',
+  })
+  await page.screenshot({
     path: `artifacts/r1e-${name}-${info.project.name}.png`,
     fullPage: true,
     animations: 'disabled',
@@ -339,6 +343,23 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
       if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
     })
     await f.login(page, f.coach, '/training?assignment=' + assignment)
+    await expect(page).toHaveURL(new RegExp('/training/' + assignment + '$'))
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
+    await expect(page.getByRole('searchbox', { name: 'Search athletes' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Adapt this program', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Adapt program', exact: true })).toBeVisible()
+    await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
+      'Track block adapted',
+    )
+    await page.getByLabel('Program name', { exact: true }).fill('Athlete-specific adaptation draft')
+    await page.getByRole('button', { name: 'Save draft', exact: true }).click()
+    await expect(page.getByText('Draft saved. Current assignments are unchanged.')).toBeVisible()
+    await page.reload()
+    await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
+      'Athlete-specific adaptation draft',
+    )
+    await page.getByRole('button', { name: 'View assigned plan', exact: true }).click()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
     const agenda = page.getByRole('region', { name: 'Next workouts', exact: true })
     await agenda.getByRole('button', { name: 'Schedule workout', exact: true }).click()
     await agenda
@@ -365,6 +386,13 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await expect(page.getByRole('link', { name: 'Open plan workouts', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Complete session', exact: true })).toHaveCount(0)
     await f.login(page, f.client, '/training')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Your workouts')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('font-size', '32px')
+    await expect(page.getByRole('heading', { name: 'Next workouts', exact: true })).toHaveCount(0)
+    await expect(page.locator('.athlete-workout-preview .agenda-row')).toHaveCount(1)
+    await expect(page.getByText('In this workout', { exact: true })).toBeVisible()
+    await expect(page.locator('.workout-preview-exercises li')).toHaveCount(4)
+    await expect(page.getByText('Muscle focus', { exact: true })).toBeVisible()
     await expect(page.getByText('Recording opens at the scheduled start time.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toHaveCount(0)
     await inspect(page, 'athlete-wait-en', info)
@@ -375,6 +403,62 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await page.reload()
     await expect(page.getByText('يفتح التسجيل عند موعد البدء المحدد.')).toBeVisible()
     await inspect(page, 'athlete-wait-ar', info)
+    await page.goto('/training/' + assignment)
+    await expect(page).toHaveURL(/\/dashboard$/)
+    await f.login(page, f.coach, '/training/' + assignment)
+    await expect(
+      page.getByRole('button', { name: 'تكييف هذا البرنامج', exact: true }),
+    ).toBeVisible()
+    await inspect(page, 'assigned-plan-ar', info)
+  } finally {
+    await f.cleanup()
+  }
+})
+
+test('coach finishes athlete-started bodyweight work and reviews it without a note', async ({
+  page,
+}, info) => {
+  test.setTimeout(180000)
+  const f = await institutionFixture()
+  try {
+    const { athlete, endpoint } = await institution(f, 'Madar coach completion')
+    const assignment = (
+      await f.call(f.coach, endpoint + '/athlete-plans?view=trainer&member=' + athlete.id)
+    ).items[0].id
+    const next = (
+      await f.call(f.client, endpoint + '/workout-scheduling?view=trainee&assignment=' + assignment)
+    ).items[0]
+    const id = randomUUID()
+    await f.call(f.client, endpoint + '/sessions', {
+      operation: id,
+      action: 'start',
+      view: 'trainee',
+      id,
+      assignment_id: assignment,
+      occurrence_id: next.occurrence.id,
+      day_id: next.day.id,
+    })
+    await f.login(page, f.coach, '/training/' + assignment)
+    await page.getByRole('link', { name: 'Resume workout', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp('/record/' + id + '$'))
+    await expect(
+      page.getByText('The athlete started this workout.', { exact: false }),
+    ).toBeVisible()
+    const set = page.locator('.delegated-set').first()
+    await set.getByLabel(/^Load/).fill('0')
+    await set.getByRole('checkbox', { name: 'Done', exact: true }).check()
+    await page.getByRole('button', { name: 'Finish session', exact: true }).click()
+    await page.getByRole('link', { name: 'Review workout', exact: true }).click()
+    await expect(page.getByLabel('Coach feedback')).toHaveValue('')
+    await page.getByRole('button', { name: 'Save review', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Review saved.' })).toBeVisible()
+    await inspect(page, 'bodyweight-review', info)
+    const result = await f.call(f.client, '/v1/workouts/' + id + '?view=trainee')
+    expect(result.recorded_mode).toBe('self')
+    expect(result.completed_by_name).toBe('R4 Coach')
+    expect(result.entries[0].load).toBe(0)
+    await f.login(page, f.client, '/workout/' + id)
+    await expect(page.getByRole('note').filter({ hasText: 'Completed by R4 Coach.' })).toBeVisible()
   } finally {
     await f.cleanup()
   }

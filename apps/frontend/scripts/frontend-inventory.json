@@ -140,7 +140,7 @@
     "access": "Athlete own results; staff only within current subject/event authority."
   },
   "features/institution/AthletePlans.vue": {
-    "purpose": "Browse-first active/expired athlete program assignments with search, pagination and selected assignment preview.",
+    "purpose": "Paginated staff assignment directory with dedicated detail routes; no embedded editor/detail below filters.",
     "access": "Administrators and training-authorized coaches; supporting links follow the training-scope contract.",
     "screen": true
   },
@@ -321,5 +321,9 @@
   },
   "features/institution/WorkoutAgenda.vue": {
     "purpose": "Shared read-only next-workout projection, fixed-time scheduling/reschedule/skip and occurrence-bound start/resume with durable command recovery."
+  },
+  "features/institution/AssignedPlanPage.vue": {
+    "purpose": "Dedicated assigned-plan review, scoped workout scheduling and adaptation from the assigned immutable snapshot using the shared editor.",
+    "access": "Administrators and authorized primary/sport-supporting coaches; athletes redirected before rendering."
   }
 }

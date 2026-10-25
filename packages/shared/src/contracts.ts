@@ -88,6 +88,14 @@ export type WorkoutAgendaItem = {
   title: string
   goal: string | null
   cursor: number
+  preview?: {
+    minutes: number | null
+    exercise_count: number
+    prescribed_sets: number
+    exercises: { name: string; name_ar?: string; sets: number; kind: string }[]
+    muscle_focus: string[]
+    cover?: string
+  }
   day: { id: string; name: string; nameAr?: string } | null
   state: 'unscheduled' | 'scheduled' | 'ready' | 'overdue' | 'in_progress' | 'paused'
   blocked: 'participation_unavailable' | 'assignment_unavailable' | 'no_workout_days' | null
@@ -99,7 +107,7 @@ export type WorkoutAgendaItem = {
     timezone: string
     training_date: string
   } | null
-  session: { id: string; recorded_mode: string } | null
+  session: { id: string; recorded_mode: string; can_record?: boolean } | null
   can_start: boolean
   can_schedule: boolean
 }

@@ -228,7 +228,7 @@ function cancelDelete() {
               )
             }}
           </p>
-          <button v-if="!deleting" class="text-link danger" @click="deleting = true">
+          <button v-if="!deleting" class="text-link danger danger-action" @click="deleting = true">
             {{ t('deleteAccount') }}
           </button>
           <form v-else @submit.prevent="deleteAccount">
@@ -241,9 +241,12 @@ function cancelDelete() {
               autocomplete="off"
               pattern="DELETE"
               required
-            /><button class="button danger-button" :disabled="busy || confirmation !== 'DELETE'">
+            /><button
+              class="button danger-button danger-action"
+              :disabled="busy || confirmation !== 'DELETE'"
+            >
               {{ language('Permanently delete', 'حذف نهائي') }}</button
-            ><button class="text-link" type="button" @click="cancelDelete">
+            ><button class="text-link danger-action" type="button" @click="cancelDelete">
               {{ t('cancel') }}
             </button>
           </form>

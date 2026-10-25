@@ -160,7 +160,7 @@ function create(ids: string[]) {
           />
           <div class="ui-dialog-actions">
             <DialogClose as-child
-              ><button type="button" class="button secondary">
+              ><button type="button" class="button secondary danger-action">
                 {{ l('Cancel', 'إلغاء') }}
               </button></DialogClose
             >

@@ -1,5 +1,13 @@
 # Verification record
 
+## Assigned-plan presentation and coach completion — 25 October 2026
+
+Focused API checks passed coach completion of athlete-started work, preserved starter/mode and completion attribution, exact retry, rejection of new coach edits to completed self-recorded actuals, supporting-coach review and optional blank feedback with zero external load. The sequence case passed independently, including bounded immutable-snapshot preview metadata. These fixtures require separate disposable databases; an initial combined invocation invalidated the sequence fixture and was not counted as acceptance.
+
+Six focused browser cases passed across desktop Chromium and phone WebKit: attributed recording/retry, dedicated assigned-plan navigation and adaptation draft recovery, future-start explanations, coach completion of athlete-started work and blank review of a recorded 0 kg set. Two scheduling cases were rerun after the final heading/RTL refinements, including athlete denial of staff plan-detail routes. Layout and Axe checks passed in those inspected states. English/light desktop and Arabic/dark desktop/phone cards, Arabic phone plan actions and the phone bodyweight review were rendered and inspected. This does not establish platform-wide visual or accessibility coverage; the broad red-action styling was source-audited with representative rendered actions.
+
+Frontend/backend types, both source inventories and documentation links passed. The [compact receipt](receipts/assigned-plan-coach-completion-2026-10-25.json) records scope and final source hashes. Paired English/Arabic next-release landing guidance is on draft PR #34 at 390e9fd. Both release PRs remain unmerged. No Android build, migration, preview reset, full browser suite or physical-device check was performed. Broader beta.3 recurrence, group results and Android offline workout recording remain pending.
+
 ## Individual workout web integration — 25 October 2026
 
 The focused disposable sequence API case passed concurrent binding, assignment independence, exact completion/skip retry, correction without double advancement, repeated cycles, rescheduling, ending/pausing, bounded agenda pagination and current participation restrictions on overdue starts. Administrator scheduling was checked without enrolling the administrator as a coach. Agenda reads expose only general restriction state. The two Swagger tests passed canonical-contract serving and local/native-marker/production restrictions.

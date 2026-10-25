@@ -4,7 +4,6 @@ import { user } from '../../app/auth'
 import { institutionContext } from '../../app/institution'
 import { localSessions } from '../../lib/storage'
 import { language as l } from '../../lib/i18n'
-import PageHeading from '../../components/PageHeading.vue'
 import WorkoutAgenda from './WorkoutAgenda.vue'
 const localWork = ref<{ id: string; title: string }[]>([])
 let disposed = false
@@ -25,22 +24,7 @@ onMounted(async () => {
 </script>
 <template>
   <div class="container page">
-    <PageHeading
-      ><div>
-        <h1>{{ l('Your workouts', 'تمارينك') }}</h1>
-        <p>
-          {{
-            l(
-              'Follow the next workout in each plan. Your coach sets the training time.',
-              'اتبع التمرين التالي في كل خطة. يحدد مدربك وقت التدريب.',
-            )
-          }}
-        </p>
-      </div>
-      <RouterLink class="button secondary" to="/workouts">{{
-        l('Workout history', 'سجل التمارين')
-      }}</RouterLink></PageHeading
-    >
+    <WorkoutAgenda page-heading />
     <section v-if="localWork.length" class="notice">
       <h2>{{ l('Work saved on this device', 'تمارين محفوظة على هذا الجهاز') }}</h2>
       <p>
@@ -57,6 +41,5 @@ onMounted(async () => {
         </li>
       </ul>
     </section>
-    <WorkoutAgenda />
   </div>
 </template>

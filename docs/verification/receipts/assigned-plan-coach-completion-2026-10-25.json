@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-25",
+  "baseCommit": "52c0c74",
+  "scope": "Assigned-plan UI and coach completion of athlete-started workouts",
+  "checks": [
+    {
+      "command": "npm run test:delegated-sessions --workspace @rafik/backend",
+      "passed": true
+    },
+    {
+      "command": "npm run test:workout-sequence",
+      "passed": true
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach schedules from a plan|coach records a session on|coach finishes athlete-started\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 6
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach schedules from a plan\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 2,
+      "reason": "Final typography, RTL and staff-route denial refinements"
+    },
+    {
+      "command": "Frontend/backend TypeScript, frontend/backend inventories, docs:check",
+      "passed": true
+    }
+  ],
+  "limits": [
+    "Representative browser states only",
+    "No native rebuild or physical device check",
+    "No full browser suite",
+    "No preview data reset or schema migration"
+  ],
+  "sourceSha256": {
+    "apps/backend/server/programming.ts": "80e03c323519f15d0bc9fa95e5b26e8d7ad5378ef4fac2053224a85f8a358839",
+    "apps/backend/openapi.json": "019ec853dd1be56ce3be4c9f17dfcbfd32f19c820861588f31651fc69df8582f",
+    "apps/frontend/src/features/institution/AssignedPlanPage.vue": "8b4f47f042598fd2563551bde7a51486fec271daf7101737bec404908cbcfa2f",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "9f48494bb9ebae72ccf7ccf7fe7b60e69148f04831f4e729b0cccc424f02f7c5",
+    "apps/frontend/src/features/institution/DelegatedWorkout.vue": "e9d2e95a083dab464fe379c769655fb58a756e17a9f50a48fd105c77962d2dff",
+    "apps/frontend/src/features/coaching/PlanEditor.vue": "94c24c6ba54ed36f62430bcb17f001fc98d6991bec7e0c06a334c54c6f72ba9d",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "4adf79086f8f5dc92255efca2daeb81399c6ea9e5287293985a86e4ae7e01d12"
+  }
+}

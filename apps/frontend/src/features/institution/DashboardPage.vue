@@ -909,7 +909,11 @@ onMounted(async () => {
                         {{ l('Close institution', 'إغلاق المؤسسة') }}
                       </button>
                       <DialogClose as-child
-                        ><button type="button" class="button secondary" :disabled="locked">
+                        ><button
+                          type="button"
+                          class="button secondary danger-action"
+                          :disabled="locked"
+                        >
                           {{ l('Cancel', 'إلغاء') }}
                         </button></DialogClose
                       >

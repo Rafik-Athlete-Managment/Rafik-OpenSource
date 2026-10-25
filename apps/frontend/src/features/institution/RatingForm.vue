@@ -162,7 +162,7 @@ const labels = computed(() => [
     <p v-if="error" role="alert" class="notice error">{{ error }}</p>
     <CommandStatus :command="command" /><button
       v-if="command.state.error && !command.state.pending"
-      class="text-link"
+      class="text-link danger-action"
       @click="discard"
     >
       {{ l('Reload rating and discard draft', 'إعادة تحميل التقييم وحذف المسودة') }}

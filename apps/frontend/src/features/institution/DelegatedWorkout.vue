@@ -28,6 +28,7 @@ type Delegated = Session & {
   member_name?: string
   recorded_mode?: 'self' | 'delegated'
   recorded_by_name?: string | null
+  can_record?: boolean
 }
 type Version = {
   version: number
@@ -281,13 +282,19 @@ onMounted(load)
       <p v-if="session.recorded_mode !== 'delegated'" class="notice">
         {{
           l(
-            'The athlete recorded this session. Coaches can review it but not edit it.',
-            'سجّل الرياضي هذه الحصة. يمكن للمدربين مراجعتها دون تعديلها.',
+            'The athlete started this workout. Authorized coaches can finish it; every saved change keeps its author.',
+            'بدأ الرياضي هذا التمرين. يستطيع المدرب المخوّل إكماله؛ ويُحفظ صاحب كل تعديل مسجّل.',
           )
         }}
       </p>
-      <form v-else class="form-stack" @submit.prevent="save(true)">
-        <CommandStatus :command="saving" />
+      <CommandStatus :command="saving" />
+      <RouterLink
+        v-if="!session.can_record"
+        class="button secondary"
+        :to="'/review/' + session.id"
+        >{{ l('Review workout', 'مراجعة التمرين') }}</RouterLink
+      >
+      <form v-if="session.can_record" class="form-stack" @submit.prevent="save(true)">
         <fieldset class="command-fields" :disabled="locked">
           <section v-for="exercise in exercises" :key="exercise.key" class="panel">
             <h2 dir="auto">{{ exerciseName(exercise) }}</h2>

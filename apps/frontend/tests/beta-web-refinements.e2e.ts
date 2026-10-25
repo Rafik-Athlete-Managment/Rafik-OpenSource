@@ -156,15 +156,15 @@ test('coach browses later pages of athlete plans, nutrition plans and events, th
     await expect(detail).toContainText(later)
     await expect(page).toHaveURL(/offset=24/)
     await inspect(page, 'athlete-plan-detail', info)
-    await detail.getByRole('button', { name: 'Close plan' }).click()
+    await detail.getByRole('link', { name: 'Athlete plans', exact: true }).click()
     await expect(detail).toHaveCount(0)
     await expect(page).toHaveURL(/offset=24/)
     await expect(page.locator('.athlete-plan-card').filter({ hasText: later })).toBeVisible()
-    await page.getByLabel('Search athlete or program').fill(later.slice(0, 18))
+    await page.getByLabel('Search athletes').fill(later.slice(0, 18))
     await page.getByRole('button', { name: 'Search', exact: true }).click()
     await expect(page.getByText('1 matching assignments')).toBeVisible()
     await page.reload()
-    await expect(page.getByLabel('Search athlete or program')).toHaveValue(later.slice(0, 18))
+    await expect(page.getByLabel('Search athletes')).toHaveValue(later.slice(0, 18))
     await expect(page.locator('.athlete-plan-card')).toHaveCount(1)
 
     // Nutrition plans: later-page selection opens the athlete editor and returns to the same page.

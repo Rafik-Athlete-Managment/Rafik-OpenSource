@@ -93,7 +93,7 @@ const remove = (link: { id: string; revision: number }) =>
           ><strong>{{ nameOf(link.coach) }}</strong> · {{ sportOf(link.sport) }}</span
         ><button
           type="button"
-          class="text-link"
+          class="text-link danger-action"
           :disabled="locked"
           :aria-label="l('Remove supporting coach ', 'إزالة المدرب المساند ') + nameOf(link.coach)"
           @click="remove(link)"

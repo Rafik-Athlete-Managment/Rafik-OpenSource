@@ -13,11 +13,17 @@ import EmptyState from '../../components/EmptyState.vue'
 import ListPagination from '../../components/ListPagination.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'
 import CommandStatus from '../../components/CommandStatus.vue'
+import { PhBarbell, PhPlay, PhClockCounterClockwise, PhArrowClockwise } from '@phosphor-icons/vue'
+import ProgramCover from '../coaching/ProgramCover.vue'
 
-const props = withDefaults(defineProps<{ assignment?: string; due?: boolean; limit?: number }>(), {
-  due: false,
-  limit: 10,
-})
+const props = withDefaults(
+  defineProps<{ assignment?: string; due?: boolean; limit?: number; pageHeading?: boolean }>(),
+  {
+    due: false,
+    limit: 10,
+    pageHeading: false,
+  },
+)
 const context = institutionContext(),
   route = useRoute(),
   router = useRouter()
@@ -193,7 +199,7 @@ function sessionLink(item: WorkoutAgendaItem) {
   if (item.state === 'paused' && context.view !== 'trainee') return `/review/${item.session!.id}`
   return context.view === 'trainee'
     ? `/workout/${item.session!.id}?institution=${context.institution}`
-    : item.session!.recorded_mode === 'delegated' && context.view === 'trainer'
+    : item.session!.can_record && context.view === 'trainer'
       ? `/record/${item.session!.id}`
       : `/review/${item.session!.id}`
 }
@@ -232,16 +238,39 @@ watch(
   },
 )
 onMounted(load)
+const muscleNames: Record<string, [string, string]> = {
+  quadriceps: ['Quadriceps', 'عضلات الفخذ الأمامية'],
+  hamstrings: ['Hamstrings', 'عضلات الفخذ الخلفية'],
+  glutes: ['Glutes', 'عضلات الأرداف'],
+  lats: ['Lats', 'عضلات الظهر العريضة'],
+  pectorals: ['Chest', 'عضلات الصدر'],
+  abdominals: ['Abdominals', 'عضلات البطن'],
+  deltoids: ['Shoulders', 'عضلات الكتف'],
+  biceps: ['Biceps', 'العضلة ذات الرأسين'],
+  triceps: ['Triceps', 'العضلة ثلاثية الرؤوس'],
+  calves: ['Calves', 'عضلات الساق'],
+  trapezius: ['Trapezius', 'العضلة شبه المنحرفة'],
+  core: ['Core', 'عضلات الجذع'],
+}
+const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]!) : name)
 </script>
 <template>
-  <section class="workout-agenda" :aria-label="l('Next workouts', 'التمارين التالية')">
+  <section
+    class="workout-agenda"
+    :class="{ 'athlete-workout-preview': pageHeading }"
+    :aria-label="l('Next workouts', 'التمارين التالية')"
+  >
     <header class="agenda-heading">
       <div>
-        <h2>
+        <component :is="pageHeading ? 'h1' : 'h2'">
           {{
-            due ? l('Today and overdue', 'اليوم والمتأخر') : l('Next workouts', 'التمارين التالية')
+            pageHeading
+              ? l('Your workouts', 'تمارينك')
+              : due
+                ? l('Today and overdue', 'اليوم والمتأخر')
+                : l('Next workouts', 'التمارين التالية')
           }}
-        </h2>
+        </component>
         <p>
           {{
             l(
@@ -251,12 +280,23 @@ onMounted(load)
           }}
         </p>
       </div>
-      <RouterLink v-if="due" class="text-link" to="/training">{{
-        l('Athlete plans', 'خطط الرياضيين')
-      }}</RouterLink>
-      <button class="button small secondary" :disabled="loading || locked" @click="load">
-        {{ l('Refresh workouts', 'تحديث التمارين') }}
-      </button>
+      <div class="agenda-toolbar-actions">
+        <RouterLink v-if="pageHeading" class="button secondary" to="/workouts"
+          ><PhClockCounterClockwise :size="18" aria-hidden="true" />{{
+            l('Workout history', 'سجل التمارين')
+          }}</RouterLink
+        ><RouterLink v-if="due" class="text-link" to="/training">{{
+          l('Athlete plans', 'خطط الرياضيين')
+        }}</RouterLink>
+        <button
+          :class="pageHeading ? 'button' : 'button small secondary'"
+          :disabled="loading || locked"
+          @click="load"
+        >
+          <PhArrowClockwise :size="18" aria-hidden="true" />
+          {{ l('Refresh workouts', 'تحديث التمارين') }}
+        </button>
+      </div>
     </header>
     <CommandStatus :command="command" />
     <p v-if="error && data" class="notice error" role="alert">{{ error }}</p>
@@ -279,11 +319,15 @@ onMounted(load)
         />
         <ul v-else class="agenda-list">
           <li v-for="item in data.items" :key="item.assignment_id" class="agenda-row">
+            <div v-if="pageHeading" class="workout-preview-art" aria-hidden="true">
+              <PhBarbell :size="44" />
+              <ProgramCover :id="item.preview?.cover" />
+            </div>
             <div class="agenda-copy">
               <p v-if="context.view !== 'trainee' && !assignment" class="overline">
                 <bdi dir="auto">{{ item.member_name }}</bdi>
               </p>
-              <h3>
+              <component :is="pageHeading ? 'h2' : 'h3'">
                 <bdi dir="auto">{{
                   assignment
                     ? locale === 'ar'
@@ -291,7 +335,7 @@ onMounted(load)
                       : item.day?.name
                     : item.title
                 }}</bdi>
-              </h3>
+              </component>
               <p v-if="!assignment">
                 <bdi dir="auto">{{
                   locale === 'ar' ? item.day?.nameAr || item.day?.name : item.day?.name
@@ -325,14 +369,70 @@ onMounted(load)
                 }}
               </p>
             </div>
+            <div v-if="pageHeading && item.preview" class="workout-preview-details">
+              <dl class="workout-preview-metrics">
+                <div v-if="item.preview.minutes">
+                  <dt>{{ l('Planned time', 'الوقت المخطط') }}</dt>
+                  <dd>{{ item.preview.minutes }} {{ l('min', 'دقيقة') }}</dd>
+                </div>
+                <div>
+                  <dt>{{ l('Exercises', 'التمارين') }}</dt>
+                  <dd>{{ item.preview.exercise_count }}</dd>
+                </div>
+                <div>
+                  <dt>{{ l('Prescribed sets', 'المجموعات الموصوفة') }}</dt>
+                  <dd>{{ item.preview.prescribed_sets }}</dd>
+                </div>
+              </dl>
+              <div class="workout-preview-sections">
+                <section v-if="item.preview.exercises.length">
+                  <h3>{{ l('In this workout', 'في هذا التمرين') }}</h3>
+                  <ol class="workout-preview-exercises">
+                    <li v-for="(exercise, index) in item.preview.exercises" :key="index">
+                      <span
+                        ><bdi>{{
+                          locale === 'ar' ? exercise.name_ar || exercise.name : exercise.name
+                        }}</bdi></span
+                      ><small>{{ exercise.sets }} {{ l('sets', 'مجموعات') }}</small>
+                    </li>
+                  </ol>
+                  <p
+                    v-if="item.preview.exercise_count > 3"
+                    class="small-print workout-preview-more-mobile"
+                  >
+                    + {{ item.preview.exercise_count - 3 }} {{ l('more exercises', 'تمارين أخرى') }}
+                  </p>
+                  <p
+                    v-if="item.preview.exercise_count > item.preview.exercises.length"
+                    class="small-print workout-preview-more-desktop"
+                  >
+                    + {{ item.preview.exercise_count - item.preview.exercises.length }}
+                    {{ l('more exercises', 'تمارين أخرى') }}
+                  </p>
+                </section>
+                <section v-if="item.preview.muscle_focus.length">
+                  <h3>{{ l('Muscle focus', 'العضلات المستهدفة') }}</h3>
+                  <div class="workout-muscles">
+                    <span v-for="muscle in item.preview.muscle_focus" :key="muscle" class="tag"
+                      ><bdi>{{ muscleName(muscle) }}</bdi></span
+                    >
+                  </div>
+                  <p class="small-print">
+                    {{
+                      l('From the prescribed exercise metadata.', 'حسب بيانات التمارين الموصوفة.')
+                    }}
+                  </p>
+                </section>
+              </div>
+            </div>
             <div class="agenda-actions">
               <RouterLink
                 v-if="item.session && (item.state !== 'paused' || context.view !== 'trainee')"
-                class="button small secondary"
+                class="button small"
                 :to="sessionLink(item)"
-                >{{
+                ><PhPlay :size="18" aria-hidden="true" />{{
                   item.state === 'paused' ||
-                  (context.view !== 'trainee' && item.session.recorded_mode !== 'delegated')
+                  (context.view !== 'trainee' && !item.session.can_record)
                     ? l('View workout', 'عرض التمرين')
                     : l('Resume workout', 'متابعة التمرين')
                 }}</RouterLink
@@ -342,7 +442,9 @@ onMounted(load)
                 :disabled="locked"
                 @click="start(item)"
               >
-                {{ l('Start workout', 'بدء التمرين') }}</button
+                <PhPlay :size="18" aria-hidden="true" />{{
+                  l('Start workout', 'بدء التمرين')
+                }}</button
               ><button
                 v-if="item.can_schedule"
                 class="button small secondary"
@@ -414,7 +516,7 @@ onMounted(load)
                   }}</button
                 ><button
                   type="button"
-                  class="button small secondary"
+                  class="button small secondary danger-action"
                   :disabled="locked"
                   @click="selected = undefined"
                 >
@@ -460,8 +562,10 @@ onMounted(load)
   margin-block: var(--space-2);
 }
 .agenda-heading h2,
-.agenda-copy h3 {
+.agenda-copy h3,
+.agenda-copy h2 {
   margin: 0;
+  font-size: var(--text-panel);
 }
 .agenda-list {
   list-style: none;
@@ -491,6 +595,182 @@ onMounted(load)
 @media (max-width: 600px) {
   .agenda-actions {
     width: 100%;
+  }
+}
+
+.agenda-toolbar-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.agenda-toolbar-actions .button,
+.agenda-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.athlete-workout-preview {
+  margin-block: 0;
+}
+.athlete-workout-preview .agenda-heading h1 {
+  font-size: var(--text-page);
+  line-height: 1.2;
+  margin: 0;
+}
+.athlete-workout-preview .agenda-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: var(--space-5);
+  margin-block: var(--space-6);
+}
+.athlete-workout-preview .agenda-row {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: var(--space-6);
+  background: var(--surface);
+  align-items: stretch;
+  gap: var(--space-5);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.athlete-workout-preview .agenda-row:hover,
+.athlete-workout-preview .agenda-row:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--accent), transparent 92%);
+}
+.workout-preview-art {
+  flex: 0 0 88px;
+  display: grid;
+  place-items: center;
+  min-height: 112px;
+  border-radius: var(--radius-panel);
+  color: var(--accent);
+  background: linear-gradient(
+    140deg,
+    var(--surface-soft),
+    color-mix(in srgb, var(--accent), transparent 85%)
+  );
+}
+.athlete-workout-preview .agenda-copy {
+  flex-basis: 200px;
+}
+.athlete-workout-preview .agenda-actions {
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+@media (prefers-reduced-motion: reduce) {
+  .athlete-workout-preview .agenda-row {
+    transition: none;
+  }
+}
+@media (max-width: 480px) {
+  .workout-preview-art {
+    flex-basis: 100%;
+    min-height: 100px;
+  }
+}
+
+.workout-preview-art {
+  position: relative;
+  overflow: hidden;
+}
+.workout-preview-art :deep(.program-cover) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border-radius: inherit;
+}
+.workout-preview-details {
+  flex-basis: 100%;
+  min-width: 0;
+}
+.workout-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--line);
+}
+.workout-preview-metrics dt {
+  font-size: var(--text-caption);
+  color: var(--muted);
+}
+.workout-preview-metrics dd {
+  margin: var(--space-2) 0 0;
+  font-weight: 650;
+  font-size: var(--text-panel);
+}
+.workout-preview-sections {
+  display: grid;
+  gap: var(--space-5);
+}
+.workout-preview-sections h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-small);
+}
+.workout-preview-exercises {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.workout-preview-exercises li {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  align-items: baseline;
+  min-width: 0;
+}
+.workout-preview-exercises li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workout-preview-exercises small {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.workout-muscles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.athlete-workout-preview .agenda-actions {
+  margin-block-start: auto;
+}
+@media (min-width: 1200px) {
+  .workout-preview-sections {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.agenda-heading h2 {
+  font-size: var(--text-section);
+}
+.workout-preview-more-mobile {
+  display: none;
+}
+@media (max-width: 600px) {
+  .athlete-workout-preview .agenda-actions {
+    order: 2;
+    margin-block-start: 0;
+  }
+  .workout-preview-details {
+    order: 3;
+  }
+  .workout-preview-exercises li:nth-child(n + 4) {
+    display: none;
+  }
+  .workout-preview-more-mobile {
+    display: block;
+  }
+  .workout-preview-more-desktop {
+    display: none;
   }
 }
 </style>

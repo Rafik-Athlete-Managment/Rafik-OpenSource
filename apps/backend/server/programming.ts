@@ -1137,6 +1137,18 @@ export async function institutionSession(
       member_name: m.name,
       version: s.version,
       completed_at: s.completed_at,
+      can_record:
+        view === "trainer" &&
+        m.active &&
+        (s.recorded_mode === "delegated" || !s.completed_at) &&
+        !(await tx.institution_workout_positions.findFirst({
+          where: {
+            institution_id: s.institution_id,
+            session_id: s.id,
+            state: { in: ["paused", "skipped", "cancelled"] },
+          },
+          select: { id: true },
+        })),
     };
   });
 }
@@ -1182,8 +1194,22 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
     if (!s || s.institution_id !== id)
       throw new ApiError(403, "session_missing");
     if (action === "save" && view === "trainer") {
-      // Coaches edit only sessions recorded on the athlete's behalf, never self-logged ones.
-      if (s.recorded_mode !== "delegated") throw new ApiError(403, "forbidden");
+      await delegate(tx, self, s.assignment_id);
+      // Coaches may finish an athlete-started record; completed self-logged actuals remain protected.
+      // A retry of the exact acknowledged completion still reaches the shared receipt comparison.
+      if (s.recorded_mode !== "delegated" && s.completed_at) {
+        const receipt = await tx.institution_operations.findFirst({
+          where: {
+            id: uuid(input.operation),
+            actor_id: actor.id,
+            institution_id: id,
+          },
+        });
+        if (!receipt) throw new ApiError(403, "forbidden");
+      }
+      return;
+    }
+    if (action === "review" && view === "trainer") {
       await delegate(tx, self, s.assignment_id);
       return;
     }
@@ -1374,12 +1400,20 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           reviewed_by: null,
           coach_note: "",
           version: s.version + 1,
+          ...(!s.completed_at && input.complete
+            ? {
+                completed_by: self.id,
+                completed_by_name: self.name,
+                completed_by_role: view === "trainer" ? "trainer" : "trainee",
+              }
+            : {}),
         };
       } else {
         if (!completed) throw new ApiError(400, "session_not_completed");
-        const note = typeof input.note === "string" ? input.note.trim() : "";
-        if (!note || note.length > 2000)
+        if (typeof input.note !== "string")
           throw new ApiError(400, "invalid_feedback");
+        const note = input.note.trim();
+        if (note.length > 2000) throw new ApiError(400, "invalid_feedback");
         document = {
           ...current,
           coach_note: note,
@@ -1595,6 +1629,23 @@ export async function workoutAgenda(
                   : occurrence.ends_at < now
                     ? "overdue"
                     : "ready";
+        const exercises = (day?.exercises || []) as any[];
+        const muscleCounts = new Map<string, number>();
+        for (const exercise of exercises) {
+          const info = exercise.info || {};
+          const muscles =
+            Array.isArray(info.muscles) && info.muscles.length
+              ? info.muscles
+              : info.target_muscle
+                ? [info.target_muscle]
+                : [];
+          for (const muscle of new Set<string>(
+            muscles
+              .filter((m: unknown) => typeof m === "string" && m.trim())
+              .map((m: string) => m.trim().toLowerCase()),
+          ))
+            muscleCounts.set(muscle, (muscleCounts.get(muscle) || 0) + 1);
+        }
         return {
           assignment_id: a.id,
           member_id: a.member_id,
@@ -1605,6 +1656,31 @@ export async function workoutAgenda(
           title: a.institution_versions.title,
           goal: a.goal,
           cursor: a.sequence_cursor,
+          preview: {
+            minutes:
+              typeof day?.minutes === "number" && day.minutes > 0
+                ? day.minutes
+                : null,
+            exercise_count: exercises.length,
+            prescribed_sets: exercises.reduce(
+              (n, e) =>
+                n + (Number.isInteger(e.sets) && e.sets > 0 ? e.sets : 0),
+              0,
+            ),
+            exercises: exercises.slice(0, 5).map((e) => ({
+              name: e.info?.name || e.exerciseId,
+              name_ar: e.info?.name_ar || undefined,
+              sets: e.sets,
+              kind: e.kind || e.info?.kind || "strength",
+            })),
+            muscle_focus: [...muscleCounts]
+              .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+              .slice(0, 4)
+              .map(([name]) => name),
+            cover:
+              (a.institution_versions.prescription as any).presentation
+                ?.cover || undefined,
+          },
           day: day ? { id: day.id, name: day.name, nameAr: day.nameAr } : null,
           state,
           blocked,
@@ -1621,7 +1697,15 @@ export async function workoutAgenda(
               }
             : null,
           session: session
-            ? { id: session.id, recorded_mode: session.recorded_mode }
+            ? {
+                id: session.id,
+                recorded_mode: session.recorded_mode,
+                can_record:
+                  view === "trainer" &&
+                  state !== "paused" &&
+                  (session.recorded_mode === "delegated" ||
+                    !session.completed_at),
+              }
             : null,
           can_start:
             !blocked &&

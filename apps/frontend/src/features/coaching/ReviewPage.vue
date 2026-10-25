@@ -18,7 +18,7 @@ const context = programContext(route)
 const draftKey = `review:${user.value!.id}:${context.key}:${route.params.id}`
 const id = String(route.params.id)
 const back = {
-  path: context.base + '/training',
+  path: context.base + '/workouts',
   query: { view: String(route.query.view || 'all'), search: route.query.search },
 }
 const session = ref<Session>(),
@@ -102,6 +102,9 @@ onMounted(async () => {
           </div></PageHeading
         >
         <CommandStatus :command="command" :show-notice="false" />
+        <RouterLink v-if="session.can_record" class="button" :to="'/record/' + session.id">{{
+          language('Continue workout for athlete', 'متابعة تمرين الرياضي')
+        }}</RouterLink>
         <div class="review-layout">
           <section>
             <article

@@ -1496,6 +1496,10 @@
                   },
                   "recorded_mode": {
                     "type": "string"
+                  },
+                  "can_record": {
+                    "type": "boolean",
+                    "description": "Current plan-scoped coach can continue this workout; writes reauthorize."
                   }
                 },
                 "required": [
@@ -1513,6 +1517,55 @@
           },
           "can_schedule": {
             "type": "boolean"
+          },
+          "preview": {
+            "type": "object",
+            "description": "Bounded preview from the immutable assigned workout. Muscle focus ranks declared metadata by exercise frequency, not physiological load.",
+            "properties": {
+              "minutes": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "exercise_count": {
+                "type": "integer"
+              },
+              "prescribed_sets": {
+                "type": "integer"
+              },
+              "exercises": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "name_ar": {
+                      "type": "string"
+                    },
+                    "sets": {
+                      "type": "integer"
+                    },
+                    "kind": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "muscle_focus": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "cover": {
+                "type": "string"
+              }
+            }
           }
         },
         "required": [

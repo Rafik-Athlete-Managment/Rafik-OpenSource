@@ -1,5 +1,17 @@
 # Current delivery ledger
 
+## Coach completion and richer workout previews — 25 October 2026
+
+Founder extended the presentation corrections to request exercise/duration/muscle previews and coach completion of athlete-started work. The bounded agenda projection now includes immutable prescription preview metadata, with at most five exercise names and four declared muscle groups; frequency ranks metadata, not physiological load. Cards reuse authorized cover rendering where supplied and keep recording controls ahead of secondary details on phones.
+
+ADR 0031 records coach completion authority: current plan-scoped coaches can finish unfinished self-started records, preserving starter/mode and attributed actuals history, with separate first-completion identity. Completed self-logged actuals remain protected from new coach edits. Exact completion retries and stale revisions use existing receipt/conflict handling. Review feedback is now optional as labelled; zero load was already valid. Supporting-coach reviews use plan-sport authority. Coach recording/review links expose the supported flow; no new Android capture is implied.
+
+## Assigned-plan presentation corrections — 25 October 2026
+
+Assigned plans now open at `/training/:assignment` instead of below directory filters. Current query links redirect there, and new profile/calendar/directory links use the detail route. Navigation remains on Athlete plans and staff authorization is checked before rendering. The detail page reuses PlanEditor for adaptation of the assigned immutable snapshot, with assignment/version-scoped recovery and an Adapt program heading; publishing still requires explicit assignment/replacement. Existing program creation/editing stays in its own editor route.
+
+Athlete training uses one page title and adjacent filled-refresh/outlined-history controls. Workout preview cards retain visible Start/Resume on touch and keyboard, with restrained hover/focus emphasis. Assigned-plan actions use consistent icon buttons. Semantic red styles were applied to cancellation, removal and deletion controls; status labels and calendar links are not destructive controls. No backend schema migration is needed. The preview/continuation contract extension is described above; focused rendered checks and limitations are in verification.
+
 ## Individual workout web cutover — 25 October 2026
 
 Added a bounded, authorization-scoped GET projection beside the existing workout scheduling commands. Dashboard due-work discovery includes today, overdue and unfinished older records without requiring athlete selection. A shared WorkoutAgenda renders immutable next-day identity, start-time/restriction explanations, occurrence-bound start, resume/review, scheduling, rescheduling and staff skip with a reason. Athlete plan details and profile links lead to this flow; athlete training no longer offers arbitrary plan days. Existing unsynced institutional browser records stay reachable. Administrator actions remain scheduling/review; delegated recording remains the coach role.
@@ -204,3 +216,5 @@ Beta.3 operation inventory: traced current direct RPC callers and Support's impl
 ## Campaign brand alignment — 23 October 2026
 
 Reviewed the founder's round7 brand ZIP and representative PDF/example renders. Integrated shared identity, product-specific exceptions, source hashes and stale-source reconciliation into the existing design system; updated AGENTS for future work. Web broadly matches the identity; native source differs in palette/typeface and needs surface-appropriate logo treatment. Added a scoped beta.3 native acceptance checklist without changing runtime code, APKs or institution themes. Supplied photography is reference-only because the cited round6 credits are absent; campaign strategy/assets stay in their owning project.
+
+Paired English/Arabic landing guidance for these corrections is on the existing unmerged PR at `390e9fd`. The delegated-completion API fixture and seeded sequence fixture must run in separate disposable databases: the former deliberately replaces the seed institution.

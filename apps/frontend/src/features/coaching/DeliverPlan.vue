@@ -583,7 +583,7 @@ onMounted(load)
                   <button
                     v-if="selected.length > 1 && !confirmClear"
                     type="button"
-                    class="text-link selected-clear"
+                    class="text-link selected-clear danger-action"
                     @click="confirmClear = true"
                   >
                     {{ l('Remove all', 'إزالة الكل') }}
@@ -596,7 +596,7 @@ onMounted(load)
                       `إزالة جميع الرياضيين المحددين (${selected.length}) واختيارات خططهم؟`,
                     )
                   }}
-                  <button type="button" class="text-link" @click="clearAll">
+                  <button type="button" class="text-link danger-action" @click="clearAll">
                     {{ l('Remove all', 'إزالة الكل') }}</button
                   ><button type="button" class="text-link" @click="confirmClear = false">
                     {{ l('Keep them', 'الإبقاء عليهم') }}
@@ -663,7 +663,7 @@ onMounted(load)
                     </div>
                     <button
                       type="button"
-                      class="icon-button selected-remove"
+                      class="icon-button selected-remove danger-action"
                       :aria-label="l('Remove ', 'إزالة ') + nameOf(id)"
                       @click="remove(id)"
                     >
@@ -783,7 +783,7 @@ onMounted(load)
           </fieldset>
           <div class="ui-dialog-actions">
             <DialogClose as-child
-              ><button type="button" class="button secondary">
+              ><button type="button" class="button secondary danger-action">
                 {{ l('Cancel', 'إلغاء') }}
               </button></DialogClose
             ><button type="button" class="button" @click="applyChoice">

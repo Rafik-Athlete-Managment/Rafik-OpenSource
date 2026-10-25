@@ -29,11 +29,13 @@ import PrescriptionFields from './PrescriptionFields.vue'
 import { upgradePrescription, targetLabel } from '../../lib/prescriptions'
 import type { Exercise } from '../../lib/domain'
 import PageState from '../../components/PageState.vue'
+import type { AthletePlanSummary } from '@rafik/shared/contracts'
+const props = defineProps<{ assignedPlan?: AthletePlanSummary }>()
 const route = useRoute(),
   router = useRouter()
 const context = programContext(route)
 const editable = ref(context.view !== 'trainee')
-const isNew = route.params.id === 'new'
+const isNew = !!props.assignedPlan || route.params.id === 'new'
 const id = ref(isNew ? crypto.randomUUID() : String(route.params.id))
 const title = ref(language('New program', 'برنامج جديد'))
 const blankPrescription = (): Prescription => ({
@@ -69,8 +71,11 @@ const coverDrag = ref(false)
 let initialized = false
 const keyFor = (id: string) => `plan:${user.value!.id}:${context.key}:${id}`
 const key =
-  keyFor(String(route.params.id)) +
-  (route.query.source ? `:source:${route.query.source}:member:${route.query.member || ''}` : '')
+  keyFor(
+    props.assignedPlan
+      ? `assignment:${props.assignedPlan.id}:${props.assignedPlan.version.id}`
+      : String(route.params.id),
+  ) + (route.query.source ? `:source:${route.query.source}:member:${route.query.member || ''}` : '')
 const day = computed(() => draft.value.days[selected.value]!)
 const catalog = ref<Exercise[]>([])
 const activeCatalog = computed(() => catalog.value.filter((exercise) => exercise.active !== false))
@@ -130,7 +135,13 @@ async function load(recover = true) {
   try {
     if (isNew) {
       catalog.value = await context.catalog()
-      if (route.query.source) {
+      if (props.assignedPlan) {
+        title.value = props.assignedPlan.version.title.slice(0, 85) + language(' adapted', ' معدّل')
+        draft.value = upgradePrescription(
+          clone(props.assignedPlan.version.prescription as Prescription),
+        )
+        version.value = null
+      } else if (route.query.source) {
         const source = await context.load(String(route.query.source))
         title.value = source.program.title.slice(0, 85) + language(' adapted', ' معدّل')
         draft.value = upgradePrescription(clone(source.program.draft))
@@ -430,8 +441,8 @@ function removeDay() {
 }
 </script>
 <template>
-  <div class="container page editor-page">
-    <RouterLink class="back-link" :to="context.base + '/plans'"
+  <div :class="assignedPlan ? 'editor-page assigned-editor' : 'container page editor-page'">
+    <RouterLink v-if="!assignedPlan" class="back-link" :to="context.base + '/plans'"
       ><PhArrowLeft :size="18" aria-hidden="true" class="directional" />{{
         language('Programs', 'البرامج')
       }}</RouterLink
@@ -445,15 +456,17 @@ function removeDay() {
               : language('Plan studio', 'تصميم الخطة')
           }}
         </p>
-        <h1>
+        <component :is="assignedPlan ? 'h2' : 'h1'">
           {{
-            isNew
-              ? language('Create a program', 'إنشاء برنامج')
-              : editable
-                ? language('Edit program', 'تعديل البرنامج')
-                : language('Program details', 'تفاصيل البرنامج')
+            assignedPlan || route.query.source
+              ? language('Adapt program', 'تكييف البرنامج')
+              : isNew
+                ? language('Create a program', 'إنشاء برنامج')
+                : editable
+                  ? language('Edit program', 'تعديل البرنامج')
+                  : language('Program details', 'تفاصيل البرنامج')
           }}
-        </h1>
+        </component>
       </div>
     </PageHeading>
     <!-- One sticky action bar keeps preview, assign, save and publish reachable while editing. -->
@@ -515,13 +528,13 @@ function removeDay() {
     <PageState :loading="loading" :error="!loadedSuccessfully ? error : ''" @retry="load()"
       ><p v-if="restored" class="notice">
         {{ language('Your local draft has been restored.', 'تم استرداد مسودتك المحلية.') }}
-        <button class="text-link" @click="discard">
+        <button class="text-link danger-action" @click="discard">
           {{ language('Discard local changes', 'تجاهل التعديلات المحلية') }}
         </button>
       </p>
       <p v-if="error" class="notice error" role="alert">
         {{ error }}
-        <button v-if="!isNew" class="text-link" @click="discard">
+        <button v-if="!isNew" class="text-link danger-action" @click="discard">
           {{
             language(
               'Reload saved plan (discards this draft)',
@@ -581,7 +594,7 @@ function removeDay() {
               <button
                 v-if="draft.presentation?.cover"
                 type="button"
-                class="text-link"
+                class="text-link danger-action"
                 @click="delete draft.presentation.cover"
               >
                 {{ language('Remove cover', 'إزالة الغلاف') }}
@@ -738,7 +751,7 @@ function removeDay() {
                   required /></label
               ><button
                 v-if="draft.days.length > 1"
-                class="icon-button danger"
+                class="icon-button danger danger-action"
                 type="button"
                 :aria-label="language('Remove this day', 'حذف اليوم')"
                 @click="removeDay"
@@ -836,7 +849,7 @@ function removeDay() {
                   >
                     <PhArrowDown :size="18" /></button
                   ><button
-                    class="icon-button danger"
+                    class="icon-button danger danger-action"
                     type="button"
                     :disabled="day.exercises.length === 1"
                     :aria-label="language('Remove exercise', 'حذف التمرين')"
@@ -896,6 +909,7 @@ function removeDay() {
                   <li v-for="alternative in ex.alternatives" :key="alternative.exerciseId">
                     <span>{{ name(alternative.exerciseId) }}</span>
                     <button
+                      class="danger-action"
                       type="button"
                       :aria-label="
                         language('Remove alternative', 'إزالة البديل') +

@@ -442,7 +442,7 @@ onMounted(async () => {
                   : language('New exercise', 'تمرين جديد')
               }}
             </h2>
-            <button type="button" class="text-link" :disabled="busy" @click="close()">
+            <button type="button" class="text-link danger-action" :disabled="busy" @click="close()">
               {{ language('Discard and close', 'تجاهل وإغلاق') }}
             </button>
           </div>
@@ -575,7 +575,7 @@ onMounted(async () => {
             <button
               v-if="editing.media_asset"
               type="button"
-              class="text-link"
+              class="text-link danger-action"
               @click="editing.media_asset = undefined"
             >
               {{ language('Remove uploaded demonstration', 'إزالة الشرح المرفوع') }}

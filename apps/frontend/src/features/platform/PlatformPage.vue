@@ -184,7 +184,7 @@ onMounted(() => load())
           <div class="actions">
             <button class="button" :disabled="reason.trim().length < 10">
               {{ l('Confirm action', 'تأكيد الإجراء') }}</button
-            ><button type="button" class="text-link" @click="selected = undefined">
+            ><button type="button" class="text-link danger-action" @click="selected = undefined">
               {{ l('Cancel', 'إلغاء') }}
             </button>
           </div>
