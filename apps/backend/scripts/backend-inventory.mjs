@@ -279,6 +279,8 @@ for (const [handler, prefix] of [
 const commands = [],
   queries = [];
 const purposes = {
+  adaptation:
+    "Assignment-local immutable prescription snapshot and revision; source library version is retained and changes are audited.",
   accepted_by: "Account that consumed the invitation.",
   answers: "Historical form response values.",
   data: "Institution exercise metadata snapshot.",

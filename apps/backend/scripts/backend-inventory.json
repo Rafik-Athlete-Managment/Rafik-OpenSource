@@ -616,7 +616,7 @@
       "path": "/v1/institution/delivery",
       "methods": ["GET", "POST"],
       "handlers": ["delivery", "deliveryCommand"],
-      "purpose": "Independent goal-specific plan assignments and end/replacement",
+      "purpose": "Independent goal-specific plan assignments, assignment-local adaptation and end/replacement",
       "access": "Current signed-in institution membership; handler enforces its role/subject scope",
       "clients": "Web program/athlete recording; future Android workout capture"
     },

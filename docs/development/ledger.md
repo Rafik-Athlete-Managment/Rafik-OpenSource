@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## Founder workflow corrections — 26 October 2026
+
+Supporting/primary coaches remain selected in their original picker list, with immediate link/unlink and explicit multi-scope addition. Conversations/Start conversation/Groups replace the disclosure directory; an institution switch interleaves unjoined metadata and joined previews, with server filtering before pagination and stale-response protection.
+
+Athlete-plan adaptation now writes a validated assignment-local snapshot through exact delivery commands. Source library records, assignment/cursor/policy and scheduled/started snapshots remain intact. Bound starts consume their frozen day even if the adapted plan removed that day. Private media references, projections and future worker preparation understand personalization. Old library-copy command recovery retains its original endpoint/scope; new adaptation commands preserve original revision/source values through replay. Regular library editing retains its program ID. ADR 0033 and the canonical founder walkthrough describe the boundaries. The event-composer workout picker and separate custom-event choice are recorded as next-slice scope; group work remains subsequent. Paired English/Arabic landing guidance is prepared at `bea632d` in draft PR #34; release PR #142 remains unmerged.
+
 ## Assessment-event template selection — 26 October 2026
 
 Removed the separate search accordion and template dropdown in EventComposer. One visible server-backed search now shows selectable template rows with test counts; requests fetch five templates at a time with explicit More templates. The selected template remains separately identified through no-match searches and restored drafts. New-template/new-tab return and refresh controls remain. Event name has bilingual assessment/training examples. This is a web presentation change; assessment authority, snapshots and submission contracts are unchanged. The founder also requested clearer light-theme card separation and corresponding text adjustment: light surfaces now mix seven percent institution ink into the canvas, while supporting text uses 78 percent ink. Both remain derived from the configured palette; explicit/system-dark overrides stay unchanged.

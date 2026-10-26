@@ -2,7 +2,7 @@
 
 Generated from a fresh migrated PostgreSQL catalog and reviewed purpose metadata. This is schema/source evidence, not production-data or runtime authorization acceptance. Regenerate with `npm run backend:inventory`; refresh the catalog after migrations with `npm run backend:inventory:database`.
 
-57 physical tables; 471 columns. SQL constraints, policies and triggers are authoritative; Prisma relations are not additional physical columns. Full raw catalog: [verification receipt](../../verification/receipts/backend-schema-catalog.json).
+57 physical tables; 472 columns. SQL constraints, policies and triggers are authoritative; Prisma relations are not additional physical columns. Full raw catalog: [verification receipt](../../verification/receipts/backend-schema-catalog.json).
 
 ## Table index
 
@@ -468,10 +468,12 @@ Athlete assignment to an immutable program version, date range, goal/sport and i
 | `goal` | `text` | yes | — | Explicit goal label for concurrent assignments. |
 | `sport_id` | `uuid` | yes | — | Linked sport identity; scope and target are shown in the foreign keys below. |
 | `sequence_cursor` | `integer` | no | `0` | Next zero-based independent assignment position; booking does not consume it. |
+| `adaptation` | `jsonb` | yes | — | Assignment-local immutable prescription snapshot and revision; source library version is retained and changes are audited. |
 
 <details>
 <summary>Relationships, constraints, indexes, policies and triggers</summary>
 
+- `institution_assignment_adaptation`: `CHECK (((adaptation IS NULL) OR ((jsonb_typeof(adaptation) = 'object'::text) AND (adaptation ?& ARRAY['title'::text, 'prescription'::text, 'revision'::text, 'source_version_id'::text]) AND (jsonb_typeof((adaptation -> 'title'::text)) = 'string'::text) AND ((length((adaptation ->> 'title'::text)) >= 1) AND (length((adaptation ->> 'title'::text)) <= 100)) AND (jsonb_typeof((adaptation -> 'prescription'::text)) = 'object'::text) AND (jsonb_typeof((adaptation -> 'revision'::text)) = 'number'::text) AND (((adaptation ->> 'revision'::text))::integer > 0) AND ((adaptation ->> 'source_version_id'::text) = (version_id)::text))))`
 - `institution_assignments_check`: `CHECK (((end_date IS NULL) OR (end_date >= start_date)))`
 - `institution_assignments_goal_check`: `CHECK (((goal IS NULL) OR (((char_length(goal) >= 1) AND (char_length(goal) <= 80)) AND (goal = btrim(goal)))))`
 - `institution_assignments_institution_id_created_by_fkey`: `FOREIGN KEY (institution_id, created_by) REFERENCES institution_members(institution_id, id) DEFERRABLE INITIALLY DEFERRED`
@@ -1803,7 +1805,7 @@ CREATE TRIGGER institution_workout_position_guard BEFORE INSERT OR UPDATE ON pub
 Opt-in bounded weekly/today-only preparation policies with current authority, poll checkpoints, last materialized day and general scheduling diagnostics.
 
 - Prisma model: `institution_workout_recurrences`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 

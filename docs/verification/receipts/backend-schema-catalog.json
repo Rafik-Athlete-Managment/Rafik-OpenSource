@@ -1,5 +1,5 @@
 {
-  "migrationDigest": "7797e17941c46a59b9c9e024ba54bbde2e56ae9475544496c1e1c791a321d233",
+  "migrationDigest": "e699f4fb1e50249bcfb95009a01f70a378cfde918f43792d087f1d64bbdddd43",
   "tables": [
     {
       "rls": false,
@@ -1191,6 +1191,13 @@
           "comment": null,
           "default": "0",
           "nullable": false
+        },
+        {
+          "name": "adaptation",
+          "type": "jsonb",
+          "comment": null,
+          "default": null,
+          "nullable": true
         }
       ],
       "indexes": [
@@ -1202,6 +1209,12 @@
       "policies": [],
       "triggers": [],
       "constraints": [
+        {
+          "kind": "c",
+          "name": "institution_assignment_adaptation",
+          "target": null,
+          "definition": "CHECK (((adaptation IS NULL) OR ((jsonb_typeof(adaptation) = 'object'::text) AND (adaptation ?& ARRAY['title'::text, 'prescription'::text, 'revision'::text, 'source_version_id'::text]) AND (jsonb_typeof((adaptation -> 'title'::text)) = 'string'::text) AND ((length((adaptation ->> 'title'::text)) >= 1) AND (length((adaptation ->> 'title'::text)) <= 100)) AND (jsonb_typeof((adaptation -> 'prescription'::text)) = 'object'::text) AND (jsonb_typeof((adaptation -> 'revision'::text)) = 'number'::text) AND (((adaptation ->> 'revision'::text))::integer > 0) AND ((adaptation ->> 'source_version_id'::text) = (version_id)::text))))"
+        },
         {
           "kind": "c",
           "name": "institution_assignments_check",

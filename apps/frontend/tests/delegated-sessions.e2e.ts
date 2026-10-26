@@ -349,20 +349,39 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await expect(page).toHaveURL(new RegExp('/training/' + assignment + '$'))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
     await expect(page.getByRole('searchbox', { name: 'Search athletes' })).toHaveCount(0)
-    await page.getByRole('button', { name: 'Adapt this program', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Adapt program', exact: true })).toBeVisible()
-    await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
-      'Track block adapted',
-    )
-    await page.getByLabel('Program name', { exact: true }).fill('Athlete-specific adaptation draft')
-    await page.getByRole('button', { name: 'Save draft', exact: true }).click()
-    await expect(page.getByText('Program draft saved.', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Adapt athlete plan', exact: true }).click()
+    await expect(
+      page.getByRole('heading', { name: 'Adapt athlete plan', exact: true }),
+    ).toBeVisible()
+    await expect(page.getByLabel('Plan name', { exact: true })).toHaveValue('Track block')
+    await expect(page.getByRole('button', { name: 'Publish program', exact: true })).toHaveCount(0)
+    await page.getByLabel('Plan name', { exact: true }).fill('Athlete-specific adaptation')
     await page.reload()
-    await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
-      'Athlete-specific adaptation draft',
+    await expect(page.getByLabel('Plan name', { exact: true })).toHaveValue(
+      'Athlete-specific adaptation',
     )
-    await page.getByRole('button', { name: 'View assigned plan', exact: true }).click()
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
+    const adaptationRequests: unknown[] = []
+    let loseAdaptationAck = true
+    await page.route('**/v1/institution/delivery', async (r) => {
+      const body = r.request().method() === 'POST' ? r.request().postDataJSON() : null
+      if (body?.action !== 'adapt') return r.continue()
+      adaptationRequests.push(body)
+      if (loseAdaptationAck) {
+        loseAdaptationAck = false
+        await r.fetch()
+        await r.abort('failed')
+      } else await r.continue()
+    })
+    await page.getByRole('button', { name: 'Apply changes to athlete plan', exact: true }).click()
+    await expect(
+      page.getByRole('button', { name: 'Retry saved change', exact: true }),
+    ).toBeEnabled()
+    await page.reload()
+    await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
+    await expect.poll(() => adaptationRequests.length).toBe(2)
+    expect(adaptationRequests[1]).toEqual(adaptationRequests[0])
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Athlete-specific adaptation')
+    await expect(page.getByText('Personalized plan · revision 1', { exact: true })).toBeVisible()
     const agenda = page.getByRole('region', { name: 'Next workouts', exact: true })
     await agenda.getByRole('button', { name: 'Schedule workout', exact: true }).click()
     await inspect(page, 'schedule-form', info)
@@ -410,9 +429,7 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await page.goto('/training/' + assignment)
     await expect(page).toHaveURL(/\/dashboard$/)
     await f.login(page, f.coach, '/training/' + assignment)
-    await expect(
-      page.getByRole('button', { name: 'تكييف هذا البرنامج', exact: true }),
-    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'تعديل خطة الرياضي', exact: true })).toBeVisible()
     await inspect(page, 'assigned-plan-ar', info)
   } finally {
     await f.cleanup()
@@ -985,6 +1002,87 @@ test('event template uses one search and preserves selection through no matches'
     expect(colors.muted).toBeGreaterThanOrEqual(4.5)
     expect(colors.softMuted).toBeGreaterThanOrEqual(4.5)
     console.info('Default light-theme contrast ratios', colors)
+  } finally {
+    await f.cleanup()
+  }
+})
+
+test('message directory tabs mix institution channels without exposing private previews', async ({
+  page,
+}, info) => {
+  test.setTimeout(180000)
+  page.setDefaultTimeout(15000)
+  const f = await institutionFixture()
+  try {
+    const prepared = await institution(f, 'Message tabs', undefined, false)
+    const roster = await f.call(f.owner, '/v1/institution?view=admin')
+    const coach = roster.members.find((m: any) => m.user_id === f.coach.id)
+    const group = randomUUID()
+    await f.call(f.coach, '/v1/institution/services', {
+      operation: randomUUID(),
+      action: 'group',
+      view: 'trainer',
+      id: group,
+      revision: 0,
+      name: 'Field group',
+      archived: false,
+      members: [prepared.athlete.id],
+    })
+    await f.call(f.coach, '/v1/institution/communication', {
+      operation: randomUUID(),
+      action: 'open-group',
+      view: 'trainer',
+      id: group,
+    })
+    await f.login(page, f.owner, '/messages')
+    await page.getByRole('tab', { name: 'Start conversation', exact: true }).click()
+    await expect(page.locator('.conversation-contacts > summary')).toHaveCount(0)
+    await page.getByRole('button', { name: /R4 Athlete.*Start your conversation/ }).click()
+    await expect(page).toHaveURL(/\/messages\/[a-f0-9-]{36}$/)
+    if ((page.viewportSize()?.width || 1440) <= 850)
+      await page.getByRole('link', { name: 'Back', exact: true }).click()
+    await expect(page.getByRole('tab', { name: 'Conversations', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    const directory = page.locator('.conversation-directory')
+    await directory.evaluate((node) => node.setAttribute('data-continuity', 'retained'))
+    await page
+      .getByRole('switch', { name: 'Include institution conversations', exact: true })
+      .click()
+    const unjoined = page.locator('article.conversation-person').filter({ hasText: 'Field group' })
+    await expect(
+      unjoined.getByRole('button', { name: 'Join conversation', exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.locator('.conversation-list').getByRole('link', { name: /R4 Athlete/ }),
+    ).toBeVisible()
+    await page.getByRole('tab', { name: 'Groups', exact: true }).click()
+    await expect(unjoined).toBeVisible()
+    await expect(
+      page.locator('.conversation-list').getByRole('link', { name: /R4 Athlete/ }),
+    ).toHaveCount(0)
+    await expect(directory).toHaveAttribute('data-continuity', 'retained')
+    await inspect(page, 'message-groups-mixed', info)
+    await page.getByRole('tab', { name: 'Start conversation', exact: true }).click()
+    await expect(
+      page.locator('.conversation-contacts').getByRole('button', { name: /R4 Athlete/ }),
+    ).toHaveCount(0)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'dark')
+    })
+    await page.goto('/messages')
+    await page.setViewportSize({ width: 320, height: 740 })
+    const conversations = page.getByRole('tab', { name: 'المحادثات', exact: true })
+    await expect(conversations).toBeVisible()
+    await conversations.focus()
+    await conversations.press('ArrowLeft')
+    await expect(page.getByRole('tab', { name: 'بدء محادثة', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await inspect(page, 'message-tabs-ar-320', info)
   } finally {
     await f.cleanup()
   }

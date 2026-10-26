@@ -70,6 +70,7 @@ export type Database = { public: { Tables: {
         goal: string | null
         sport_id: string | null
         sequence_cursor: number
+        adaptation: Json | null
     } }
     institution_audit_events: { Row: {
         id: string

@@ -88,12 +88,26 @@ test('admin builds a coaching team; a supporting coach sees training only until 
     await expect(page).toHaveURL(new RegExp(`/members/${athlete.id}\\?tab=manage`))
     const manageUrl = page.url()
     const team = page.locator('.coaching-team')
-    await expect(team.getByText('None yet.')).toBeVisible()
+    await expect(
+      team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).not.toBeChecked()
     // Choosing a coach with one eligible scope saves immediately.
-    await team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }).check()
-    await expect(team.locator('.coaching-links li')).toContainText(
-      'Supporting Coach With A Long Name · Football',
+    const linked = page.waitForResponse(
+      (r) =>
+        r.url().endsWith('/v1/institution') &&
+        r.request().method() === 'POST' &&
+        r.request().postDataJSON()?.action === 'link-coach',
     )
+    await team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }).check()
+    expect((await linked).ok()).toBeTruthy()
+    await expect(
+      team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).toBeChecked()
+    await expect(
+      team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).toBeEnabled()
+    await expect(team.locator('.chosen-members, .coaching-links')).toHaveCount(0)
+    await inspect(page, 'supporting-inline-selected', info)
     await page.goto(base + '/people')
     const card = page
       .locator('.organization-person')
@@ -128,8 +142,22 @@ test('admin builds a coaching team; a supporting coach sees training only until 
     await inspect(page, 'admin-team-ar-dark-320', info)
 
     // Ending the link removes the athlete from the supporting coach's roster.
-    await page.getByRole('button', { name: /^إزالة المدرب المساند/ }).click()
-    await expect(page.locator('.coaching-team').getByText('لا يوجد بعد.')).toBeVisible()
+    const ended = page.waitForResponse(
+      (r) =>
+        r.url().endsWith('/v1/institution') &&
+        r.request().method() === 'POST' &&
+        r.request().postDataJSON()?.action === 'end-coach-link',
+    )
+    await page
+      .locator('.coaching-team')
+      .getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ })
+      .uncheck()
+    expect((await ended).ok()).toBeTruthy()
+    await expect(
+      page
+        .locator('.coaching-team')
+        .getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).not.toBeChecked()
     await supportPage.reload()
     await expect(supportPage.getByRole('heading', { name: 'R4 Athlete', exact: true })).toHaveCount(
       0,

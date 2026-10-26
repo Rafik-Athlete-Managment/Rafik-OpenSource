@@ -175,6 +175,7 @@ function resetPassword() {
           role="trainer"
           single
           :label="l('Choose primary coach', 'اختيار المدرب الأساسي')"
+          inline-selection
           :model-value="trainer ? [trainer] : []"
           :exclude-ids="[member.id]"
           @update:model-value="selectPrimary"

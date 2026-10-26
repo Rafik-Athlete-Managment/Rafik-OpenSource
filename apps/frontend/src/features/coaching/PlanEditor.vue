@@ -31,6 +31,7 @@ import type { Exercise } from '../../lib/domain'
 import PageState from '../../components/PageState.vue'
 import type { AthletePlanSummary } from '@rafik/shared/contracts'
 const props = defineProps<{ assignedPlan?: AthletePlanSummary }>()
+const emit = defineEmits<{ adapted: [] }>()
 const route = useRoute(),
   router = useRouter()
 const context = programContext(route)
@@ -136,14 +137,14 @@ async function load(recover = true) {
     if (isNew) {
       catalog.value = await context.catalog()
       if (props.assignedPlan) {
-        title.value = props.assignedPlan.version.title.slice(0, 85) + language(' adapted', ' معدّل')
+        title.value = props.assignedPlan.version.title
         draft.value = upgradePrescription(
           clone(props.assignedPlan.version.prescription as Prescription),
         )
         version.value = null
       } else if (route.query.source) {
         const source = await context.load(String(route.query.source))
-        title.value = source.program.title.slice(0, 85) + language(' adapted', ' معدّل')
+        title.value = source.program.title.slice(0, 85) + language(' copy', ' نسخة')
         draft.value = upgradePrescription(clone(source.program.draft))
         version.value = null
       }
@@ -170,7 +171,7 @@ async function load(recover = true) {
         draft: Prescription
         version: number | null
       }>(key)
-      if (local) {
+      if (local && (isNew || local.id === id.value)) {
         id.value = local.id
         title.value = local.title
         draft.value = upgradePrescription(local.draft)
@@ -209,9 +210,24 @@ watch(
   },
   { deep: true },
 )
+// Old assignment-editor commands meant library publication. Never replay them as adaptation.
+const previousCopy = props.assignedPlan
+  ? useCommand<'save' | 'publish'>(
+      `program:${key}`,
+      async () => {},
+      (action, args) => context.command(action, args),
+      { successToast: false },
+    )
+  : undefined
 const command = useCommand<'save' | 'publish'>(
-  `program:${key}`,
+  props.assignedPlan ? `athlete-plan-adaptation:${key}` : `program:${key}`,
   async (action, result) => {
+    if (props.assignedPlan) {
+      await removeDraft(key)
+      restored.value = false
+      emit('adapted')
+      return
+    }
     const value = result as { plan: Plan; version?: PlanVersion }
     version.value = value.plan.draft_version
     restored.value = false
@@ -237,19 +253,40 @@ const command = useCommand<'save' | 'publish'>(
             'حُفظت المسودة. التعيينات الحالية لم تتغير.',
           )
   },
-  (action, args) => context.command(action, args),
+  (action, args) =>
+    props.assignedPlan
+      ? request('/v1/institution/delivery', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...args,
+            action: 'adapt',
+            view: context.view,
+          }),
+        })
+      : context.command(action, args),
   {
     successMessage: (action) =>
-      action === 'publish'
+      props.assignedPlan
         ? language(
-            'Program published to the institution library.',
-            'تم نشر البرنامج في مكتبة المؤسسة.',
+            'Athlete plan updated. Existing scheduled workouts are unchanged.',
+            'تم تحديث خطة الرياضي. لم تتغير التمارين المجدولة الحالية.',
           )
-        : language('Program draft saved.', 'تم حفظ مسودة البرنامج.'),
+        : action === 'publish'
+          ? language(
+              'Program published to the institution library.',
+              'تم نشر البرنامج في مكتبة المؤسسة.',
+            )
+          : language('Program draft saved.', 'تم حفظ مسودة البرنامج.'),
   },
 )
 const busy = computed(
-  () => uploading.value || command.state.busy || !!command.state.pending || !command.state.ready,
+  () =>
+    uploading.value ||
+    command.state.busy ||
+    !!command.state.pending ||
+    !command.state.ready ||
+    !!previousCopy?.state.pending ||
+    (previousCopy ? !previousCopy.state.ready : false),
 )
 async function execute(action: 'save' | 'publish') {
   if (!editable.value || !form.value?.reportValidity()) return
@@ -261,7 +298,13 @@ async function execute(action: 'save' | 'publish') {
     id: id.value,
     title: title.value,
     draft: clone(draft.value),
-    revision: version.value,
+    revision: props.assignedPlan ? props.assignedPlan.revision : version.value,
+    ...(props.assignedPlan
+      ? {
+          assignment: props.assignedPlan.id,
+          source_version_id: props.assignedPlan.version.id,
+        }
+      : {}),
   })
   if (
     action === 'save' &&
@@ -391,7 +434,8 @@ async function discard() {
   await removeDraft(key)
   restored.value = false
   selected.value = 0
-  if (isNew) {
+  if (props.assignedPlan) await load(false)
+  else if (isNew) {
     title.value = language('New program', 'برنامج جديد')
     draft.value = blankPrescription()
     version.value = null
@@ -458,13 +502,15 @@ function removeDay() {
         </p>
         <component :is="assignedPlan ? 'h2' : 'h1'">
           {{
-            assignedPlan || route.query.source
-              ? language('Adapt program', 'تكييف البرنامج')
-              : isNew
-                ? language('Create a program', 'إنشاء برنامج')
-                : editable
-                  ? language('Edit program', 'تعديل البرنامج')
-                  : language('Program details', 'تفاصيل البرنامج')
+            assignedPlan
+              ? language('Adapt athlete plan', 'تعديل خطة الرياضي')
+              : route.query.source
+                ? language('Create a program copy', 'إنشاء نسخة من البرنامج')
+                : isNew
+                  ? language('Create a program', 'إنشاء برنامج')
+                  : editable
+                    ? language('Edit program', 'تعديل البرنامج')
+                    : language('Program details', 'تفاصيل البرنامج')
           }}
         </component>
       </div>
@@ -505,6 +551,7 @@ function removeDay() {
         </RouterLink>
         <template v-if="editable">
           <button
+            v-if="!assignedPlan"
             type="submit"
             form="program-editor-form"
             class="button secondary small"
@@ -512,17 +559,28 @@ function removeDay() {
           >
             {{ language('Save draft', 'حفظ المسودة') }}</button
           ><button type="button" class="button small" :disabled="busy" @click="publish">
-            {{ busy ? t('loading') : language('Publish program', 'نشر البرنامج') }}
+            {{
+              busy
+                ? t('loading')
+                : assignedPlan
+                  ? language('Apply changes to athlete plan', 'تطبيق التعديلات على خطة الرياضي')
+                  : language('Publish program', 'نشر البرنامج')
+            }}
           </button>
         </template>
       </div>
     </div>
     <p v-if="editable && !loading" class="small-print editor-publish-note">
       {{
-        language(
-          'Publishing creates a fixed version and makes it available in the institution program library. Assignments remain a separate step.',
-          'ينشئ النشر نسخة ثابتة ويتيحها في مكتبة برامج المؤسسة. يبقى التعيين خطوة منفصلة.',
-        )
+        assignedPlan
+          ? language(
+              'Changes apply only to this athlete plan and future workouts. Existing scheduled/started workouts and the library program remain unchanged.',
+              'تخص التعديلات خطة هذا الرياضي وتمارينه المستقبلية فقط. لا تتغير التمارين المجدولة أو التي بدأت ولا برنامج المكتبة.',
+            )
+          : language(
+              'Publishing creates a fixed version and makes it available in the institution program library. Assignments remain a separate step.',
+              'ينشئ النشر نسخة ثابتة ويتيحها في مكتبة برامج المؤسسة. يبقى التعيين خطوة منفصلة.',
+            )
       }}
     </p>
     <PageState :loading="loading" :error="!loadedSuccessfully ? error : ''" @retry="load()"
@@ -556,8 +614,19 @@ function removeDay() {
           >{{ language('Assign this plan', 'تعيين هذه الخطة') }}</RouterLink
         >
       </p>
+      <template v-if="previousCopy?.state.pending">
+        <p class="notice">
+          {{
+            language(
+              'An earlier library-copy operation is awaiting confirmation. Resolve its saved request first; it does not update this athlete plan.',
+              'تنتظر عملية سابقة لنسخ البرنامج تأكيداً. عالج طلبها المحفوظ أولاً؛ فهي لا تحدّث خطة الرياضي.',
+            )
+          }}
+        </p>
+        <CommandStatus :command="previousCopy" />
+      </template>
       <CommandStatus :command="command" :show-notice="false" />
-      <form id="program-editor-form" ref="form" @submit.prevent="save">
+      <form id="program-editor-form" ref="form" @submit.prevent="assignedPlan ? publish() : save()">
         <fieldset :disabled="busy" class="form-fields">
           <section v-if="!preview" class="program-identity-card">
             <div
@@ -602,7 +671,11 @@ function removeDay() {
               }}</small>
             </div>
             <div class="program-identity-fields">
-              <label for="plan-title">{{ language('Program name', 'اسم البرنامج') }}</label>
+              <label for="plan-title">{{
+                assignedPlan
+                  ? language('Plan name', 'اسم الخطة')
+                  : language('Program name', 'اسم البرنامج')
+              }}</label>
               <input id="plan-title" v-model="title" required maxlength="100" class="title-input" />
               <label for="program-description">{{
                 language('What athletes can expect', 'ماذا يتوقع الرياضيون')
@@ -688,7 +761,7 @@ function removeDay() {
             <summary>
               {{ language('Program schedule', 'جدول البرنامج') }}
             </summary>
-            <label class="program-preparation">
+            <label v-if="!assignedPlan" class="program-preparation">
               <input v-model="draft.automaticPreparation" type="checkbox" />
               {{
                 language(
@@ -697,7 +770,7 @@ function removeDay() {
                 )
               }}
             </label>
-            <p class="small-print">
+            <p v-if="!assignedPlan" class="small-print">
               {{
                 language(
                   'Suggested for new athlete plans. Confirm dates and timezone when assigning; each plan can override this. Editing the program never changes existing scheduling policies.',

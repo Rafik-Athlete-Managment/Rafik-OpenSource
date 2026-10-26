@@ -325,3 +325,9 @@ Existing attendance/assessment payloads and receipts retain their meaning; Andro
 ### Program preparation defaults
 
 Program draft/prescription metadata accepts optional boolean `automaticPreparation` (absent means manual). Delivery accepts optional boolean `automatic_preparation`, defaulting to the selected immutable version, plus `timezone` and a required `end_date` for automatic mode. Its date span is at most 366 days. Assignment and policy creation share one transaction/exact receipt; explicit false opts out. Program edits do not alter existing policies.
+
+### Athlete-plan adaptation
+
+`POST /v1/institution/delivery` with `action=adapt`, exact `operation`, staff `view`, `assignment`, expected assignment `revision`, `source_version_id`, `title` and full `draft` updates the existing plan’s personalized snapshot. Current primary/sport-scoped supporting coach or administrator authority is required before receipt replay. No program/version is created. The cursor and preparation policy stay unchanged. Existing occurrence/session snapshots remain immutable; future preparation uses the adapted order. Assignment projections expose `adaptation_revision` and an effective version title/prescription while preserving the source version ID. Previous snapshots remain in institutional audit history.
+
+Communication list reads accept `tab=groups` to filter non-pair channels before pagination. Each row exposes `joined` and `private_pair`; unjoined discoverable institution channels omit previews/read counts. `manage=true` includes them alongside joined channels for administrators without replacing joined previews. Private pair participation remains required. The web presents Conversations, Start conversation and Groups tabs with one institution-inclusion switch.

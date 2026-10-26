@@ -134,6 +134,7 @@ export type AthletePlanSummary = {
   goal: string | null
   sport: string | null
   revision: number
+  adaptation_revision?: number
   version: {
     id: string
     title: string

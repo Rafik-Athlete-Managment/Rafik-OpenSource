@@ -4,7 +4,7 @@ Reviewed 23 October 2026 for the unreleased beta.3 branch. This is a schema/sour
 
 ## Start here
 
-- [Schema and field catalog](schema.md): all 57 physical tables and 471 columns, reviewed purposes, native types/defaults/nullability, incoming relationships, SQL constraints/indexes/policies/triggers and source modules.
+- [Schema and field catalog](schema.md): all 57 physical tables and 472 columns, reviewed purposes, native types/defaults/nullability, incoming relationships, SQL constraints/indexes/policies/triggers and source modules.
 - [Routes and data dependencies](routes.md): 67 reviewed route records (some support multiple methods), authority, app/workflow, handlers, conservative transitive table touches, explicit profile/support/account operations and retired-route boundaries. This is broader than the field OpenAPI subset.
 - [Reusable audit prompt](audit-prompt.md): scope, removal criteria and verification procedure for future contributors.
 - [Canonical API contract](../../../apps/backend/openapi.json) and [API guide](../api.md): supported wire shapes and actual implemented behavior.

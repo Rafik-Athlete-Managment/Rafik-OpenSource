@@ -265,6 +265,7 @@ test("weekly and opt-in automatic preparation preserve one unresolved position, 
   const other = await db.institution_assignments.create({
     data: {
       ...base,
+      adaptation: base.adaptation ?? undefined,
       id: randomUUID(),
       version_id: otherVersion.id,
       sequence_cursor: 0,
@@ -421,7 +422,12 @@ test("weekly and opt-in automatic preparation preserve one unresolved position, 
     },
   });
   const third = await db.institution_assignments.create({
-    data: { ...base, id: randomUUID(), version_id: thirdVersion.id },
+    data: {
+      ...base,
+      adaptation: base.adaptation ?? undefined,
+      id: randomUUID(),
+      version_id: thirdVersion.id,
+    },
   });
   const thirdRule = await command(auth, {
     ...payload,
@@ -454,7 +460,12 @@ test("weekly and opt-in automatic preparation preserve one unresolved position, 
     },
   });
   const collisionPlan = await db.institution_assignments.create({
-    data: { ...base, id: randomUUID(), version_id: collisionVersion.id },
+    data: {
+      ...base,
+      adaptation: base.adaptation ?? undefined,
+      id: randomUUID(),
+      version_id: collisionVersion.id,
+    },
   });
   const collisionRule = await command(auth, {
     ...payload,

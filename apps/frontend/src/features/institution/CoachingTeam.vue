@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SectionHeader from '../../components/SectionHeader.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { request } from '../../lib/backend'
 import { language as l } from '../../lib/i18n'
 import { useCommand } from '../../lib/commands'
@@ -21,8 +21,34 @@ const coach = ref(''),
 const supporting = computed(() =>
   (props.member.coaches || []).filter((c) => c.kind === 'supporting'),
 )
-const nameOf = (id: string) => props.names.find((n) => n.id === id)?.name || l('Coach', 'مدرب')
-const sportOf = (id: string | null) => props.sports.find((s) => s.id === id)?.name || ''
+const removingCoaches = ref<string[]>([])
+const selectedCoaches = computed(() => [
+  ...new Set([
+    ...supporting.value
+      .filter((link) => !removingCoaches.value.includes(link.coach))
+      .map((link) => link.coach),
+    ...(coach.value ? [coach.value] : []),
+  ]),
+])
+watch(
+  () => props.member.coaches,
+  () => {
+    if (supporting.value.some((link) => link.coach === coach.value)) {
+      coach.value = ''
+      sport.value = ''
+    }
+    removingCoaches.value = removingCoaches.value.filter((id) =>
+      supporting.value.some((link) => link.coach === id),
+    )
+  },
+)
+const specialties = (person: Member) => {
+  const links = supporting.value.filter((link) => link.coach === person.id)
+  return (links.length ? links.map((link) => link.sport) : person.sports || [])
+    .map((id) => props.sports.find((scope) => scope.id === id)?.name)
+    .filter(Boolean)
+    .join(' · ')
+}
 // A supporting coach covers one of the athlete's sports, or a general coaching specialty.
 const choices = computed(() =>
   props.sports.filter(
@@ -34,23 +60,42 @@ const scopes = computed(() =>
     candidates.value.find((person) => person.id === coach.value)?.sports?.includes(scope.id),
   ),
 )
-function selectCoach(ids: string[]) {
+let unlinking = false
+async function selectCoach(ids: string[]) {
   if (locked.value) return
-  coach.value = ids[0] || ''
+  const removed = supporting.value.filter((link) => !ids.includes(link.coach))
+  if (removed.length) {
+    removingCoaches.value = [
+      ...new Set([...removingCoaches.value, ...removed.map((link) => link.coach)]),
+    ]
+    unlinking = true
+    try {
+      for (const link of removed) {
+        await remove(link)
+        if (command.state.error || command.state.pending) {
+          if (!command.state.pending) removingCoaches.value = []
+          return
+        }
+      }
+    } finally {
+      unlinking = false
+      emit('saved')
+    }
+    return
+  }
+  coach.value = ids.find((id) => !supporting.value.some((link) => link.coach === id)) || ''
   sport.value = ''
   if (scopes.value.length === 1) {
     sport.value = scopes.value[0]!.id
-    void add()
+    await add()
   }
 }
 const command = useCommand<'coaching'>(
   `organization-coaching:${props.institutionId}`,
   async (_, __, args) => {
-    if (args.action === 'link-coach') {
-      coach.value = ''
-      sport.value = ''
-    }
-    emit('saved')
+    // Keep the user's checked intent until the refreshed member contains the acknowledged link.
+    if (args.action === 'link-coach') coach.value = String(args.coach)
+    if (!unlinking) emit('saved')
   },
   (_, args) => request(`/v1/institution`, { method: 'POST', body: JSON.stringify(args) }),
   { successMessage: l('Coaching team updated.', 'تم تحديث فريق التدريب.') },
@@ -86,22 +131,6 @@ const remove = (link: { id: string; revision: number }) =>
       "
     />
     <CommandStatus :command="command" />
-    <p v-if="!supporting.length" class="small-print">{{ l('None yet.', 'لا يوجد بعد.') }}</p>
-    <ul v-else class="coaching-links">
-      <li v-for="link in supporting" :key="link.id">
-        <span dir="auto"
-          ><strong>{{ nameOf(link.coach) }}</strong> · {{ sportOf(link.sport) }}</span
-        ><button
-          type="button"
-          class="text-link danger-action"
-          :disabled="locked"
-          :aria-label="l('Remove supporting coach ', 'إزالة المدرب المساند ') + nameOf(link.coach)"
-          @click="remove(link)"
-        >
-          {{ l('Remove', 'إزالة') }}
-        </button>
-      </li>
-    </ul>
     <form class="form-stack" @submit.prevent>
       <fieldset class="command-fields" :disabled="locked">
         <details>
@@ -121,22 +150,15 @@ const remove = (link: { id: string; revision: number }) =>
           :institution="institutionId"
           view="admin"
           role="trainer"
-          single
-          :label="l('Add a supporting coach', 'إضافة مدرب مساند')"
-          :model-value="coach ? [coach] : []"
-          :exclude-ids="[
-            member.id,
-            ...(member.trainer_id ? [member.trainer_id] : []),
-            ...supporting.map((c) => c.coach),
-          ]"
+          inline-selection
+          :label="l('Choose supporting coaches', 'اختيار المدربين المساندين')"
+          :model-value="selectedCoaches"
+          :exclude-ids="[member.id, ...(member.trainer_id ? [member.trainer_id] : [])]"
           @options="candidates = $event"
           @update:model-value="selectCoach"
           ><template #default="{ member: person }"
             ><small style="display: block; color: var(--muted)">{{
-              (person.sports || [])
-                .map((id) => sports.find((s) => s.id === id)?.name)
-                .filter(Boolean)
-                .join(' · ')
+              specialties(person)
             }}</small></template
           ></MemberPicker
         >
@@ -175,23 +197,6 @@ const remove = (link: { id: string; revision: number }) =>
 .coaching-team h2 {
   margin-top: 0;
   font-size: 1.1rem;
-}
-.coaching-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 8px;
-}
-.coaching-links li {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 6px 12px;
-  min-width: 0;
-}
-.coaching-links span {
-  overflow-wrap: anywhere;
 }
 .coaching-team fieldset {
   border: 0;

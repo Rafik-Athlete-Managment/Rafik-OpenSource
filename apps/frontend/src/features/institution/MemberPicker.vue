@@ -18,6 +18,7 @@ const props = withDefaults(
     disabled?: boolean
     requiredIds?: string[]
     excludeIds?: string[]
+    inlineSelection?: boolean
   }>(),
   {
     role: '',
@@ -92,6 +93,14 @@ const missing = computed(() =>
       ),
   ),
 )
+const visibleMembers = computed(() =>
+  props.inlineSelection
+    ? [
+        ...items.value,
+        ...chosen.value.filter((person) => !items.value.some((item) => item.id === person.id)),
+      ]
+    : items.value,
+)
 function toggle(id: string) {
   if (props.requiredIds.includes(id)) return
   emit(
@@ -158,7 +167,7 @@ onUnmounted(() => {
         {{ l('Try again', 'حاول مجدداً') }}
       </button>
     </p>
-    <div v-if="modelValue.length" class="chosen-members">
+    <div v-if="modelValue.length && !inlineSelection" class="chosen-members">
       <span v-for="id in modelValue" :key="id"
         ><bdi>{{
           chosen.find((m) => m.id === id)?.name || l('Unavailable person', 'شخص غير متاح')
@@ -181,7 +190,7 @@ onUnmounted(() => {
     </p>
     <!-- Compact name cards: the whole card toggles a real checkbox; plus/check shows the state. -->
     <ul class="member-options" :aria-busy="loading">
-      <li v-for="m in items" :key="m.id">
+      <li v-for="m in visibleMembers" :key="m.id">
         <label class="member-match" :class="{ 'is-chosen': modelValue.includes(m.id) }"
           ><input
             type="checkbox"
@@ -214,7 +223,7 @@ onUnmounted(() => {
         ></label>
       </li>
     </ul>
-    <p v-if="!items.length && !loading" class="small-print">
+    <p v-if="!visibleMembers.length && !loading" class="small-print">
       {{ l('No matching people.', 'لا يوجد أشخاص مطابقون.') }}
     </p>
   </section>

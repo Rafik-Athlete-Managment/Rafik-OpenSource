@@ -1,3 +1,4 @@
+import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
 import { pageSize } from "./pagination.ts";
 import { ApiError, asActor, type Actor } from "./db.ts";
 import { scoped, uuid } from "./institution.ts";
@@ -91,6 +92,13 @@ export async function athletePlans(
                   {
                     OR: [
                       {
+                        adaptation: {
+                          path: ["title"],
+                          string_contains: search,
+                          mode: "insensitive" as const,
+                        },
+                      },
+                      {
                         institution_versions: {
                           title: {
                             contains: search,
@@ -167,7 +175,8 @@ export async function athletePlans(
           goal: row.goal,
           sport: row.institution_sports?.name || null,
           revision: row.revision,
-          version: row.institution_versions,
+          version: effectivePlan(row),
+          adaptation_revision: adaptationRevision(row),
         };
       }),
     };

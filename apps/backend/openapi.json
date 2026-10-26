@@ -734,6 +734,60 @@
           }
         }
       }
+    },
+    "/v1/institution/delivery": {
+      "post": {
+        "tags": [
+          "Coach field work"
+        ],
+        "summary": "Adapt an existing athlete plan without publishing a library copy",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Rafik-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "enum": [
+                "web",
+                "android"
+              ]
+            }
+          }
+        ],
+        "description": "Unreleased beta.3. This documented subset is POST delivery action=adapt. Administrator or current primary/sport-scoped supporting coach authority is required before receipt replay. Supply exact operation, view, assignment ID, expected assignment revision, source_version_id, title and full valid draft prescription. A stale new request fails with conflict. Store a validated assignment-local snapshot and increment its revision; do not create a program/version, replace the assignment, reset its sequence cursor or change its preparation policy. Existing scheduled/started workout snapshots stay fixed; future preparation uses the adapted ordered cycle. Prior snapshots remain in institutional audit history. The same route also supports the existing assign/end lifecycle described in the API guide.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanAdaptationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged assignment and personalized snapshot. Replay returns the original receipt after current authority checks."
+          },
+          "400": {
+            "description": "Invalid title or prescription."
+          },
+          "403": {
+            "description": "Current plan authority missing."
+          },
+          "409": {
+            "description": "Stale assignment/source identity or inactive assignment."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1842,6 +1896,59 @@
           }
         },
         "description": "For set-workout-rule also provide mode/starts_on/ends_on/timezone; weekly additionally requires weekdays/local_time/duration_minutes. Automatic ignores weekly-only fields. Stop changes only the future policy."
+      },
+      "PlanAdaptationCommand": {
+        "type": "object",
+        "required": [
+          "operation",
+          "action",
+          "view",
+          "assignment",
+          "revision",
+          "source_version_id",
+          "title",
+          "draft"
+        ],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "adapt"
+            ]
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "trainer"
+            ]
+          },
+          "assignment": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "source_version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "draft": {
+            "type": "object",
+            "description": "Full valid schema-2 prescription; catalog/media authority is revalidated."
+          }
+        }
       }
     },
     "responses": {

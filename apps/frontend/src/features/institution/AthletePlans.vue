@@ -198,6 +198,9 @@ onUnmounted(() => {
               <span class="tag" :data-status="plan.status">{{ label(plan.status) }}</span>
             </div>
             <h2 dir="auto">{{ plan.version.title }}</h2>
+            <span v-if="plan.adaptation_revision" class="tag" data-status="active">{{
+              l('Personalized', 'مخصصة')
+            }}</span>
             <p v-if="planLabel(plan)" class="tag plan-sport" dir="auto">{{ planLabel(plan) }}</p>
             <p class="small-print">
               {{ l('Version', 'النسخة') }} {{ plan.version.revision }} ·

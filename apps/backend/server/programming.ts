@@ -1,3 +1,4 @@
+import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
 import {
   scheduleIndividualWorkout,
   skipIndividualWorkout,
@@ -6,6 +7,7 @@ import {
   assertLinkedWorkoutWritable,
   resolveCompletedWorkout,
   stopAssignmentWork,
+  lockedAssignment,
 } from "./workout-sequence.ts";
 import { pageSize } from "./pagination.ts";
 import type { WorkoutAgenda, WorkoutAgendaItem } from "@rafik/shared/contracts";
@@ -757,7 +759,7 @@ export async function delivery(
         ),
         assignments: assignments.map((a) => ({
           ...a,
-          version: a.institution_versions,
+          version: effectivePlan(a),
           institution_versions: undefined,
         })),
         sessions: sessions.map((s) => ({
@@ -837,7 +839,7 @@ export async function delivery(
       members,
       assignments: assignments.map((a) => ({
         ...a,
-        version: a.institution_versions,
+        version: effectivePlan(a),
         institution_versions: undefined,
       })),
       sessions: sessions.map((s) => ({
@@ -856,6 +858,7 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
     action = String(input.action);
   if (view === "trainee") throw new ApiError(403, "forbidden");
   if (action === "end") return endAssignment(actor, id, view, input);
+  if (action === "adapt") return adaptAssignment(actor, id, view, input);
   if (action !== "assign") throw new ApiError(400, "invalid_request");
   const selected = input.members;
   if (
@@ -1057,6 +1060,58 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
       return results;
     },
     authorize,
+  );
+}
+/** Apply only to future work in this existing athlete plan. Current occurrence snapshots survive. */
+async function adaptAssignment(
+  actor: Actor,
+  id: string,
+  view: Role,
+  input: Input,
+) {
+  const key = uuid(input.assignment);
+  const authorize = async (tx: Tx, self: Member) => {
+    const plan = await lockedAssignment(tx, id, key);
+    await planAuthority(tx, id, self, view, plan.member_id, [plan.sport_id]);
+    return plan;
+  };
+  return mutation(
+    actor,
+    id,
+    [view],
+    input,
+    async (tx, self) => {
+      const plan = await authorize(tx, self);
+      if (plan.state !== "active")
+        throw new ApiError(409, "assignment_unavailable");
+      if (
+        plan.revision !== input.revision ||
+        plan.version_id !== input.source_version_id
+      )
+        throw new ApiError(409, "conflict");
+      const title = textValue(input.title, 100);
+      const prescription = await snapshot(tx, id, self, input.draft);
+      const revision = adaptationRevision(plan) + 1;
+      const adaptation = {
+        title,
+        prescription,
+        revision,
+        source_version_id: plan.version_id,
+      };
+      const result = await tx.institution_assignments.update({
+        where: { id: key },
+        data: { adaptation: json(adaptation), revision: { increment: 1 } },
+      });
+      await event(tx, actor, id, "athlete_plan_adapted", plan.member_id, {
+        assignment: key,
+        before: plan.adaptation || null,
+        after: json(adaptation),
+      });
+      return { assignment: result, adaptation };
+    },
+    async (tx, self) => {
+      await authorize(tx, self);
+    },
   );
 }
 /** Ending archives one plan; sessions and the immutable version stay in history. */
@@ -1316,12 +1371,16 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           (assignment.end_date && assignment.end_date < nowDate)
         )
           throw new ApiError(400, "assignment_unavailable");
-        const plan = assignment.institution_versions.prescription as any,
-          day = plan.days.find((d: any) => d.id === input.day_id);
+        const effective = effectivePlan(assignment),
+          plan = effective.prescription as any,
+          frozen = linked?.occurrence.workout_snapshot as any,
+          day =
+            frozen?.day || plan.days.find((d: any) => d.id === input.day_id);
         if (
           !day ||
           day.restDay ||
-          (linked && linked.position.day_id !== day.id)
+          (linked &&
+            (linked.position.day_id !== day.id || input.day_id !== day.id))
         )
           throw new ApiError(400, "invalid_day");
         const delta = Math.floor(
@@ -1360,7 +1419,10 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           occurrence_key: `${assignment.id}:${nowDate.toISOString().slice(0, 10)}:${day.id}`,
           ...(linked ? { occurrence_id: linked.occurrence.id } : {}),
           local_date: nowDate.toISOString().slice(0, 10),
-          title: assignment.institution_versions.title,
+          title: linked ? linked.occurrence.title : effective.title,
+          adaptation_revision: linked
+            ? frozen?.adaptation_revision || 0
+            : adaptationRevision(assignment),
           prescription: day,
           status: "in_progress",
           entries: day.exercises.flatMap((e: any) =>
@@ -1700,13 +1762,17 @@ export async function workoutAgenda(
           occurrence = position?.institution_events;
         const session =
           position?.institution_sessions || a.institution_sessions[0];
-        const days = (
-          (a.institution_versions.prescription as any).days || []
-        ).filter((d: any) => !d.restDay);
+        const effective = effectivePlan(a);
+        const days = ((effective.prescription as any).days || []).filter(
+          (d: any) => !d.restDay,
+        );
         const day =
+          (occurrence?.workout_snapshot as any)?.day ||
+          (session?.document as any)?.prescription ||
           days.find(
             (d: any) => d.id === (position?.day_id || session?.day_id),
-          ) || days[a.sequence_cursor % days.length];
+          ) ||
+          days[a.sequence_cursor % days.length];
         const occurrenceToday = occurrence
           ? new Date(
               new Intl.DateTimeFormat("en-CA", {
@@ -1774,7 +1840,10 @@ export async function workoutAgenda(
             a
               .institution_members_institution_assignments_institution_id_member_idToinstitution_members
               .name,
-          title: a.institution_versions.title,
+          title:
+            occurrence?.title ||
+            (session?.document as any)?.title ||
+            effective.title,
           goal: a.goal,
           cursor: a.sequence_cursor,
           preview: {
@@ -1799,8 +1868,7 @@ export async function workoutAgenda(
               .slice(0, 4)
               .map(([name]) => name),
             cover:
-              (a.institution_versions.prescription as any).presentation
-                ?.cover || undefined,
+              (effective.prescription as any).presentation?.cover || undefined,
           },
           day: day ? { id: day.id, name: day.name, nameAr: day.nameAr } : null,
           state,

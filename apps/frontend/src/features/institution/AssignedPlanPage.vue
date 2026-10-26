@@ -85,6 +85,11 @@ function adapt() {
     },
   })
 }
+async function adapted() {
+  if (disposed) return
+  await load()
+  if (!disposed) await router.replace({ query: { ...route.query, adapt: undefined } })
+}
 watch(() => route.params.assignment, load)
 onMounted(load)
 </script>
@@ -122,7 +127,12 @@ onMounted(load)
               <span v-if="detail.goal || detail.sport"
                 >{{ [detail.goal, detail.sport].filter(Boolean).join(' · ') }} ·
               </span>
-              {{ l('Version', 'النسخة') }} {{ detail.version.revision }}
+              {{
+                detail.adaptation_revision
+                  ? l('Personalized plan · revision', 'خطة مخصصة · مراجعة')
+                  : l('Library version', 'نسخة المكتبة')
+              }}
+              {{ detail.adaptation_revision || detail.version.revision }}
             </p>
           </div>
           <span class="tag" :data-status="detail.status">{{
@@ -140,7 +150,7 @@ onMounted(load)
             <PhPencilSimple :size="18" aria-hidden="true" />{{
               adapting
                 ? l('View assigned plan', 'عرض الخطة المعيّنة')
-                : l('Adapt this program', 'تكييف هذا البرنامج')
+                : l('Adapt athlete plan', 'تعديل خطة الرياضي')
             }}
           </button>
           <RouterLink class="button secondary" :to="'/workouts?member=' + detail.member_id"
@@ -168,7 +178,7 @@ onMounted(load)
           </button>
         </nav>
         <CommandStatus :command="ending" />
-        <PlanEditor v-if="adapting" :key="detail.id" :assigned-plan="detail" />
+        <PlanEditor v-if="adapting" :key="detail.id" :assigned-plan="detail" @adapted="adapted" />
         <template v-else>
           <p v-if="prescription()?.description" class="plan-description">
             {{

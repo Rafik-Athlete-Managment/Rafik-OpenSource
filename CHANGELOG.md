@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep supporting/primary coach selections in one checked list; add messaging directory tabs and per-row institution discovery; fix athlete-plan adaptation to update its existing assignment rather than publishing a library copy, preserving scheduled snapshots, cursor, policy, audit and exact recovery.
+
 - Separate light-theme cards from the page using a seven-percent ink tint and derive supporting text from the institution ink/canvas pair. Dark-theme surface tokens are unchanged.
 
 - Simplify assessment-event template selection to one visible server search and a selectable list with test counts, retain the selected template through no-match searches, and add bilingual event-name examples.

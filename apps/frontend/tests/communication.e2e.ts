@@ -39,7 +39,7 @@ test('organization conversations preserve scope, compact layout, drafts and exac
         response.request().method() === 'GET',
     )
     await f.login(page, f.owner, base)
-    await page.locator('.conversation-contacts > summary').click()
+    await page.getByRole('tab', { name: 'Start conversation', exact: true }).click()
     await expect(page.getByRole('button', { name: 'New conversation', exact: true })).toHaveCount(0)
     await initialList
     const athlete = page

@@ -1,3 +1,4 @@
+import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
 import { randomUUID } from "node:crypto";
 import { ApiError, type Actor } from "./db.ts";
 import { event, textValue, uuid, type Tx } from "./institution.ts";
@@ -17,7 +18,7 @@ export async function lockedAssignment(
     include: { institution_versions: true },
   });
   if (!item) throw new ApiError(404, "assignment_unavailable");
-  return item;
+  return { ...item, institution_versions: effectivePlan(item) };
 }
 
 function timedSlot(input: Input) {
@@ -175,6 +176,8 @@ export async function scheduleIndividualWorkout(
         typeof input.location === "string" ? input.location.slice(0, 200) : "",
       workout_snapshot: json({
         version_id: assignment.version_id,
+        adaptation_revision: adaptationRevision(assignment),
+        presentation: plan.presentation || null,
         assignment_id: assignment.id,
         ...(preparedRuleId
           ? {

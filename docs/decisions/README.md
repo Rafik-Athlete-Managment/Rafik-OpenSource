@@ -39,3 +39,5 @@ ADR 0004 (gym-first timing), ADR 0014 (session packages) and ADR 0016 (former Su
 - [ADR 0031](ADR-0031-coach-completion-of-athlete-started-workouts.md): authorized coach completion of athlete-started work, preserved attribution, protected completed actuals and optional review feedback.
 
 - [ADR 0032 — Opt-in workout preparation](ADR-0032-opt-in-workout-preparation.md): weekly rules, day-only work, DST resolution and worker boundaries.
+
+- [ADR 0033 — Assignment-local adaptations](ADR-0033-assignment-local-adaptations.md): update one athlete plan without library copies or rewriting current work.

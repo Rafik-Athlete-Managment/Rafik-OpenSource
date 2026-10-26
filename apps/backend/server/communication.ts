@@ -195,8 +195,10 @@ export async function communication(
         last_body: string | null;
         last_sequence: bigint | null;
         unread: bigint;
+        joined: boolean;
+        private_pair: boolean;
       }[]
-    >`SELECT c.id,c.title,c.revision,c.archived,last.body last_body,last.sequence last_sequence,(SELECT count(*) FROM public.institution_messages m WHERE m.channel_id=c.id AND m.sender_id<>${self.id}::uuid AND m.sequence>coalesce(r.sequence,0)) unread FROM public.institution_channels c LEFT JOIN public.institution_channel_reads r ON r.channel_id=c.id AND r.member_id=${self.id}::uuid LEFT JOIN LATERAL(SELECT body,sequence FROM public.institution_messages WHERE channel_id=c.id ORDER BY sequence DESC LIMIT 1) last ON true WHERE c.institution_id=${id}::uuid AND (c.title ILIKE ${search} OR EXISTS(SELECT 1 FROM public.institution_channel_members search_member JOIN public.institution_members search_person ON search_person.id=search_member.member_id WHERE search_member.channel_id=c.id AND search_member.member_id<>${self.id}::uuid AND c.private_pair AND search_person.name ILIKE ${search})) AND ((${manage} AND NOT c.private_pair) OR EXISTS(SELECT 1 FROM public.institution_channel_members p WHERE p.channel_id=c.id AND p.member_id=${self.id}::uuid)) ORDER BY last.sequence DESC NULLS LAST,c.id LIMIT 26 OFFSET ${offset}`;
+    >`SELECT c.id,c.title,c.revision,c.archived,c.private_pair,EXISTS(SELECT 1 FROM public.institution_channel_members own WHERE own.channel_id=c.id AND own.member_id=${self.id}::uuid) joined,last.body last_body,last.sequence last_sequence,(SELECT count(*) FROM public.institution_messages m WHERE m.channel_id=c.id AND m.sender_id<>${self.id}::uuid AND m.sequence>coalesce(r.sequence,0)) unread FROM public.institution_channels c LEFT JOIN public.institution_channel_reads r ON r.channel_id=c.id AND r.member_id=${self.id}::uuid LEFT JOIN LATERAL(SELECT body,sequence FROM public.institution_messages WHERE channel_id=c.id ORDER BY sequence DESC LIMIT 1) last ON true WHERE c.institution_id=${id}::uuid AND (NOT ${q.get("tab") === "groups"} OR NOT c.private_pair) AND (c.title ILIKE ${search} OR EXISTS(SELECT 1 FROM public.institution_channel_members search_member JOIN public.institution_members search_person ON search_person.id=search_member.member_id WHERE search_member.channel_id=c.id AND search_member.member_id<>${self.id}::uuid AND c.private_pair AND search_person.name ILIKE ${search})) AND ((${manage} AND NOT c.private_pair) OR EXISTS(SELECT 1 FROM public.institution_channel_members p WHERE p.channel_id=c.id AND p.member_id=${self.id}::uuid)) ORDER BY last.sequence DESC NULLS LAST,c.id LIMIT 26 OFFSET ${offset}`;
     const directPeople = await tx.$queryRaw<{ member_id: string }[]>`
       SELECT DISTINCT other.member_id
       FROM public.institution_channels c
@@ -221,9 +223,9 @@ export async function communication(
       directPeople: directPeople.map((person) => person.member_id),
       items: list.slice(0, 25).map((c) => ({
         ...c,
-        last_body: manage ? null : c.last_body,
-        last_sequence: manage ? null : Number(c.last_sequence || 0),
-        unread: manage ? 0 : Number(c.unread),
+        last_body: c.joined ? c.last_body : null,
+        last_sequence: c.joined ? Number(c.last_sequence || 0) : null,
+        unread: c.joined ? Number(c.unread) : 0,
       })),
       next: list.length > 25 ? offset + 25 : null,
     };

@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-26",
+  "scope": "Unreleased beta.3 founder workflow corrections",
+  "checks": {
+    "adaptation_api": "1 passed: existing assignment, no program/version copies, immutable occurrence after removed day IDs, completion/progression, exact retry, stale/athlete rejection, audit and regular library edit",
+    "communication_api": "1 existing privacy/replay case passed",
+    "scheduler": "3 regression cases passed",
+    "swagger": "2 bundled API reference cases passed",
+    "browser": "6 feature/project combinations passed: coach selection, adaptation recovery/future scheduling, message directory tabs in Chromium and WebKit phone; unaffected desktop evidence reused",
+    "catalog": "57 tables,472 columns,67 route records,31 SQL functions; generated client/shared types",
+    "types": "backend/frontend passed",
+    "frontend_inventory": "92 Vue files,47 screens,45 routes,205 navigation references",
+    "docs": "2033 local links,629 heading links,76 maintained documents passed; external URLs not fetched",
+    "ui_tokens": "1 owned-token-definition test passed; unrelated timezone case skipped"
+  },
+  "browser_evidence": {
+    "coaching_both": "rafik-founder-workflows-browser-last.log: 2 passed on final coach source",
+    "adaptation_chromium": "rafik-founder-workflows-browser-recovery.log: passed on final adaptation source",
+    "adaptation_webkit": "rafik-founder-workflows-browser-coach-state.log: passed on final adaptation source",
+    "messages_chromium": "rafik-founder-workflows-browser-final-remaining.log: passed on final message source",
+    "messages_webkit": "rafik-founder-workflows-browser-last.log: passed on final message source"
+  },
+  "limits": [
+    "No full browser suite or Android/device acceptance",
+    "Old pending library-copy UI recovery and exhaustive multi-scope capture not separately rendered",
+    "Adapted private-media reference predicates reviewed; no new real-media byte journey in this slice",
+    "No preview migration/reset or whole-release acceptance",
+    "Existing-workout event picker/custom-event distinction, group prescriptions and native recording remain later slices"
+  ],
+  "landing_commit": "bea632d1097bd2def16e86c2633fe6b094a1a906",
+  "source_sha256": {
+    "apps/backend/prisma/migrations/202610261900_athlete_plan_adaptation/migration.sql": "e2811866daf9ba2b78bc283b2d0c84a59283aa126d4d9b86d7cce9ac7b04b380",
+    "apps/backend/server/plan-prescription.ts": "40def7c49e88b40777ee2ca76a4cc6ce7526f3ec669e7db845be01a1765c307e",
+    "apps/backend/server/programming.ts": "0b9b2a447afd1d3bd289bcb6c8c3c2e0caa06648d20d3d257c7764fddffb4f54",
+    "apps/backend/server/workout-sequence.ts": "bae0ac2a5058c1bfd6a938d4793314a3afbfca39e94f1920b41acb1a87727d69",
+    "apps/backend/server/athlete-plans.ts": "9968272df8ccda8edd885e5f7d258bcb7c52cb48519f9c53e7ad9fda71e46e69",
+    "apps/backend/server/assets.ts": "16a27fd1131017c0cf56d2b3c5d463d9c9ec2c2ca2fb3a91f594e628434081d7",
+    "apps/backend/server/program-media.ts": "111d4b0ec1aaa9e561eb80d5d931ec3bd43d84f575339fa513b18a851d9c2ca1",
+    "apps/backend/server/communication.ts": "019025df2237ae0df12ced8c116da92efca96abd2873cde21677b6310179c1c2",
+    "apps/backend/tests/plan-adaptation.test.ts": "1528480ed910c8a9efb437836b5c5f43cf9bb138075dde004560ebb7fbf8d70e",
+    "apps/frontend/src/features/institution/CoachingTeam.vue": "6b4476fc060b86e5bc8e02a9f9d57a5a08edd3fc8b5a698dc561349f01f556c8",
+    "apps/frontend/src/features/institution/MemberPicker.vue": "8bbde78167710f566223b905a060b2ee323090526fbda3f5dc5d2b84e4c0e469",
+    "apps/frontend/src/features/institution/ChannelsPage.vue": "b6d1a3d6200ab8c5af6eebbb76b308c203fdc3f101ecea9c1a000001cb2c345f",
+    "apps/frontend/src/features/coaching/PlanEditor.vue": "ebf9d33cadba225cdd5a9d4eb4dbad059e55bca14f88b06a0b9f82223dac9941",
+    "apps/frontend/src/features/institution/AssignedPlanPage.vue": "ceb6c998dceb6f446fcd0f6408bf25efb0affcfcca45e8de82ee28fc2e0a82f7",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "05a3687286c907d7d83209ab23370f2b9946eb38822c2f1abc4a9d2a4d8bb7e3",
+    "apps/frontend/tests/coaching-team.e2e.ts": "2dfa501c4d1621ff9f07374885238fc76f331915c26c17795de07063e6b544f9"
+  },
+  "hash_basis": "SHA-256 of LF-normalized source bytes"
+}
