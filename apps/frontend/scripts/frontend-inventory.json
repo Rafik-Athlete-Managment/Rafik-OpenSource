@@ -329,5 +329,11 @@
   "features/institution/CoachDesk.vue": {
     "purpose": "Balanced coach dashboard: disjoint recording/due/planning queues, today events, limited primary-roster participation status and compact follow-up.",
     "access": "Coach dashboard only; all reads retain existing server primary/sport authority and limited injury-status visibility."
+  },
+  "features/institution/AdminOverview.vue": {
+    "purpose": "Administrator overview: existing institution activity/attendance reporting, current roster coverage and operational navigation. No clinical data."
+  },
+  "features/institution/AthleteDay.vue": {
+    "purpose": "Athlete daily dashboard: own workout agenda, upcoming events, food-diary entry and assigned coach messaging."
   }
 }

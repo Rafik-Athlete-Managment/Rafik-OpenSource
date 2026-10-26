@@ -604,3 +604,111 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
     await f.cleanup()
   }
 })
+
+test('role dashboards prioritize athlete actions and administrator oversight', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(180000)
+  page.setDefaultTimeout(15000)
+  const f = await institutionFixture()
+  try {
+    await institution(f, 'Madar oversight')
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
+    })
+    const errors: string[] = []
+    page.on('pageerror', (e) => {
+      console.log('Dashboard error at', page.url(), e.message)
+      errors.push(e.message)
+    })
+    await f.login(page, f.owner, '/dashboard')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Institution overview')
+    await expect(
+      page.getByText('Recorded completions in this period', { exact: true }),
+    ).toBeVisible()
+    await expect(page.getByText('No records in this period', { exact: true })).toHaveCount(1)
+    await inspect(page, 'admin-overview-empty', info)
+    const analytics = '**/v1/institution/analytics?**'
+    await page.route(analytics, async (route) => {
+      const response = await route.fetch(),
+        result = await response.json()
+      result.summary.completed = 9
+      result.summary.participating = 1
+      result.daily = [{ date: result.window.to, value: 9 }]
+      result.attendance = [
+        { label: 'present', value: 6 },
+        { label: 'unmarked', value: 2 },
+      ]
+      await route.fulfill({ json: result })
+    })
+    await page.getByRole('combobox', { name: /Reporting period/ }).selectOption('7')
+    await expect(page.getByText('9', { exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('img', { name: 'Workout activity', exact: true })).toBeVisible()
+    await inspect(page, 'admin-overview-populated', info)
+    await page.unroute(analytics)
+    await page.route(analytics, (route) => route.abort())
+    await page.getByRole('combobox', { name: /Reporting period/ }).selectOption('90')
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page.getByRole('img', { name: 'Workout activity', exact: true })).toBeVisible()
+    await page.unroute(analytics)
+    await page.getByRole('button', { name: 'Retry', exact: true }).click()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'dark')
+    })
+    await page.reload()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('نظرة عامة على المؤسسة')
+    await inspect(page, 'admin-overview-ar', info)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'en')
+      localStorage.setItem('rafik.theme', 'light')
+    })
+    expect(errors).toEqual([])
+    const athleteContext = await browser.newContext({
+      baseURL: testPreview,
+      viewport: page.viewportSize()!,
+      isMobile: !!info.project.use.isMobile,
+      hasTouch: !!info.project.use.hasTouch,
+      deviceScaleFactor: Number(info.project.use.deviceScaleFactor || 1),
+      serviceWorkers: 'block',
+    })
+    page = await athleteContext.newPage()
+    page.setDefaultTimeout(15000)
+    page.on('pageerror', (e) => {
+      console.log('Athlete error at', page.url(), e.message)
+      errors.push(e.message)
+    })
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
+    })
+    await f.login(page, f.client, '/dashboard')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('My day')
+    await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Your coaches', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Message R4 Coach/i })).toBeVisible()
+    await inspect(page, 'athlete-my-day', info)
+    await expect(page.getByRole('link', { name: 'All my workouts', exact: true })).toHaveCount(1)
+    await page.getByRole('link', { name: /Message R4 Coach/i }).click()
+    await expect(page).toHaveURL(/\/messages\/[a-f0-9-]+$/)
+    await expect(page.getByPlaceholder('Write a message…', { exact: true })).toBeVisible()
+    expect(errors).toEqual([])
+    await page.goto('/dashboard')
+    await page.getByRole('link', { name: 'Log food', exact: true }).click()
+    await expect(page).toHaveURL(/nutrition\?section=diary/)
+    await expect(page.getByRole('heading', { name: 'Food diary', exact: true })).toBeVisible()
+    await page.goto('/dashboard')
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'dark')
+    })
+    await page.reload()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('يومي')
+    await inspect(page, 'athlete-my-day-ar', info)
+    expect(errors).toEqual([])
+    await athleteContext.close()
+  } finally {
+    await f.cleanup()
+  }
+})

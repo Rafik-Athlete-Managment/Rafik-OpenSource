@@ -33,6 +33,13 @@ Use an empty synthetic institution or your existing local demo; do not reset ano
 
 ## Administrator
 
+### Institution overview
+
+1. Open Dashboard: expect Institution overview, a reporting-period control and activity before administrative detail. Switch 7/28/90 days; wait for the returned dates to match. No records should show honest chart empty states, not example data.
+2. Compare completed workouts with recorded completions in the selected period. Participation counts distinct currently active athletes with a completion, over the active roster now; it is not attendance or compliance. Attendance counts athlete-event entries for started non-cancelled events, including unknown/unmarked entries.
+3. Follow coverage links to People and coaches; check Invite people, persistent invitation link, athlete plans and institution settings remain reachable. Admins must not gain coach recording or injury-detail access.
+4. Interrupt a report refresh: expect an error and retained results with their original dates. Retry and confirm recovery. Inspect phone/desktop, Arabic/English and both themes.
+
 ### Prepare an assigned program
 
 Create an empty program, add real exercises and prescriptions, review and publish it. Choose Assign this program for a synthetic athlete with an assigned coach. Confirm the published version is fixed and assignment is explicit. The assigned coach should find it in Athlete plans; an unrelated coach must not acquire assignment or recording authority. Use this record for the scheduling and recording checks below.
@@ -80,6 +87,13 @@ Have a synthetic athlete start a scheduled workout and leave it unfinished. As i
 7. Open Injury status from navigation. Coaches see limited shared participation status; they do not acquire clinical details or athlete status-editing rights.
 
 ## Athlete
+
+### My day
+
+1. Open Dashboard: expect My day with workout cards first, Start/Resume visible without hover, upcoming events and compact food/coach panels. Workouts remain independently scoped per plan.
+2. Choose Log food: expect the Food diary tab directly. Record only actual intake; guidance/example meals are separate. Return to Dashboard.
+3. Choose Message beside an assigned coach: expect the existing private conversation or a single newly initiated one. Supporting coaches appear when assigned and returned by the authorized communication-contact read. Without a coach, expect a clear contact-your-administrator message.
+4. Open All my workouts and Workout history, then return. Check empty data and long coach/workout names, phone/desktop, Arabic/English and both themes; athletes must not acquire staff reporting or directory access.
 
 ### Scheduled workout access
 

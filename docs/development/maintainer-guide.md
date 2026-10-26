@@ -229,3 +229,7 @@ Run delegated-session and seeded workout-sequence API suites through separate is
 ### Dashboard queue synchronization
 
 CoachDesk uses `actionable` (due plus unfinished) and `planning`, with server identity echoed in `WorkoutAgenda.queue`. Narrower recording/today reads remain supported but are not additional desk lists. WorkoutAgenda emits changed only after acknowledgment and its refresh; the parent changes the sibling refresh token rather than remounting active editors. The combined recorder retains the former recording command scope, planning is unchanged, and today/due scopes have recovery controls. Do not reintroduce a queue filter over only one paginated client page or accept a missing queue marker as an empty/successful scoped read.
+
+### Role dashboard ownership
+
+DashboardPage owns institution context and recoverable invitations; CoachDesk, AthleteDay and AdminOverview own their overview compositions. Shared responsive layout lives in role-dashboard.css. Reuse authorized service projections rather than deriving institution totals from loaded directory pages. AdminOverview retains the former due-agenda command key for pending scheduling recovery. Admin trends use returned report dates and current-roster denominators; unknown attendance/logging is not absence or inactivity. The food diary shortcut accepts only section=diary, leaving historical plan selection precedence intact.

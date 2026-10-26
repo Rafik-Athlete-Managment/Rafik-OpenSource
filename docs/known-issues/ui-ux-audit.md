@@ -255,7 +255,7 @@ The founder approved A. The implementation uses the existing limited status read
 
 ## Athlete and administrator dashboards — study opened 26 October 2026
 
-**Proposal only.** Founder requested the same role-specific study/concept review as Coaching desk. Android remains a later slice. Priority questions are pending; implementation is not approved by this study.
+**Approved and implemented, 26 October:** founder selected daily actions for athletes and institution participation/activity oversight for administrators, then approved these concepts. Android remains a later slice. The candidate table below preserves the study; current implementation uses My day and Institution overview.
 
 ### Source findings
 
@@ -270,6 +270,8 @@ DashboardPage still gives these roles the institution name as its main heading. 
 
 Desktop should use one clear main work region and a smaller context region, stacking in action order on phones. Reuse shared cards, semantic statuses, skeletons and empty states. Avoid duplicate queue/count cards and charts without a meaningful source, denominator or period. Dedicated role compositions are preferable to adding more conditional dashboard sections.
 
-### Decisions needed before implementation
+### Approved priorities and remaining review
 
-Confirm each role’s first-use priority (pending founder questions). Then present the chosen region order and action labels, verify available authorized sources, and review empty/populated states in English/Arabic and both themes. Optional personal progress belongs behind reliable data, not fabricated analytics. Detailed operational reporting remains on Analytics rather than crowding the overview.
+Founder selected athlete daily actions and administrator participation/activity trends followed by administration, and approved implementation. Authorized sources were reviewed before implementation. Keep optional personal progress behind reliable data rather than fabricated analytics; detailed operational reporting remains on Analytics. Verification records inspected states and remaining founder usability coverage.
+
+Implementation reuses existing period analytics; institution-wide assessment trends lack an existing aggregate and were not added. Admin coverage follows activity rather than leading it. Athlete coach contacts use the existing authorized messaging entry point. See verification for actual rendered coverage; the original source findings above describe the pre-change page.

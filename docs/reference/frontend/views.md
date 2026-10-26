@@ -290,7 +290,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/activity`, `/dashboard`, `/institution-settings`, `/people`
 - **Purpose:** Role dashboard and route-selected People, Activity and Institution settings sections, invitations and close-institution confirmation.
 - **Access:** Dashboard: all members. People: administrators and coaches with scoped roster. Activity/settings: administrator router gate; branding has a stricter initial-admin check.
-- **Opens:** `/access`, `/analytics`, `/injuries`, `/members/:member`, `/messages/:channel?`, `/people`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
+- **Opens:** `/access`, `/analytics`, `/injuries`, `/institution-settings`, `/members/:member`, `/messages/:channel?`, `/nutrition`, `/people`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
 - **Opened from views:** `/`, `/access`, `/analytics`, `/help`, `/invitation/:token`, `/local-preview`, `/login`, `/members/:member`, `/notifications`, `/password-setup/:token`, `/setup`, `/support`
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)

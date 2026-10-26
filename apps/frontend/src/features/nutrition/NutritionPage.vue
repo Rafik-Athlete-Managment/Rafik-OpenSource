@@ -77,7 +77,7 @@ const institutionName = computed(
 )
 const selected = ref(String(route.query.member || '')),
   date = ref(localDate(profile.value?.timezone || 'UTC')),
-  section = ref(route.query.plan ? 'history' : 'plan'),
+  section = ref(route.query.plan ? 'history' : route.query.section === 'diary' ? 'diary' : 'plan'),
   choosing = ref(!selected.value)
 const data = ref<Data>(),
   loading = ref(false),

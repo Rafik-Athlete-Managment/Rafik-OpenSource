@@ -326,7 +326,9 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                     : pageHeading
                       ? l('Your workouts', 'تمارينك')
                       : due
-                        ? l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
+                        ? context.view === 'trainee'
+                          ? l('Your workouts', 'تمارينك')
+                          : l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
                         : l('Next workouts', 'التمارين التالية')
           }}
         </component>
@@ -356,12 +358,17 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
         </p>
       </div>
       <div class="agenda-toolbar-actions">
-        <RouterLink v-if="pageHeading" class="button secondary" to="/workouts"
+        <RouterLink
+          v-if="pageHeading || (due && context.view === 'trainee')"
+          class="button secondary"
+          to="/workouts"
           ><PhClockCounterClockwise :size="18" aria-hidden="true" />{{
             l('Workout history', 'سجل التمارين')
           }}</RouterLink
         ><RouterLink v-if="due && !queue" class="text-link" to="/training">{{
-          l('Athlete plans', 'خطط الرياضيين')
+          context.view === 'trainee'
+            ? l('All my workouts', 'كل تماريني')
+            : l('Athlete plans', 'خطط الرياضيين')
         }}</RouterLink>
         <button
           :class="pageHeading ? 'button' : 'button small secondary'"

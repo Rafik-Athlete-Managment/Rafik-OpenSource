@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refined role dashboards: athlete My day prioritizes workouts, events, food diary and coach messaging; administrator Institution overview leads with existing period-scoped workout/attendance reports before coverage and administrative actions. No new metric, permission or clinical projection.
+
 - Consolidate due and unfinished workouts into one Workouts to record list, separate from Needs scheduling. Refresh sibling queues after acknowledged changes without remounting active recorders, preserve prior pending-command scopes, and reject unconfirmed queue responses from outdated backends.
 
 - Lead every shared workout card with the workout/day name and show the program title beneath it, so different workouts from one program are distinguishable.

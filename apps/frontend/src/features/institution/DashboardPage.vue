@@ -16,9 +16,9 @@ import PageState from '../../components/PageState.vue'
 import type { Institution, Member, Role, Sport } from './types'
 import './institution.css'
 import CoachDesk from './CoachDesk.vue'
-import FollowUpPanel from './FollowUpPanel.vue'
-import UpcomingSessions from './UpcomingSessions.vue'
-import WorkoutAgenda from './WorkoutAgenda.vue'
+import AdminOverview from './AdminOverview.vue'
+import AthleteDay from './AthleteDay.vue'
+import './role-dashboard.css'
 import BrandingSettings from './BrandingSettings.vue'
 import SportsSettings from './SportsSettings.vue'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
@@ -350,7 +350,11 @@ onMounted(async () => {
                   ? l('Institution activity', 'نشاط المؤسسة')
                   : section === 'overview' && view === 'trainer'
                     ? l('Welcome back', 'أهلاً بعودتك')
-                    : data?.institution.name || l('Institution', 'المؤسسة')
+                    : section === 'overview' && view === 'admin'
+                      ? l('Institution overview', 'نظرة عامة على المؤسسة')
+                      : section === 'overview'
+                        ? l('My day', 'يومي')
+                        : data?.institution.name || l('Institution', 'المؤسسة')
           }}
         </h1>
         <p v-if="section !== 'overview'">
@@ -375,12 +379,15 @@ onMounted(async () => {
           {{
             view === 'admin'
               ? l(
-                  'Your people, their training, one shared responsibility.',
-                  'أشخاصك وتدريبهم ومسؤولية مشتركة.',
+                  'Understand participation, activity and where support is needed.',
+                  'تابع المشاركة والنشاط ومواضع الحاجة إلى الدعم.',
                 )
               : view === 'trainer'
                 ? l('Focus on the people you support.', 'ركّز على الأشخاص الذين تدعمهم.')
-                : l('Your training within this institution.', 'تدريبك ضمن هذه المؤسسة.')
+                : l(
+                    'Your workouts, appointments and daily recording.',
+                    'تمارينك ومواعيدك وتسجيلك اليومي.',
+                  )
           }}
         </p>
       </div>
@@ -508,79 +515,9 @@ onMounted(async () => {
           /></label>
         </div>
         <template v-if="section === 'overview'">
-          <div v-if="view === 'admin'" class="organization-summary">
-            <RouterLink :to="base + '/people'"
-              ><strong>{{ data.summary.trainees }}</strong
-              ><span>{{
-                view === 'admin'
-                  ? l('Active athletes', 'الرياضيون النشطون')
-                  : l('Assigned to you', 'المعيّنون لك')
-              }}</span></RouterLink
-            ><RouterLink v-if="view === 'admin'" :to="base + '/people?filter=trainer'"
-              ><strong>{{ data.summary.trainers }}</strong
-              ><span>{{ l('Coaches', 'المدربون') }}</span></RouterLink
-            ><RouterLink v-if="view === 'admin'" :to="base + '/people'"
-              ><strong>{{ data.summary.unassigned }}</strong
-              ><span>{{ l('Need a coach', 'بحاجة إلى مدرب') }}</span></RouterLink
-            >
-          </div>
-          <div v-if="view !== 'trainer'" class="actions">
-            <RouterLink class="button" :to="base + '/training'">{{
-              view === 'trainee'
-                ? l('Open my training', 'فتح تدريبي')
-                : l('Athlete plans', 'خطط الرياضيين')
-            }}</RouterLink
-            ><RouterLink
-              v-if="view !== 'trainee'"
-              class="button secondary"
-              :to="base + '/analytics'"
-              >{{ l('View analytics', 'عرض التحليلات') }}</RouterLink
-            >
-          </div>
           <CoachDesk v-if="view === 'trainer'" />
-          <FollowUpPanel v-else-if="view === 'admin'" />
-          <WorkoutAgenda v-if="view === 'trainee'" due :limit="4" />
-          <UpcomingSessions v-if="view !== 'trainer'" />
-          <section
-            v-if="view === 'trainee' || (view === 'admin' && !data.summary.trainees)"
-            class="panel"
-          >
-            <h2>
-              {{
-                view === 'admin'
-                  ? l('Keep everyone supported', 'امنح الجميع الدعم')
-                  : l('Your coach', 'مدربك')
-              }}
-            </h2>
-            <template v-if="view === 'trainee'"
-              ><p>{{ trainerName(data.members.find((m) => m.id === data?.self.id)!) }}</p>
-              <p class="muted">
-                {{
-                  l(
-                    'Your institution manages your coach assignment. Your personal training remains in My training.',
-                    'تدير مؤسستك تعيين مدربك. يبقى تدريبك الشخصي في «تدريبي».',
-                  )
-                }}
-              </p></template
-            ><template v-else
-              ><p>
-                {{
-                  view === 'admin'
-                    ? l(
-                        'Invite your staff and athletes, then give each athlete a responsible coach. You can reassign responsibility while keeping the institution’s records together.',
-                        'ادعُ موظفيك ورياضييك وعيّن مدرباً مسؤولاً لكل رياضي. يمكنك تغيير المسؤولية مع الحفاظ على سجلات المؤسسة.',
-                      )
-                    : l(
-                        'Open your roster to review your assigned athletes and their training.',
-                        'افتح القائمة لمراجعة الرياضيين المعيّنين لك وتدريبهم.',
-                      )
-                }}
-              </p>
-              <RouterLink class="text-link" :to="base + '/people'"
-                >{{ l('Open roster', 'فتح القائمة') }} →</RouterLink
-              ></template
-            >
-          </section>
+          <AdminOverview v-else-if="view === 'admin'" :institution="data" />
+          <AthleteDay v-else :institution="data" />
         </template>
         <template v-else-if="section === 'people'">
           <TabsRoot

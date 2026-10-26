@@ -1,0 +1,119 @@
+.role-dashboard {
+  display: grid;
+  gap: var(--space-6);
+}
+.role-dashboard-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.role-dashboard-main,
+.role-dashboard-context {
+  min-width: 0;
+}
+.role-dashboard-context {
+  display: grid;
+  gap: var(--space-5);
+}
+.role-dashboard .panel {
+  margin: 0;
+}
+.dashboard-action-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+.dashboard-action-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-panel);
+  margin: 0;
+}
+.dashboard-action-panel p {
+  margin: 0;
+}
+.dashboard-action-panel > .button {
+  justify-self: start;
+}
+.dashboard-coaches {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.dashboard-coaches li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-block-end: 1px solid var(--line);
+  padding-block-end: var(--space-3);
+}
+.dashboard-coaches li > span {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-coaches small {
+  color: var(--muted);
+}
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.dashboard-metrics > * {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-inline-start: 3px solid var(--accent);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-metrics strong {
+  font-size: var(--text-section);
+}
+.dashboard-metrics small {
+  color: var(--muted);
+}
+.dashboard-period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.dashboard-period h2 {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.dashboard-period label {
+  min-width: 160px;
+}
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+.dashboard-charts > * {
+  min-width: 0;
+}
+.dashboard-operations {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: var(--space-6);
+}
+@media (max-width: 1050px) {
+  .role-dashboard-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .dashboard-charts,
+  .dashboard-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

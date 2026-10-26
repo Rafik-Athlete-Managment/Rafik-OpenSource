@@ -19,26 +19,6 @@
 .organization-page .work-heading h1 {
   overflow-wrap: anywhere;
 }
-.organization-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-block: 1px solid var(--line);
-  margin-block: 24px 32px;
-}
-.organization-summary a {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 24px 16px;
-}
-.organization-summary strong {
-  font-size: 2rem;
-  font-variant-numeric: tabular-nums;
-}
-.organization-summary span {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
 .organization-toolbar {
   display: flex;
   gap: 16px;
@@ -332,12 +312,6 @@
   .organization-toolbar {
     align-items: stretch;
     flex-direction: column;
-  }
-  .organization-summary a {
-    padding: 20px 8px;
-  }
-  .organization-summary strong {
-    font-size: 1.6rem;
   }
   .organization-person {
     gap: 10px;

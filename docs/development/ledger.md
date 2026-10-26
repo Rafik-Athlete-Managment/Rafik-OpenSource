@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## Athlete My day and administrator Institution overview — 26 October 2026
+
+Founder selected athlete daily actions and administrator participation/activity oversight, then approved implementation. Dedicated AthleteDay and AdminOverview compositions replace conditional legacy overview blocks. Shared dashboard spacing follows existing tokens. Athlete actions reuse own workout, authorized appointments, diary and direct-coach messaging routes; a bounded diary query opens the existing Food diary tab. Admin reporting reuses the current analytics service, with 7/28/90-day periods, current-roster participation denominator, completed-workout daily trend and event-attendance entries. No assessment trend is invented. Current coach coverage and administrative actions follow reporting. Existing invitation recovery/link behavior remains, as does recovery of exact pending scheduling commands from the former admin agenda.
+
+Old report results remain visible with their returned dates after a failed refresh; authorization failures clear them. Backend/API/schema, Android and clinical authority are unchanged. Paired English/Arabic landing guidance is on draft PR #34 at `6783a9b`. Focused rendered evidence and limitations are recorded in verification.
+
 ## One workout, one dashboard card — 26 October 2026
 
 The coach desk now renders two meaningful collections: Workouts to record (due or unfinished, once per assignment) and Needs scheduling (no unresolved appointment or unfinished recording). The server adds an actionable queue and echoes the requested queue; the UI refuses untagged/mismatched responses rather than showing duplicate all-plan results from an outdated backend. Old recording/today API filters remain narrower reads, not separate desk panels.

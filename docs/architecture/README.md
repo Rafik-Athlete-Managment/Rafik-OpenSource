@@ -1,5 +1,9 @@
 # Rafik architecture
 
+## Role dashboard composition
+
+DashboardPage delegates overview layout to CoachDesk, AthleteDay and AdminOverview. AthleteDay derives its coaching team from the authorized messaging-contact read and sends existing `/messages?to=` links through communication authority; it does not create a new contact grant. `/nutrition?section=diary` selects the existing food diary tab and changes no access/sharing rule. AdminOverview reads the existing period-scoped institution analytics API, keeps returned dates with retained results and clears unauthorized results. Completed workout counts, current active-roster participation and per-event athlete attendance have distinct units; no assessment aggregate or health/readiness metric is implied. Source inventories record their consumers and outgoing navigation.
+
 ## Assigned-plan web ownership
 
 The staff assignment directory is `/training`; `/training/:assignment` owns one authorized plan's review, workout actions and embedded adaptation. Athletes use the role-specific `/training` workout-card screen and cannot enter the staff detail route. Adaptation clones the assigned immutable version into a distinct recoverable program draft. Saving/publishing does not rewrite that assignment; the existing explicit assignment flow remains authoritative. The shared PlanEditor serves both contexts, avoiding a duplicate editor and preserving API behavior.
