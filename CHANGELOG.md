@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Separate light-theme cards from the page using a seven-percent ink tint and derive supporting text from the institution ink/canvas pair. Dark-theme surface tokens are unchanged.
+
+- Simplify assessment-event template selection to one visible server search and a selectable list with test counts, retain the selected template through no-match searches, and add bilingual event-name examples.
+
 - Add versioned program defaults for automatic daily preparation, editable during creation and editing, with explicit per-assignment opt-out, bounded dates/timezone and atomic policy creation. Existing plan policies remain unchanged by program edits.
 
 - Add opt-in per-plan weekly scheduling and automatic day-only workout preparation, exact policy save/stop, current-authority checks, DST diagnostics, bounded worker retries and no duplicate unresolved work. Extend web plan/calendar/list/detail reads for explicit day-only events while default attendance calendar reads remain timed-only. No group progression or Android workout capture is enabled.

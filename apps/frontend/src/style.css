@@ -6,12 +6,13 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   --page: var(--instance-page-light, #f8f8f3);
-  --surface: color-mix(in srgb, var(--page) 90%, white);
+  /* Cards need visible separation even on the near-white default canvas. */
+  --surface: color-mix(in srgb, var(--page) 93%, var(--ink));
   /* Restrained chip/selection fill; the former 18% ink mix read as a heavy grey block. */
   --surface-soft: color-mix(in srgb, var(--page) 89%, var(--ink));
-  --ink: var(--instance-ink-light, #23332d);
-  /* 4.5:1+ on light --surface-soft (the former #545d56 measured 4.39:1 in WebKit). */
-  --muted: #4d564f;
+  --ink: var(--instance-ink-light, #121b15);
+  /* Follow the institution ink/canvas rather than a fixed grey on tinted cards. */
+  --muted: color-mix(in srgb, var(--ink) 78%, var(--page));
   --line: color-mix(in srgb, var(--page) 72%, var(--ink));
   --accent: var(--instance-accent, #285943);
   --accent-hover: color-mix(in srgb, var(--accent) 86%, var(--ink));

@@ -79,19 +79,15 @@ test('organization staff schedule a group assessment, recover a result, correct 
     await page.goto(base + '/schedule/new')
     await page.getByLabel('Event name', { exact: true }).fill('Morning assessment')
     await page.getByRole('combobox', { name: 'Event type', exact: true }).selectOption('assessment')
-    await page
-      .getByRole('combobox', { name: 'Assessment template', exact: true })
-      .selectOption({ label: 'Movement baseline' })
-    await page.getByText('Find another template', { exact: true }).click()
+    await page.getByRole('radio', { name: 'Movement baseline 1 test', exact: true }).check()
     await page
       .getByRole('searchbox', { name: 'Find an assessment template', exact: true })
       .fill('No matching template')
     await page.getByRole('button', { name: 'Search templates', exact: true }).click()
     await expect(
-      page
-        .getByRole('combobox', { name: 'Assessment template', exact: true })
-        .locator('option:checked'),
-    ).toHaveText('Movement baseline')
+      page.getByText('No templates match. Try another name or create a template.', { exact: true }),
+    ).toBeVisible()
+    await expect(page.locator('.template-selection')).toContainText('Movement baseline')
     await page.getByRole('combobox', { name: 'Timezone', exact: true }).click()
     await page.getByRole('combobox', { name: 'Timezone', exact: true }).fill('UTC')
     await page.getByRole('option', { name: 'UTC · UTC', exact: true }).click()
@@ -121,7 +117,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
     ).toBeEnabled()
     await page.reload()
     await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
-    await expect(page).toHaveURL(/\/calendar\/[a-f0-9-]{36}$/)
+    await expect(page).toHaveURL(/\/schedule\/[a-f0-9-]{36}$/)
     const eid = new URL(page.url()).pathname.split('/').at(-1)!
     expect(eid).toMatch(/^[a-f0-9-]{36}$/)
     execFileSync(
@@ -198,7 +194,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
     ).toBeVisible()
     await expect(page.getByText('14 reps', { exact: true })).toBeVisible()
     await expect(page.getByText('19 reps', { exact: true })).toBeVisible()
-    await f.login(client, f.client, `/calendar/${eid}`)
+    await f.login(client, f.client, `/schedule/${eid}`)
     await expect(client.getByText('14 reps', { exact: true })).toBeVisible()
     await expect(client.getByText('19 reps', { exact: true })).toHaveCount(0)
     await page.goto(base + '/analytics')

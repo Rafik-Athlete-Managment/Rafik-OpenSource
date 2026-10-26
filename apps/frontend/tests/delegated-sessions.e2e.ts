@@ -892,3 +892,100 @@ test('program preparation default is visible and confirmed at assignment', async
     await f.cleanup()
   }
 })
+
+test('event template uses one search and preserves selection through no matches', async ({
+  page,
+}, info) => {
+  test.setTimeout(120000)
+  const f = await institutionFixture()
+  try {
+    await institution(f, 'Template picker', undefined, false)
+    for (let i = 0; i < 6; i++)
+      await f.call(f.coach, '/v1/institution/services', {
+        operation: randomUUID(),
+        action: 'template',
+        view: 'trainer',
+        id: randomUUID(),
+        revision: 0,
+        title: `Fitness ${i + 1}`,
+        archived: false,
+        definition: [{ key: randomUUID(), name: 'Standing jump', unit: 'cm', kind: 'number' }],
+      })
+    await f.login(page, f.coach, '/schedule/new')
+    await page.getByLabel('Event name', { exact: true }).fill('Pre-season assessment')
+    await page.getByRole('combobox', { name: 'Event type', exact: true }).selectOption('assessment')
+    await expect(page.getByLabel('Event name', { exact: true })).toHaveAttribute(
+      'placeholder',
+      'For example: Pre-season fitness assessment',
+    )
+    const picker = page.getByRole('region', { name: 'Assessment template', exact: true })
+    await expect(picker.getByRole('searchbox')).toHaveCount(1)
+    await expect(picker.getByRole('combobox')).toHaveCount(0)
+    await expect(picker.getByRole('radio')).toHaveCount(5)
+    await picker.scrollIntoViewIfNeeded()
+    await inspect(page, 'event-template-options', info)
+    await picker.getByRole('button', { name: 'More templates', exact: true }).click()
+    await picker.getByRole('radio', { name: 'Fitness 6 1 test', exact: true }).check()
+    await picker.getByRole('searchbox').fill('not-found')
+    await picker.getByRole('button', { name: 'Search templates', exact: true }).click()
+    await expect(
+      picker.getByText('No templates match. Try another name or create a template.', {
+        exact: true,
+      }),
+    ).toBeVisible()
+    await expect(picker.locator('.template-selection')).toContainText('Fitness 6')
+    await picker.scrollIntoViewIfNeeded()
+    await inspect(page, 'event-template-search', info)
+    await page.getByRole('button', { name: 'Choose people', exact: true }).click()
+    await expect(page.getByRole('region', { name: 'Choose people', exact: true })).toBeVisible()
+    await page.reload()
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'light')
+    })
+    await page.goto('/schedule/new')
+    const arabicPicker = page.getByRole('region', { name: 'قالب التقييم', exact: true })
+    await expect(arabicPicker.locator('.template-selection')).toContainText('Fitness 6')
+    await arabicPicker.scrollIntoViewIfNeeded()
+    await inspect(page, 'event-template-search-ar', info)
+    const colors = await page.evaluate(() => {
+      const ctx = document.createElement('canvas').getContext('2d')!
+      const pixel = (token: string) => {
+        const probe = document.createElement('span')
+        probe.style.color = `var(${token})`
+        document.body.append(probe)
+        const color = getComputedStyle(probe).color
+        probe.remove()
+        ctx.clearRect(0, 0, 1, 1)
+        ctx.fillStyle = color
+        ctx.fillRect(0, 0, 1, 1)
+        return [...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3)
+      }
+      const lum = (rgb: number[]) =>
+        rgb
+          .map((v) => {
+            const c = v / 255
+            return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+          })
+          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i]!, 0)
+      const ratio = (a: string, b: string) => {
+        const x = lum(pixel(a)),
+          y = lum(pixel(b))
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
+      }
+      return {
+        card: ratio('--surface', '--page'),
+        text: ratio('--ink', '--surface'),
+        muted: ratio('--muted', '--surface'),
+        softMuted: ratio('--muted', '--surface-soft'),
+      }
+    })
+    expect(colors.card).toBeGreaterThan(1.1)
+    expect(colors.text).toBeGreaterThanOrEqual(4.5)
+    expect(colors.muted).toBeGreaterThanOrEqual(4.5)
+    expect(colors.softMuted).toBeGreaterThanOrEqual(4.5)
+    console.info('Default light-theme contrast ratios', colors)
+  } finally {
+    await f.cleanup()
+  }
+})

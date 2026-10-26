@@ -1,5 +1,13 @@
 # Verification record
 
+## Event template picker and light surfaces — 26 October 2026
+
+The focused event-composer journey passed desktop Chromium and phone WebKit with disposable records: one template search/no duplicate dropdown, five-result server page and later-batch selection, retained selection through no-match search, advancement to people selection and restored template on reload. English/dark populated/no-match and Arabic/light restored states were rendered and inspected; layout-contract and Axe checks passed in those states. The event-name assessment placeholder was asserted. The full group-assessment suite was not rerun; its selector and current browser paths were updated for the picker.
+
+Rendered default-light token contrasts in both engines measured primary text/card 14.41:1, supporting text/card 7.24:1 and supporting text/soft surface 6.66:1. Card/canvas separation is 1.15:1; this is a subtle surface distinction, not a control-outline contrast claim. Light surfaces/secondary text remain derived from institution ink/canvas; custom-palette combinations were not exhaustively rendered. Dark surface tokens are unchanged and the scoped dark form was inspected. This is not whole-application visual acceptance or Android evidence.
+
+Frontend type checks, inventory, the owned-token-definition check and local documentation checks passed. No preview data was reset; isolated fixtures and this run’s screenshots were cleaned. Routine visual refinements do not require a separate landing workflow/API update. Release PR #142 stays unmerged.
+
 ## Program automatic-preparation defaults — 26 October 2026
 
 Three focused scheduler cases passed in a disposable migrated database, including versioned program preferences, invalid date/timezone rejection, exact delivery retry with one policy, opt-out against an enabled published default, existing-policy preservation on program republish, and the prior sequence/DST safeguards. Backend/frontend type checks and local documentation links/anchors passed. No schema migration was added in this follow-up; the prior scheduling migration remains required.

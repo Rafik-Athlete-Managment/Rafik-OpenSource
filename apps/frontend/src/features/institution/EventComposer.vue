@@ -103,7 +103,18 @@ const people = computed(
   ),
   staff = computed(() => trainerOptions.value)
 const chosen = computed(() => people.value.filter((m) => draft.value.participants.includes(m.id)))
-const selectedTemplate = computed(() => templates.value.find((t) => t.id === draft.value.template))
+const retainedTemplate = ref<AssessmentTemplate>()
+const selectedTemplate = computed(
+  () =>
+    templates.value.find((t) => t.id === draft.value.template) ||
+    (retainedTemplate.value?.id === draft.value.template ? retainedTemplate.value : undefined),
+)
+function chooseTemplate(template: AssessmentTemplate) {
+  retainedTemplate.value = template
+  draft.value.template = template.id
+}
+const testCount = (count: number) =>
+  l(`${count} ${count === 1 ? 'test' : 'tests'}`, `عدد الاختبارات: ${count}`)
 const templateSearch = ref(''),
   groupSearch = ref(''),
   templateNext = ref<number | null>(null),
@@ -114,6 +125,7 @@ async function catalogPage(kind: 'templates' | 'groups', append = false) {
     view,
     kind,
     search: kind === 'templates' ? templateSearch.value : groupSearch.value,
+    ...(kind === 'templates' ? { limit: '5' } : {}),
     offset: String(append ? (kind === 'templates' ? templateNext.value : groupNext.value) || 0 : 0),
   })
   const page = await request<{ items: any[]; next: number | null }>(`/v1/institution/services?${q}`)
@@ -122,8 +134,7 @@ async function catalogPage(kind: 'templates' | 'groups', append = false) {
     templates.value = append
       ? Array.from(new Map([...templates.value, ...page.items].map((t) => [t.id, t])).values())
       : page.items
-    if (selected && !templates.value.some((t) => t.id === selected.id))
-      templates.value.unshift(selected)
+    if (selected) retainedTemplate.value = selected
     templateNext.value = page.next
   } else {
     groups.value = append ? [...groups.value, ...page.items] : page.items
@@ -311,7 +322,18 @@ onMounted(async () => {
           >
             <label
               >{{ l('Event name', 'اسم الموعد')
-              }}<input v-model="draft.title" required maxlength="100"
+              }}<input
+                v-model="draft.title"
+                required
+                maxlength="100"
+                :placeholder="
+                  draft.kind === 'assessment'
+                    ? l(
+                        'For example: Pre-season fitness assessment',
+                        'مثال: تقييم اللياقة قبل الموسم',
+                      )
+                    : l('For example: First-team training', 'مثال: تدريب الفريق الأول')
+                "
             /></label>
             <label
               >{{ l('Event type', 'نوع الموعد')
@@ -322,59 +344,105 @@ onMounted(async () => {
                 </option>
               </select></label
             >
-            <details v-if="draft.kind === 'assessment'" class="catalog-search">
-              <summary>{{ l('Find another template', 'ابحث عن قالب آخر') }}</summary>
-              <div class="form-fields">
+            <section
+              v-if="draft.kind === 'assessment'"
+              class="template-picker"
+              :aria-label="l('Assessment template', 'قالب التقييم')"
+            >
+              <div class="template-picker-heading">
+                <h2>{{ l('Assessment template', 'قالب التقييم') }}</h2>
+                <RouterLink
+                  :to="base + '/assessment-templates/new?forEvent=' + draft.id"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-link"
+                  >{{ l('Create a template ↗ (new tab)', 'إنشاء قالب ↗ (تبويب جديد)') }}</RouterLink
+                >
+              </div>
+              <p class="small-print">
+                {{
+                  l(
+                    'Choose the tests you will record. Search the library or create a new template.',
+                    'اختر الاختبارات التي ستسجلها. ابحث في المكتبة أو أنشئ قالباً جديداً.',
+                  )
+                }}
+              </p>
+              <div class="template-search-row">
                 <label
                   >{{ l('Find an assessment template', 'البحث عن قالب تقييم')
                   }}<input
-                    :placeholder="l('Type to search…', 'اكتب للبحث…')"
                     v-model="templateSearch"
                     type="search"
-                    @keydown.enter.prevent="findCatalog('templates')" /></label
-                ><button
+                    :placeholder="l('Search templates by name…', 'ابحث عن القوالب بالاسم…')"
+                    @keydown.enter.prevent="findCatalog('templates')"
+                /></label>
+                <button
                   type="button"
-                  class="text-link"
+                  class="button secondary"
                   :disabled="catalogBusy.templates"
                   @click="findCatalog('templates')"
                 >
-                  {{ l('Search templates', 'البحث في القوالب') }}</button
-                ><button
+                  {{ l('Search templates', 'البحث في القوالب') }}
+                </button>
+              </div>
+              <p v-if="selectedTemplate" class="template-selection" role="status">
+                {{ l('Selected:', 'المحدد:') }}
+                <strong dir="auto">{{ selectedTemplate.title }}</strong> ·
+                {{ testCount(selectedTemplate.definition.length) }}
+              </p>
+              <div
+                class="template-options"
+                role="radiogroup"
+                :aria-label="l('Choose an assessment template', 'اختر قالب تقييم')"
+                :aria-busy="catalogBusy.templates"
+              >
+                <label
+                  v-for="template in templates"
+                  :key="template.id"
+                  class="template-option"
+                  :class="{ selected: draft.template === template.id }"
+                >
+                  <input
+                    type="radio"
+                    name="assessment-template"
+                    :value="template.id"
+                    :checked="draft.template === template.id"
+                    @change="chooseTemplate(template)"
+                  />
+                  <span
+                    ><strong dir="auto">{{ template.title }}</strong
+                    ><small>{{ testCount(template.definition.length) }}</small></span
+                  >
+                </label>
+              </div>
+              <p v-if="!catalogBusy.templates && !templates.length" class="small-print">
+                {{
+                  l(
+                    'No templates match. Try another name or create a template.',
+                    'لا توجد قوالب مطابقة. جرّب اسماً آخر أو أنشئ قالباً.',
+                  )
+                }}
+              </p>
+              <div class="actions">
+                <button
                   v-if="templateNext !== null"
                   type="button"
-                  class="text-link"
+                  class="button small secondary"
                   :disabled="catalogBusy.templates"
                   @click="findCatalog('templates', true)"
                 >
                   {{ l('More templates', 'المزيد من القوالب') }}
                 </button>
+                <button
+                  type="button"
+                  class="text-link"
+                  :disabled="catalogBusy.templates"
+                  @click="refreshTemplates"
+                >
+                  {{ l('Refresh templates', 'تحديث القوالب') }}
+                </button>
               </div>
-            </details>
-            <label v-if="draft.kind === 'assessment'"
-              >{{ l('Assessment template', 'قالب التقييم')
-              }}<select v-model="draft.template" required>
-                <option value="" disabled>{{ l('Choose a template', 'اختر قالباً') }}</option>
-                <option v-for="t in templates" :key="t.id" :value="t.id">
-                  {{ t.title }}
-                </option>
-              </select></label
-            ><RouterLink
-              v-if="draft.kind === 'assessment'"
-              :to="base + '/assessment-templates/new?forEvent=' + draft.id"
-              target="_blank"
-              rel="noopener"
-              class="text-link"
-              >{{ l('Create a template ↗ (new tab)', 'إنشاء قالب ↗ (تبويب جديد)') }}</RouterLink
-            >
-            <button
-              v-if="draft.kind === 'assessment'"
-              type="button"
-              class="text-link"
-              :disabled="catalogBusy.templates"
-              @click="refreshTemplates"
-            >
-              {{ l('Refresh templates', 'تحديث القوالب') }}
-            </button>
+            </section>
             <div class="service-field-row">
               <label
                 >{{ l('Local date and time', 'التاريخ والوقت المحلي')
@@ -584,6 +652,74 @@ onMounted(async () => {
   </div>
 </template>
 <style scoped>
+.template-picker {
+  margin-block: var(--space-5);
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--line);
+}
+.template-picker-heading,
+.template-search-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: end;
+  flex-wrap: wrap;
+}
+.template-picker-heading {
+  align-items: center;
+  justify-content: space-between;
+}
+.template-picker-heading h2 {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.event-composer .template-search-row > label {
+  flex: 1 1 240px;
+  margin: 0;
+  min-width: 0;
+}
+.template-search-row {
+  margin-block: var(--space-4);
+}
+.template-selection {
+  color: var(--muted);
+}
+.template-options {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+}
+.event-composer .template-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.template-option.selected {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.template-option input[type='radio'] {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  min-inline-size: 1.15rem;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+}
+.template-option span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.template-option small {
+  display: block;
+  color: var(--muted);
+  margin-block-start: var(--space-1);
+}
+
 .event-composer {
 }
 .composer-steps {
