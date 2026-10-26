@@ -505,6 +505,27 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
     await expect(
       page.getByText('No shared status means unknown, not cleared to train.', { exact: false }),
     ).toBeVisible()
+    const recordQueue = page.getByRole('region', { name: 'Workouts to record', exact: true })
+    await expect(
+      page.getByRole('heading', { name: 'Continue recording', exact: true }),
+    ).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Due workouts', exact: true })).toHaveCount(0)
+    const oldQueueUrl = '**/v1/institution/workout-scheduling?**queue=actionable'
+    await page.route(oldQueueUrl, async (route) => {
+      const url = route.request().url().replace('queue=actionable', 'queue=planning')
+      const response = await route.fetch({ url })
+      const result = await response.json()
+      delete result.queue
+      await route.fulfill({ json: result })
+    })
+    await recordQueue.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
+    await expect(
+      recordQueue.getByText('The backend does not confirm this workout queue.', { exact: false }),
+    ).toBeVisible()
+    await expect(recordQueue.locator('.agenda-row')).toHaveCount(0)
+    await page.unroute(oldQueueUrl)
+    await recordQueue.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
+    await expect(recordQueue.getByRole('alert')).toHaveCount(0)
     await inspect(page, 'coach-priorities', info)
     // UI-only synthetic status response: this checks long/populated/error rendering, not authorization.
     const statusUrl = '**/v1/institution/injuries?view=trainer'
@@ -552,11 +573,11 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
     await page.reload()
 
     await expect(page.getByRole('heading', { name: 'Today’s work', exact: true })).toBeVisible()
-    const planning = page.getByRole('region', { name: 'Awaiting scheduling', exact: true })
+    const planning = page.getByRole('region', { name: 'Needs scheduling', exact: true })
     await planning.getByRole('button', { name: 'Schedule workout', exact: true }).click()
     await planning
       .getByLabel('Date and time', { exact: true })
-      .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))
+      .fill(new Date(Date.now() - 60000).toISOString().slice(0, 16))
     const savedSchedule = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
@@ -570,6 +591,15 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
       fullPage: true,
     })
     await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toHaveCount(0)
+    await expect(recordQueue.locator('.agenda-row')).toHaveCount(1)
+    await expect(page.getByRole('heading', { name: 'Full body A', exact: true })).toHaveCount(1)
+    await recordQueue.getByRole('button', { name: 'Start workout', exact: true }).click()
+    await expect(page).toHaveURL(/\/record\/[a-f0-9-]{36}$/)
+    await page.goto('/dashboard')
+    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toHaveCount(1)
+    await expect(page.getByRole('heading', { name: 'Full body A', exact: true })).toHaveCount(1)
+    await expect(page.getByRole('region', { name: 'Needs scheduling', exact: true })).toHaveCount(0)
+    await inspect(page, 'coach-desk-single-record', info)
   } finally {
     await f.cleanup()
   }

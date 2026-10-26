@@ -1,5 +1,11 @@
 # Verification record
 
+## Single workout card — 26 October 2026
+
+The disposable workout-sequence API case passed actionable/planning uniqueness, response identity, scheduling/start transitions and existing sequence/retry/restriction assertions. Frontend and backend typechecks passed. The dedicated Coaching desk journey passed desktop Chromium and phone WebKit against a frozen isolated production preview: missing-identity response rejection, acknowledged scheduling into the actionable queue, Start navigation and one Resume card after returning. English/light and Arabic/dark screenshots were rendered and inspected, including the desktop completed transition and phone planning/status layout. Synthetic status data is presentation evidence only. No new athlete/admin visual acceptance, native build, migration or full browser-suite claim. Temporary screenshots were removed after inspection.
+
+The [queue receipt](receipts/unique-workout-queues-2026-10-26.json) records scope. The mismatched response was mocked; it does not prove the founder’s local backend process was outdated. Matching frontend/backend deployment is required.
+
 ## Approved Coaching desk — 26 October 2026
 
 The founder approved Coaching desk for web and reserved Field launch for a later tablet slice. The disposable sequence API case passed disjoint recording/today/planning queues before pagination, movement after scheduling/start, existing progression/retry/restriction checks and unchanged scope. A redundant unfinished-record predicate was subsequently removed without changing the OR result.

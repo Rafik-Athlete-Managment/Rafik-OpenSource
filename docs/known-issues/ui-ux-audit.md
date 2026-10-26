@@ -190,7 +190,7 @@ This is a source-led alignment assessment. The existing published Android accept
 
 ## Coach dashboard study — 26 October 2026
 
-**Decision, 26 October:** the founder approved concept A (Coaching desk), with Field launch reserved for the later tablet app. The first implementation uses grouped recording/due/event streams rather than inventing a combined chronological projection. It preserves explicit primary-roster status/follow-up coverage, server-scoped disjoint queue pagination and unknown-status semantics. Verification records actual rendered coverage; no readiness score or expanded health authority is implied. The following study records the reasoning and considered alternatives.
+**Decision, 26 October:** the founder approved concept A (Coaching desk), with Field launch reserved for the later tablet app. The implementation combines due and unfinished work in Workouts to record, keeps Needs scheduling separate, and lists today’s group/assessment events without duplicating workout events. It preserves explicit primary-roster status/follow-up coverage, server-scoped disjoint queue pagination and unknown-status semantics. Verification records actual rendered coverage; no readiness score or expanded health authority is implied. The following study records the reasoning and considered alternatives.
 
 **Study context:** the founder requested a deeper redesign after the incremental priorities/card correction and selected a balanced overview: today's work plus compact athlete readiness. The incremental correction is not acceptance of the larger redesign.
 
@@ -252,3 +252,24 @@ On desktop, Today and Athlete status sit beside each other; on phones, active wo
 ### Approved implementation and acceptance
 
 The founder approved A. The implementation uses the existing limited status read and current commands in one shared dashboard composition; no new health authority or derived readiness model was added. Add a scoped projection only if existing reads cannot provide complete, correctly scoped totals. Validate populated/empty/error, a long roster, simultaneous plans, supporting-coach scope, live recording, overdue work, unknown status and refresh failures. Inspect desktop/phone English/Arabic in both themes; separately verify that stale completion acknowledgments cannot navigate away from a different screen. Update the canonical instance walkthrough rather than creating another validation guide.
+
+## Athlete and administrator dashboards — study opened 26 October 2026
+
+**Proposal only.** Founder requested the same role-specific study/concept review as Coaching desk. Android remains a later slice. Priority questions are pending; implementation is not approved by this study.
+
+### Source findings
+
+DashboardPage still gives these roles the institution name as its main heading. Athlete content combines a due workout agenda, upcoming appointments and a coach panel, without an explicit daily action hierarchy. Administrator content combines three summary links, a large invitation area, FollowUpPanel and upcoming events. The shared page owns unrelated directory/settings behavior as well, increasing the risk of role conditionals shaping layout accidentally. These findings are source-inspected; no new athlete/admin rendered acceptance is claimed here.
+
+### Candidate directions
+
+| Role          | Recommended concept                                                                                                                                           | Alternative                                                                     | Boundaries                                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Athlete       | My day: prominent Start/Resume workout cards, next appointments and compact food-log/coach-contact actions; personal history below                            | My progress: personal trends first, daily actions beneath                       | Actual intake differs from prescribed nutrition; missing logs are unknown, not noncompliance. No invented readiness score or global workout lock. |
+| Administrator | Institution desk: greeting and small roster totals, actionable coach-coverage/access exceptions, upcoming institutional activity, clear People/Invite actions | Institution overview: participation trends lead, operational exceptions beneath | No injury/clinical status aggregation, private-message access or implied coach recording authority. Count each institutional record precisely.    |
+
+Desktop should use one clear main work region and a smaller context region, stacking in action order on phones. Reuse shared cards, semantic statuses, skeletons and empty states. Avoid duplicate queue/count cards and charts without a meaningful source, denominator or period. Dedicated role compositions are preferable to adding more conditional dashboard sections.
+
+### Decisions needed before implementation
+
+Confirm each role’s first-use priority (pending founder questions). Then present the chosen region order and action labels, verify available authorized sources, and review empty/populated states in English/Arabic and both themes. Optional personal progress belongs behind reliable data, not fabricated analytics. Detailed operational reporting remains on Analytics rather than crowding the overview.

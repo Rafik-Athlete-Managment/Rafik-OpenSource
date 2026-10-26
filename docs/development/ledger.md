@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## One workout, one dashboard card — 26 October 2026
+
+The coach desk now renders two meaningful collections: Workouts to record (due or unfinished, once per assignment) and Needs scheduling (no unresolved appointment or unfinished recording). The server adds an actionable queue and echoes the requested queue; the UI refuses untagged/mismatched responses rather than showing duplicate all-plan results from an outdated backend. Old recording/today API filters remain narrower reads, not separate desk panels.
+
+Acknowledged queue changes refresh the sibling in place; component remounts do not interrupt start navigation or active command state. Existing recording/planning durable scopes are retained, with explicit recovery for former today/due scopes. Titles remain workout-first and program-second. No schema or Android change. Focused API and desktop Chromium/phone WebKit transition checks passed; see verification for limits. Paired English/Arabic landing guidance is on draft PR #34 at `2f5e319`. Athlete/admin dashboard study is recorded in the UI audit, pending priority answers and concept review.
+
 ## Workout card naming — 26 October 2026
 
 The shared WorkoutAgenda now uses the localized workout/day name as its card heading and the program title as its subheading in coach, athlete and assigned-plan contexts. Athlete identity remains an overline where relevant. Missing day names use a neutral Workout label rather than repeating the program title. Presentation only; no API, scheduling or permission changes. Source inventory refreshed; no browser or application tests rerun for this text hierarchy change.

@@ -539,13 +539,14 @@
           {
             "name": "queue",
             "in": "query",
-            "description": "Optional disjoint dashboard queue; implies due=true. recording: unfinished records; today: due positions without unfinished records; planning: no unresolved position or unfinished record. Existing scope applies before pagination.",
+            "description": "Optional dashboard queue, filtered before pagination. actionable combines due positions and unfinished recordings once per assignment; planning contains neither. recording/today remain narrower read filters. The response echoes the queue to detect mismatched backend versions.",
             "schema": {
               "type": "string",
               "enum": [
                 "recording",
                 "today",
-                "planning"
+                "planning",
+                "actionable"
               ]
             }
           }
@@ -1619,6 +1620,22 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100
+          },
+          "queue": {
+            "anyOf": [
+              {
+                "enum": [
+                  "recording",
+                  "today",
+                  "planning",
+                  "actionable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Echo of requested queue; null when no queue was requested."
           }
         },
         "required": [

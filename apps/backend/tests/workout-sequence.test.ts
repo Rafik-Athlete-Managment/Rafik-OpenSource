@@ -99,6 +99,11 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
   assert.equal((await agenda(auth, "trainer", "&queue=planning")).total, 2);
   assert.equal((await agenda(auth, "trainer", "&queue=recording")).total, 0);
   assert.equal((await agenda(auth, "trainer", "&queue=today")).total, 0);
+  assert.equal((await agenda(auth, "trainer", "&queue=actionable")).total, 0);
+  assert.equal(
+    (await agenda(auth, "trainer", "&queue=planning")).queue,
+    "planning",
+  );
   const firstInput = operation("schedule-workout", {
     assignment_id: assignment,
     cursor: 0,
@@ -138,6 +143,7 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
   assert.equal(todayQueue.total, 1);
   assert.equal(todayQueue.items[0].assignment_id, assignment);
   assert.equal((await agenda(auth, "trainer", "&queue=planning")).total, 1);
+  assert.equal((await agenda(auth, "trainer", "&queue=actionable")).total, 1);
   const a = firstResult.data;
   const due = await agenda(auth, "trainer", "&due=true&limit=1");
   assert.equal(due.total, 2);
@@ -254,6 +260,18 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
       (x: any) => x.assignment_id === assignment,
     ),
     false,
+  );
+  const recordNow = await agenda(auth, "trainer", "&queue=actionable");
+  const planLater = await agenda(auth, "trainer", "&queue=planning");
+  assert.equal(recordNow.queue, "actionable");
+  assert.equal(
+    recordNow.items.filter((x: any) => x.assignment_id === assignment).length,
+    1,
+  );
+  assert.ok(
+    !recordNow.items.some((x: any) =>
+      planLater.items.some((p: any) => p.assignment_id === x.assignment_id),
+    ),
   );
   assert.equal(started.status, 200, JSON.stringify(started));
   const save = operation("save", {

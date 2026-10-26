@@ -1503,32 +1503,49 @@ export async function workoutAgenda(
       }).format(now) + "T00:00:00Z",
     );
     const queue = query.get("queue");
-    if (queue && !["recording", "today", "planning"].includes(queue))
+    if (
+      queue &&
+      !["recording", "today", "planning", "actionable"].includes(queue)
+    )
       throw new ApiError(400, "invalid_request");
     const unfinished: Prisma.institution_assignmentsWhereInput = {
       institution_sessions: { some: { completed_at: null } },
     };
     const queueScope: Prisma.institution_assignmentsWhereInput =
-      queue === "recording"
-        ? unfinished
-        : queue === "planning"
-          ? {
-              institution_workout_positions: {
-                none: { state: { in: ["pending", "paused"] } },
-              },
-              NOT: unfinished,
-            }
-          : queue === "today"
-            ? {
+      queue === "actionable"
+        ? {
+            OR: [
+              unfinished,
+              {
                 institution_workout_positions: {
                   some: {
                     state: { in: ["pending", "paused"] },
                     institution_events: { training_date: { lte: today } },
                   },
                 },
+              },
+            ],
+          }
+        : queue === "recording"
+          ? unfinished
+          : queue === "planning"
+            ? {
+                institution_workout_positions: {
+                  none: { state: { in: ["pending", "paused"] } },
+                },
                 NOT: unfinished,
               }
-            : {};
+            : queue === "today"
+              ? {
+                  institution_workout_positions: {
+                    some: {
+                      state: { in: ["pending", "paused"] },
+                      institution_events: { training_date: { lte: today } },
+                    },
+                  },
+                  NOT: unfinished,
+                }
+              : {};
     const assignment = query.get("assignment");
     const scope: Prisma.institution_assignmentsWhereInput = {
       institution_id: institution,
@@ -1620,6 +1637,7 @@ export async function workoutAgenda(
       select: { athlete_member_id: true },
     });
     return {
+      queue: (queue as WorkoutAgenda["queue"]) || null,
       total: await tx.institution_assignments.count({ where: scope }),
       offset,
       limit,

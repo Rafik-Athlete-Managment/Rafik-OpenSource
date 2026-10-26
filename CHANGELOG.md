@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Consolidate due and unfinished workouts into one Workouts to record list, separate from Needs scheduling. Refresh sibling queues after acknowledged changes without remounting active recorders, preserve prior pending-command scopes, and reject unconfirmed queue responses from outdated backends.
+
 - Lead every shared workout card with the workout/day name and show the program title beneath it, so different workouts from one program are distinguishable.
 
 - Introduce the approved Coaching desk: unfinished recordings, due workouts and today’s events lead; a limited athlete-status column retains unknown/consent boundaries. Awaiting-schedule work and compact primary-roster follow-up are separate. Add scoped, disjoint server queues before pagination and preserve recovery of the prior dashboard’s pending commands.

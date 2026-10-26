@@ -22,7 +22,9 @@ const props = withDefaults(
     due?: boolean
     limit?: number
     pageHeading?: boolean
-    queue?: 'recording' | 'today' | 'planning'
+    queue?: 'recording' | 'today' | 'planning' | 'actionable'
+    commandScope?: string
+    refreshToken?: number
     hideEmpty?: boolean
     headingLevel?: number
   }>(),
@@ -30,6 +32,13 @@ const props = withDefaults(
     due: false,
     limit: 10,
     pageHeading: false,
+  },
+)
+const emit = defineEmits<{ changed: [] }>()
+watch(
+  () => props.refreshToken,
+  () => {
+    void load()
   },
 )
 const context = institutionContext(),
@@ -67,10 +76,31 @@ async function load() {
     const result = await request<WorkoutAgenda>(`/v1/institution/workout-scheduling?${query}`, {
       feedback: 'none',
     })
-    if (!disposed && generation === seq) data.value = result
+    if (!disposed && generation === seq) {
+      if (props.queue && result.queue !== props.queue) {
+        data.value = undefined
+        error.value = l(
+          'The backend does not confirm this workout queue. Update and restart the backend, then retry.',
+          'الخادم لا يؤكد قائمة التمارين المطلوبة. حدّث الخادم وأعد تشغيله ثم حاول مجدداً.',
+        )
+        return
+      }
+      data.value = result
+    }
   } catch (e) {
     if (!disposed && generation === seq) {
       error.value = errorMessage(e)
+      if (
+        props.queue === 'actionable' &&
+        (e as { statusCode?: number }).statusCode === 400 &&
+        (e as Error).message === 'invalid_request'
+      ) {
+        data.value = undefined
+        error.value = l(
+          'Update and restart the backend to load the current workout queues, then retry.',
+          'حدّث الخادم وأعد تشغيله لتحميل قوائم التمارين الحالية ثم حاول مجدداً.',
+        )
+      }
       if ([401, 403].includes((e as { statusCode?: number }).statusCode || 0))
         data.value = undefined
     }
@@ -82,7 +112,7 @@ const started = ref('')
 const startedMode = ref('')
 const preparing = ref(false)
 const command = useCommand(
-  `workout-agenda:${context.institution}:${props.assignment || props.queue || (props.due ? 'due' : 'all')}`,
+  `workout-agenda:${context.institution}:${props.assignment || props.commandScope || props.queue || (props.due ? 'due' : 'all')}`,
   async (name, result) => {
     if (name === 'start') {
       started.value = (result as { id: string }).id
@@ -91,6 +121,7 @@ const command = useCommand(
     if (!disposed) {
       selected.value = undefined
       await load()
+      if (!disposed) emit('changed')
     }
   },
   (name, args) =>
@@ -269,33 +300,53 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
     class="workout-agenda"
     :class="{ 'athlete-workout-preview': pageHeading, 'staff-workout-cards': !pageHeading }"
     :aria-label="
-      queue === 'recording'
-        ? l('Continue recording', 'متابعة التسجيل')
-        : queue === 'today'
-          ? l('Due workouts', 'التمارين المستحقة')
-          : queue === 'planning'
-            ? l('Awaiting scheduling', 'بانتظار الجدولة')
-            : l('Next workouts', 'التمارين التالية')
+      queue === 'actionable'
+        ? l('Workouts to record', 'تمارين للتسجيل')
+        : queue === 'recording'
+          ? l('Continue recording', 'متابعة التسجيل')
+          : queue === 'today'
+            ? l('Due workouts', 'التمارين المستحقة')
+            : queue === 'planning'
+              ? l('Needs scheduling', 'تحتاج إلى جدولة')
+              : l('Next workouts', 'التمارين التالية')
     "
   >
     <header class="agenda-heading">
       <div>
         <component :is="pageHeading ? 'h1' : headingLevel === 3 ? 'h3' : 'h2'">
           {{
-            queue === 'recording'
-              ? l('Continue recording', 'متابعة التسجيل')
-              : queue === 'today'
-                ? l('Due workouts', 'التمارين المستحقة')
-                : queue === 'planning'
-                  ? l('Awaiting scheduling', 'بانتظار الجدولة')
-                  : pageHeading
-                    ? l('Your workouts', 'تمارينك')
-                    : due
-                      ? l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
-                      : l('Next workouts', 'التمارين التالية')
+            queue === 'actionable'
+              ? l('Workouts to record', 'تمارين للتسجيل')
+              : queue === 'recording'
+                ? l('Continue recording', 'متابعة التسجيل')
+                : queue === 'today'
+                  ? l('Due workouts', 'التمارين المستحقة')
+                  : queue === 'planning'
+                    ? l('Needs scheduling', 'تحتاج إلى جدولة')
+                    : pageHeading
+                      ? l('Your workouts', 'تمارينك')
+                      : due
+                        ? l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
+                        : l('Next workouts', 'التمارين التالية')
           }}
         </component>
-        <p v-if="!queue">
+        <p v-if="queue === 'actionable'">
+          {{
+            l(
+              'Due workouts and unfinished recordings. Start a scheduled workout or resume its existing record.',
+              'التمارين المستحقة والتسجيلات غير المكتملة. ابدأ تمريناً مجدولاً أو تابع سجله الحالي.',
+            )
+          }}
+        </p>
+        <p v-else-if="queue === 'planning'">
+          {{
+            l(
+              'Plans with no scheduled workout or unfinished recording. Choose a time before training.',
+              'خطط دون تمرين مجدول أو تسجيل غير مكتمل. اختر موعداً قبل التدريب.',
+            )
+          }}
+        </p>
+        <p v-else-if="!queue">
           {{
             l(
               'Each plan progresses independently. Unfinished work stays here until completed or explicitly skipped.',

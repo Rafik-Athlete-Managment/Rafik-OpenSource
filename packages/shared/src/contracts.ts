@@ -112,6 +112,7 @@ export type WorkoutAgendaItem = {
   can_schedule: boolean
 }
 export type WorkoutAgenda = {
+  queue?: 'recording' | 'today' | 'planning' | 'actionable' | null
   items: WorkoutAgendaItem[]
   total: number
   offset: number

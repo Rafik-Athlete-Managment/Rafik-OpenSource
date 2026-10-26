@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+The coach desk has one Workouts to record collection for due and unfinished work, with status-specific Start/Resume actions, and a separate Needs scheduling collection. Do not render recording and due as duplicate panels. State changes refresh related collections in place after acknowledgment; preserve open command/recovery state. Require matching server queue identity instead of treating an older unfiltered response as valid scoped results.
+
 Workout cards lead with the localized workout/day name; the program title belongs beneath it as context. Keep athlete identity as a separate overline in staff directories. Do not repeat a program title as every workout heading.
 
 Coaching desk (approved 26 October): put Today’s work and a narrower Athlete status panel beside each other on desktop, stacked on phones. Keep unfinished recordings first, due workouts and group/assessment events clearly labelled, and planning below. Avoid combined task totals across overlapping record types. Compact native details/summary rows disclose primary-roster follow-up; zero queues do not consume large empty cards. Status data is factual and permission-scoped; absent shared status is unknown. Field launch is a future tablet direction, not a second web dashboard.

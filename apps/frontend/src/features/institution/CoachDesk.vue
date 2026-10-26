@@ -20,10 +20,25 @@ type SharedStatus = {
 const statuses = ref<SharedStatus[]>([]),
   loading = ref(true),
   error = ref('')
-const revision = ref(0)
+const revision = ref(0),
+  actionableRevision = ref(0),
+  planningRevision = ref(0)
 // Keep the previous dashboard's exact pending command reachable after the layout upgrade.
 const previousDashboard = useCommand(
   `workout-agenda:${institutionContext().institution}:due`,
+  async () => {
+    revision.value++
+  },
+  (name, args) =>
+    request(`/v1/institution/${name === 'start' ? 'sessions' : 'workout-scheduling'}`, {
+      method: 'POST',
+      body: JSON.stringify(args),
+    }),
+  { successMessage: l('Workout change confirmed.', 'تم تأكيد تعديل التمرين.') },
+)
+// Pending commands from the former separate Due workouts panel retain their exact scope.
+const previousToday = useCommand(
+  `workout-agenda:${institutionContext().institution}:today`,
   async () => {
     revision.value++
   },
@@ -65,6 +80,7 @@ onUnmounted(() => {
 <template>
   <div class="coach-desk">
     <CommandStatus :command="previousDashboard" />
+    <CommandStatus :command="previousToday" />
     <div class="desk-columns">
       <section class="desk-today" aria-labelledby="desk-today-title">
         <header class="desk-section-heading">
@@ -81,13 +97,13 @@ onUnmounted(() => {
           }}</RouterLink>
         </header>
         <WorkoutAgenda
-          :key="'recording:' + revision"
-          queue="recording"
+          queue="actionable"
+          command-scope="recording"
+          :refresh-token="revision + actionableRevision"
           :limit="4"
           :heading-level="3"
-          hide-empty
+          @changed="planningRevision++"
         />
-        <WorkoutAgenda :key="'today:' + revision" queue="today" :limit="4" :heading-level="3" />
         <UpcomingSessions :key="'events:' + revision" today-only omit-workouts :heading-level="3" />
       </section>
       <aside class="desk-status panel" aria-labelledby="desk-status-title">
@@ -153,7 +169,13 @@ onUnmounted(() => {
       </aside>
     </div>
     <section class="desk-planning" :aria-label="l('Planning', 'التخطيط')">
-      <WorkoutAgenda :key="'planning:' + revision" queue="planning" :limit="4" hide-empty />
+      <WorkoutAgenda
+        queue="planning"
+        :refresh-token="revision + planningRevision"
+        :limit="4"
+        hide-empty
+        @changed="actionableRevision++"
+      />
     </section>
     <FollowUpPanel compact />
   </div>
