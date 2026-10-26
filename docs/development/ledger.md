@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Workout card naming — 26 October 2026
+
+The shared WorkoutAgenda now uses the localized workout/day name as its card heading and the program title as its subheading in coach, athlete and assigned-plan contexts. Athlete identity remains an overline where relevant. Missing day names use a neutral Workout label rather than repeating the program title. Presentation only; no API, scheduling or permission changes. Source inventory refreshed; no browser or application tests rerun for this text hierarchy change.
+
 ## Coaching desk — 26 October 2026
 
 Founder approved concept A and reserved Field launch for the tablet app. CoachDesk now composes explicit recording/today/planning queues, today’s non-workout events, limited primary-roster participation status and compact follow-up. Server queue predicates apply before count/pagination; individual workout calendar projections are omitted from the event summary to avoid a second action. Unknown status is never clearance; primary-roster follow-up and count are labelled, and supporting sport plans remain in authorized workout queues. The prior due-agenda durable scope remains reachable through explicit recovery in the desk. Administrators/athletes keep their existing overview. No readiness score, authority expansion, worker or native capture was added. Focused queue/API and two desk browser cases passed; paired English/Arabic landing guidance is on draft PR #34 at `e07c14c`. See verification for actual state coverage and limits.

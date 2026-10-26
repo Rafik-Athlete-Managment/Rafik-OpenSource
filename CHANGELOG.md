@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Lead every shared workout card with the workout/day name and show the program title beneath it, so different workouts from one program are distinguishable.
+
 - Introduce the approved Coaching desk: unfinished recordings, due workouts and today’s events lead; a limited athlete-status column retains unknown/consent boundaries. Awaiting-schedule work and compact primary-roster follow-up are separate. Add scoped, disjoint server queues before pagination and preserve recovery of the prior dashboard’s pending commands.
 
 - Redirect acknowledged coach workout completion to its review with delayed-navigation guards; separate review continuation controls from exercise content. Record a balanced coach-dashboard redesign proposal for founder review, without enabling speculative readiness metrics.

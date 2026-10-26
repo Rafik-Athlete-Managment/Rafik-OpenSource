@@ -363,17 +363,12 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
               </p>
               <component :is="pageHeading ? 'h2' : headingLevel === 3 ? 'h4' : 'h3'">
                 <bdi dir="auto">{{
-                  assignment
-                    ? locale === 'ar'
-                      ? item.day?.nameAr || item.day?.name
-                      : item.day?.name
-                    : item.title
+                  (locale === 'ar' ? item.day?.nameAr || item.day?.name : item.day?.name) ||
+                  l('Workout', 'تمرين')
                 }}</bdi>
               </component>
-              <p v-if="!assignment">
-                <bdi dir="auto">{{
-                  locale === 'ar' ? item.day?.nameAr || item.day?.name : item.day?.name
-                }}</bdi
+              <p>
+                <bdi dir="auto">{{ item.title }}</bdi
                 ><span v-if="item.goal">
                   · <bdi dir="auto">{{ item.goal }}</bdi></span
                 >

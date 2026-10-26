@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+Workout cards lead with the localized workout/day name; the program title belongs beneath it as context. Keep athlete identity as a separate overline in staff directories. Do not repeat a program title as every workout heading.
+
 Coaching desk (approved 26 October): put Today’s work and a narrower Athlete status panel beside each other on desktop, stacked on phones. Keep unfinished recordings first, due workouts and group/assessment events clearly labelled, and planning below. Avoid combined task totals across overlapping record types. Compact native details/summary rows disclose primary-roster follow-up; zero queues do not consume large empty cards. Status data is factual and permission-scoped; absent shared status is unknown. Field launch is a future tablet direction, not a second web dashboard.
 
 Status tags use `data-status` with the machine status, never translated-text inference. Green: active/completed/reviewed/resolved/published. Blue: scheduled/upcoming/in-progress/open. Amber: unscheduled/awaiting-review/pending. Yellow: draft/paused. Red: overdue/cancelled/expired/ended/replaced/unavailable. Archived, inactive and descriptive labels remain neutral. Always retain a visible text label so color is supplementary. Shared CSS adapts ink, background and border to light/dark themes.
