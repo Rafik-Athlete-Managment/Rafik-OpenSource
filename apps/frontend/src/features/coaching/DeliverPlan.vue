@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
+import TimezonePicker from '../../components/TimezonePicker.vue'
+import { addDays } from '../../lib/dates'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { user, profile } from '../../app/auth'
@@ -76,7 +78,9 @@ const start = ref(
     }).format(new Date()),
   ),
   end = ref(''),
-  mode = ref('flexible')
+  mode = ref('flexible'),
+  automatic = ref(false),
+  timezone = ref(profile.value?.timezone || 'UTC')
 const key = `delivery:${user.value!.id}:${context.key}:${versionId}`
 /** Large institutions: search returns only the top matches; the selection lives below. */
 const MATCHES = 5,
@@ -168,7 +172,7 @@ function clearAll() {
 const recipients = computed(() => people.value.filter((p) => selected.value.includes(p.id)))
 let initialized = false
 watch(
-  [selected, start, end, mode],
+  [selected, start, end, mode, automatic, timezone],
   () => {
     if (initialized)
       void storeDraft(key, {
@@ -176,6 +180,8 @@ watch(
         start: start.value,
         end: end.value,
         mode: mode.value,
+        automatic: automatic.value,
+        timezone: timezone.value,
         replace: { ...replace.value },
         goal: goal.value,
         sport: sport.value,
@@ -192,6 +198,8 @@ watch(
         start: start.value,
         end: end.value,
         mode: mode.value,
+        automatic: automatic.value,
+        timezone: timezone.value,
         replace: { ...replace.value },
         goal: goal.value,
         sport: sport.value,
@@ -261,6 +269,8 @@ async function load() {
       start: string
       end: string
       mode: string
+      automatic?: boolean
+      timezone?: string
       replace?: Record<string, string>
       goal?: string
       sport?: string
@@ -270,10 +280,15 @@ async function load() {
       start.value = local.start
       end.value = local.end
       mode.value = local.mode
+      automatic.value = local.automatic ?? false
+      timezone.value = local.timezone || profile.value?.timezone || 'UTC'
       replace.value = local.replace || {}
       goal.value = local.goal || ''
       sport.value = local.sport || ''
-    } else if (route.query.member) selected.value = [String(route.query.member)]
+    } else {
+      automatic.value = version.value.prescription.automaticPreparation === true
+      if (route.query.member) selected.value = [String(route.query.member)]
+    }
     const preselected = !local && !!route.query.member
     sports.value = (
       await request<{ items: Sport[] }>(`/v1/institution/sports?view=${context.view}`).catch(
@@ -332,6 +347,8 @@ function deliver() {
     start_date: start.value,
     end_date: end.value || null,
     schedule_mode: mode.value,
+    automatic_preparation: automatic.value,
+    timezone: timezone.value,
     goal: goal.value.trim() || null,
     sport: sport.value || null,
   })
@@ -405,14 +422,23 @@ onMounted(load)
                   <p>
                     {{
                       l(
-                        'Dates follow each athlete’s timezone. Cycle day 1 is the start date; unfilled days are recovery days.',
-                        'التواريخ بحسب المنطقة الزمنية للرياضي. اليوم الأول هو تاريخ البداية والأيام الفارغة للتعافي.',
+                        'Cycle day 1 is the start date; unfilled days are recovery days. Automatic preparation uses the timezone selected below and requires an end date within 366 days.',
+                        'اليوم الأول هو تاريخ البداية والأيام الفارغة للتعافي. يستخدم التحضير التلقائي المنطقة الزمنية المحددة أدناه ويتطلب نهاية خلال ٣٦٦ يوماً.',
                       )
                     }}
                   </p>
                 </div>
               </header>
               <div class="run-fields">
+                <label class="checkbox-row">
+                  <input v-model="automatic" type="checkbox" />
+                  {{ l('Automatic daily preparation', 'التحضير اليومي التلقائي') }}
+                </label>
+                <TimezonePicker
+                  v-if="automatic"
+                  v-model="timezone"
+                  :label="l('Preparation timezone', 'المنطقة الزمنية للتحضير')"
+                />
                 <label
                   >{{ l('Schedule', 'الجدول')
                   }}<select v-model="mode">
@@ -427,8 +453,20 @@ onMounted(load)
                   >{{ l('Start date', 'تاريخ البداية')
                   }}<input v-model="start" type="date" required /></label
                 ><label
-                  >{{ l('End date (optional)', 'تاريخ النهاية (اختياري)')
-                  }}<input v-model="end" type="date" :min="start" /></label
+                  >{{
+                    automatic
+                      ? l('Preparation ends on', 'نهاية التحضير')
+                      : l('End date (optional)', 'تاريخ النهاية (اختياري)')
+                  }}<input
+                    v-model="end"
+                    type="date"
+                    :min="start"
+                    :max="
+                      automatic && /^\d{4}-\d{2}-\d{2}$/.test(start)
+                        ? addDays(start, 366)
+                        : undefined
+                    "
+                    :required="automatic" /></label
                 ><template
                   ><label
                     >{{ l('Goal (optional)', 'الهدف (اختياري)')
@@ -717,6 +755,16 @@ onMounted(load)
               </div>
             </header>
             <ul class="review-list">
+              <li>
+                {{
+                  automatic
+                    ? l(
+                        `Automatic daily preparation · ${timezone} · until ${end}`,
+                        `التحضير اليومي التلقائي · ${timezone} · حتى ${end}`,
+                      )
+                    : l('Manual scheduling', 'جدولة يدوية')
+                }}
+              </li>
               <li v-for="person in recipients" :key="person.id" dir="auto">
                 {{ person.name }} —
                 {{ outcome(person) }}
@@ -972,12 +1020,23 @@ onMounted(load)
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--space-4);
+  align-items: end;
 }
 .run-fields label {
   display: grid;
   gap: var(--space-2);
   margin: 0;
   min-width: 0;
+}
+.run-fields .checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  grid-column: 1 / -1;
+}
+.checkbox-row input {
+  width: auto;
+  flex: 0 0 auto;
 }
 .selected-count {
   display: inline-flex;

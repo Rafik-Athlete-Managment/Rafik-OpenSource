@@ -321,3 +321,7 @@ For the current desk, `queue=actionable` combines due positions and unfinished r
 - Workout agenda occurrences may have null starts_at/ends_at: use training_date/timezone and label No fixed time. Eligibility follows the occurrence timezone. Calendar/list/detail readers opt in with includeDayOnly=true; default calendar lists remain timed-only, and an unsupported day-only detail returns day_only_event_requires_update. Web serializes training_date as YYYY-MM-DD. Timed collision checks do not reserve a day-long slot for day-only work.
 
 Existing attendance/assessment payloads and receipts retain their meaning; Android offline workout recording, capability discovery and cache evolution remain later beta.3 work. This slice does not promise compatibility with all pre-ADR-0030 client routes. Canonical request/schema details are in OpenAPI and [ADR 0032](../decisions/ADR-0032-opt-in-workout-preparation.md).
+
+### Program preparation defaults
+
+Program draft/prescription metadata accepts optional boolean `automaticPreparation` (absent means manual). Delivery accepts optional boolean `automatic_preparation`, defaulting to the selected immutable version, plus `timezone` and a required `end_date` for automatic mode. Its date span is at most 366 days. Assignment and policy creation share one transaction/exact receipt; explicit false opts out. Program edits do not alter existing policies.

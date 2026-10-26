@@ -688,6 +688,23 @@ function removeDay() {
             <summary>
               {{ language('Program schedule', 'جدول البرنامج') }}
             </summary>
+            <label class="program-preparation">
+              <input v-model="draft.automaticPreparation" type="checkbox" />
+              {{
+                language(
+                  'Default to automatic daily preparation',
+                  'التحضير اليومي التلقائي افتراضياً',
+                )
+              }}
+            </label>
+            <p class="small-print">
+              {{
+                language(
+                  'Suggested for new athlete plans. Confirm dates and timezone when assigning; each plan can override this. Editing the program never changes existing scheduling policies.',
+                  'اقتراح للخطط الجديدة. أكّد التواريخ والمنطقة الزمنية عند التعيين؛ يمكن تغييره لكل خطة. تعديل البرنامج لا يغيّر سياسات الجدولة الحالية.',
+                )
+              }}
+            </p>
             <label
               >{{ language('Repeat every (weeks)', 'التكرار كل (أسابيع)')
               }}<input v-model.number="draft.cycleWeeks" type="number" min="1" max="12" required
@@ -1178,6 +1195,20 @@ function removeDay() {
 </style>
 
 <style scoped>
+.program-schedule .program-preparation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+}
+.program-preparation input[type='checkbox'] {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  min-inline-size: 1.15rem;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 auto;
+}
 .grouped-exercise {
   border-inline-start: 4px solid var(--accent);
 }

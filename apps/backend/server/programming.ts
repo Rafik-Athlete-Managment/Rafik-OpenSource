@@ -599,6 +599,11 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
         return { plan: p };
       }
       const title = textValue(input.title, 100);
+      const preparation = (
+        input.draft as { automaticPreparation?: unknown } | null
+      )?.automaticPreparation;
+      if (preparation !== undefined && typeof preparation !== "boolean")
+        throw new ApiError(400, "invalid_plan");
       let prescription: Prisma.InputJsonValue | null = null;
       if (action === "publish")
         prescription = await snapshot(tx, id, self, input.draft);
@@ -905,6 +910,27 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
       if (p.archived) throw new ApiError(400, "program_unavailable");
       const start = date(input.start_date),
         end = input.end_date ? date(input.end_date) : null;
+      const automatic =
+        input.automatic_preparation ??
+        (v.prescription as { automaticPreparation?: boolean })
+          .automaticPreparation === true;
+      if (typeof automatic !== "boolean")
+        throw new ApiError(400, "invalid_request");
+      const zone = String(input.timezone || "");
+      if (automatic) {
+        if (
+          !end ||
+          end < start ||
+          end.getTime() - start.getTime() > 366 * 86400000
+        )
+          throw new ApiError(400, "invalid_date");
+        try {
+          new Intl.DateTimeFormat("en", { timeZone: zone }).format();
+        } catch {
+          throw new ApiError(400, "invalid_timezone");
+        }
+        if (!zone) throw new ApiError(400, "invalid_timezone");
+      }
       if (
         (end && end < start) ||
         !["cycle", "flexible"].includes(String(input.schedule_mode))
@@ -968,6 +994,26 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
             sport_id: sport,
           },
         });
+        if (automatic) {
+          const rule = await tx.institution_workout_recurrences.create({
+            data: {
+              institution_id: id,
+              assignment_id: created.id,
+              created_by: self.id,
+              starts_on: start,
+              ends_on: end!,
+              timezone: zone,
+              weekdays: [1, 2, 3, 4, 5, 6, 7],
+              local_time: null,
+              duration_minutes: null,
+            },
+          });
+          await event(tx, actor, id, "workout_rule_saved", m.id, {
+            assignment: created.id,
+            rule: rule.id,
+            mode: "automatic",
+          });
+        }
         // Concurrent plans are allowed; overlapping dates are reported, never blocked.
         // Intentional visibility exception: so coaches can coordinate load, the warning lists every
         // overlapping active plan for this athlete, including plans outside a supporting coach's

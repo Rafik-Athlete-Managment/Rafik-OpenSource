@@ -52,6 +52,125 @@ test("DST wall-clock resolution never guesses gaps or repeated hours", () => {
     /ambiguous_local_time/,
   );
 });
+test("program automatic default is versioned and assignment can opt out", async () => {
+  const auth = await cookie("11000000-0000-4000-8000-000000000002");
+  const call = async (path: string, body: object) => {
+    const response = await fetch(apiOrigin + "/v1/institution/" + path, {
+      method: "POST",
+      headers: {
+        Cookie: auth,
+        "x-rafik-client": "web",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const source = await db.institution_assignments.findUniqueOrThrow({
+    where: { id: assignment },
+    include: { institution_versions: true },
+  });
+  const member = await db.institution_members.findUniqueOrThrow({
+    where: { id: source.member_id },
+  });
+  const program = randomUUID(),
+    draft = {
+      ...(source.institution_versions.prescription as object),
+      automaticPreparation: true,
+    };
+  const publish = (draft: object, revision: number | null) =>
+    call("programs", {
+      operation: randomUUID(),
+      action: "publish",
+      view: "trainer",
+      id: program,
+      title: "Preparation default",
+      draft,
+      revision,
+    });
+  const published = await publish(draft, null);
+  assert.equal(published.status, 200, JSON.stringify(published));
+  assert.equal(published.data.version.prescription.automaticPreparation, true);
+  const input = {
+    operation: randomUUID(),
+    action: "assign",
+    view: "trainer",
+    version_id: published.data.version.id,
+    start_date: "2030-01-01",
+    end_date: "2030-02-01",
+    timezone: "Asia/Dubai",
+    schedule_mode: "cycle",
+    members: [{ id: member.id, revision: member.revision, replaces: null }],
+  };
+  assert.equal(
+    (
+      await call("delivery", {
+        ...input,
+        operation: randomUUID(),
+        end_date: null,
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call("delivery", {
+        ...input,
+        operation: randomUUID(),
+        timezone: "bad/zone",
+      })
+    ).status,
+    400,
+  );
+  const delivered = await call("delivery", input);
+  assert.equal(delivered.status, 200, JSON.stringify(delivered));
+  assert.deepEqual((await call("delivery", input)).data, delivered.data);
+  const plan = delivered.data[0];
+  assert.equal(
+    await db.institution_workout_recurrences.count({
+      where: { assignment_id: plan.id },
+    }),
+    1,
+  );
+  const edited = await publish(
+    { ...draft, automaticPreparation: false },
+    published.data.plan.draft_version,
+  );
+  assert.equal(edited.status, 200, JSON.stringify(edited));
+  assert.equal(
+    (
+      (
+        await db.institution_versions.findUniqueOrThrow({
+          where: { id: published.data.version.id },
+        })
+      ).prescription as any
+    ).automaticPreparation,
+    true,
+  );
+  assert.equal(
+    await db.institution_workout_recurrences.count({
+      where: { assignment_id: plan.id, state: "active" },
+    }),
+    1,
+  );
+  const opted = await publish(draft, edited.data.plan.draft_version);
+  assert.equal(opted.status, 200, JSON.stringify(opted));
+  const manual = await call("delivery", {
+    ...input,
+    operation: randomUUID(),
+    version_id: opted.data.version.id,
+    automatic_preparation: false,
+    end_date: null,
+    timezone: "",
+  });
+  assert.equal(manual.status, 200, JSON.stringify(manual));
+  assert.equal(
+    await db.institution_workout_recurrences.count({
+      where: { assignment_id: manual.data[0].id },
+    }),
+    0,
+  );
+});
 test("weekly and opt-in automatic preparation preserve one unresolved position, local dates, authority and receipts", async () => {
   const auth = await cookie("11000000-0000-4000-8000-000000000002"),
     athleteAuth = await cookie("11000000-0000-4000-8000-000000000003");

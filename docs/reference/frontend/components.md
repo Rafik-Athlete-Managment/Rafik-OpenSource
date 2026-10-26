@@ -161,8 +161,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [components/TimezonePicker.vue](../../../apps/frontend/src/components/TimezonePicker.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Searchable IANA timezone selection.
-- **Direct rendered consumers:** [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue), [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue), [features/institution/WorkoutRuleSettings.vue](../../../apps/frontend/src/features/institution/WorkoutRuleSettings.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/schedule/:id`, `/schedule/new`, `/settings`, `/training`, `/training/:assignment`
+- **Direct rendered consumers:** [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue), [features/coaching/DeliverPlan.vue](../../../apps/frontend/src/features/coaching/DeliverPlan.vue), [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue), [features/institution/WorkoutRuleSettings.vue](../../../apps/frontend/src/features/institution/WorkoutRuleSettings.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/deliver/:id`, `/institution-settings`, `/people`, `/schedule/:id`, `/schedule/new`, `/settings`, `/training`, `/training/:assignment`
 
 ## AccessPage
 

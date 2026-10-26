@@ -202,3 +202,5 @@ The coach overview uses `queue=actionable|planning` on the existing scheduling p
 ### Consolidated coach action queue
 
 The desk now uses `queue=actionable` for the union of unfinished records and due unresolved positions, once per assignment, and `queue=planning` for assignments with neither. Existing recording/today filters remain available as narrower API reads. Both counts and paging stay server-scoped. The response echoes queue identity; the web rejects missing/mismatched identity and explains the required backend update. Acknowledged changes refresh the other collection through a token, retaining active components, async-navigation guards and durable command scopes.
+
+Program prescriptions may carry a boolean `automaticPreparation` default. Publishing freezes it with the version; delivery confirms/overrides the default and atomically creates a bounded automatic policy with each new assignment. Editing a program never mutates existing plan policies. No schema migration is required for this optional JSON metadata.

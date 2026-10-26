@@ -163,3 +163,5 @@
 - Backend inventory: keep `docs/reference/backend/` current with `npm run backend:inventory` and `npm run backend:inventory:check`; refresh the disposable catalog after migration changes. Keep explicit HTTP allowlists independent of SQL grants, plain domain filenames, and retired endpoints out of fixtures.
 
 - Founder-approved institution naming, 23 October 2026: ADR 0029 supersedes naming preservation in ADR 0026. Use canonical institution schema/ORM fields and instance-resolved `/v1/institution` APIs across web/Android. Keep old API names only at the published-client adapter, preserving durable IDs, payloads/results, owner tuples, encryption keys and historical file/source identities. No database alias views or duplicate institution models.
+
+- Program preparation defaults: optional `automaticPreparation` belongs to the immutable published prescription. New delivery may confirm or override it with bounded dates/timezone; create its policy atomically with the assignment. Program edits must never change existing assignment policies. Keep per-plan controls independent and DST gap/fold resolution explicit.

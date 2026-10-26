@@ -65,6 +65,8 @@ export interface PlanDay {
   exercises: PrescriptionExercise[]
 }
 export interface Prescription {
+  /** Default for new assignments; never changes existing plan policies. */
+  automaticPreparation?: boolean
   presentation?: { goal?: string; level?: 'beginner' | 'mixed' | 'experienced'; cover?: string }
   schema: number
   cycleWeeks?: number

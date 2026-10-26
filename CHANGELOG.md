@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add versioned program defaults for automatic daily preparation, editable during creation and editing, with explicit per-assignment opt-out, bounded dates/timezone and atomic policy creation. Existing plan policies remain unchanged by program edits.
+
 - Add opt-in per-plan weekly scheduling and automatic day-only workout preparation, exact policy save/stop, current-authority checks, DST diagnostics, bounded worker retries and no duplicate unresolved work. Extend web plan/calendar/list/detail reads for explicit day-only events while default attendance calendar reads remain timed-only. No group progression or Android workout capture is enabled.
 
 - Refined role dashboards: athlete My day prioritizes workouts, events, food diary and coach messaging; administrator Institution overview leads with existing period-scoped workout/attendance reports before coverage and administrative actions. No new metric, permission or clinical projection.

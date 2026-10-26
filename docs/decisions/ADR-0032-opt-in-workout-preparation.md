@@ -1,6 +1,6 @@
 # ADR 0032 — Opt-in individual workout preparation
 
-Date: 26 October 2026. Status: implemented on the unreleased beta.3 branch. Founder approved recurring individual scheduling and automatic preparation; the recommended opt-in and DST-resolution defaults were stated during implementation. This is not beta.3 or Android release acceptance.
+Date: 26 October 2026. Status: implemented on the unreleased beta.3 branch. Founder approved recurring individual scheduling and automatic preparation; the founder confirmed program-level opt-in defaults, per-plan overrides and coach resolution of DST ambiguity. This is not beta.3 or Android release acceptance.
 
 ## Context and options
 
@@ -8,7 +8,7 @@ Fixed-time individual progression already owns assignment locking, immutable pre
 
 ## Decision
 
-- A plan is manual until authorized staff explicitly save a bounded weekly or automatic rule. At most one active rule exists per assignment. The active creator must retain current administrator or primary/sport-specific supporting-coach authority before preparation. No clinical details appear in diagnostics. Generated event snapshots/audit include the preparing rule identity and automatic/weekly mode; manual request fields cannot forge that internal provenance.
+- Programs default to manual. An optional boolean `automaticPreparation` in the versioned prescription preselects automatic preparation for new assignments. Staff confirm bounded dates/timezone or opt out during assignment; delivery creates the plan and policy atomically. Program edits never change existing assignments or policies. Per-plan settings can independently enable/stop/change a rule. At most one active rule exists per assignment. The active creator must retain current administrator or primary/sport-specific supporting-coach authority before preparation. No clinical details appear in diagnostics. Generated event snapshots/audit include the preparing rule identity and automatic/weekly mode; manual request fields cannot forge that internal provenance.
 - Weekly rules select ISO weekdays and one local start time, with elapsed duration. Bind only the next eligible slot, never several actionable successors. Unresolved work blocks its assignment alone. Completion or explicit skip advances through the existing sequence service; generation never advances it.
 - Automatic rules prepare only the current eligible local day with no start/end timestamps. Recovery follows the immutable prescription’s calendar cycle anchored to assignment start. Missing cycle days are recovery. No global unfinished-work lock or training-load inference is introduced. Existing work for that assignment/day prevents an extra automatic workout.
 - Repeating rules never backfill dates that passed without materialization. Already created overdue work stays unresolved. Do not silently skip it or allocate replacements. Date windows span at most 366 days and remain inside assignment dates.

@@ -824,3 +824,71 @@ test('plan scheduling switches from weekly slots to opt-in day-only preparation'
     await f.cleanup()
   }
 })
+
+test('program preparation default is visible and confirmed at assignment', async ({
+  page,
+}, info) => {
+  test.setTimeout(180000)
+  const f = await institutionFixture()
+  try {
+    const prepared = await institution(f, 'Preparation defaults', undefined, false)
+    const program = randomUUID()
+    const published = await f.call(f.coach, '/v1/institution/programs', {
+      operation: randomUUID(),
+      action: 'publish',
+      view: 'trainer',
+      id: program,
+      title: 'Daily preparation',
+      revision: null,
+      draft: { ...prepared.plan, automaticPreparation: true },
+    })
+    await f.login(page, f.coach, '/plans/' + program)
+    const preference = page.getByLabel('Default to automatic daily preparation', { exact: true })
+    await expect(preference).toBeChecked()
+    await preference.uncheck()
+    await preference.check()
+    await preference.scrollIntoViewIfNeeded()
+    await inspect(page, 'program-preparation-default', info)
+    await page.goto('/deliver/' + published.version.id + '?member=' + prepared.athlete.id)
+    const automatic = page.getByLabel('Automatic daily preparation', { exact: true })
+    await expect(automatic).toBeChecked()
+    const end = page.getByLabel('Preparation ends on', { exact: true })
+    await expect(end).toHaveAttribute('required', '')
+    await automatic.uncheck()
+    await expect(page.getByLabel('End date (optional)', { exact: true })).toBeVisible()
+    await automatic.check()
+    await end.fill(new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10))
+    await inspect(page, 'program-preparation-assignment', info)
+    await page
+      .getByRole('button', { name: /Review assignment|Review and assign|Review selection/ })
+      .click()
+    await expect(page.getByText(/Automatic daily preparation ·/)).toBeVisible()
+    await page.getByRole('button', { name: 'Confirm assignment', exact: true }).click()
+    await expect(page.getByText('Ready for their next session.', { exact: true })).toBeVisible()
+    const assigned = (
+      await f.call(f.coach, '/v1/institution/athlete-plans?view=trainer')
+    ).items.find(
+      (p: any) => p.version_id === published.version.id || p.version?.id === published.version.id,
+    )
+    expect(assigned).toBeTruthy()
+    const rules = await f.call(
+      f.coach,
+      '/v1/institution/workout-rules?view=trainer&assignment=' + assigned.id,
+    )
+    expect(rules.items.filter((r: any) => r.state === 'active')).toHaveLength(1)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'light')
+    })
+    await page.goto('/plans/' + program)
+    const arabicPreference = page.getByLabel('التحضير اليومي التلقائي افتراضياً', { exact: true })
+    await expect(arabicPreference).toBeChecked()
+    await arabicPreference.scrollIntoViewIfNeeded()
+    await inspect(page, 'program-preparation-default-ar', info)
+    await page.goto('/deliver/' + published.version.id)
+    await expect(page.getByLabel('التحضير اليومي التلقائي', { exact: true })).toBeChecked()
+    await inspect(page, 'program-preparation-assignment-ar', info)
+  } finally {
+    await f.cleanup()
+  }
+})

@@ -708,7 +708,7 @@
             }
           }
         ],
-        "description": "Unreleased beta.3. Opt-in per plan. Exact operation receipt and current plan authority required on replay. Set replaces the active rule; rule_id/revision must match (null/null for manual). Existing materialized work is not changed: use workout-scheduling for that occurrence. Weekly rules use one uniquely resolvable local clock; DST gaps/folds surface an issue without shifting time. Automatic mode prepares the current eligible non-rest day with no clock time, at most once per assignment/day. Unresolved work blocks only that assignment. No missed-date backfill or group progression. A post-acknowledgment worker kick/poll is separate from saving the policy.",
+        "description": "Unreleased beta.3. Opt-in per plan. Exact operation receipt and current plan authority required on replay. Set replaces the active rule; rule_id/revision must match (null/null for manual). Existing materialized work is not changed: use workout-scheduling for that occurrence. Weekly rules use one uniquely resolvable local clock; DST gaps/folds surface an issue without shifting time. Automatic mode prepares the current eligible non-rest day with no clock time, at most once per assignment/day. Unresolved work blocks only that assignment. No missed-date backfill or group progression. A post-acknowledgment worker kick/poll is separate from saving the policy. Published program prescriptions may set boolean automaticPreparation for new assignment defaults. Delivery confirms or overrides with automatic_preparation, timezone and bounded end_date; assignment and policy are atomic. Program edits never change existing policies.",
         "requestBody": {
           "required": true,
           "content": {

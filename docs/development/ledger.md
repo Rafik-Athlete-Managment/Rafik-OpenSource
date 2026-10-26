@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Program preparation defaults — 26 October 2026
+
+Programs can opt into automatic daily preparation during creation/editing. The immutable published version seeds new assignment choices; staff confirm a bounded end date and timezone or opt out before assigning. Delivery atomically creates each enabled plan policy with the assignment and exact receipt. Existing assignments and policies never change when a program is edited. Per-plan settings remain independently editable. Founder confirmed coach resolution for DST gaps/repeated hours. Paired English/Arabic landing guidance is on draft PR #34 at `13ab86f`; both PRs remain unmerged.
+
 ## Recurring and automatic individual preparation — 26 October 2026
 
 Added the current event’s explicit day-only timing shape and worker checkpoint/diagnostic fields on existing recurrence storage, preserving prior dates, histories and exact receipts. Staff plan settings save/stop one opt-in weekly/automatic rule through current plan-specific authority. Future policy edits preserve the existing materialized workout. Worker transactions reuse institution/assignment locks, next-day selection and once-only progression; explicit weekly work can use recovery days, automatic work observes the published calendar cycle. Missing predecessors, restrictions, conflicts and lost authority remain visible general blocks. DST gaps/folds are not guessed; missed dates are not backfilled.

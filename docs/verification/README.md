@@ -1,5 +1,11 @@
 # Verification record
 
+## Program automatic-preparation defaults — 26 October 2026
+
+Three focused scheduler cases passed in a disposable migrated database, including versioned program preferences, invalid date/timezone rejection, exact delivery retry with one policy, opt-out against an enabled published default, existing-policy preservation on program republish, and the prior sequence/DST safeguards. Backend/frontend type checks and local documentation links/anchors passed. No schema migration was added in this follow-up; the prior scheduling migration remains required.
+
+The dedicated browser journey covers program preference rendering/toggling, inherited assignment choice, explicit opt-out and required end date, review/confirmation and the resulting saved policy. English/dark and Arabic/light controls were rendered; final browser results are recorded in the receipt. Screenshot review found and fixed an oversized checkbox before the final run. This is scoped web evidence, not Android, a full browser suite, or whole-release acceptance. Paired English/Arabic landing guidance is on draft PR #34 at `13ab86f`; release PR #142 remains unmerged. Temporary screenshots are removed after inspection; canonical founder steps remain in the instance validation walkthrough.
+
 ## Recurring and automatic individual preparation — 26 October 2026
 
 The focused worker cases passed against owned disposable migrated data: uniquely resolved Dubai time and DST gap/fold refusal; exact policy receipts and athlete refusal; concurrent preparation with one position and unchanged cursor; independent plans; genuine null-bound day-only work; rest/missing calendar days; cannot-train and revoked creator blocks; explicit skip without another same-day automatic workout; timed collision diagnostic/recovery and exclusion of day-only rows from timed ranges; no skipped-workout completion/delivery inflation; and the actual one-shot operator entrypoint while API polling is paused. A direct projection test with an injected clock and the authorized profile service checked eligibility/restrictions when the viewer timezone is on the previous date. This is not a native device-clock test.
