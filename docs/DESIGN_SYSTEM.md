@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+Coaching desk (approved 26 October): put Today’s work and a narrower Athlete status panel beside each other on desktop, stacked on phones. Keep unfinished recordings first, due workouts and group/assessment events clearly labelled, and planning below. Avoid combined task totals across overlapping record types. Compact native details/summary rows disclose primary-roster follow-up; zero queues do not consume large empty cards. Status data is factual and permission-scoped; absent shared status is unknown. Field launch is a future tablet direction, not a second web dashboard.
+
 Status tags use `data-status` with the machine status, never translated-text inference. Green: active/completed/reviewed/resolved/published. Blue: scheduled/upcoming/in-progress/open. Amber: unscheduled/awaiting-review/pending. Yellow: draft/paused. Red: overdue/cancelled/expired/ended/replaced/unavailable. Archived, inactive and descriptive labels remain neutral. Always retain a visible text label so color is supplementary. Shared CSS adapts ink, background and border to light/dark themes.
 
 Routine acknowledged success uses one action-specific toast; never render a duplicate success card. Keep pending/conflict/error recovery and actionable generated links visible. Staff workout summaries use bordered prescription cards; scheduling controls share aligned labels and 44px controls and stack on phones. Coach recording uses explicit athlete-style check buttons with pressed state and an accessible label; input alone must not claim a set was performed. Dashboard priorities combine workout action discovery and review/attendance follow-up, with greeting and roster/navigation controls in the page header.

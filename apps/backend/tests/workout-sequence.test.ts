@@ -96,6 +96,9 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     ),
     "dashboard includes work awaiting scheduling",
   );
+  assert.equal((await agenda(auth, "trainer", "&queue=planning")).total, 2);
+  assert.equal((await agenda(auth, "trainer", "&queue=recording")).total, 0);
+  assert.equal((await agenda(auth, "trainer", "&queue=today")).total, 0);
   const firstInput = operation("schedule-workout", {
     assignment_id: assignment,
     cursor: 0,
@@ -131,6 +134,10 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     (await call(auth, "/workout-scheduling", winningInput as object)).data,
     firstResult.data,
   );
+  const todayQueue = await agenda(auth, "trainer", "&queue=today");
+  assert.equal(todayQueue.total, 1);
+  assert.equal(todayQueue.items[0].assignment_id, assignment);
+  assert.equal((await agenda(auth, "trainer", "&queue=planning")).total, 1);
   const a = firstResult.data;
   const due = await agenda(auth, "trainer", "&due=true&limit=1");
   assert.equal(due.total, 2);
@@ -235,6 +242,19 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     occurrence_id: a.occurrence.id,
   });
   const started = await call(auth, "/sessions", begin);
+  assert.equal((await agenda(auth, "trainer", "&queue=recording")).total, 1);
+  assert.equal(
+    (await agenda(auth, "trainer", "&queue=today")).items.some(
+      (x: any) => x.assignment_id === assignment,
+    ),
+    false,
+  );
+  assert.equal(
+    (await agenda(auth, "trainer", "&queue=planning")).items.some(
+      (x: any) => x.assignment_id === assignment,
+    ),
+    false,
+  );
   assert.equal(started.status, 200, JSON.stringify(started));
   const save = operation("save", {
     id: started.data.id,

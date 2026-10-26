@@ -1502,6 +1502,33 @@ export async function workoutAgenda(
         day: "2-digit",
       }).format(now) + "T00:00:00Z",
     );
+    const queue = query.get("queue");
+    if (queue && !["recording", "today", "planning"].includes(queue))
+      throw new ApiError(400, "invalid_request");
+    const unfinished: Prisma.institution_assignmentsWhereInput = {
+      institution_sessions: { some: { completed_at: null } },
+    };
+    const queueScope: Prisma.institution_assignmentsWhereInput =
+      queue === "recording"
+        ? unfinished
+        : queue === "planning"
+          ? {
+              institution_workout_positions: {
+                none: { state: { in: ["pending", "paused"] } },
+              },
+              NOT: unfinished,
+            }
+          : queue === "today"
+            ? {
+                institution_workout_positions: {
+                  some: {
+                    state: { in: ["pending", "paused"] },
+                    institution_events: { training_date: { lte: today } },
+                  },
+                },
+                NOT: unfinished,
+              }
+            : {};
     const assignment = query.get("assignment");
     const scope: Prisma.institution_assignmentsWhereInput = {
       institution_id: institution,
@@ -1525,11 +1552,13 @@ export async function workoutAgenda(
             ? { name: { contains: search, mode: "insensitive" } }
             : {}),
         },
-      ...(query.get("due") === "true"
+      ...(query.get("due") === "true" || queue
         ? {
             AND: [
+              queueScope,
               {
                 OR: [
+                  { institution_sessions: { some: { completed_at: null } } },
                   {
                     institution_workout_positions: {
                       none: { state: { in: ["pending", "paused"] } },
@@ -1541,11 +1570,6 @@ export async function workoutAgenda(
                         state: { in: ["pending", "paused"] },
                         institution_events: { training_date: { lte: today } },
                       },
-                    },
-                  },
-                  {
-                    institution_sessions: {
-                      some: { completed_at: null, occurrence_id: null },
                     },
                   },
                 ],

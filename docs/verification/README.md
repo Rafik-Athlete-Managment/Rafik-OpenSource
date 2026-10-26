@@ -1,5 +1,15 @@
 # Verification record
 
+## Approved Coaching desk — 26 October 2026
+
+The founder approved Coaching desk for web and reserved Field launch for a later tablet slice. The disposable sequence API case passed disjoint recording/today/planning queues before pagination, movement after scheduling/start, existing progression/retry/restriction checks and unchanged scope. A redundant unfinished-record predicate was subsequently removed without changing the OR result.
+
+The dedicated desk journey passed in desktop Chromium and phone WebKit against an isolated frozen production preview: real planning response/count, empty queues, scheduling acknowledgment and removal from planning, English/light and Arabic/dark layout/Axe checks, plus a long synthetic participation-status response and failed-refresh retention/recovery. The status response was mocked only for presentation; this is not new evidence of health authorization. Actual limited-status authority remains in the unchanged injury API. Desktop and phone English status/empty views and Arabic dark desk screenshots were rendered and inspected. Populated event streams, multiple queue pages, supporting-only roster usability and the former dashboard's stored-command replay still need founder validation; existing API scope and exact-command mechanisms were reused.
+
+Initial checks found planning render/key and obsolete athlete-oriented empty copy issues; unique queue keys and compact staff queue copy were corrected. A combined dashboard/program-adaptation journey later stopped at the unrelated draft-reload field assertion, so the final acceptance was narrowed to the desk; this change does not claim fresh program-editor recovery acceptance. A scheduling assertion was changed to wait for the actual server acknowledgment before checking removal. Failed runs are not acceptance evidence.
+
+Frontend/backend types, both source inventories and documentation links passed. The [desk receipt](receipts/coach-desk-2026-10-26.json) records source hashes and scope. Paired English/Arabic landing guidance is on draft PR #34 at e07c14c, linking the canonical instance walkthrough rather than copying it. No native build, schema migration, preview reset, full browser suite or release was performed. Both release PRs remain unmerged; Field launch is a documented future tablet direction.
+
 ## Coaching priorities, status tags and completion navigation — 26 October 2026
 
 The focused disposable sequence API case passed awaiting-schedule discovery alongside due work, existing scope, pagination and progression/retry/restriction behavior. Its old expected dashboard total was updated from one to two because the second unscheduled assignment is now intentionally included. No schema migration or preview reset was needed.

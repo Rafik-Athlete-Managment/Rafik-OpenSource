@@ -15,6 +15,7 @@ import CommandStatus from '../../components/CommandStatus.vue'
 import PageState from '../../components/PageState.vue'
 import type { Institution, Member, Role, Sport } from './types'
 import './institution.css'
+import CoachDesk from './CoachDesk.vue'
 import FollowUpPanel from './FollowUpPanel.vue'
 import UpcomingSessions from './UpcomingSessions.vue'
 import WorkoutAgenda from './WorkoutAgenda.vue'
@@ -397,7 +398,7 @@ onMounted(async () => {
       >
         <RouterLink class="button secondary" to="/people"
           >{{ data.summary.trainees }} ·
-          {{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</RouterLink
+          {{ l('Primary-roster athletes', 'رياضيو القائمة الأساسية') }}</RouterLink
         >
         <RouterLink class="button" to="/training">{{
           l('Athlete plans', 'خطط الرياضيين')
@@ -536,17 +537,19 @@ onMounted(async () => {
               >{{ l('View analytics', 'عرض التحليلات') }}</RouterLink
             >
           </div>
-          <FollowUpPanel v-if="view !== 'trainee'" />
+          <CoachDesk v-if="view === 'trainer'" />
+          <FollowUpPanel v-else-if="view === 'admin'" />
           <WorkoutAgenda v-if="view === 'trainee'" due :limit="4" />
-          <UpcomingSessions />
-          <section v-if="view === 'trainee' || !data.summary.trainees" class="panel">
+          <UpcomingSessions v-if="view !== 'trainer'" />
+          <section
+            v-if="view === 'trainee' || (view === 'admin' && !data.summary.trainees)"
+            class="panel"
+          >
             <h2>
               {{
                 view === 'admin'
                   ? l('Keep everyone supported', 'امنح الجميع الدعم')
-                  : view === 'trainer'
-                    ? l('Your next coaching step', 'خطوتك التدريبية التالية')
-                    : l('Your coach', 'مدربك')
+                  : l('Your coach', 'مدربك')
               }}
             </h2>
             <template v-if="view === 'trainee'"

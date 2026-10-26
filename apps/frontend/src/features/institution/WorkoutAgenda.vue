@@ -17,7 +17,15 @@ import { PhBarbell, PhPlay, PhClockCounterClockwise, PhArrowClockwise } from '@p
 import ProgramCover from '../coaching/ProgramCover.vue'
 
 const props = withDefaults(
-  defineProps<{ assignment?: string; due?: boolean; limit?: number; pageHeading?: boolean }>(),
+  defineProps<{
+    assignment?: string
+    due?: boolean
+    limit?: number
+    pageHeading?: boolean
+    queue?: 'recording' | 'today' | 'planning'
+    hideEmpty?: boolean
+    headingLevel?: number
+  }>(),
   {
     due: false,
     limit: 10,
@@ -55,6 +63,7 @@ async function load() {
     })
     if (props.assignment) query.set('assignment', props.assignment)
     if (props.due) query.set('due', 'true')
+    if (props.queue) query.set('queue', props.queue)
     const result = await request<WorkoutAgenda>(`/v1/institution/workout-scheduling?${query}`, {
       feedback: 'none',
     })
@@ -73,7 +82,7 @@ const started = ref('')
 const startedMode = ref('')
 const preparing = ref(false)
 const command = useCommand(
-  `workout-agenda:${context.institution}:${props.assignment || (props.due ? 'due' : 'all')}`,
+  `workout-agenda:${context.institution}:${props.assignment || props.queue || (props.due ? 'due' : 'all')}`,
   async (name, result) => {
     if (name === 'start') {
       started.value = (result as { id: string }).id
@@ -256,22 +265,37 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
 </script>
 <template>
   <section
+    v-if="!hideEmpty || loading || error || (data?.total || 0) > 0"
     class="workout-agenda"
     :class="{ 'athlete-workout-preview': pageHeading, 'staff-workout-cards': !pageHeading }"
-    :aria-label="l('Next workouts', 'التمارين التالية')"
+    :aria-label="
+      queue === 'recording'
+        ? l('Continue recording', 'متابعة التسجيل')
+        : queue === 'today'
+          ? l('Due workouts', 'التمارين المستحقة')
+          : queue === 'planning'
+            ? l('Awaiting scheduling', 'بانتظار الجدولة')
+            : l('Next workouts', 'التمارين التالية')
+    "
   >
     <header class="agenda-heading">
       <div>
-        <component :is="pageHeading ? 'h1' : 'h2'">
+        <component :is="pageHeading ? 'h1' : headingLevel === 3 ? 'h3' : 'h2'">
           {{
-            pageHeading
-              ? l('Your workouts', 'تمارينك')
-              : due
-                ? l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
-                : l('Next workouts', 'التمارين التالية')
+            queue === 'recording'
+              ? l('Continue recording', 'متابعة التسجيل')
+              : queue === 'today'
+                ? l('Due workouts', 'التمارين المستحقة')
+                : queue === 'planning'
+                  ? l('Awaiting scheduling', 'بانتظار الجدولة')
+                  : pageHeading
+                    ? l('Your workouts', 'تمارينك')
+                    : due
+                      ? l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
+                      : l('Next workouts', 'التمارين التالية')
           }}
         </component>
-        <p>
+        <p v-if="!queue">
           {{
             l(
               'Each plan progresses independently. Unfinished work stays here until completed or explicitly skipped.',
@@ -285,7 +309,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
           ><PhClockCounterClockwise :size="18" aria-hidden="true" />{{
             l('Workout history', 'سجل التمارين')
           }}</RouterLink
-        ><RouterLink v-if="due" class="text-link" to="/training">{{
+        ><RouterLink v-if="due && !queue" class="text-link" to="/training">{{
           l('Athlete plans', 'خطط الرياضيين')
         }}</RouterLink>
         <button
@@ -302,12 +326,22 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
     <p v-if="error && data" class="notice error" role="alert">{{ error }}</p>
     <PageState :loading="loading && !data" :error="!data ? error : ''" @retry="load">
       <template v-if="data">
+        <p v-if="queue && !data.items.length" class="small-print">
+          {{ l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.') }}
+        </p>
         <EmptyState
-          v-if="!data.items.length"
+          v-else-if="!data.items.length"
           compact
           :title="
             due
-              ? l('No workouts need action.', 'لا توجد تمارين تحتاج إلى إجراء.')
+              ? l(
+                  queue === 'today'
+                    ? 'No workouts due. Check today’s events below.'
+                    : 'No workouts need action.',
+                  queue === 'today'
+                    ? 'لا توجد تمارين مستحقة. راجع مواعيد اليوم أدناه.'
+                    : 'لا توجد تمارين تحتاج إلى إجراء.',
+                )
               : l('No active workouts yet.', 'لا توجد تمارين نشطة بعد.')
           "
           :description="
@@ -327,7 +361,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
               <p v-if="context.view !== 'trainee' && !assignment" class="overline">
                 <bdi dir="auto">{{ item.member_name }}</bdi>
               </p>
-              <component :is="pageHeading ? 'h2' : 'h3'">
+              <component :is="pageHeading ? 'h2' : headingLevel === 3 ? 'h4' : 'h3'">
                 <bdi dir="auto">{{
                   assignment
                     ? locale === 'ar'
@@ -430,6 +464,12 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
               </div>
             </div>
             <div class="agenda-actions">
+              <RouterLink
+                v-if="context.view !== 'trainee' && !assignment"
+                class="button small secondary"
+                :to="'/training/' + item.assignment_id"
+                >{{ l('View plan', 'عرض الخطة') }}</RouterLink
+              >
               <RouterLink
                 v-if="item.session && (item.state !== 'paused' || context.view !== 'trainee')"
                 class="button small"
@@ -566,7 +606,9 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
   margin-block: var(--space-2);
 }
 .agenda-heading h2,
+.agenda-heading h3,
 .agenda-copy h3,
+.agenda-copy h4,
 .agenda-copy h2 {
   margin: 0;
   font-size: var(--text-panel);

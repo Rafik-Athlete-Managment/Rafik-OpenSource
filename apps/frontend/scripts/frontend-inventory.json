@@ -325,5 +325,9 @@
   "features/institution/AssignedPlanPage.vue": {
     "purpose": "Dedicated assigned-plan review, scoped workout scheduling and adaptation from the assigned immutable snapshot using the shared editor.",
     "access": "Administrators and authorized primary/sport-supporting coaches; athletes redirected before rendering."
+  },
+  "features/institution/CoachDesk.vue": {
+    "purpose": "Balanced coach dashboard: disjoint recording/due/planning queues, today events, limited primary-roster participation status and compact follow-up.",
+    "access": "Coach dashboard only; all reads retain existing server primary/sport authority and limited injury-status visibility."
   }
 }

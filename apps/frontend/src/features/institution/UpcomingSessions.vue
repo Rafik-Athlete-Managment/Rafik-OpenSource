@@ -8,6 +8,7 @@ import { request } from '../../lib/backend'
 import { localDate, addDays } from '../../lib/dates'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import type { CalendarEvent } from './service-types'
+const props = defineProps<{ todayOnly?: boolean; omitWorkouts?: boolean; headingLevel?: number }>()
 const route = useRoute(),
   id = institutionContext().institution,
   view = institutionContext().view,
@@ -27,10 +28,15 @@ const label = (date: string) =>
 onMounted(async () => {
   try {
     const result = await request<{ items: CalendarEvent[] }>(
-      `/v1/institution/calendar?view=${view}&from=${today}&to=${addDays(today, 7)}&zone=${encodeURIComponent(zone)}`,
+      `/v1/institution/calendar?view=${view}&from=${today}&to=${props.todayOnly ? today : addDays(today, 7)}&zone=${encodeURIComponent(zone)}`,
     )
     events.value = result.items
-      .filter((e) => e.state === 'scheduled' && Date.parse(e.ends_at) > Date.now())
+      .filter(
+        (e) =>
+          e.state === 'scheduled' &&
+          (!props.omitWorkouts || !e.workout_snapshot?.assignment_id) &&
+          (props.todayOnly || Date.parse(e.ends_at) > Date.now()),
+      )
       .slice(0, 3)
   } catch (e) {
     error.value = errorMessage(e)
@@ -42,7 +48,9 @@ onMounted(async () => {
 <template>
   <section class="organization-upcoming">
     <div class="heading-actions">
-      <h2>{{ l('Coming up', 'القادم') }}</h2>
+      <component :is="headingLevel === 3 ? 'h3' : 'h2'">{{
+        todayOnly ? l('Today’s events', 'مواعيد اليوم') : l('Coming up', 'القادم')
+      }}</component>
       <RouterLink :to="base + '/schedule'" class="text-link"
         >{{ l('Open calendar', 'فتح التقويم') }} ↗</RouterLink
       >
@@ -52,7 +60,14 @@ onMounted(async () => {
     </p>
     <p v-else-if="error" class="notice error" role="alert">{{ error }}</p>
     <p v-else-if="!events.length" class="small-print">
-      {{ l('No scheduled events in the next week.', 'لا توجد مواعيد مجدولة في الأسبوع القادم.') }}
+      {{
+        todayOnly
+          ? l(
+              'No group sessions or assessments scheduled today.',
+              'لا توجد حصص جماعية أو تقييمات مجدولة اليوم.',
+            )
+          : l('No scheduled events in the next week.', 'لا توجد مواعيد مجدولة في الأسبوع القادم.')
+      }}
     </p>
     <RouterLink
       v-for="e in events"
@@ -70,7 +85,8 @@ onMounted(async () => {
 .organization-upcoming {
   margin-block: 28px;
 }
-.organization-upcoming h2 {
+.organization-upcoming h2,
+.organization-upcoming h3 {
   font-size: 1.15rem;
 }
 .upcoming-event {

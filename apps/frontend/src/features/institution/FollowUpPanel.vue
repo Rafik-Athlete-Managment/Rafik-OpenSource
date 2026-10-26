@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage, dateLabel } from '../../lib/i18n'
+const props = defineProps<{ compact?: boolean }>()
 const context = programContext(useRoute()),
   loading = ref(true),
   error = ref('')
@@ -43,7 +44,13 @@ onUnmounted(() => {
   <section class="daily-followup" aria-labelledby="follow-up-title">
     <div class="section-heading">
       <div>
-        <h2 id="follow-up-title">{{ l('Your coaching priorities', 'أولوياتك التدريبية') }}</h2>
+        <h2 id="follow-up-title">
+          {{
+            compact
+              ? l('Primary-roster follow-up', 'متابعة القائمة الأساسية')
+              : l('Your coaching priorities', 'أولوياتك التدريبية')
+          }}
+        </h2>
         <p class="small-print">
           {{
             l(
@@ -59,13 +66,23 @@ onUnmounted(() => {
       {{ error }}
       <button class="text-link" @click="load">{{ l('Retry', 'إعادة المحاولة') }}</button>
     </p>
-    <WorkoutAgenda due :limit="4" />
-    <div v-if="data" class="followup-columns">
-      <section class="panel">
-        <h3>
-          {{ l('Missed sessions to follow up', 'جلسات فائتة للمتابعة') }}
-          <span class="count">{{ data.missed.total }}</span>
-        </h3>
+    <WorkoutAgenda v-if="!compact" due :limit="4" />
+    <p v-if="compact" class="small-print">
+      {{
+        l(
+          'These queues cover your primary roster. Supporting sport work appears in the workout queues above. Plan gaps here mean no assignment marked active; check plan dates in Athlete plans.',
+          'تغطي هذه القوائم الرياضيين الأساسيين لك. يظهر عملك المساند حسب الرياضة في قوائم التمارين أعلاه. تعني فجوات الخطط هنا عدم وجود تعيين بحالة نشطة؛ راجع تواريخ الخطط في صفحة خطط الرياضيين.',
+        )
+      }}
+    </p>
+    <div v-if="data" :class="compact ? 'compact-followup' : 'followup-columns'">
+      <component :is="compact ? 'details' : 'section'" class="panel followup-queue">
+        <component :is="compact ? 'summary' : 'div'" class="queue-summary"
+          ><h3>
+            {{ l('Missed sessions to follow up', 'جلسات فائتة للمتابعة') }}
+            <span class="count">{{ data.missed.total }}</span>
+          </h3></component
+        >
         <p class="small-print">
           {{
             l(
@@ -93,12 +110,14 @@ onUnmounted(() => {
           :to="context.base + '/schedule'"
           >{{ l('Open calendar', 'فتح التقويم') }}</RouterLink
         >
-      </section>
-      <section class="panel">
-        <h3>
-          {{ l('Training to review', 'تدريب للمراجعة') }}
-          <span class="count">{{ data.reviews.total }}</span>
-        </h3>
+      </component>
+      <component :is="compact ? 'details' : 'section'" class="panel followup-queue">
+        <component :is="compact ? 'summary' : 'div'" class="queue-summary"
+          ><h3>
+            {{ l('Training to review', 'تدريب للمراجعة') }}
+            <span class="count">{{ data.reviews.total }}</span>
+          </h3></component
+        >
         <p v-if="!data.reviews.total" class="small-print">
           {{
             l('No completed training awaiting feedback.', 'لا يوجد تدريب مكتمل بانتظار الملاحظات.')
@@ -121,12 +140,14 @@ onUnmounted(() => {
           :to="context.base + '/workouts'"
           >{{ l('Workout history', 'سجل التمارين') }}</RouterLink
         >
-      </section>
-      <section class="panel">
-        <h3>
-          {{ l('Session outcomes needed', 'حصص تحتاج إلى نتيجة') }}
-          <span class="count">{{ data.outcomes.total }}</span>
-        </h3>
+      </component>
+      <component :is="compact ? 'details' : 'section'" class="panel followup-queue">
+        <component :is="compact ? 'summary' : 'div'" class="queue-summary"
+          ><h3>
+            {{ l('Session outcomes needed', 'حصص تحتاج إلى نتيجة') }}
+            <span class="count">{{ data.outcomes.total }}</span>
+          </h3></component
+        >
         <p class="small-print">
           {{
             l(
@@ -152,12 +173,14 @@ onUnmounted(() => {
           :to="context.base + '/schedule'"
           >{{ l('Open calendar', 'فتح التقويم') }}</RouterLink
         >
-      </section>
-      <section class="panel">
-        <h3>
-          {{ l('Athletes without a plan', 'رياضيون بلا خطة') }}
-          <span class="count">{{ data.unplanned.total }}</span>
-        </h3>
+      </component>
+      <component :is="compact ? 'details' : 'section'" class="panel followup-queue">
+        <component :is="compact ? 'summary' : 'div'" class="queue-summary"
+          ><h3>
+            {{ l('Athletes without a plan', 'رياضيون بلا خطة') }}
+            <span class="count">{{ data.unplanned.total }}</span>
+          </h3></component
+        >
         <p v-if="!data.unplanned.total" class="small-print">
           {{ l('Every active athlete has a program assignment.', 'لكل رياضي نشط تكليف ببرنامج.') }}
         </p>
@@ -177,7 +200,7 @@ onUnmounted(() => {
           :to="context.base + '/people'"
           >{{ l('Open people', 'فتح الأشخاص') }}</RouterLink
         >
-      </section>
+      </component>
     </div>
   </section>
 </template>
@@ -229,5 +252,23 @@ li small {
   .followup-columns {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+.compact-followup {
+  display: grid;
+  gap: var(--space-3);
+}
+.compact-followup .panel {
+  padding: var(--space-4);
+  margin: 0;
+}
+.queue-summary h3 {
+  margin: 0;
+}
+.compact-followup summary {
+  cursor: pointer;
+}
+.compact-followup .count {
+  min-width: 2rem;
+  text-align: center;
 }
 </style>

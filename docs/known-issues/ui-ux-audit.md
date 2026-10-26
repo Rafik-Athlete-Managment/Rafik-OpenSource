@@ -190,7 +190,9 @@ This is a source-led alignment assessment. The existing published Android accept
 
 ## Coach dashboard study — 26 October 2026
 
-**Proposed, not implemented:** the founder requested a deeper redesign after the incremental priorities/card correction and selected a balanced overview: today's work plus compact athlete readiness. The incremental correction is not acceptance of the larger redesign.
+**Decision, 26 October:** the founder approved concept A (Coaching desk), with Field launch reserved for the later tablet app. The first implementation uses grouped recording/due/event streams rather than inventing a combined chronological projection. It preserves explicit primary-roster status/follow-up coverage, server-scoped disjoint queue pagination and unknown-status semantics. Verification records actual rendered coverage; no readiness score or expanded health authority is implied. The following study records the reasoning and considered alternatives.
+
+**Study context:** the founder requested a deeper redesign after the incremental priorities/card correction and selected a balanced overview: today's work plus compact athlete readiness. The incremental correction is not acceptance of the larger redesign.
 
 ### Evidence and root causes
 
@@ -214,7 +216,7 @@ This is a source-led alignment assessment. The existing published Android accept
 - **Source:** `server/follow-up.ts` filters workout review/missed/unplanned queues by primary trainer; workout agenda authority also supports sport-scoped supporting coaches. A unified overview must explicitly reconcile coverage with the relevant service authority rather than imply that an empty primary-only queue covers all the coach's work. Expanding that scope needs its own authorization checks.
 - **Source:** the current without-plan query checks assignment `state='active'`, while plan dates and paused/ended lifecycle carry additional meaning elsewhere. The proposed gap indicator needs a documented effective-date definition before becoming a headline metric. This is a candidate data-definition issue, not permission to mutate historical assignments or a claim that the new metric exists.
 
-### Concepts for founder review
+### Considered concepts (A approved)
 
 | Concept                         | Main area                                                                                     | Compact secondary area                                                              | Trade-off                                                                                                                        |
 | ------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -247,6 +249,6 @@ On desktop, Today and Athlete status sit beside each other; on phones, active wo
 - Keep explicit empty/loading/error states, accessible keyboard actions, Arabic logical alignment, local timezone labels and one primary action per row. Avoid hover-only actions and decorative charts.
 - A new readiness summary/read model is **not yet implemented or verified**. Audit its actual data availability and permission requirements before committing the concept; existing limited status must not be broadened to satisfy the layout.
 
-### Proposed implementation and acceptance
+### Approved implementation and acceptance
 
-After founder concept approval: finalize the region hierarchy and factual status fields, then implement one shared dashboard composition using current commands. Add a scoped projection only if existing reads cannot provide complete, correctly scoped totals. Validate populated/empty/error, a long roster, simultaneous plans, supporting-coach scope, live recording, overdue work, unknown status and refresh failures. Inspect desktop/phone English/Arabic in both themes; separately verify that stale completion acknowledgments cannot navigate away from a different screen. Update the canonical instance walkthrough rather than creating another validation guide.
+The founder approved A. The implementation uses the existing limited status read and current commands in one shared dashboard composition; no new health authority or derived readiness model was added. Add a scoped projection only if existing reads cannot provide complete, correctly scoped totals. Validate populated/empty/error, a long roster, simultaneous plans, supporting-coach scope, live recording, overdue work, unknown status and refresh failures. Inspect desktop/phone English/Arabic in both themes; separately verify that stale completion acknowledgments cannot navigate away from a different screen. Update the canonical instance walkthrough rather than creating another validation guide.

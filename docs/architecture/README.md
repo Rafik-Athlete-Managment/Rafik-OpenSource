@@ -184,3 +184,7 @@ The breaking beta.3 migration removes personal/team/business storage and generic
 ### Coaching dashboard action discovery
 
 The shared follow-up panel composes workout priorities with review and attendance follow-up. Its `due=true` agenda read also includes plans awaiting scheduling; it does not allocate positions or enable automatic scheduling. Future scheduled work remains in plan details. Role/sport access and existing pagination are unchanged.
+
+### Coaching desk queue boundaries
+
+The coach overview uses optional `queue=recording|today|planning` on the existing scheduling projection. Queue predicates apply inside the authorized database scope before pagination/counting. Recording contains unfinished records; today contains due positions without an unfinished record; planning has neither unresolved positions nor unfinished records. Shared controls retain exact commands. The previous due-dashboard command scope remains available for recovery after layout upgrade. Calendar-linked workout events are omitted from the desk’s separate event summary. Limited participation status still comes from the existing primary-coach/consent-gated audited read; absence is unknown. Compact follow-up retains its explicitly labelled primary-roster/state-based coverage. No clinical projection or aggregate readiness score was introduced.

@@ -535,6 +535,19 @@
               "minimum": 1,
               "maximum": 100
             }
+          },
+          {
+            "name": "queue",
+            "in": "query",
+            "description": "Optional disjoint dashboard queue; implies due=true. recording: unfinished records; today: due positions without unfinished records; planning: no unresolved position or unfinished record. Existing scope applies before pagination.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "recording",
+                "today",
+                "planning"
+              ]
+            }
           }
         ],
         "responses": {

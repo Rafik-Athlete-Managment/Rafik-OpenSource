@@ -345,13 +345,7 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await page.addInitScript(() => {
       if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
     })
-    await f.login(page, f.coach, '/dashboard')
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back')
-    await expect(page.getByRole('heading', { name: 'Your coaching priorities' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toBeVisible()
-    await expect(page.locator('.tag[data-status="unscheduled"]')).toBeVisible()
-    await inspect(page, 'coach-priorities', info)
-    await page.goto('/training?assignment=' + assignment)
+    await f.login(page, f.coach, '/training?assignment=' + assignment)
     await expect(page).toHaveURL(new RegExp('/training/' + assignment + '$'))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
     await expect(page.getByRole('searchbox', { name: 'Search athletes' })).toHaveCount(0)
@@ -476,6 +470,106 @@ test('coach finishes athlete-started bodyweight work and reviews it without a no
     expect(result.entries[0].load).toBe(0)
     await f.login(page, f.client, '/workout/' + id)
     await expect(page.getByRole('note').filter({ hasText: 'Completed by R4 Coach.' })).toBeVisible()
+  } finally {
+    await f.cleanup()
+  }
+})
+
+test('coach desk shows disjoint planning, status recovery and Arabic layout', async ({
+  page,
+}, info) => {
+  test.setTimeout(300000)
+  const f = await institutionFixture()
+  try {
+    await institution(f, 'Madar desk', undefined, false)
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
+    })
+    page.on('pageerror', (error) => console.log('Desk runtime:', error.message))
+    const planningRead = page.waitForResponse((response) =>
+      response.url().includes('queue=planning'),
+    )
+    await f.login(page, f.coach, '/dashboard')
+    const planningResponse = await planningRead
+    expect(planningResponse.status()).toBe(200)
+    expect((await planningResponse.json()).total).toBe(1)
+    await page.screenshot({
+      path: 'artifacts/r1e-coach-desk-initial-' + info.project.name + '.png',
+      fullPage: true,
+    })
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back')
+    await expect(page.getByRole('heading', { name: 'Today’s work' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toBeVisible()
+    await expect(page.locator('.tag[data-status="unscheduled"]')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Athlete status', exact: true })).toBeVisible()
+    await expect(
+      page.getByText('No shared status means unknown, not cleared to train.', { exact: false }),
+    ).toBeVisible()
+    await inspect(page, 'coach-priorities', info)
+    // UI-only synthetic status response: this checks long/populated/error rendering, not authorization.
+    const statusUrl = '**/v1/institution/injuries?view=trainer'
+    await page.route(statusUrl, (route) =>
+      route.fulfill({
+        json: {
+          items: [
+            {
+              id: 'display-status',
+              athlete_name: 'Synthetic athlete with a deliberately long roster display name',
+              participation: 'modified',
+              effective_from: new Date().toISOString(),
+            },
+          ],
+        },
+      }),
+    )
+    await page.getByRole('button', { name: 'Refresh athlete status' }).click()
+    await expect(
+      page.getByText('Synthetic athlete with a deliberately long roster display name'),
+    ).toBeVisible()
+    await inspect(page, 'coach-desk-status', info)
+    await page.unroute(statusUrl)
+    await page.route(statusUrl, (route) => route.abort('failed'))
+    await page.getByRole('button', { name: 'Refresh athlete status' }).click()
+    await expect(page.locator('.desk-status').getByRole('alert')).toBeVisible()
+    await expect(
+      page.getByText('Synthetic athlete with a deliberately long roster display name'),
+    ).toBeVisible()
+    await page.unroute(statusUrl)
+    await page.getByRole('button', { name: 'Refresh athlete status' }).click()
+    await expect(page.locator('.desk-status').getByRole('alert')).toHaveCount(0)
+
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'dark')
+    })
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'عمل اليوم', exact: true })).toBeVisible()
+    await inspect(page, 'coach-desk-ar', info)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'en')
+      localStorage.setItem('rafik.theme', 'light')
+    })
+    await page.reload()
+
+    await expect(page.getByRole('heading', { name: 'Today’s work', exact: true })).toBeVisible()
+    const planning = page.getByRole('region', { name: 'Awaiting scheduling', exact: true })
+    await planning.getByRole('button', { name: 'Schedule workout', exact: true }).click()
+    await planning
+      .getByLabel('Date and time', { exact: true })
+      .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))
+    const savedSchedule = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url().endsWith('/v1/institution/workout-scheduling'),
+    )
+    await planning.getByRole('button', { name: 'Save schedule', exact: true }).click()
+    const scheduleResponse = await savedSchedule
+    expect(scheduleResponse.status(), JSON.stringify(await scheduleResponse.json())).toBe(200)
+    await page.screenshot({
+      path: 'artifacts/r1e-desk-scheduled-' + info.project.name + '.png',
+      fullPage: true,
+    })
+    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toHaveCount(0)
   } finally {
     await f.cleanup()
   }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Introduce the approved Coaching desk: unfinished recordings, due workouts and today’s events lead; a limited athlete-status column retains unknown/consent boundaries. Awaiting-schedule work and compact primary-roster follow-up are separate. Add scoped, disjoint server queues before pagination and preserve recovery of the prior dashboard’s pending commands.
+
 - Redirect acknowledged coach workout completion to its review with delayed-navigation guards; separate review continuation controls from exercise content. Record a balanced coach-dashboard redesign proposal for founder review, without enabling speculative readiness metrics.
 
 - Consolidate dashboard workout discovery and follow-up under coaching priorities, including work awaiting scheduling. Add greeting/header actions, shared semantic status colors, clear staff workout cards and aligned scheduling fields. Use athlete-style explicit set checks in coach recording and remove duplicate success cards while retaining recovery and generated invitation/reset links.
