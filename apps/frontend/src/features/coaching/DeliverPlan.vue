@@ -356,7 +356,7 @@ onMounted(load)
           }}
         </p>
       </div>
-      <span v-if="version?.revision" class="tag success delivery-version">{{
+      <span v-if="version?.revision" class="tag delivery-version" data-status="published">{{
         l(`Version ${version.revision}`, `النسخة ${version.revision}`)
       }}</span>
     </PageHeading>
@@ -644,11 +644,14 @@ onMounted(load)
                       <small v-if="personOf(id)">{{ currentPlans(personOf(id)!) }}</small>
                     </div>
                     <div v-if="personOf(id)" class="selected-outcome">
-                      <span class="tag" :class="{ success: !onThisVersion(personOf(id)) }">{{
-                        onThisVersion(personOf(id))
-                          ? l('Already on this program', 'على هذا البرنامج بالفعل')
-                          : outcome(personOf(id)!)
-                      }}</span
+                      <span
+                        class="tag"
+                        :data-status="!onThisVersion(personOf(id)) ? 'active' : 'published'"
+                        >{{
+                          onThisVersion(personOf(id))
+                            ? l('Already on this program', 'على هذا البرنامج بالفعل')
+                            : outcome(personOf(id)!)
+                        }}</span
                       ><button
                         v-if="personOf(id)?.plans?.length && !onThisVersion(personOf(id))"
                         type="button"

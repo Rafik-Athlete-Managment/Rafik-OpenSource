@@ -180,3 +180,7 @@ The cleanup migration deletes the legacy Tasks table, attributable saved-command
 ## Explicit backend boundary
 
 The breaking beta.3 migration removes personal/team/business storage and generic command/query/file gateways. Explicit own profile/support/account lifecycle services replace their current dependencies. Current institution records, histories and exact receipts remain. Canonical `/v1/institution` paths are the only supported scope routes; published beta.2 clients require a coordinated upgrade. The response normalizer may read old field names in preserved institutional receipt envelopes; it does not expose old routes or rewrite stored documents. See [ADR 0030](../decisions/ADR-0030-retire-standalone-storage-and-apis.md) and the [complete backend reference](../reference/backend/README.md).
+
+### Coaching dashboard action discovery
+
+The shared follow-up panel composes workout priorities with review and attendance follow-up. Its `due=true` agenda read also includes plans awaiting scheduling; it does not allocate positions or enable automatic scheduling. Future scheduled work remains in plan details. Role/sport access and existing pagination are unchanged.

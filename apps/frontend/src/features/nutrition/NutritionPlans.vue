@@ -227,7 +227,7 @@ function create(ids: string[]) {
           <article v-for="plan in data.items" :key="plan.id" class="nutrition-plan-card">
             <div class="heading-actions">
               <h2 dir="auto">{{ plan.member_name }}</h2>
-              <span class="tag">{{ label(plan.status) }}</span>
+              <span class="tag" :data-status="plan.status">{{ label(plan.status) }}</span>
             </div>
             <p class="small-print">
               {{ l('Nutrition plan · version', 'خطة تغذية · النسخة') }} {{ plan.revision }}

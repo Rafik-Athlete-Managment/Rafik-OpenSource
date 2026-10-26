@@ -187,7 +187,7 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
     await expect(page.getByText('Recorded on behalf of')).toBeVisible()
     const firstSet = page.locator('.delegated-set').first()
     await firstSet.getByLabel(/^Load/).fill('22.5')
-    await firstSet.getByRole('checkbox', { name: 'Done' }).check()
+    await firstSet.getByRole('button', { name: /Mark set.*Done/ }).click()
     let lost = false,
       saves = 0
     await page.route(`**${endpoint}/sessions`, async (route) => {
@@ -201,6 +201,8 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
     })
     await page.getByRole('button', { name: 'Finish session', exact: true }).click()
     await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
+    await expect(page).toHaveURL(/\/review\/[a-f0-9-]{36}$/)
+    await page.goto(page.url().replace('/review/', '/record/'))
     const history = page.getByRole('region', { name: 'Record history' })
     await expect(history.getByRole('listitem')).toHaveCount(2)
     await expect(history).toContainText('R4 Coach · started')
@@ -262,18 +264,19 @@ test('coach-recorded timed and distance sets require actual seconds and metres',
     await expect(timed.getByLabel(/^Load/)).toHaveCount(0)
     await expect(distance.getByLabel('Metres')).toHaveAttribute('placeholder', 'Target 400')
     // Completing without an actual result is refused.
-    await timed.getByRole('checkbox', { name: 'Done' }).click()
-    await expect(timed.getByRole('checkbox', { name: 'Done' })).not.toBeChecked()
+    await timed.getByRole('button', { name: /Mark set.*Done/ }).click()
+    await expect(timed.getByRole('button', { name: /Mark set.*Done/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
     await expect(page.getByRole('alert')).toContainText('Record the actual result')
     await timed.getByLabel('Seconds').fill('42')
     await timed.getByLabel('Effort (RPE, optional)').fill('7')
-    await timed.getByRole('checkbox', { name: 'Done' }).check()
+    await timed.getByRole('button', { name: /Mark set.*Done/ }).click()
     await distance.getByLabel('Metres').fill('380')
-    await distance.getByRole('checkbox', { name: 'Done' }).check()
+    await distance.getByRole('button', { name: /Mark set.*Done/ }).click()
     await page.getByRole('button', { name: 'Finish session', exact: true }).click()
-    await expect(page.getByRole('region', { name: 'Record history' })).toContainText(
-      'saved as completed',
-    )
+    await expect(page).toHaveURL(/\/review\/[a-f0-9-]{36}$/)
     const id = page.url().split('/').at(-1)
     const saved = await f.call(f.coach, `/v1/workouts/${id}?view=trainer`)
     const find = (key: string) =>
@@ -342,7 +345,13 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await page.addInitScript(() => {
       if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
     })
-    await f.login(page, f.coach, '/training?assignment=' + assignment)
+    await f.login(page, f.coach, '/dashboard')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back')
+    await expect(page.getByRole('heading', { name: 'Your coaching priorities' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toBeVisible()
+    await expect(page.locator('.tag[data-status="unscheduled"]')).toBeVisible()
+    await inspect(page, 'coach-priorities', info)
+    await page.goto('/training?assignment=' + assignment)
     await expect(page).toHaveURL(new RegExp('/training/' + assignment + '$'))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
     await expect(page.getByRole('searchbox', { name: 'Search athletes' })).toHaveCount(0)
@@ -353,7 +362,7 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     )
     await page.getByLabel('Program name', { exact: true }).fill('Athlete-specific adaptation draft')
     await page.getByRole('button', { name: 'Save draft', exact: true }).click()
-    await expect(page.getByText('Draft saved. Current assignments are unchanged.')).toBeVisible()
+    await expect(page.getByText('Program draft saved.', { exact: true })).toBeVisible()
     await page.reload()
     await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
       'Athlete-specific adaptation draft',
@@ -362,6 +371,7 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Track block')
     const agenda = page.getByRole('region', { name: 'Next workouts', exact: true })
     await agenda.getByRole('button', { name: 'Schedule workout', exact: true }).click()
+    await inspect(page, 'schedule-form', info)
     await agenda
       .getByLabel('Date and time', { exact: true })
       .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))
@@ -444,14 +454,21 @@ test('coach finishes athlete-started bodyweight work and reviews it without a no
     await expect(
       page.getByText('The athlete started this workout.', { exact: false }),
     ).toBeVisible()
+    await page.goto('/review/' + id)
+    await expect(page.getByRole('link', { name: 'Continue workout for athlete' })).toBeVisible()
+    await inspect(page, 'unfinished-review', info)
+    await page.getByRole('link', { name: 'Continue workout for athlete' }).click()
     const set = page.locator('.delegated-set').first()
     await set.getByLabel(/^Load/).fill('0')
-    await set.getByRole('checkbox', { name: 'Done', exact: true }).check()
+    await set.getByRole('button', { name: /Mark set.*Done/ }).focus()
+    await page.keyboard.press('Space')
+    await inspect(page, 'coach-recorder', info)
     await page.getByRole('button', { name: 'Finish session', exact: true }).click()
-    await page.getByRole('link', { name: 'Review workout', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp('/review/' + id + '$'))
     await expect(page.getByLabel('Coach feedback')).toHaveValue('')
     await page.getByRole('button', { name: 'Save review', exact: true }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Review saved.' })).toBeVisible()
+    await expect(page.getByText('Workout review saved.', { exact: true })).toBeVisible()
+    await expect(page.locator('.notice.success')).toHaveCount(0)
     await inspect(page, 'bodyweight-review', info)
     const result = await f.call(f.client, '/v1/workouts/' + id + '?view=trainee')
     expect(result.recorded_mode).toBe('self')

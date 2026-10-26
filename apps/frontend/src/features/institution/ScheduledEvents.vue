@@ -233,7 +233,7 @@ onUnmounted(() => {
                 }}<span v-if="event.location" dir="auto"> · {{ event.location }}</span>
               </p>
             </div>
-            <span class="tag">{{ stateLabel(event.state) }}</span>
+            <span class="tag" :data-status="event.state">{{ stateLabel(event.state) }}</span>
           </li>
         </ol>
       </template>

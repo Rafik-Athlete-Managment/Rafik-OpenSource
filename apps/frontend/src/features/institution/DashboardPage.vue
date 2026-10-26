@@ -347,7 +347,9 @@ onMounted(async () => {
                 ? l('Institution settings', 'إعدادات المؤسسة')
                 : section === 'activity'
                   ? l('Institution activity', 'نشاط المؤسسة')
-                  : data?.institution.name || l('Institution', 'المؤسسة')
+                  : section === 'overview' && view === 'trainer'
+                    ? l('Welcome back', 'أهلاً بعودتك')
+                    : data?.institution.name || l('Institution', 'المؤسسة')
           }}
         </h1>
         <p v-if="section !== 'overview'">
@@ -389,6 +391,21 @@ onMounted(async () => {
       >
         {{ l('Invite people', 'دعوة أشخاص') }}
       </button>
+      <div
+        v-if="section === 'overview' && view === 'trainer' && data"
+        class="coach-header-actions actions"
+      >
+        <RouterLink class="button secondary" to="/people"
+          >{{ data.summary.trainees }} ·
+          {{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</RouterLink
+        >
+        <RouterLink class="button" to="/training">{{
+          l('Athlete plans', 'خطط الرياضيين')
+        }}</RouterLink>
+        <RouterLink class="button secondary" to="/analytics">{{
+          l('View analytics', 'عرض التحليلات')
+        }}</RouterLink>
+      </div>
     </PageHeading>
     <CommandStatus :command="command" />
     <PageState :loading="loading" :error="error" @retry="load"
@@ -490,7 +507,7 @@ onMounted(async () => {
           /></label>
         </div>
         <template v-if="section === 'overview'">
-          <div v-if="view !== 'trainee'" class="organization-summary">
+          <div v-if="view === 'admin'" class="organization-summary">
             <RouterLink :to="base + '/people'"
               ><strong>{{ data.summary.trainees }}</strong
               ><span>{{
@@ -506,7 +523,7 @@ onMounted(async () => {
               ><span>{{ l('Need a coach', 'بحاجة إلى مدرب') }}</span></RouterLink
             >
           </div>
-          <div class="actions">
+          <div v-if="view !== 'trainer'" class="actions">
             <RouterLink class="button" :to="base + '/training'">{{
               view === 'trainee'
                 ? l('Open my training', 'فتح تدريبي')
@@ -520,7 +537,7 @@ onMounted(async () => {
             >
           </div>
           <FollowUpPanel v-if="view !== 'trainee'" />
-          <WorkoutAgenda due :limit="4" />
+          <WorkoutAgenda v-if="view === 'trainee'" due :limit="4" />
           <UpcomingSessions />
           <section v-if="view === 'trainee' || !data.summary.trainees" class="panel">
             <h2>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 
+import { PhCheck } from '@phosphor-icons/vue'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -99,10 +100,14 @@ const starting = useCommand<'start'>(
   },
   (_, args) => request(`${ws}/sessions`, { method: 'POST', body: JSON.stringify(args) }),
 )
+let commandOrigin = route.fullPath
+const completedDestination = ref('')
 const saving = useCommand<'save'>(
   `delegated-save:${institution}:${sessionId.value}`,
-  async () => {
+  async (_, _result, args) => {
     await load()
+    if (args.complete && !disposed && route.fullPath === commandOrigin)
+      completedDestination.value = String(args.id)
   },
   (_, args) => request(`${ws}/sessions`, { method: 'POST', body: JSON.stringify(args) }),
   { successMessage: l('Saved on the athlete’s record.', 'حُفظ في سجل الرياضي.') },
@@ -137,6 +142,23 @@ async function start(day: PlanDay) {
     await router.replace(`${base}/record/${started.value}`)
 }
 watch(sessionId, load)
+watch(
+  () => saving.state.busy,
+  async (busy) => {
+    if (
+      !busy &&
+      completedDestination.value &&
+      !saving.state.pending &&
+      !saving.state.error &&
+      !disposed &&
+      route.fullPath === commandOrigin
+    ) {
+      const id = completedDestination.value
+      completedDestination.value = ''
+      await router.replace('/review/' + id)
+    }
+  },
+)
 const save = (complete: boolean) => {
   if (
     entries.value.some(
@@ -151,6 +173,7 @@ const save = (complete: boolean) => {
     )
     return
   }
+  commandOrigin = route.fullPath
   return saving.run('save', {
     operation: crypto.randomUUID(),
     action: 'save',
@@ -200,19 +223,18 @@ function setField(entry: Entry, field: MeasureField, event: Event) {
   if (entry.completed && !hasActualResult(entry, kindOf(entry))) entry.completed = false
 }
 const kindOf = (entry: Entry) => exercises.value.find((e) => e.key === entry.exercise_key)?.kind
-function toggleDone(entry: Entry, kind: ExerciseKind | undefined, event: Event) {
-  const box = event.target as HTMLInputElement
+function toggleDone(entry: Entry, kind: ExerciseKind | undefined) {
+  const checked = !entry.completed
   setError.value = ''
   const actual = measureFields(kind).first
-  if (box.checked && (!measured(entry, actual) || !hasActualResult(entry, kind))) {
-    box.checked = false
+  if (checked && (!measured(entry, actual) || !hasActualResult(entry, kind))) {
     setError.value = l(
       'Record the actual result for this set before marking it done.',
       'سجّل النتيجة الفعلية لهذه المجموعة قبل تحديدها كمكتملة.',
     )
     return
   }
-  entry.completed = box.checked
+  entry.completed = checked
 }
 const dayName = (d: PlanDay) => (locale.value === 'ar' ? d.nameAr || d.name : d.name)
 onMounted(load)
@@ -295,7 +317,15 @@ onMounted(load)
         >{{ l('Review workout', 'مراجعة التمرين') }}</RouterLink
       >
       <form v-if="session.can_record" class="form-stack" @submit.prevent="save(true)">
-        <fieldset class="command-fields" :disabled="locked">
+        <p class="small-print">
+          {{
+            l(
+              'Enter actual results, then check each completed set. Targets are suggestions, not recorded results.',
+              'أدخل النتائج الفعلية ثم حدد كل مجموعة مكتملة. الأهداف مقترحات وليست نتائج مسجّلة.',
+            )
+          }}
+        </p>
+        <fieldset class="command-fields delegated-fields" :disabled="locked">
           <section v-for="exercise in exercises" :key="exercise.key" class="panel">
             <h2 dir="auto">{{ exerciseName(exercise) }}</h2>
             <div
@@ -324,13 +354,21 @@ onMounted(load)
                   "
                   @input="setField(entry, field, $event)"
               /></label>
-              <label class="check-label"
-                ><input
-                  type="checkbox"
-                  :checked="entry.completed"
-                  @change="toggleDone(entry, exercise.kind, $event)"
-                />{{ l('Done', 'تمت') }}</label
+              <button
+                type="button"
+                class="record-button"
+                :class="{ checked: entry.completed }"
+                :aria-pressed="entry.completed"
+                :aria-label="
+                  l('Mark set ', 'تحديد المجموعة ') +
+                  (entry.set_index + 1) +
+                  ' · ' +
+                  l('Done', 'تمت')
+                "
+                @click="toggleDone(entry, exercise.kind)"
               >
+                <PhCheck :size="23" weight="bold" aria-hidden="true" />
+              </button>
             </div>
           </section>
           <p v-if="setError" role="alert" class="notice error">{{ setError }}</p>
@@ -370,21 +408,42 @@ onMounted(load)
 </template>
 <style scoped>
 .delegated-workout {
+  display: grid;
+  gap: var(--space-5);
+}
+.delegated-fields {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.delegated-fields .panel {
+  margin: 0;
 }
 .recording-for {
   margin: 0 0 4px;
   font-weight: 650;
 }
-.delegated-workout .panel {
-  margin-bottom: 16px;
-}
 .delegated-set {
   display: grid;
-  grid-template-columns: minmax(64px, auto) repeat(auto-fit, minmax(110px, 1fr));
+  grid-template-columns: 64px repeat(3, minmax(0, 1fr)) 50px;
   gap: 10px 14px;
   align-items: end;
   padding: 10px 0;
   border-bottom: 1px solid var(--line);
+}
+.delegated-set > label {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.delegated-set > span {
+  align-self: center;
+}
+.delegated-set .record-button {
+  grid-column: -2;
+  align-self: end;
+  min-width: 44px;
+  min-height: 44px;
 }
 .delegated-set input[type='number'] {
   width: 100%;
@@ -393,6 +452,9 @@ onMounted(load)
 @media (max-width: 520px) {
   .delegated-set {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .delegated-set > span {
+    grid-column: 1 / -1;
   }
 }
 .record-history {

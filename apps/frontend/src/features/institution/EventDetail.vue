@@ -320,7 +320,7 @@ onMounted(load)
               )
             }}
           </p>
-          <span class="tag">{{
+          <span class="tag" :data-status="data.event.state">{{
             data.event.state === 'cancelled'
               ? l('Cancelled', 'ملغي')
               : data.event.state === 'completed'

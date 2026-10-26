@@ -257,7 +257,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
 <template>
   <section
     class="workout-agenda"
-    :class="{ 'athlete-workout-preview': pageHeading }"
+    :class="{ 'athlete-workout-preview': pageHeading, 'staff-workout-cards': !pageHeading }"
     :aria-label="l('Next workouts', 'التمارين التالية')"
   >
     <header class="agenda-heading">
@@ -267,7 +267,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
             pageHeading
               ? l('Your workouts', 'تمارينك')
               : due
-                ? l('Today and overdue', 'اليوم والمتأخر')
+                ? l('Workouts to manage', 'تمارين تحتاج إلى إجراء')
                 : l('Next workouts', 'التمارين التالية')
           }}
         </component>
@@ -307,7 +307,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
           compact
           :title="
             due
-              ? l('No workouts due.', 'لا توجد تمارين مستحقة.')
+              ? l('No workouts need action.', 'لا توجد تمارين تحتاج إلى إجراء.')
               : l('No active workouts yet.', 'لا توجد تمارين نشطة بعد.')
           "
           :description="
@@ -344,7 +344,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                   · <bdi dir="auto">{{ item.goal }}</bdi></span
                 >
               </p>
-              <span class="tag">{{ l(...states[item.state]) }}</span>
+              <span class="tag" :data-status="item.state">{{ l(...states[item.state]) }}</span>
               <p v-if="item.occurrence">
                 {{ when(item) }} · <bdi>{{ item.occurrence.timezone }}</bdi>
               </p>
@@ -369,7 +369,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                 }}
               </p>
             </div>
-            <div v-if="pageHeading && item.preview" class="workout-preview-details">
+            <div v-if="item.preview" class="workout-preview-details">
               <dl class="workout-preview-metrics">
                 <div v-if="item.preview.minutes">
                   <dt>{{ l('Planned time', 'الوقت المخطط') }}</dt>
@@ -386,7 +386,9 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
               </dl>
               <div class="workout-preview-sections">
                 <section v-if="item.preview.exercises.length">
-                  <h3>{{ l('In this workout', 'في هذا التمرين') }}</h3>
+                  <component :is="pageHeading ? 'h3' : 'h4'">{{
+                    l('In this workout', 'في هذا التمرين')
+                  }}</component>
                   <ol class="workout-preview-exercises">
                     <li v-for="(exercise, index) in item.preview.exercises" :key="index">
                       <span
@@ -411,7 +413,9 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                   </p>
                 </section>
                 <section v-if="item.preview.muscle_focus.length">
-                  <h3>{{ l('Muscle focus', 'العضلات المستهدفة') }}</h3>
+                  <component :is="pageHeading ? 'h3' : 'h4'">{{
+                    l('Muscle focus', 'العضلات المستهدفة')
+                  }}</component>
                   <div class="workout-muscles">
                     <span v-for="muscle in item.preview.muscle_focus" :key="muscle" class="tag"
                       ><bdi>{{ muscleName(muscle) }}</bdi></span
@@ -586,7 +590,6 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: var(--space-4);
-  padding-block: var(--space-4);
 }
 .agenda-form h3,
 .agenda-form .actions {
@@ -772,5 +775,61 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
   .workout-preview-more-desktop {
     display: none;
   }
+}
+
+.staff-workout-cards .agenda-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: var(--space-4);
+  margin-block: var(--space-5);
+}
+.staff-workout-cards .agenda-row {
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  align-items: stretch;
+}
+.staff-workout-cards .agenda-actions {
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+.staff-workout-cards .workout-preview-sections {
+  display: none;
+}
+.staff-workout-cards .workout-preview-metrics {
+  margin: 0;
+  padding-block: var(--space-3);
+}
+.agenda-form {
+  align-items: end;
+  padding: var(--space-4);
+  border-block-start: 1px solid var(--line);
+  background: var(--surface-soft);
+  border-radius: var(--radius-panel);
+  min-width: 0;
+}
+.agenda-form > label,
+.agenda-form :deep(.timezone-picker) {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+}
+.agenda-form :deep(label) {
+  margin: 0;
+}
+.agenda-form input,
+.agenda-form :deep(.timezone-anchor) {
+  min-height: 44px;
+  margin: 0;
+}
+.agenda-form h3 {
+  margin: 0;
+  font-size: var(--text-panel);
+}
+.workout-preview-sections h4 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-small);
 }
 </style>

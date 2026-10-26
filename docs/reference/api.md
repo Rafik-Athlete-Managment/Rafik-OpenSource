@@ -303,3 +303,7 @@ The old `/v1/account/institution` remains a current subject-only institutional p
 Agenda items include optional `preview`: planned minutes (unknown remains null), total exercises/prescribed sets, up to five exercise names/sets/types, up to four declared muscle groups and an optional authorized cover ID. Groups are ranked by exercise-metadata frequency, not physiological load. The same immutable assigned snapshot supplies the preview. Current workout reads and agenda session summaries expose `can_record` for authorized coach continuation. This is a snapshot flag; writes recheck current authority and lifecycle.
 
 Completed self-logged actuals remain protected from new coach edits. Completion origin is preserved in `recorded_mode`; `completed_by`, `completed_by_name` and `completed_by_role` separately identify the first finisher. Optional review feedback may be empty and is bounded to 2,000 characters; review never rejects a valid result merely for zero external load. See [ADR 0031](../decisions/ADR-0031-coach-completion-of-athlete-started-workouts.md).
+
+### Dashboard workout priorities
+
+For the unreleased beta.3 scheduling projection, `due=true` includes assignments awaiting scheduling as well as today/overdue pending occurrences and unfinished records. Future scheduled occurrences remain in assignment detail rather than the dashboard action list. Existing role/sport authority, bounded pagination and general participation restrictions still apply.

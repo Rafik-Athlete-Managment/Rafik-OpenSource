@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkoutAgenda from './WorkoutAgenda.vue'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
@@ -42,12 +43,12 @@ onUnmounted(() => {
   <section class="daily-followup" aria-labelledby="follow-up-title">
     <div class="section-heading">
       <div>
-        <h2 id="follow-up-title">{{ l('Needs follow-up', 'بحاجة إلى متابعة') }}</h2>
+        <h2 id="follow-up-title">{{ l('Your coaching priorities', 'أولوياتك التدريبية') }}</h2>
         <p class="small-print">
           {{
             l(
-              'Recorded work that needs a clear next step.',
-              'عمل مسجّل يحتاج إلى خطوة تالية واضحة.',
+              'Schedule upcoming work, record due workouts and resolve follow-up.',
+              'جدول التمارين القادمة وسجل المستحق منها وتابع ما يحتاج إلى مراجعة.',
             )
           }}
         </p>
@@ -58,6 +59,7 @@ onUnmounted(() => {
       {{ error }}
       <button class="text-link" @click="load">{{ l('Retry', 'إعادة المحاولة') }}</button>
     </p>
+    <WorkoutAgenda due :limit="4" />
     <div v-if="data" class="followup-columns">
       <section class="panel">
         <h3>

@@ -58,6 +58,7 @@ const command = useCommand<'review'>(
       method: 'POST',
       body: JSON.stringify(args),
     }),
+  { successMessage: language('Workout review saved.', 'حُفظت مراجعة التمرين.') },
 )
 const busy = computed(() => command.state.busy || !!command.state.pending || !command.state.ready)
 async function save() {
@@ -102,9 +103,12 @@ onMounted(async () => {
           </div></PageHeading
         >
         <CommandStatus :command="command" :show-notice="false" />
-        <RouterLink v-if="session.can_record" class="button" :to="'/record/' + session.id">{{
-          language('Continue workout for athlete', 'متابعة تمرين الرياضي')
-        }}</RouterLink>
+        <RouterLink
+          v-if="session.can_record"
+          class="button review-continuation"
+          :to="'/record/' + session.id"
+          >{{ language('Continue workout for athlete', 'متابعة تمرين الرياضي') }}</RouterLink
+        >
         <div class="review-layout">
           <section>
             <article
@@ -172,7 +176,6 @@ onMounted(async () => {
                   busy ? t('loading') : language('Save review', 'حفظ المراجعة')
                 }}
               </button>
-              <p v-if="message" class="notice success" role="status">{{ message }}</p>
               <RouterLink v-if="message" class="button secondary full" :to="back"
                 >{{ language('Continue reviewing', 'متابعة المراجعات') }} →</RouterLink
               >
@@ -184,3 +187,24 @@ onMounted(async () => {
     >
   </div>
 </template>
+
+<style scoped>
+.review-continuation {
+  display: inline-flex;
+  margin-block: var(--space-2) var(--space-6);
+}
+.review-layout {
+  margin-block-start: var(--space-5);
+}
+.review-exercise + .review-exercise {
+  margin-block-start: var(--space-6);
+}
+.feedback-form {
+  display: grid;
+  gap: var(--space-4);
+}
+.feedback-form > h2,
+.feedback-form > p {
+  margin: 0;
+}
+</style>

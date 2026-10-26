@@ -12,6 +12,8 @@ From the repository root, the focused rendered command is `node apps/frontend/sc
 
 ## Founder validation corrections
 
+Shared status colors belong in `styles/design-system.css` and are selected by explicit `data-status` values. Do not inspect localized text to choose colors. Keep routine success in toasts; CommandStatus owns pending/error recovery only. Generated invitation/reset links are actionable results, not disposable success notices. Dashboard workout discovery and follow-up are composed in FollowUpPanel using WorkoutAgenda, with no second staff agenda. Coach check buttons reuse athlete recording visuals while retaining server validation and exact receipts.
+
 Update the [canonical instance validation walkthrough](../testing/instance-validation.md) whenever implemented workflows change. It is the single source of truth for manual role checks; link to the affected section from founder handoffs and landing instead of creating another walkthrough. Published guidance must use the matching release tag; unreleased guidance must be labelled. Contact discovery belongs to communication, not the people directory. Supporting-coach sport/specialty is a permission boundary, even though the coach picker no longer requires a sport filter first. Keep current immutable reference exercise IDs and source/media attribution when curating the library. Extend shared workout progression and event command services for later scheduling/attendance work.
 
 ## Progression service workflow

@@ -569,7 +569,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Shared read-only next-workout projection, fixed-time scheduling/reschedule/skip and occurrence-bound start/resume with durable command recovery.
-- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue)
+- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue)
 - **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/training`, `/training/:assignment`
 
 ## DashboardNav

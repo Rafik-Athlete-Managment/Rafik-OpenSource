@@ -187,3 +187,66 @@ Rendered coverage and the checks that ran are recorded in [verification](../veri
 - Keep branding work within the accepted session/field UI slice; do not rebuild the whole mobile information architecture for campaign styling.
 
 This is a source-led alignment assessment. The existing published Android acceptance remains valid for its recorded scope; these identity gaps are follow-up work and are not a claim that beta.3 native alignment is already implemented.
+
+## Coach dashboard study — 26 October 2026
+
+**Proposed, not implemented:** the founder requested a deeper redesign after the incremental priorities/card correction and selected a balanced overview: today's work plus compact athlete readiness. The incremental correction is not acceptance of the larger redesign.
+
+### Evidence and root causes
+
+- **Rendered:** the current English/light desktop dashboard groups a workout agenda above four follow-up panels. Awaiting-schedule work is discoverable, but a single workout occupies substantial width and four empty follow-up panels consume the first screen. The previous screenshot supplied by the founder also showed unrelated summary cards above a flat due-work list.
+- **Source:** DashboardPage composes FollowUpPanel and UpcomingSessions. FollowUpPanel reads missed appointments, completed workouts awaiting review, unresolved event outcomes and athletes without plans. WorkoutAgenda reads independently progressing assignments. UpcomingSessions reads the next week's calendar. These use different time windows and record units; summing them as a single task count would double-count people and mix appointments with workouts.
+- **Source:** primary/supporting sport scope and limited participation status are authorization boundaries. A compact readiness presentation must use the same boundaries; no clinical history or institution-wide athlete list may leak through a summary.
+- **Founder-observed:** review continuation controls touch exercise headings; coach recording lacked the athlete logger's clear check affordance. These spacing/recording corrections are in the current implementation slice, independent of dashboard approval.
+
+### Jobs the dashboard should support
+
+1. Resume an unfinished workout without selecting an athlete again.
+2. See today's individual workouts and group/assessment appointments in local institutional/account time, with explicit type and start time.
+3. Notice known participation restrictions before starting work; distinguish modified participation, unavailable and unknown rather than estimating readiness or assuming clearance.
+4. Schedule assigned work that has no appointment, without competing with an imminent live session.
+5. Review completed work or resolve an event outcome, retaining the meaning and attribution of each record.
+6. Reach the athlete profile, plans and schedule quickly without reproducing the complete directories.
+
+### Data gaps confirmed during the study
+
+- **Source:** InjuryStatus exposes only shared active participation status and effective date to coaches. Its empty response is not evidence of unrestricted participation, consent or clearance. The proposed compact column should be called Athlete status rather than presenting a derived readiness score.
+- **Source:** `server/follow-up.ts` filters workout review/missed/unplanned queues by primary trainer; workout agenda authority also supports sport-scoped supporting coaches. A unified overview must explicitly reconcile coverage with the relevant service authority rather than imply that an empty primary-only queue covers all the coach's work. Expanding that scope needs its own authorization checks.
+- **Source:** the current without-plan query checks assignment `state='active'`, while plan dates and paused/ended lifecycle carry additional meaning elsewhere. The proposed gap indicator needs a documented effective-date definition before becoming a headline metric. This is a candidate data-definition issue, not permission to mutate historical assignments or a claim that the new metric exists.
+
+### Concepts for founder review
+
+| Concept                         | Main area                                                                                     | Compact secondary area                                                              | Trade-off                                                                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| A — Coaching desk (recommended) | Today timeline, with unfinished work pinned first and explicit workout/assessment/group types | Known participation restrictions and coaching/plan gaps; compact review queue below | Best balance for the requested daily overview. Requires a clear projection for merging record types without duplicating actions. |
+| B — Athlete overview            | Authorized athletes with their next action and factual participation status                   | Today's appointments and review links                                               | Better for small rosters; large rosters need search/pagination and can bury time-critical appointments.                          |
+| C — Field launch                | Large Resume/Start/Attendance actions for the next few appointments                           | Compact athlete-status summary and remaining work counts                            | Fastest for the field; less useful for desk planning and already overlaps the Android role.                                      |
+
+**Recommended layout for A:** a personal greeting and compact roster/navigation in the header; a wide Today area and narrower Athlete status column on desktop; a small Needs attention strip below. On phones: active recording first, today's appointments, known participation restrictions, then planning/review. Empty queues collapse to short reassuring text rather than four large empty cards. Awaiting-schedule work is a labelled planning queue, not a scheduled event or overdue workout. Future appointments remain a compact next-up list with a calendar link.
+
+### Coaching desk region map (proposal)
+
+```mermaid
+flowchart TB
+  H[Greeting · assigned roster · plans / schedule]
+  H --> T[Today: resume work · workouts · assessments / groups]
+  H --> A[Athlete status: shared restrictions · unknown status]
+  T --> Q[Needs attention: schedule work · reviews · unresolved outcomes]
+  A --> Q
+```
+
+On desktop, Today and Athlete status sit beside each other; on phones, active work leads and the regions stack. This is an information hierarchy proposal, not a screenshot or implemented responsive layout.
+
+### Data and interaction rules before implementation
+
+- Resume outranks Start; neither silently allocates a workout. Future work explains its start time. Scheduling remains explicit and recurrence stays out of scope until implemented.
+- Use actual status/effective date and an unknown state; do not infer readiness, injury risk or compliance from missing logs, attendance or workout volume. Do not invent a numeric readiness score.
+- Counts retain their unit and server total: athletes, workouts or appointments. Do not sum overlapping queues. Lists retain prior data during refresh, mark stale/error states, and never show a false zero after failure.
+- Distinguish individual workouts from group sessions and assessments. Linked individual calendar events must resolve to the same workout action, not a second competing completion path.
+- Supporting coaches see only authorized sport plans/status. A summary endpoint must prove equivalent scope before replacing current reads; do not fetch clinical fields and hide them in CSS.
+- Keep explicit empty/loading/error states, accessible keyboard actions, Arabic logical alignment, local timezone labels and one primary action per row. Avoid hover-only actions and decorative charts.
+- A new readiness summary/read model is **not yet implemented or verified**. Audit its actual data availability and permission requirements before committing the concept; existing limited status must not be broadened to satisfy the layout.
+
+### Proposed implementation and acceptance
+
+After founder concept approval: finalize the region hierarchy and factual status fields, then implement one shared dashboard composition using current commands. Add a scoped projection only if existing reads cannot provide complete, correctly scoped totals. Validate populated/empty/error, a long roster, simultaneous plans, supporting-coach scope, live recording, overdue work, unknown status and refresh failures. Inspect desktop/phone English/Arabic in both themes; separately verify that stale completion acknowledgments cannot navigate away from a different screen. Update the canonical instance walkthrough rather than creating another validation guide.

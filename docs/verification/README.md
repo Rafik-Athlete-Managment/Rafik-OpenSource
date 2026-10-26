@@ -1,5 +1,15 @@
 # Verification record
 
+## Coaching priorities, status tags and completion navigation — 26 October 2026
+
+The focused disposable sequence API case passed awaiting-schedule discovery alongside due work, existing scope, pagination and progression/retry/restriction behavior. Its old expected dashboard total was updated from one to two because the second unscheduled assignment is now intentionally included. No schema migration or preview reset was needed.
+
+Six focused browser cases passed across desktop Chromium and phone WebKit for dashboard discovery, aligned scheduling, adaptation recovery, athlete scope, measured actuals and zero-load review without a duplicate success card. After completion navigation changed, six recorder cases passed in both engines for acknowledged review redirects, lost-acknowledgment exact retry/history, timed/distance validation and athlete-started completion. Two final cases added direct inspection of unfinished-review continuation spacing and keyboard set completion. The first priorities run stopped on an obsolete removed-success-card assertion; it was corrected to expect the action-specific toast. That failed run is not acceptance evidence.
+
+Rendered and inspected: English/light desktop dashboard and scheduling card; phone scheduling; English/dark desktop recorder and unfinished review; Arabic/dark 320px recorder; phone recorder and unfinished review. Layout/Axe checks passed for the inspected cases. These are representative states, not full-platform visual/accessibility acceptance or proof of every status color/theme combination. The completion callback guards disposed/changed screens at source; this slice did not add a dedicated delayed-completion SPA departure fault case.
+
+Frontend/backend TypeScript, both source inventories, the two focused design-control/token tests and maintained documentation links passed. The [compact receipt](receipts/coaching-priorities-2026-10-26.json) records final source hashes and check scope. Paired English/Arabic landing guidance is on draft PR #34 at 8c33bd7. The canonical instance walkthrough was updated. The deeper balanced dashboard study is a proposal in the UI audit, not an implemented readiness summary. No full browser suite, Android build/device test, dependency audit or deployment acceptance was run. Both release PRs remain unmerged.
+
 ## Canonical validation guide — 25 October 2026
 
 Documentation-only consolidation: local setup, role checks, assessment/attachment checks and optional participation checks now live in the single [instance validation walkthrough](../testing/instance-validation.md). Maintained references were updated and the two former walkthrough files removed. `npm run docs:check` passed two fixtures, 1,958 local links and 613 heading links across 74 maintained documents. No application tests or browser runs were needed for this documentation change. Paired English/Arabic landing links were pushed to existing draft PR #34 at `2000cef`; the linked unreleased guide is explicitly distinguished from installed release-tag documentation. Both release PRs remain unmerged.

@@ -474,7 +474,7 @@
           "Coach field work"
         ],
         "summary": "Read authorized next-workout state without choosing an athlete first",
-        "description": "Unreleased beta.3 web integration. Read-only projection; never allocates a sequence position. Returns next immutable plan day, pending occurrence, resumable record, general participation restriction and action flags. Coach scope is primary athletes plus supporting sport-specific plans. Athlete scope is own assignments. due=true includes today/overdue unresolved occurrences and unfinished older records, in the signed-in account timezone. Recurrence and automatic scheduling remain pending.",
+        "description": "Unreleased beta.3 web integration. Read-only projection; never allocates a sequence position. Returns next immutable plan day, pending occurrence, resumable record, general participation restriction and action flags. Coach scope is primary athletes plus supporting sport-specific plans. Athlete scope is own assignments. due=true includes workouts awaiting scheduling, today/overdue unresolved occurrences and unfinished older records, in the signed-in account timezone. Recurrence and automatic scheduling remain pending.",
         "security": [
           {
             "mobileBearer": []
@@ -516,7 +516,8 @@
             "in": "query",
             "schema": {
               "type": "boolean"
-            }
+            },
+            "description": "Include workouts awaiting scheduling, due today, overdue or unfinished; excludes future scheduled work."
           },
           {
             "name": "offset",

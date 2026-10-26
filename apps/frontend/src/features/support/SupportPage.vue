@@ -139,7 +139,7 @@ onMounted(async () => {
             {{ l('No support requests yet.', 'لا توجد طلبات دعم بعد.') }}
           </p>
           <article v-if="current" class="panel support-detail">
-            <span class="tag">{{
+            <span class="tag" :data-status="current.state">{{
               current.state === 'open' ? l('Open', 'مفتوح') : l('Resolved', 'محلول')
             }}</span>
             <h2>{{ current.subject }}</h2>

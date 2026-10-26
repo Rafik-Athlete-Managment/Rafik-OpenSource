@@ -1,5 +1,15 @@
 # Current delivery ledger
 
+## Completion navigation and dashboard study — 26 October 2026
+
+Coach completion now navigates to the same workout review only after the exact command settles, including retry, with disposed/current-route checks. Review continuation has explicit section spacing. The founder selected a balanced daily-work/athlete-status direction for the deeper dashboard redesign; concepts, source/rendered findings and data/permission boundaries are recorded in the existing UI audit. That broader redesign awaits concept review and is not part of the incremental priorities implementation.
+
+## Coaching priorities and recorder polish — 26 October 2026
+
+Consolidated workout discovery and follow-up in one coaching-priorities section; the dashboard query now includes unscheduled assignments alongside due/unfinished work and excludes future scheduled occurrences. Coach greeting, assigned count and primary navigation sit in the page header. Staff agendas use prescription-summary cards; scheduling fields align and stack. Coach set completion uses the existing athlete check-button treatment without auto-completing prescribed values. Record history is separated from save actions.
+
+Removed routine inline success text from review/program editing and from the shared CommandStatus; action-specific toasts remain. Generated invitation/password links remain persistent actionable content. Status tags use explicit machine status attributes and shared light/dark semantic colors; neutral descriptive tags stay neutral. No schema or native changes. Paired English/Arabic next-release landing guidance is on draft PR #34 at `8c33bd7`. Focused evidence and remaining limits are recorded in verification.
+
 ## Canonical instance validation — 25 October 2026
 
 Founder clarified that walkthroughs must have one source of truth, rather than merely a shared style. Consolidated the older local coach setup, assessment/attachment and participation checks into `docs/testing/instance-validation.md`, alongside current administrator/coach/athlete checks. Removed the two competing walkthrough files and updated maintained links. The guide distinguishes unreleased beta.3 from matching release-tag guidance; landing refers readers to it without copying procedures. Paired English/Arabic landing references were pushed to draft PR #34 at `2000cef`. Documentation links passed; no runtime checks were repeated. This is documentation-only; no application behavior changed.

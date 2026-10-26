@@ -187,13 +187,22 @@ const name = (id: string) =>
                 <h2 dir="auto">{{ session.prescription.name }}</h2>
                 <p dir="auto">{{ session.title }} · {{ dateLabel(session.started_at) }}</p>
               </div>
-              <span class="tag">{{
-                session.status === 'completed'
-                  ? session.reviewed_at
-                    ? l('Reviewed', 'تمت المراجعة')
-                    : l('Awaiting review', 'بانتظار المراجعة')
-                  : l('In progress', 'قيد التنفيذ')
-              }}</span
+              <span
+                class="tag"
+                :data-status="
+                  session.reviewed_at
+                    ? 'reviewed'
+                    : session.status === 'completed'
+                      ? 'awaiting_review'
+                      : 'in_progress'
+                "
+                >{{
+                  session.status === 'completed'
+                    ? session.reviewed_at
+                      ? l('Reviewed', 'تمت المراجعة')
+                      : l('Awaiting review', 'بانتظار المراجعة')
+                    : l('In progress', 'قيد التنفيذ')
+                }}</span
               ><span aria-hidden="true">↗</span>
             </RouterLink>
           </li>

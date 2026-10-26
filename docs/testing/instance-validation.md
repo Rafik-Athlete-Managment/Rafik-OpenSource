@@ -54,6 +54,12 @@ Use an active synthetic athlete with a published assigned plan and primary coach
 
 ## Coach
 
+### Dashboard, scheduling and completion controls
+
+Open the dashboard with an assigned plan awaiting scheduling and one due workout. Expect a greeting, assigned-athlete count and plan/analytics links in the header; one coaching-priorities section contains workout cards and follow-up. Awaiting-schedule work must be discoverable without picking an athlete. Schedule it from its card; check date/time, timezone and duration alignment on desktop and stacked phone layout. Future scheduled work leaves the action list but remains in plan details. Status tags retain readable text and distinct light/dark colors.
+
+Open the coach recorder. Enter actual values and use each set’s check button, including keyboard activation; prescribed placeholders alone must not complete sets. Invalid/missing timed or distance results must keep the check off with an explanation. Save partial progress and reload. Finish the workout: after server acknowledgment, expect the workout review page for that same record. A failed/uncertain save must remain recoverable; navigating away during a delayed acknowledgment must not pull you back. Reopen its recorder/history to inspect attribution. Save/review a program or workout: expect one action-specific toast and no duplicate success card. Invitation/reset links and pending/error recovery remain visible because they require action.
+
 ### Events, assessments and attachments
 
 Create a scheduled assessment or group training event with synthetic participants. For an assessment, select a template and event staff, verify timezone/start time, then open it after its start. Record attendance and applicable results with units, correct a result and inspect its history; confirm unassigned coaches remain denied. Complete only after required entries are confirmed. In Messages, send several harmless image/document attachments: inspect pending previews, send, confirm they clear and downloads work; interrupted retries must not duplicate the conversation or attachment set. These are current per-person saves, not the deferred bulk attendance flow.

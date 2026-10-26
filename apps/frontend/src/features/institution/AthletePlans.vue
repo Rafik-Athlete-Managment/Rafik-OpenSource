@@ -195,7 +195,7 @@ onUnmounted(() => {
           <article v-for="plan in data.items" :key="plan.id" class="athlete-plan-card">
             <div class="heading-actions">
               <p class="plan-athlete" dir="auto">{{ plan.member_name }}</p>
-              <span class="tag">{{ label(plan.status) }}</span>
+              <span class="tag" :data-status="plan.status">{{ label(plan.status) }}</span>
             </div>
             <h2 dir="auto">{{ plan.version.title }}</h2>
             <p v-if="planLabel(plan)" class="tag plan-sport" dir="auto">{{ planLabel(plan) }}</p>

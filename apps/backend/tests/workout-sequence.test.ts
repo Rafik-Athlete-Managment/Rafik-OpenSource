@@ -89,6 +89,13 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
       schedule_mode: "flexible",
     },
   });
+  const dashboardUnscheduled = await agenda(auth, "trainer", "&due=true");
+  assert.ok(
+    dashboardUnscheduled.items.some(
+      (x: any) => x.assignment_id === assignment && x.state === "unscheduled",
+    ),
+    "dashboard includes work awaiting scheduling",
+  );
   const firstInput = operation("schedule-workout", {
     assignment_id: assignment,
     cursor: 0,
@@ -126,7 +133,7 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
   );
   const a = firstResult.data;
   const due = await agenda(auth, "trainer", "&due=true&limit=1");
-  assert.equal(due.total, 1);
+  assert.equal(due.total, 2);
   assert.equal(due.items[0].assignment_id, assignment);
   assert.equal(due.items[0].state, "overdue");
   assert.equal(due.items[0].can_start, true);

@@ -120,12 +120,22 @@ onUnmounted(() => {
           ><ProgramCover :id="p.draft.presentation?.cover" />
           <div class="plan-card-top">
             <PhBarbell :size="28" aria-hidden="true" /><span class="plan-card-tags"
-              ><span v-if="p.listed" class="tag">{{ language('In library', 'في المكتبة') }}</span
-              ><span class="tag">{{
-                versions.some((v) => v.plan_id === p.id && v.revision === p.draft_version)
-                  ? t('published')
-                  : t('draft')
-              }}</span></span
+              ><span v-if="p.listed" class="tag" data-status="published">{{
+                language('In library', 'في المكتبة')
+              }}</span
+              ><span
+                class="tag"
+                :data-status="
+                  versions.some((v) => v.plan_id === p.id && v.revision === p.draft_version)
+                    ? 'published'
+                    : 'draft'
+                "
+                >{{
+                  versions.some((v) => v.plan_id === p.id && v.revision === p.draft_version)
+                    ? t('published')
+                    : t('draft')
+                }}</span
+              ></span
             >
           </div>
           <h2>{{ p.title }}</h2>

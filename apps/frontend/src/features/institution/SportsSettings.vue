@@ -140,7 +140,9 @@ onMounted(load)
             </form>
             <template v-else>
               <span dir="auto" :class="{ muted: sport.archived }">{{ sport.name }}</span>
-              <span v-if="sport.archived" class="tag">{{ l('Archived', 'مؤرشف') }}</span>
+              <span v-if="sport.archived" class="tag" data-status="archived">{{
+                l('Archived', 'مؤرشف')
+              }}</span>
               <span class="sports-actions"
                 ><button
                   type="button"

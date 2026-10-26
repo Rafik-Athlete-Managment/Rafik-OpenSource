@@ -123,7 +123,7 @@ onMounted(load)
               {{ l('Version', 'النسخة') }} {{ detail.version.revision }}
             </p>
           </div>
-          <span class="tag">{{
+          <span class="tag" :data-status="detail.status">{{
             detail.status === 'active'
               ? l('Active', 'نشط')
               : detail.status === 'upcoming'

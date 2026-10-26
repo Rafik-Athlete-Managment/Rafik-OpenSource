@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Redirect acknowledged coach workout completion to its review with delayed-navigation guards; separate review continuation controls from exercise content. Record a balanced coach-dashboard redesign proposal for founder review, without enabling speculative readiness metrics.
+
+- Consolidate dashboard workout discovery and follow-up under coaching priorities, including work awaiting scheduling. Add greeting/header actions, shared semantic status colors, clear staff workout cards and aligned scheduling fields. Use athlete-style explicit set checks in coach recording and remove duplicate success cards while retaining recovery and generated invitation/reset links.
+
 - Consolidate manual role walkthroughs into one version-scoped instance validation guide; contributor handoffs and landing refer to it rather than duplicating steps.
 
 - Let authorized coaches finish unfinished athlete-started workouts with preserved origin, completion attribution and exact retry. Allow empty optional review feedback, including reviews of valid zero-load/bodyweight results. Add exercise, duration, prescribed-set and declared muscle-focus previews to athlete workout cards.

@@ -1532,6 +1532,11 @@ export async function workoutAgenda(
                 OR: [
                   {
                     institution_workout_positions: {
+                      none: { state: { in: ["pending", "paused"] } },
+                    },
+                  },
+                  {
+                    institution_workout_positions: {
                       some: {
                         state: { in: ["pending", "paused"] },
                         institution_events: { training_date: { lte: today } },

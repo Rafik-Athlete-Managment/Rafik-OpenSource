@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { onUnmounted, watch } from 'vue'
 import { language as l } from '../lib/i18n'
 const props = withDefaults(
   defineProps<{
@@ -11,26 +10,9 @@ const props = withDefaults(
   }>(),
   { showNotice: false },
 )
-let noticeTimer: ReturnType<typeof setTimeout> | undefined
-watch(
-  () => props.command.state.notice,
-  (notice) => {
-    if (noticeTimer) clearTimeout(noticeTimer)
-    if (notice)
-      noticeTimer = setTimeout(() => {
-        if (props.command.state.notice === notice) props.command.state.notice = ''
-      }, 5000)
-  },
-)
-onUnmounted(() => {
-  if (noticeTimer) clearTimeout(noticeTimer)
-})
 </script>
 <template>
   <p v-if="command.state.error" class="notice error" role="alert">{{ command.state.error }}</p>
-  <p v-if="command.state.notice && showNotice !== false" class="notice success" role="status">
-    {{ command.state.notice }}
-  </p>
   <p v-if="command.state.busy" class="command-progress" role="status">
     {{ l('Saving change…', 'جارٍ حفظ التعديل…') }}
   </p>
