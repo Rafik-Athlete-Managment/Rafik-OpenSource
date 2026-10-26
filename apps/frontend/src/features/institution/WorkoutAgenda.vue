@@ -149,7 +149,7 @@ function edit(item: WorkoutAgendaItem, next: typeof action.value) {
   action.value = next
   reason.value = ''
   timezone.value = item.occurrence?.timezone || profile.value?.timezone || 'UTC'
-  const instant = item.occurrence ? new Date(item.occurrence.starts_at) : new Date()
+  const instant = item.occurrence?.starts_at ? new Date(item.occurrence.starts_at) : new Date()
   local.value =
     localDate(timezone.value, instant) +
     'T' +
@@ -161,11 +161,12 @@ function edit(item: WorkoutAgendaItem, next: typeof action.value) {
           hourCycle: 'h23',
         }).format(instant)
       : '09:00')
-  minutes.value = item.occurrence
-    ? Math.round(
-        (Date.parse(item.occurrence.ends_at) - Date.parse(item.occurrence.starts_at)) / 60000,
-      )
-    : 60
+  minutes.value =
+    item.occurrence?.starts_at && item.occurrence.ends_at
+      ? Math.round(
+          (Date.parse(item.occurrence.ends_at) - Date.parse(item.occurrence.starts_at)) / 60000,
+        )
+      : 60
 }
 function changePage(value: number) {
   offset.value = value
@@ -264,11 +265,13 @@ const blockedLabel = (item: WorkoutAgendaItem) =>
         )
       : l('This plan has no workout days.', 'لا تتضمن هذه الخطة أيام تدريب.')
 const when = (item: WorkoutAgendaItem) =>
-  new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
-    timeZone: item.occurrence!.timezone,
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(item.occurrence!.starts_at))
+  !item.occurrence?.starts_at
+    ? item.occurrence?.training_date + ' · ' + l('No fixed time', 'دون وقت محدد')
+    : new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
+        timeZone: item.occurrence!.timezone,
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(item.occurrence!.starts_at))
 watch(
   () => props.assignment,
   () => {

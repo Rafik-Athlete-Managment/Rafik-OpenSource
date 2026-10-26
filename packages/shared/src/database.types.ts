@@ -134,8 +134,8 @@ export type Database = { public: { Tables: {
         created_by: string
         series_id: string
         title: string
-        starts_at: string
-        ends_at: string
+        starts_at: string | null
+        ends_at: string | null
         timezone: string
         location: string
         kind: string
@@ -147,6 +147,7 @@ export type Database = { public: { Tables: {
         created_at: string
         training_date: string
         workout_snapshot: Json | null
+        timing_mode: string
     } }
     institution_exercises: { Row: {
         institution_id: string
@@ -423,6 +424,9 @@ export type Database = { public: { Tables: {
         duration_minutes: number | null
         state: string
         revision: number
+        last_generated_on: string | null
+        last_checked_at: string | null
+        issue: string | null
     } }
     institution_workplace_feedback: { Row: {
         institution_id: string

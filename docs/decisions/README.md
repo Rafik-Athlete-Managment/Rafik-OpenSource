@@ -37,3 +37,5 @@ ADR 0004 (gym-first timing), ADR 0014 (session packages) and ADR 0016 (former Su
 - [0030 — Retire standalone storage and APIs](ADR-0030-retire-standalone-storage-and-apis.md)
 
 - [ADR 0031](ADR-0031-coach-completion-of-athlete-started-workouts.md): authorized coach completion of athlete-started work, preserved attribution, protected completed actuals and optional review feedback.
+
+- [ADR 0032 — Opt-in workout preparation](ADR-0032-opt-in-workout-preparation.md): weekly rules, day-only work, DST resolution and worker boundaries.

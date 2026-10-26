@@ -102,8 +102,8 @@ export type WorkoutAgendaItem = {
   occurrence: {
     id: string
     revision: number
-    starts_at: string
-    ends_at: string
+    starts_at: string | null
+    ends_at: string | null
     timezone: string
     training_date: string
   } | null

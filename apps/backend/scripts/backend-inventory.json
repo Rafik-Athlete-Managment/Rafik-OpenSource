@@ -121,7 +121,7 @@
       "disposition": "retain-current"
     },
     "institution_events": {
-      "purpose": "Timed training/assessment occurrences, timezone/date, source snapshot and lifecycle.",
+      "purpose": "Timed institution training/assessment occurrences and explicit day-only individual workouts, frozen prescription, staff/athlete roster and local training date.",
       "domain": "Training and scheduling",
       "disposition": "retain-current"
     },
@@ -276,7 +276,7 @@
       "disposition": "retain-current"
     },
     "institution_workout_recurrences": {
-      "purpose": "Bounded weekly individual schedule rules; the recurring worker remains pending.",
+      "purpose": "Opt-in bounded weekly/today-only preparation policies with current authority, poll checkpoints, last materialized day and general scheduling diagnostics.",
       "domain": "Training and scheduling",
       "disposition": "retain-current"
     },
@@ -880,6 +880,15 @@
       "purpose": "Own paginated support reports and exact create/update retries",
       "access": "Authenticated own account",
       "clients": "Web account settings and support"
+    },
+    {
+      "anchor": "ruleMatch",
+      "path": "/v1/institution/workout-rules",
+      "methods": ["GET", "POST"],
+      "handlers": ["workoutRules", "workoutRuleCommand"],
+      "purpose": "Authorized per-plan weekly/automatic policy, exact save/stop receipts and worker diagnostics",
+      "access": "Administrator or primary/sport-scoped supporting coach; current authority rechecked before replay and preparation",
+      "clients": "Web assigned-plan scheduling; new native workout UI remains a later slice"
     }
   ]
 }

@@ -1,8 +1,18 @@
 # Operations
 
-## Individual scheduling API rollout
+## Recurring workout preparation rollout
 
-Unreleased beta.3: deploy the additive migration before the backend containing the sequence service. No new environment variable or cron job is required in this slice. No recurring scheduler is started. Fixed-time bookings use explicit offset-bearing timestamps and an IANA timezone. Existing unlinked recording and attendance/assessment receipts remain supported. Update web/native interfaces only through the coordinated later cutover; do not advertise offline workout capture from these server endpoints alone.
+Unreleased beta.3: apply the forward migration with the matching services stopped and a complete database/private-files backup, then deploy the matching backend and web. Close/update old web tabs before enabling policies so cached clients cannot misinterpret day-only bounds. The new event timing shape does not rewrite existing timestamps, workouts or receipts. The unique active-rule constraint refuses inconsistent duplicate active policies rather than deleting them. Existing native workout capture is still a later slice; follow the coordinated beta.3 upgrade policy.
+
+The API starts a one-minute bounded scheduling poll; no separate cron host or cloud service is needed. Plans remain manual until staff opt in. To pause automatic materialization, set RAFIK_DISABLE_WORKOUT_SCHEDULER=true and restart the API; Compose forwards this setting. Saved policies/history and existing workouts remain. Restore false/restart to resume; verify the scheduler_enabled response and plan diagnostics.
+
+For a deliberate one-shot pass, from the repository root with the normal backend database environment configured, run `npm run workouts:prepare`. Expected output is a JSON checked-policy count, not a created-workout count. This explicit operator command runs even while the API poll is paused. It checks at most 50 policies and is safe to repeat. Do not copy credentials into scripts. Each rule failure retains a general diagnostic; unexpected failures are logged and do not stop the rest of the batch. Monitor policy age/issue and validate deployment throughput separately; a one-minute timer is not a guarantee for every institution size.
+
+Recovery: correct authority, restriction or timing issues, then wait for/re-run preparation. Do not delete positions or rewrite cursors to unblock a workout. Use its explicit reschedule/skip workflow. Roll back through a matching database/files/application backup, not an unsafe down migration.
+
+## Historical fixed-time API rollout checkpoint
+
+Unreleased beta.3: deploy the additive migration before the backend containing the sequence service. No new environment variable or cron job is required in this slice. No recurring scheduler was started at this checkpoint; the preparation rollout above supersedes that limitation. Fixed-time bookings use explicit offset-bearing timestamps and an IANA timezone. Existing unlinked recording and attendance/assessment receipts remain supported. Update web/native interfaces only through the coordinated later cutover; do not advertise offline workout capture from these server endpoints alone.
 
 ## Additive workout foundation upgrade
 

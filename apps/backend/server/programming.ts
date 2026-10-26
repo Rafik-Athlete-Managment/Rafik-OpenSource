@@ -237,7 +237,7 @@ export const sessionScope = (coach: string, links: Links) => ({
  * Plan writes: admins and the primary coach for any plan; a supporting coach only for plans
  * labelled with a sport they are linked to for this athlete (including the plan replaced).
  */
-async function planAuthority(
+export async function planAuthority(
   tx: Tx,
   institution: string,
   self: Member,
@@ -1483,6 +1483,7 @@ export async function workoutAgenda(
   actor: Actor,
   institution: string,
   query: URLSearchParams,
+  now = new Date(),
 ): Promise<WorkoutAgenda> {
   const view = role(query.get("view"));
   const profile = await asActor(actor, (tx) =>
@@ -1493,7 +1494,6 @@ export async function workoutAgenda(
   );
   return scoped(actor, institution, [view], async (tx, self) => {
     const search = (query.get("search") || "").trim().slice(0, 100);
-    const now = new Date();
     const today = new Date(
       new Intl.DateTimeFormat("en-CA", {
         timeZone: profile?.timezone || "UTC",
@@ -1502,6 +1502,15 @@ export async function workoutAgenda(
         day: "2-digit",
       }).format(now) + "T00:00:00Z",
     );
+    const dueDays = await tx.$queryRaw<
+      { id: string }[]
+    >`SELECT e.id FROM public.institution_events e JOIN public.institution_workout_positions p ON p.occurrence_id=e.id WHERE e.institution_id=${institution}::uuid AND e.timing_mode='day' AND p.state IN('pending','paused') AND e.training_date<=(${now}::timestamptz AT TIME ZONE e.timezone)::date`;
+    const dueEvent: Prisma.institution_eventsWhereInput = {
+      OR: [
+        { timing_mode: "timed", training_date: { lte: today } },
+        { timing_mode: "day", id: { in: dueDays.map((e) => e.id) } },
+      ],
+    };
     const queue = query.get("queue");
     if (
       queue &&
@@ -1520,7 +1529,7 @@ export async function workoutAgenda(
                 institution_workout_positions: {
                   some: {
                     state: { in: ["pending", "paused"] },
-                    institution_events: { training_date: { lte: today } },
+                    institution_events: dueEvent,
                   },
                 },
               },
@@ -1540,7 +1549,7 @@ export async function workoutAgenda(
                   institution_workout_positions: {
                     some: {
                       state: { in: ["pending", "paused"] },
-                      institution_events: { training_date: { lte: today } },
+                      institution_events: dueEvent,
                     },
                   },
                   NOT: unfinished,
@@ -1585,7 +1594,7 @@ export async function workoutAgenda(
                     institution_workout_positions: {
                       some: {
                         state: { in: ["pending", "paused"] },
-                        institution_events: { training_date: { lte: today } },
+                        institution_events: dueEvent,
                       },
                     },
                   },
@@ -1632,9 +1641,8 @@ export async function workoutAgenda(
         athlete_member_id: { in: rows.map((a) => a.member_id) },
         state: "active",
         participation: "unavailable",
-        effective_from: { lte: today },
       },
-      select: { athlete_member_id: true },
+      select: { athlete_member_id: true, effective_from: true },
     });
     return {
       queue: (queue as WorkoutAgenda["queue"]) || null,
@@ -1653,13 +1661,25 @@ export async function workoutAgenda(
           days.find(
             (d: any) => d.id === (position?.day_id || session?.day_id),
           ) || days[a.sequence_cursor % days.length];
+        const occurrenceToday = occurrence
+          ? new Date(
+              new Intl.DateTimeFormat("en-CA", {
+                timeZone: occurrence.timezone,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              }).format(now) + "T00:00:00Z",
+            )
+          : today;
         const blocked = restrictions.some(
-          (r) => r.athlete_member_id === a.member_id,
+          (r) =>
+            r.athlete_member_id === a.member_id &&
+            r.effective_from <= occurrenceToday,
         )
           ? "participation_unavailable"
           : a.state !== "active" ||
-              a.start_date > today ||
-              (a.end_date && a.end_date < today)
+              a.start_date > occurrenceToday ||
+              (a.end_date && a.end_date < occurrenceToday)
             ? "assignment_unavailable"
             : !day
               ? "no_workout_days"
@@ -1671,9 +1691,17 @@ export async function workoutAgenda(
               ? "in_progress"
               : !occurrence
                 ? "unscheduled"
-                : occurrence.starts_at > now
+                : (
+                      occurrence.starts_at
+                        ? occurrence.starts_at > now
+                        : occurrence.training_date > occurrenceToday
+                    )
                   ? "scheduled"
-                  : occurrence.ends_at < now
+                  : (
+                        occurrence.ends_at
+                          ? occurrence.ends_at < now
+                          : occurrence.training_date < occurrenceToday
+                      )
                     ? "overdue"
                     : "ready";
         const exercises = (day?.exercises || []) as any[];
@@ -1735,8 +1763,8 @@ export async function workoutAgenda(
             ? {
                 id: occurrence.id,
                 revision: occurrence.revision,
-                starts_at: occurrence.starts_at.toISOString(),
-                ends_at: occurrence.ends_at.toISOString(),
+                starts_at: occurrence.starts_at?.toISOString() || null,
+                ends_at: occurrence.ends_at?.toISOString() || null,
                 timezone: occurrence.timezone,
                 training_date: occurrence.training_date
                   .toISOString()
@@ -1758,7 +1786,9 @@ export async function workoutAgenda(
             !blocked &&
             !!occurrence &&
             occurrence.state === "scheduled" &&
-            occurrence.starts_at <= now &&
+            (occurrence.starts_at
+              ? occurrence.starts_at <= now
+              : occurrence.training_date <= occurrenceToday) &&
             position?.state === "pending" &&
             !session &&
             view !== "admin",
@@ -1766,7 +1796,7 @@ export async function workoutAgenda(
             view !== "trainee" &&
             a.state === "active" &&
             !!day &&
-            !(a.end_date && a.end_date < today) &&
+            !(a.end_date && a.end_date < occurrenceToday) &&
             blocked !== "participation_unavailable" &&
             !position &&
             !session,

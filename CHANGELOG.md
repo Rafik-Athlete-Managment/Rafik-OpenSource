@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add opt-in per-plan weekly scheduling and automatic day-only workout preparation, exact policy save/stop, current-authority checks, DST diagnostics, bounded worker retries and no duplicate unresolved work. Extend web plan/calendar/list/detail reads for explicit day-only events while default attendance calendar reads remain timed-only. No group progression or Android workout capture is enabled.
+
 - Refined role dashboards: athlete My day prioritizes workouts, events, food diary and coach messaging; administrator Institution overview leads with existing period-scoped workout/attendance reports before coverage and administrative actions. No new metric, permission or clinical projection.
 
 - Consolidate due and unfinished workouts into one Workouts to record list, separate from Needs scheduling. Refresh sibling queues after acknowledged changes without remounting active recorders, preserve prior pending-command scopes, and reject unconfirmed queue responses from outdated backends.

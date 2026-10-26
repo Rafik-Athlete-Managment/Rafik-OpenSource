@@ -26,7 +26,9 @@ const format = (value: string, parts: Intl.DateTimeFormatOptions) =>
     timeZone: zone,
   }).format(new Date(value))
 /** Same-day events show one date and a time range; longer events show both ends. */
-function when(event: Pick<CalendarEvent, 'starts_at' | 'ends_at'>) {
+function when(event: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'training_date'>) {
+  if (!event.starts_at || !event.ends_at)
+    return event.training_date + ' · ' + l('No fixed time', 'دون وقت محدد')
   const day = { weekday: 'short', day: 'numeric', month: 'short' } as const,
     clock = { hour: '2-digit', minute: '2-digit' } as const
   return localDate(zone, new Date(event.starts_at)) === localDate(zone, new Date(event.ends_at))
@@ -36,7 +38,15 @@ function when(event: Pick<CalendarEvent, 'starts_at' | 'ends_at'>) {
 type Page = {
   items: (Pick<
     CalendarEvent,
-    'id' | 'title' | 'kind' | 'state' | 'starts_at' | 'ends_at' | 'timezone' | 'location'
+    | 'id'
+    | 'title'
+    | 'kind'
+    | 'state'
+    | 'starts_at'
+    | 'ends_at'
+    | 'timezone'
+    | 'location'
+    | 'training_date'
   > & { athlete_count: number })[]
   total: number
   next: number | null
@@ -76,7 +86,9 @@ async function load() {
     offset: String(page),
   })
   try {
-    const result = await request<Page>(`/v1/institution/scheduled-events?${query}`)
+    const result = await request<Page>(
+      `/v1/institution/scheduled-events?includeDayOnly=true&${query}`,
+    )
     if (disposed || stamp !== generation) return
     data.value = result
     acceptLimit()

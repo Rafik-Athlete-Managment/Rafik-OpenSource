@@ -63,7 +63,9 @@
     "inventory:database": "node scripts/backend-inventory.mjs --refresh-database",
     "test:institution-names": "node scripts/prisma/verify-institution-names.mjs",
     "test:institution-api": "node scripts/prisma/isolated-api.mjs tests/retired-domains.test.ts tests/backend-boundary.test.ts tests/institution-transport.test.ts",
-    "test:retired-domains": "node scripts/prisma/verify-retired-domains.mjs"
+    "test:retired-domains": "node scripts/prisma/verify-retired-domains.mjs",
+    "test:workout-scheduler": "node scripts/prisma/isolated-api.mjs tests/workout-scheduler.test.ts",
+    "workouts:prepare": "tsx scripts/prepare-workouts.ts"
   },
   "devDependencies": {
     "@types/node": "22.19.0",

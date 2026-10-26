@@ -549,6 +549,14 @@ const purposes = {
   checked_in_at: "Participant check-in timestamp.",
   client_ids: "Historical selected athlete account identities.",
   sport_ids: "Selected sport/specialty identities frozen on the invitation.",
+  timing_mode:
+    "Explicit timed appointment or day-only training; governs null timestamps and local-date handling.",
+  last_generated_on:
+    "Last rule-local date materialized without advancing the assignment sequence.",
+  last_checked_at:
+    "Most recent worker evaluation; oldest-first bounded polling checkpoint.",
+  issue:
+    "General preparation diagnostic, without clinical details or an implication of medical clearance.",
 };
 function fieldPurpose(table, column) {
   const k = column.name;

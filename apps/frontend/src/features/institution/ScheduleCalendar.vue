@@ -40,7 +40,9 @@ const visible = computed(() =>
   items.value.filter(
     (e) =>
       (showCancelled.value || e.state !== 'cancelled') &&
-      (!selectedDay.value || localDate(zone, new Date(e.starts_at)) === selectedDay.value),
+      (!selectedDay.value ||
+        (e.starts_at ? localDate(zone, new Date(e.starts_at)) : e.training_date) ===
+          selectedDay.value),
   ),
 )
 watch([selectedDay, showCancelled], () => {
@@ -54,7 +56,7 @@ const bookingsOn = (day: string) =>
   items.value.filter(
     (event) =>
       (showCancelled.value || event.state !== 'cancelled') &&
-      localDate(zone, new Date(event.starts_at)) === day,
+      (event.starts_at ? localDate(zone, new Date(event.starts_at)) : event.training_date) === day,
   ).length
 const date = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
@@ -97,7 +99,7 @@ async function load() {
     let cursor: number | null = 0
     while (cursor !== null) {
       const result: { items: CalendarEvent[]; next: number | null } = await request(
-        `/v1/institution/calendar?view=${view}&from=${start.value}&to=${end.value}&zone=${encodeURIComponent(zone)}&offset=${cursor}`,
+        `/v1/institution/calendar?includeDayOnly=true&view=${view}&from=${start.value}&to=${end.value}&zone=${encodeURIComponent(zone)}&offset=${cursor}`,
       )
       if (current !== generation) return
       collected.push(...result.items)
@@ -293,8 +295,10 @@ onMounted(() => load())
             >
               <RouterLink :to="base + '/schedule/' + e.id + '?from=' + start" class="agenda-event">
                 <div class="agenda-time">
-                  <strong>{{ date(e.starts_at) }}</strong>
-                  <span>{{ time(e.starts_at) }} — {{ time(e.ends_at) }}</span>
+                  <strong>{{ e.starts_at ? date(e.starts_at) : e.training_date }}</strong>
+                  <span v-if="e.starts_at && e.ends_at"
+                    >{{ time(e.starts_at) }} — {{ time(e.ends_at) }}</span
+                  ><span v-else>{{ l('No fixed time', 'دون وقت محدد') }}</span>
                 </div>
                 <div class="agenda-content">
                   <span class="tag">{{

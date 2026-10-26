@@ -77,6 +77,8 @@ export async function scheduleIndividualWorkout(
   institution: string,
   self: string,
   input: Input,
+  dayOnly = false,
+  preparedRuleId?: string,
 ) {
   const assignment = await lockedAssignment(
     tx,
@@ -85,7 +87,14 @@ export async function scheduleIndividualWorkout(
   );
   if (input.cursor !== assignment.sequence_cursor)
     throw new ApiError(409, "sequence_conflict");
-  const slot = timedSlot(input);
+  const slot = dayOnly
+    ? {
+        start: null,
+        end: null,
+        timezone: textValue(input.timezone, 100),
+        date: new Date(String(input.training_date) + "T00:00:00Z"),
+      }
+    : timedSlot(input);
   if (
     assignment.state !== "active" ||
     slot.date < assignment.start_date ||
@@ -148,7 +157,8 @@ export async function scheduleIndividualWorkout(
   });
   if (!people.some((x) => x.id === athlete.id))
     throw new ApiError(403, "trainee_unavailable");
-  await tx.$queryRaw`SELECT public.validate_calendar_collision(${people.map((x) => x.user_id)}::uuid[],${slot.start},${slot.end},NULL::uuid)::text`;
+  if (slot.start && slot.end)
+    await tx.$queryRaw`SELECT public.validate_calendar_collision(${people.map((x) => x.user_id)}::uuid[],${slot.start},${slot.end},NULL::uuid)::text`;
   const occurrence = await tx.institution_events.create({
     data: {
       institution_id: institution,
@@ -157,6 +167,8 @@ export async function scheduleIndividualWorkout(
       title: assignment.institution_versions.title.slice(0, 100),
       starts_at: slot.start,
       ends_at: slot.end,
+      timing_mode: dayOnly ? "day" : "timed",
+      training_date: slot.date,
       timezone: slot.timezone,
       kind: "training",
       location:
@@ -164,6 +176,14 @@ export async function scheduleIndividualWorkout(
       workout_snapshot: json({
         version_id: assignment.version_id,
         assignment_id: assignment.id,
+        ...(preparedRuleId
+          ? {
+              preparation: {
+                rule_id: preparedRuleId,
+                mode: dayOnly ? "automatic" : "weekly",
+              },
+            }
+          : {}),
         day,
         position: cursor,
         cycle: Math.floor(cursor / days.length),
@@ -192,6 +212,12 @@ export async function scheduleIndividualWorkout(
     assignment: assignment.id,
     occurrence: occurrence.id,
     position: cursor,
+    ...(preparedRuleId
+      ? {
+          preparation_rule: preparedRuleId,
+          preparation_mode: dayOnly ? "automatic" : "weekly",
+        }
+      : {}),
   });
   return { occurrence, position };
 }
@@ -311,6 +337,7 @@ export async function rescheduleIndividualWorkout(
     data: {
       starts_at: slot.start,
       ends_at: slot.end,
+      timing_mode: "timed",
       timezone: slot.timezone,
       revision: { increment: 1 },
     },
@@ -324,7 +351,7 @@ export async function rescheduleIndividualWorkout(
     {
       assignment: assignment.id,
       occurrence: occurrence.id,
-      previous_start: occurrence.starts_at.toISOString(),
+      previous_start: occurrence.starts_at?.toISOString() || null,
       starts_at: slot.start.toISOString(),
     },
   );
@@ -362,7 +389,17 @@ export async function workoutStartContext(
   });
   if (occurrence.state !== "scheduled")
     throw new ApiError(409, "workout_not_actionable");
-  if (occurrence.starts_at > new Date())
+  if (
+    occurrence.starts_at
+      ? occurrence.starts_at > new Date()
+      : occurrence.training_date.toISOString().slice(0, 10) >
+        new Intl.DateTimeFormat("en-CA", {
+          timeZone: occurrence.timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(new Date())
+  )
     throw new ApiError(409, "workout_not_started_yet");
   await assertTrainingAllowed(
     tx,

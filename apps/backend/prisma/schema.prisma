@@ -550,8 +550,8 @@ model institution_events {
   created_by                     String                          @db.Uuid
   series_id                      String                          @db.Uuid
   title                          String
-  starts_at                      DateTime                        @db.Timestamptz(6)
-  ends_at                        DateTime                        @db.Timestamptz(6)
+  starts_at                      DateTime?                       @db.Timestamptz(6)
+  ends_at                        DateTime?                       @db.Timestamptz(6)
   timezone                       String
   location                       String                          @default("")
   kind                           String
@@ -574,6 +574,8 @@ model institution_events {
   @@index([institution_id, starts_at, id], map: "institution_event_agenda")
   @@index([institution_id, series_id, starts_at], map: "institution_event_series")
   @@schema("public")
+  timing_mode String @default("timed")
+
 }
 
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
@@ -1121,4 +1123,8 @@ model institution_workout_recurrences {
   @@unique([institution_id, id])
   @@index([institution_id, assignment_id], map: "institution_workout_recurrence_assignment")
   @@schema("public")
+  last_generated_on DateTime? @db.Date
+  last_checked_at DateTime? @db.Timestamptz(6)
+  issue String?
+
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { localDate } from '../../lib/dates'
 import { institutionContext } from '../../app/institution'
 
 import PageHeading from '../../components/PageHeading.vue'
@@ -84,7 +85,12 @@ const clock = window.setInterval(() => {
 }, 15000)
 onUnmounted(() => window.clearInterval(clock))
 const started = computed(
-    () => !!data.value && new Date(data.value.event.starts_at).getTime() <= now.value,
+    () =>
+      !!data.value &&
+      (data.value.event.starts_at
+        ? new Date(data.value.event.starts_at).getTime() <= now.value
+        : data.value.event.training_date <=
+          localDate(data.value.event.timezone, new Date(now.value))),
   ),
   writable = computed(
     () => view !== 'trainee' && data.value?.event.state !== 'cancelled' && started.value,
@@ -135,13 +141,19 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    data.value = await request<EventDetail>(endpoint + `?view=${view}&id=${eid}&summary=true`)
+    data.value = await request<EventDetail>(
+      endpoint + `?view=${view}&id=${eid}&includeDayOnly=true&summary=true`,
+    )
     attendance.value = Object.fromEntries(data.value.people.map((p) => [p.member_id, p.attendance]))
     correctionReason.value = {}
     zone.value = data.value.event.timezone
-    local.value = localInput(data.value.event.starts_at, zone.value)
+    local.value = data.value.event.starts_at
+      ? localInput(data.value.event.starts_at, zone.value)
+      : data.value.event.training_date + 'T09:00'
     minutes.value =
-      (Date.parse(data.value.event.ends_at) - Date.parse(data.value.event.starts_at)) / 60000
+      data.value.event.ends_at && data.value.event.starts_at
+        ? (Date.parse(data.value.event.ends_at) - Date.parse(data.value.event.starts_at)) / 60000
+        : 60
     newStaff.value = data.value.people.filter((p) => p.duty === 'staff').map((p) => p.member_id)
     if (view === 'admin')
       organization.value = await request<Institution>(`/v1/institution?view=admin&summary=true`)
@@ -293,7 +305,13 @@ onMounted(load)
       ><template v-if="data">
         <section class="event-overview">
           <p class="event-when">
-            {{ label(data.event.starts_at) }} — {{ label(data.event.ends_at) }}
+            {{
+              data.event.starts_at && data.event.ends_at
+                ? label(data.event.starts_at || data.event.training_date + 'T12:00:00Z') +
+                  ' — ' +
+                  label(data.event.ends_at)
+                : data.event.training_date + ' · ' + l('No fixed time', 'دون وقت محدد')
+            }}
           </p>
           <p>{{ data.event.location || l('Location to be agreed', 'الموقع يحدد لاحقاً') }}</p>
           <p>
@@ -455,7 +473,10 @@ onMounted(load)
         </form>
         <section v-if="cancelOpen" class="panel event-change">
           <h2>{{ l('Cancel this event?', 'إلغاء هذا الموعد؟') }}</h2>
-          <p>{{ data.event.title }} · {{ label(data.event.starts_at) }}</p>
+          <p>
+            {{ data.event.title }} ·
+            {{ label(data.event.starts_at || data.event.training_date + 'T12:00:00Z') }}
+          </p>
           <label v-if="!started" class="check-label"
             ><input v-model="futureSeries" type="checkbox" />{{
               l(

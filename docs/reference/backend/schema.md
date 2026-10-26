@@ -2,7 +2,7 @@
 
 Generated from a fresh migrated PostgreSQL catalog and reviewed purpose metadata. This is schema/source evidence, not production-data or runtime authorization acceptance. Regenerate with `npm run backend:inventory`; refresh the catalog after migrations with `npm run backend:inventory:database`.
 
-57 physical tables; 467 columns. SQL constraints, policies and triggers are authoritative; Prisma relations are not additional physical columns. Full raw catalog: [verification receipt](../../verification/receipts/backend-schema-catalog.json).
+57 physical tables; 471 columns. SQL constraints, policies and triggers are authoritative; Prisma relations are not additional physical columns. Full raw catalog: [verification receipt](../../verification/receipts/backend-schema-catalog.json).
 
 ## Table index
 
@@ -25,7 +25,7 @@ Generated from a fresh migrated PostgreSQL catalog and reviewed purpose metadata
 | [public.institution_channels](#publicinstitution_channels) | Communication and feedback | retain-current | Institution direct-pair/group conversation identity with distinct access rules. |
 | [public.institution_coaching_links](#publicinstitution_coaching_links) | Institution and operations | retain-current | Primary/supporting coach relationships with sport scope and attribution/history. |
 | [public.institution_event_people](#publicinstitution_event_people) | Training and scheduling | retain-current | Frozen event roster, staff/athlete duty, attendance and participant revision. |
-| [public.institution_events](#publicinstitution_events) | Training and scheduling | retain-current | Timed training/assessment occurrences, timezone/date, source snapshot and lifecycle. |
+| [public.institution_events](#publicinstitution_events) | Training and scheduling | retain-current | Timed institution training/assessment occurrences and explicit day-only individual workouts, frozen prescription, staff/athlete roster and local training date. |
 | [public.institution_exercises](#publicinstitution_exercises) | Institution and operations | retain-current | Institution-authored exercise metadata and visibility to authorized staff. |
 | [public.institution_group_members](#publicinstitution_group_members) | Institution and operations | retain-current | Current institution group membership; does not rewrite historical event rosters. |
 | [public.institution_groups](#publicinstitution_groups) | Institution and operations | retain-current | Institution groups used to select participants and coaches. |
@@ -52,7 +52,7 @@ Generated from a fresh migrated PostgreSQL catalog and reviewed purpose metadata
 | [public.institution_sports](#publicinstitution_sports) | Institution and operations | retain-current | Institution sports and coaching specialties, ordered and archived explicitly. |
 | [public.institution_versions](#publicinstitution_versions) | Training and scheduling | retain-current | Immutable published institution program snapshots referenced by assignments and history. |
 | [public.institution_workout_positions](#publicinstitution_workout_positions) | Training and scheduling | retain-current | Assignment sequence position/cycle, occurrence/workout links and attributed once-only resolution. |
-| [public.institution_workout_recurrences](#publicinstitution_workout_recurrences) | Training and scheduling | retain-current | Bounded weekly individual schedule rules; the recurring worker remains pending. |
+| [public.institution_workout_recurrences](#publicinstitution_workout_recurrences) | Training and scheduling | retain-current | Opt-in bounded weekly/today-only preparation policies with current authority, poll checkpoints, last materialized day and general scheduling diagnostics. |
 | [public.institution_workplace_feedback](#publicinstitution_workplace_feedback) | Communication and feedback | retain-current | Explicit monthly coach workplace feedback; distinct from athlete experience. |
 | [public.institutions](#publicinstitutions) | Institution and operations | retain-current | Persistent institution identity and historical scope keys; one institution is supported per installation. |
 | [public.notification_events](#publicnotification_events) | Communication and feedback | retain-current | Per-user notification inbox and delivery checkpoints; not proof of external delivery. |
@@ -726,10 +726,10 @@ CREATE TRIGGER notification_org_person AFTER INSERT ON public.institution_event_
 
 ## public.institution_events
 
-Timed training/assessment occurrences, timezone/date, source snapshot and lifecycle.
+Timed institution training/assessment occurrences and explicit day-only individual workouts, frozen prescription, staff/athlete roster and local training date.
 
 - Prisma model: `institution_events`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/feedback.ts](../../../apps/backend/server/feedback.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/feedback.ts](../../../apps/backend/server/feedback.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.assessment_results](schema.md#publicassessment_results), [public.institution_event_people](schema.md#publicinstitution_event_people), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -740,8 +740,8 @@ Timed training/assessment occurrences, timezone/date, source snapshot and lifecy
 | `created_by` | `uuid` | no | — | Attributed creator identity; the foreign key identifies account versus membership scope. |
 | `series_id` | `uuid` | no | — | Linked series identity; scope and target are shown in the foreign keys below. |
 | `title` | `text` | no | — | Human-readable title. |
-| `starts_at` | `timestamp with time zone` | no | — | Fixed occurrence/booking start instant. |
-| `ends_at` | `timestamp with time zone` | no | — | Fixed occurrence/booking end instant. |
+| `starts_at` | `timestamp with time zone` | yes | — | Fixed occurrence/booking start instant. |
+| `ends_at` | `timestamp with time zone` | yes | — | Fixed occurrence/booking end instant. |
 | `timezone` | `text` | no | — | IANA timezone used for date/clock interpretation. |
 | `location` | `text` | no | `''::text` | Human-readable occurrence location. |
 | `kind` | `text` | no | — | Entity variant; consult SQL constraints and the relevant handler. |
@@ -753,10 +753,12 @@ Timed training/assessment occurrences, timezone/date, source snapshot and lifecy
 | `created_at` | `timestamp with time zone` | no | `now()` | Record creation timestamp. |
 | `training_date` | `date` | no | `CURRENT_DATE` | Event-local calendar date derived from timestamp and timezone. |
 | `workout_snapshot` | `jsonb` | yes | — | Shared workout baseline and sequence source for a training occurrence. |
+| `timing_mode` | `text` | no | `'timed'::text` | Explicit timed appointment or day-only training; governs null timestamps and local-date handling. |
 
 <details>
 <summary>Relationships, constraints, indexes, policies and triggers</summary>
 
+- `institution_event_timing`: `CHECK ((((timing_mode = 'timed'::text) AND (starts_at IS NOT NULL) AND (ends_at IS NOT NULL) AND (ends_at > starts_at)) OR ((timing_mode = 'day'::text) AND (starts_at IS NULL) AND (ends_at IS NULL) AND (kind = 'training'::text) AND (workout_snapshot IS NOT NULL))))`
 - `institution_event_workout_kind`: `CHECK (((workout_snapshot IS NULL) OR ((kind = 'training'::text) AND (jsonb_typeof(workout_snapshot) = 'object'::text))))`
 - `institution_events_check`: `CHECK (((ends_at > starts_at) AND (ends_at <= (starts_at + '08:00:00'::interval))))`
 - `institution_events_check1`: `CHECK (((kind = 'assessment'::text) = (definition IS NOT NULL)))`
@@ -771,6 +773,7 @@ Timed training/assessment occurrences, timezone/date, source snapshot and lifecy
 
 ```sql
 CREATE INDEX institution_event_agenda ON public.institution_events USING btree (institution_id, starts_at, id);
+CREATE INDEX institution_event_day_agenda ON public.institution_events USING btree (institution_id, training_date, id) WHERE (timing_mode = 'day'::text);
 CREATE INDEX institution_event_series ON public.institution_events USING btree (institution_id, series_id, starts_at);
 CREATE UNIQUE INDEX institution_events_institution_id_id_key ON public.institution_events USING btree (institution_id, id);
 CREATE UNIQUE INDEX institution_events_pkey ON public.institution_events USING btree (id);
@@ -1256,7 +1259,7 @@ CREATE INDEX institution_member_sports_sport ON public.institution_member_sports
 Institution membership, one role, active/revoked state, primary-coach mirror and revision.
 
 - Prisma model: `institution_members`; domain: Institution and operations; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/assets.ts](../../../apps/backend/server/assets.ts), [server/auth.ts](../../../apps/backend/server/auth.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/coaching-links.ts](../../../apps/backend/server/coaching-links.ts), [server/communication.ts](../../../apps/backend/server/communication.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/injuries.ts](../../../apps/backend/server/injuries.ts), [server/injury-retention.ts](../../../apps/backend/server/injury-retention.ts), [server/institution.ts](../../../apps/backend/server/institution.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/nutrition-plan-index.ts](../../../apps/backend/server/nutrition-plan-index.ts), [server/nutrition.ts](../../../apps/backend/server/nutrition.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/platform.ts](../../../apps/backend/server/platform.ts), [server/program-media.ts](../../../apps/backend/server/program-media.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/service-catalog.ts](../../../apps/backend/server/service-catalog.ts), [server/sports.ts](../../../apps/backend/server/sports.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/assets.ts](../../../apps/backend/server/assets.ts), [server/auth.ts](../../../apps/backend/server/auth.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/coaching-links.ts](../../../apps/backend/server/coaching-links.ts), [server/communication.ts](../../../apps/backend/server/communication.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/injuries.ts](../../../apps/backend/server/injuries.ts), [server/injury-retention.ts](../../../apps/backend/server/injury-retention.ts), [server/institution.ts](../../../apps/backend/server/institution.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/nutrition-plan-index.ts](../../../apps/backend/server/nutrition-plan-index.ts), [server/nutrition.ts](../../../apps/backend/server/nutrition.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/platform.ts](../../../apps/backend/server/platform.ts), [server/program-media.ts](../../../apps/backend/server/program-media.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/service-catalog.ts](../../../apps/backend/server/service-catalog.ts), [server/sports.ts](../../../apps/backend/server/sports.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.assessment_result_history](schema.md#publicassessment_result_history), [public.assessment_results](schema.md#publicassessment_results), [public.assessment_templates](schema.md#publicassessment_templates), [public.institution_assets](schema.md#publicinstitution_assets), [public.institution_assignments](schema.md#publicinstitution_assignments), [public.institution_channel_members](schema.md#publicinstitution_channel_members), [public.institution_channel_reads](schema.md#publicinstitution_channel_reads), [public.institution_channels](schema.md#publicinstitution_channels), [public.institution_coaching_links](schema.md#publicinstitution_coaching_links), [public.institution_event_people](schema.md#publicinstitution_event_people), [public.institution_events](schema.md#publicinstitution_events), [public.institution_exercises](schema.md#publicinstitution_exercises), [public.institution_group_members](schema.md#publicinstitution_group_members), [public.institution_groups](schema.md#publicinstitution_groups), [public.institution_injury_access_log](schema.md#publicinstitution_injury_access_log), [public.institution_injury_permissions](schema.md#publicinstitution_injury_permissions), [public.institution_injury_records](schema.md#publicinstitution_injury_records), [public.institution_meals](schema.md#publicinstitution_meals), [public.institution_member_sports](schema.md#publicinstitution_member_sports), [public.institution_members](schema.md#publicinstitution_members), [public.institution_messages](schema.md#publicinstitution_messages), [public.institution_nutrition_plans](schema.md#publicinstitution_nutrition_plans), [public.institution_nutrition_sharing](schema.md#publicinstitution_nutrition_sharing), [public.institution_programs](schema.md#publicinstitution_programs), [public.institution_session_history](schema.md#publicinstitution_session_history), [public.institution_sessions](schema.md#publicinstitution_sessions), [public.institution_versions](schema.md#publicinstitution_versions), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions), [public.institution_workout_recurrences](schema.md#publicinstitution_workout_recurrences), [public.institution_workplace_feedback](schema.md#publicinstitution_workplace_feedback).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -1608,7 +1611,7 @@ CREATE UNIQUE INDEX institution_session_history_session_id_version_key ON public
 Athlete workout document, prescription/actual results, recorder attribution and optional scoped occurrence link.
 
 - Prisma model: `institution_sessions`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/assets.ts](../../../apps/backend/server/assets.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/feedback.ts](../../../apps/backend/server/feedback.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/assets.ts](../../../apps/backend/server/assets.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/feedback.ts](../../../apps/backend/server/feedback.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.institution_session_feedback](schema.md#publicinstitution_session_feedback), [public.institution_session_history](schema.md#publicinstitution_session_history), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -1742,7 +1745,7 @@ CREATE UNIQUE INDEX institution_versions_program_id_revision_key ON public.insti
 Assignment sequence position/cycle, occurrence/workout links and attributed once-only resolution.
 
 - Prisma model: `institution_workout_positions`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -1797,10 +1800,10 @@ CREATE TRIGGER institution_workout_position_guard BEFORE INSERT OR UPDATE ON pub
 
 ## public.institution_workout_recurrences
 
-Bounded weekly individual schedule rules; the recurring worker remains pending.
+Opt-in bounded weekly/today-only preparation policies with current authority, poll checkpoints, last materialized day and general scheduling diagnostics.
 
 - Prisma model: `institution_workout_recurrences`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -1818,6 +1821,9 @@ Bounded weekly individual schedule rules; the recurring worker remains pending.
 | `duration_minutes` | `integer` | yes | — | Fixed occurrence duration in minutes. |
 | `state` | `text` | no | `'active'::text` | Record lifecycle state; SQL constraints and the handler govern valid transitions. |
 | `revision` | `integer` | no | `1` | Optimistic record revision checked before edits. |
+| `last_generated_on` | `date` | yes | — | Last rule-local date materialized without advancing the assignment sequence. |
+| `last_checked_at` | `timestamp with time zone` | yes | — | Most recent worker evaluation; oldest-first bounded polling checkpoint. |
+| `issue` | `text` | yes | — | General preparation diagnostic, without clinical details or an implication of medical clearance. |
 
 <details>
 <summary>Relationships, constraints, indexes, policies and triggers</summary>
@@ -1833,9 +1839,11 @@ Bounded weekly individual schedule rules; the recurring worker remains pending.
 - `institution_workout_recurrences_weekdays_check`: `CHECK ((((cardinality(weekdays) >= 1) AND (cardinality(weekdays) <= 7)) AND (weekdays <@ ARRAY[(1)::smallint, (2)::smallint, (3)::smallint, (4)::smallint, (5)::smallint, (6)::smallint, (7)::smallint]) AND (array_position(weekdays, NULL::smallint) IS NULL)))`
 
 ```sql
+CREATE UNIQUE INDEX institution_workout_one_active_rule ON public.institution_workout_recurrences USING btree (assignment_id) WHERE (state = 'active'::text);
 CREATE INDEX institution_workout_recurrence_assignment ON public.institution_workout_recurrences USING btree (institution_id, assignment_id);
 CREATE UNIQUE INDEX institution_workout_recurrences_institution_id_id_key ON public.institution_workout_recurrences USING btree (institution_id, id);
 CREATE UNIQUE INDEX institution_workout_recurrences_pkey ON public.institution_workout_recurrences USING btree (id);
+CREATE INDEX institution_workout_rule_poll ON public.institution_workout_recurrences USING btree (last_checked_at NULLS FIRST, id) WHERE (state = 'active'::text);
 ```
 
 

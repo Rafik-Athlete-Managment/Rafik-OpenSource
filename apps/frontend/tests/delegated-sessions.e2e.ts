@@ -712,3 +712,115 @@ test('role dashboards prioritize athlete actions and administrator oversight', a
     await f.cleanup()
   }
 })
+
+test('plan scheduling switches from weekly slots to opt-in day-only preparation', async ({
+  page,
+}, info) => {
+  test.setTimeout(180000)
+  page.setDefaultTimeout(15000)
+  const f = await institutionFixture()
+  try {
+    const prepared = await institution(
+      f,
+      'Madar recurring',
+      (plan) => {
+        plan.days[0].weekday = 0
+        plan.days[0].week = 1
+        plan.days[0].restDay = false
+      },
+      false,
+    )
+    const assigned = (await f.call(f.coach, '/v1/institution/athlete-plans?view=trainer')).items[0]
+      .id
+    const today = new Date().toISOString().slice(0, 10),
+      tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      until = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10)
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('rafik.theme')) localStorage.setItem('rafik.theme', 'light')
+    })
+    await f.login(page, f.coach, '/training/' + assigned)
+    const policy = page.getByRole('region', { name: 'Scheduling policy', exact: true })
+    await expect(
+      policy.getByText('Manual scheduling. Automatic preparation is off.', { exact: true }),
+    ).toBeVisible()
+    await policy.getByRole('button', { name: 'Set up scheduling', exact: true }).click()
+    await policy.getByLabel('From', { exact: true }).fill(tomorrow)
+    await policy.getByLabel('Until', { exact: true }).fill(until)
+    await policy.getByLabel('Local time', { exact: true }).fill('10:00')
+    await inspect(page, 'rule-weekly-form', info)
+    await policy.getByRole('button', { name: 'Save scheduling', exact: true }).click()
+    await expect(
+      policy.getByRole('button', { name: 'Change future scheduling', exact: true }),
+    ).toBeVisible()
+    const readRule = async () =>
+      (
+        await f.call(f.coach, `/v1/institution/workout-rules?view=trainer&assignment=${assigned}`)
+      ).items.find((r: any) => r.state === 'active')
+    await expect
+      .poll(async () => !!(await readRule())?.last_generated_on, {
+        timeout: 15000,
+        intervals: [500, 1000],
+      })
+      .toBe(true)
+    const old = (
+      await f.call(
+        f.coach,
+        `/v1/institution/workout-scheduling?view=trainer&assignment=${assigned}`,
+      )
+    ).items[0]
+    await page.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Reschedule', exact: true })).toBeVisible()
+    await policy.getByRole('button', { name: 'Stop future scheduling', exact: true }).click()
+    await expect(
+      policy.getByText('Manual scheduling. Automatic preparation is off.', { exact: true }),
+    ).toBeVisible()
+    const retained = (
+      await f.call(
+        f.coach,
+        `/v1/institution/workout-scheduling?view=trainer&assignment=${assigned}`,
+      )
+    ).items[0]
+    expect(retained.occurrence.id).toBe(old.occurrence.id)
+    await f.call(f.coach, '/v1/institution/workout-scheduling', {
+      operation: randomUUID(),
+      action: 'skip-workout',
+      view: 'trainer',
+      assignment_id: assigned,
+      occurrence_id: old.occurrence.id,
+      revision: old.occurrence.revision,
+      reason: 'Synthetic weekly slot resolved before enabling daily preparation',
+    })
+    await policy.getByRole('button', { name: 'Set up scheduling', exact: true }).click()
+    await policy.getByRole('radio', { name: 'Automatic daily preparation', exact: true }).check()
+    await policy.getByLabel('From', { exact: true }).fill(today)
+    await policy.getByLabel('Until', { exact: true }).fill(until)
+    await policy.getByRole('button', { name: 'Save scheduling', exact: true }).click()
+    await expect
+      .poll(async () => !!(await readRule())?.last_generated_on, {
+        timeout: 15000,
+        intervals: [500, 1000],
+      })
+      .toBe(true)
+    await page.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
+    await expect(page.getByText('No fixed time', { exact: false })).toBeVisible()
+    await inspect(page, 'rule-automatic-plan', info)
+    await page.goto('/schedule')
+    const dayEvent = page.locator('.agenda-event').filter({ hasText: 'No fixed time' })
+    await expect(dayEvent).toBeVisible()
+    await inspect(page, 'rule-day-calendar', info)
+    await dayEvent.click()
+    await expect(page.getByRole('link', { name: 'Open plan workouts', exact: true })).toBeVisible()
+    await expect(page.getByText('No fixed time', { exact: false })).toBeVisible()
+    await page.goto('/training/' + assigned)
+    await page.evaluate(() => {
+      localStorage.setItem('rafik.locale', 'ar')
+      localStorage.setItem('rafik.theme', 'dark')
+    })
+    await page.reload()
+    await page.getByRole('button', { name: 'تغيير الجدولة القادمة', exact: true }).click()
+    await expect(page.getByRole('radio', { name: 'تجهيز يومي تلقائي', exact: true })).toBeChecked()
+    await inspect(page, 'rule-automatic-ar', info)
+  } finally {
+    await f.cleanup()
+  }
+})

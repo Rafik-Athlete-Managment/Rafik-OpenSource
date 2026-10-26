@@ -233,3 +233,9 @@ CoachDesk uses `actionable` (due plus unfinished) and `planning`, with server id
 ### Role dashboard ownership
 
 DashboardPage owns institution context and recoverable invitations; CoachDesk, AthleteDay and AdminOverview own their overview compositions. Shared responsive layout lives in role-dashboard.css. Reuse authorized service projections rather than deriving institution totals from loaded directory pages. AdminOverview retains the former due-agenda command key for pending scheduling recovery. Admin trends use returned report dates and current-roster denominators; unknown attendance/logging is not absence or inactivity. The food diary shortcut accepts only section=diary, leaving historical plan selection precedence intact.
+
+### Scheduling service ownership
+
+workout-scheduler.ts owns policy validation, diagnostic checkpoints and bounded preparation; workout-sequence.ts owns the shared binding/reschedule/skip/start/resolve invariants. Never make the timer or frontend determine progression. Preserve institution → assignment lock order and exact user-command receipts. Date-only calendar values must stay YYYY-MM-DD through transport; comparing serialized midnight timestamps to a selected date hides events. Nullable event bounds must never be used as an unbounded timed collision range. Old/default attendance reads stay timed-only unless explicitly opted in; do not send date-only shapes into the current native cache by accident.
+
+Use test:workout-scheduler for DST/authority/rest/restriction/duplicate checks, test:workout-sequence for progression and test:workout-foundation for populated migration/client/type evidence, each on its own disposable database. The dedicated plan scheduling browser case validates the actual form, worker kick, preserved current appointment and day-only calendar/detail. Isolated API tests disable the background poll and explicitly drive the worker; normal API/web tests keep actual preparation enabled.

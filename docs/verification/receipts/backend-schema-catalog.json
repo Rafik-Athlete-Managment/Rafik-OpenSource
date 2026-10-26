@@ -1,5 +1,5 @@
 {
-  "migrationDigest": "58b5d90a06d0625498110b6cff96b03159ba63b2d5770b772ce3c288c5951aeb",
+  "migrationDigest": "7797e17941c46a59b9c9e024ba54bbde2e56ae9475544496c1e1c791a321d233",
   "tables": [
     {
       "rls": false,
@@ -1972,14 +1972,14 @@
           "type": "timestamp with time zone",
           "comment": null,
           "default": null,
-          "nullable": false
+          "nullable": true
         },
         {
           "name": "ends_at",
           "type": "timestamp with time zone",
           "comment": null,
           "default": null,
-          "nullable": false
+          "nullable": true
         },
         {
           "name": "timezone",
@@ -2057,10 +2057,18 @@
           "comment": null,
           "default": null,
           "nullable": true
+        },
+        {
+          "name": "timing_mode",
+          "type": "text",
+          "comment": null,
+          "default": "'timed'::text",
+          "nullable": false
         }
       ],
       "indexes": [
         "CREATE INDEX institution_event_agenda ON public.institution_events USING btree (institution_id, starts_at, id)",
+        "CREATE INDEX institution_event_day_agenda ON public.institution_events USING btree (institution_id, training_date, id) WHERE (timing_mode = 'day'::text)",
         "CREATE INDEX institution_event_series ON public.institution_events USING btree (institution_id, series_id, starts_at)",
         "CREATE UNIQUE INDEX institution_events_institution_id_id_key ON public.institution_events USING btree (institution_id, id)",
         "CREATE UNIQUE INDEX institution_events_pkey ON public.institution_events USING btree (id)"
@@ -2071,6 +2079,12 @@
         "CREATE TRIGGER notification_org_event AFTER UPDATE ON public.institution_events FOR EACH ROW EXECUTE FUNCTION capture_domain_notification()"
       ],
       "constraints": [
+        {
+          "kind": "c",
+          "name": "institution_event_timing",
+          "target": null,
+          "definition": "CHECK ((((timing_mode = 'timed'::text) AND (starts_at IS NOT NULL) AND (ends_at IS NOT NULL) AND (ends_at > starts_at)) OR ((timing_mode = 'day'::text) AND (starts_at IS NULL) AND (ends_at IS NULL) AND (kind = 'training'::text) AND (workout_snapshot IS NOT NULL))))"
+        },
         {
           "kind": "c",
           "name": "institution_event_workout_kind",
@@ -5176,12 +5190,35 @@
           "comment": null,
           "default": "1",
           "nullable": false
+        },
+        {
+          "name": "last_generated_on",
+          "type": "date",
+          "comment": null,
+          "default": null,
+          "nullable": true
+        },
+        {
+          "name": "last_checked_at",
+          "type": "timestamp with time zone",
+          "comment": null,
+          "default": null,
+          "nullable": true
+        },
+        {
+          "name": "issue",
+          "type": "text",
+          "comment": null,
+          "default": null,
+          "nullable": true
         }
       ],
       "indexes": [
+        "CREATE UNIQUE INDEX institution_workout_one_active_rule ON public.institution_workout_recurrences USING btree (assignment_id) WHERE (state = 'active'::text)",
         "CREATE INDEX institution_workout_recurrence_assignment ON public.institution_workout_recurrences USING btree (institution_id, assignment_id)",
         "CREATE UNIQUE INDEX institution_workout_recurrences_institution_id_id_key ON public.institution_workout_recurrences USING btree (institution_id, id)",
-        "CREATE UNIQUE INDEX institution_workout_recurrences_pkey ON public.institution_workout_recurrences USING btree (id)"
+        "CREATE UNIQUE INDEX institution_workout_recurrences_pkey ON public.institution_workout_recurrences USING btree (id)",
+        "CREATE INDEX institution_workout_rule_poll ON public.institution_workout_recurrences USING btree (last_checked_at NULLS FIRST, id) WHERE (state = 'active'::text)"
       ],
       "policies": [],
       "triggers": [],

@@ -82,6 +82,7 @@ export async function scheduledEvents(
   return scoped(actor, id, [view], async (tx, self) => {
     const where = {
       institution_id: id,
+      ...(q.get("includeDayOnly") === "true" ? {} : { timing_mode: "timed" }),
       ...(kind !== "all" ? { kind } : {}),
       ...(state !== "all" ? { state } : {}),
       ...(search
@@ -108,6 +109,8 @@ export async function scheduledEvents(
           state: true,
           starts_at: true,
           ends_at: true,
+          timing_mode: true,
+          training_date: true,
           timezone: true,
           location: true,
           _count: {
@@ -122,6 +125,7 @@ export async function scheduledEvents(
     return {
       items: items.map(({ _count, ...item }) => ({
         ...item,
+        training_date: item.training_date.toISOString().slice(0, 10),
         athlete_count: _count.institution_event_people,
       })),
       total,
@@ -135,6 +139,8 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
   return scoped(actor, id, [view], async (tx, self) => {
     if (q.get("id")) {
       const item = await eventAccess(tx, id, self, view, q.get("id")!);
+      if (item.timing_mode === "day" && q.get("includeDayOnly") !== "true")
+        throw new ApiError(409, "day_only_event_requires_update");
       const people = item.institution_event_people.filter(
         (p) =>
           view !== "trainee" || p.duty === "staff" || p.member_id === self.id,
@@ -244,7 +250,11 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
               take: historyMember ? 26 : 101,
             });
       return {
-        event: { ...item, institution_event_people: undefined },
+        event: {
+          ...item,
+          training_date: item.training_date.toISOString().slice(0, 10),
+          institution_event_people: undefined,
+        },
         people: people.map((p) => ({
           ...p,
           institution_members: undefined,
@@ -270,8 +280,24 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
     >`SELECT ${from}::date::timestamp AT TIME ZONE ${zone} AS start,(${to}::date+1)::timestamp AT TIME ZONE ${zone} AS end`;
     const where = {
       institution_id: id,
-      starts_at: { lt: bounds[0].end },
-      ends_at: { gt: bounds[0].start },
+      OR: [
+        {
+          timing_mode: "timed",
+          starts_at: { lt: bounds[0].end },
+          ends_at: { gt: bounds[0].start },
+        },
+        ...(q.get("includeDayOnly") === "true"
+          ? [
+              {
+                timing_mode: "day",
+                training_date: {
+                  gte: new Date(from + "T00:00:00Z"),
+                  lte: new Date(to + "T00:00:00Z"),
+                },
+              },
+            ]
+          : []),
+      ],
       ...(view !== "admin"
         ? {
             institution_event_people: {
@@ -308,6 +334,7 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
     return {
       items: items.map((e) => ({
         ...e,
+        training_date: e.training_date.toISOString().slice(0, 10),
         definition: undefined,
         institution_event_people: undefined,
         people: e.institution_event_people
@@ -542,7 +569,11 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
       )
         throw new ApiError(409, "conflict");
       if (action === "reschedule") {
-        if (item.state !== "scheduled" || item.starts_at <= new Date())
+        if (
+          !item.starts_at ||
+          item.state !== "scheduled" ||
+          item.starts_at <= new Date()
+        )
           throw new ApiError(400, "event_unavailable");
         const times = await preview(tx, { ...input, count: 1, every: 7 }),
           start = new Date(times[0].starts_at),
@@ -612,6 +643,7 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         });
       }
       if (action === "cancel") {
+        if (!item.starts_at) throw new ApiError(409, "use_workout_scheduling");
         if (
           item.state === "completed" ||
           (await tx.assessment_results.count({ where: { event_id: key } }))
@@ -651,7 +683,18 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         });
         return { cancelled: targets.length };
       }
-      if (item.state === "cancelled" || item.starts_at > new Date())
+      if (
+        item.state === "cancelled" ||
+        (item.starts_at
+          ? item.starts_at > new Date()
+          : item.training_date.toISOString().slice(0, 10) >
+            new Intl.DateTimeFormat("en-CA", {
+              timeZone: item.timezone,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }).format(new Date()))
+      )
         throw new ApiError(400, "event_not_started");
       if (action === "session-note") {
         const member = uuid(input.member),

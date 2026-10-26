@@ -167,6 +167,7 @@ export async function notificationTarget(
       if (
         n.source_kind === "organization_reminder" &&
         (event.state !== "scheduled" ||
+          !event.starts_at ||
           event.starts_at <= new Date() ||
           event.revision !== n.source_revision)
       )

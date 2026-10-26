@@ -34,8 +34,10 @@ onMounted(async () => {
       .filter(
         (e) =>
           e.state === 'scheduled' &&
+          !!e.starts_at &&
+          !!e.ends_at &&
           (!props.omitWorkouts || !e.workout_snapshot?.assignment_id) &&
-          (props.todayOnly || Date.parse(e.ends_at) > Date.now()),
+          (props.todayOnly || Date.parse(e.ends_at || '') > Date.now()),
       )
       .slice(0, 3)
   } catch (e) {
@@ -76,7 +78,7 @@ onMounted(async () => {
       :to="base + '/schedule/' + e.id"
       ><span
         ><strong>{{ e.title }}</strong
-        ><small>{{ label(e.starts_at) }} · {{ zone }}</small></span
+        ><small>{{ label(e.starts_at || '') }} · {{ zone }}</small></span
       ><span aria-hidden="true">↗</span></RouterLink
     >
   </section>

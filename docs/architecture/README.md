@@ -1,5 +1,11 @@
 # Rafik architecture
 
+## Individual preparation policy and worker
+
+The existing recurrence model stores one active per-assignment weekly or automatic policy. workout-scheduler.ts rechecks its creator’s current authority under the institution → assignment lock order, then calls the same scheduleIndividualWorkout service as manual writes. Rule saves/stops use existing exact receipts; initial preparation and periodic retry are separate. Worker checkpoints, unresolved-position uniqueness and same-day history prevent duplicate automatic work; generation does not consume sequence positions. See [ADR 0032](../decisions/ADR-0032-opt-in-workout-preparation.md).
+
+institution_events now requires either real timed bounds or day-only training with null bounds, explicit training_date and a prescription snapshot. Calendar API serializes that date as YYYY-MM-DD. Web opts into includeDayOnly; default attendance list reads remain timed-only, with an upgrade error for unsupported day-only detail. Day-only eligibility follows its own timezone; reports may use the local-day boundary for grouping without inventing an appointment time. Timed collision ranges exclude day-only events. Pending historical commands, clinical boundaries and assignment-specific progression remain unchanged.
+
 ## Role dashboard composition
 
 DashboardPage delegates overview layout to CoachDesk, AthleteDay and AdminOverview. AthleteDay derives its coaching team from the authorized messaging-contact read and sends existing `/messages?to=` links through communication authority; it does not create a new contact grant. `/nutrition?section=diary` selects the existing food diary tab and changes no access/sharing rule. AdminOverview reads the existing period-scoped institution analytics API, keeps returned dates with retained results and clears unauthorized results. Completed workout counts, current active-roster participation and per-event athlete attendance have distinct units; no assessment aggregate or health/readiness metric is implied. Source inventories record their consumers and outgoing navigation.
@@ -12,7 +18,7 @@ The staff assignment directory is `/training`; `/training/:assignment` owns one 
 
 `GET /v1/institution/workout-scheduling` projects the next non-rest day and unresolved occurrence for each authorized assignment. It does not allocate work or advance progression. Pagination and athlete-name filtering happen after institution/role/plan-sport scope is applied in SQL. The dashboard requests due work; plan details request one assignment; athletes receive only their own assignments. General participation restrictions expose no injury-record identifiers or sensitive details.
 
-The shared web WorkoutAgenda uses existing exact-receipt schedule/reschedule/skip and session-start commands. Recording receives the occurrence identity; server start time and sequence checks remain authoritative. Existing unfinished unlinked records are surfaced for recovery and block scheduling in that assignment. Older unlinked start compatibility remains until historical occurrence reconciliation; it is not the new UI's creation path. Recurrence, automatic preparation, group prescription/results and native workout recording remain later beta.3 slices.
+The shared web WorkoutAgenda uses existing exact-receipt schedule/reschedule/skip and session-start commands. Recording receives the occurrence identity; server start time and sequence checks remain authoritative. Existing unfinished unlinked records are surfaced for recovery and block scheduling in that assignment. Older unlinked start compatibility remains until historical occurrence reconciliation; it is not the new UI's creation path. Recurring/day-only preparation is now described above; group prescription/results and native workout recording remain later beta.3 slices.
 
 ## Program and conversation visibility
 
@@ -28,7 +34,7 @@ An unresolved position blocks only its assignment. Historical unlinked unfinishe
 
 New fixed-time bookings may use a calendar rest day, but an active effective cannot-train status blocks booking/start. The response is a general restriction, never the underlying injury record. Existing timestamp/date/day uniqueness remains authoritative. Generic calendar reschedule/cancel/staff/finish mutations reject bound individual occurrences: use the sequence command so event status cannot masquerade as workout resolution. Attendance remains independent. Ending/replacing assignments cancels unstarted bound work and recurrence rules and pauses started work without deleting documents/history.
 
-The recurring worker, day-only contracts, group additional recording, native queue upgrade and web scheduling controls remain separate slices.
+Recurring/day-only contracts and web scheduling controls are implemented in the later preparation slice above. Group additional recording and native queue upgrade remain separate slices.
 
 ## Beta.3 additive workout storage
 

@@ -20,6 +20,7 @@ import PageState from '../../components/PageState.vue'
 import CommandStatus from '../../components/CommandStatus.vue'
 import { useCommand } from '../../lib/commands'
 import WorkoutAgenda from './WorkoutAgenda.vue'
+import WorkoutRuleSettings from './WorkoutRuleSettings.vue'
 import PlanEditor from '../coaching/PlanEditor.vue'
 const route = useRoute(),
   router = useRouter(),
@@ -27,6 +28,7 @@ const route = useRoute(),
 const detail = ref<AthletePlanSummary>(),
   loading = ref(true),
   error = ref('')
+const workoutRevision = ref(0)
 const adapting = computed(() => route.query.adapt === '1')
 const prescription = () => detail.value?.version.prescription as Prescription | undefined
 let disposed = false,
@@ -178,7 +180,18 @@ onMounted(load)
           <p class="small-print">
             {{ detail.start_date }} — {{ detail.end_date || l('No end date', 'دون تاريخ انتهاء') }}
           </p>
-          <WorkoutAgenda :key="detail.id" :assignment="detail.id" />
+          <WorkoutAgenda
+            :key="detail.id"
+            :assignment="detail.id"
+            :refresh-token="workoutRevision"
+          />
+          <WorkoutRuleSettings
+            :key="'rule:' + detail.id"
+            :assignment="detail.id"
+            :starts-on="detail.start_date.slice(0, 10)"
+            :ends-on="detail.end_date?.slice(0, 10) || null"
+            @changed="workoutRevision++"
+          />
           <section :aria-label="l('Assigned prescription', 'الوصفة المعيّنة')">
             <h2>{{ l('Program preview', 'معاينة البرنامج') }}</h2>
             <details v-for="day in prescription()?.days || []" :key="day.id" class="plan-day">

@@ -1,3 +1,8 @@
+import {
+  workoutRules,
+  workoutRuleCommand,
+  startWorkoutScheduler,
+} from "./workout-scheduler.ts";
 import { institutionRoute, responseTransport } from "./institution-routing.ts";
 import type { ApiErrorBody } from "@rafik/shared/contracts";
 import { feedback, feedbackCommand } from "./feedback.ts";
@@ -665,6 +670,19 @@ const server = createServer(async (req, res) => {
       else throw new ApiError(405, "method_not_allowed");
       return;
     }
+    const ruleMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/workout-rules$/,
+    );
+    if (ruleMatch) {
+      const who = requireActor(actor),
+        id = ruleMatch[1];
+      if (req.method === "GET")
+        send(res, 200, await workoutRules(who, id, url.searchParams));
+      else if (req.method === "POST")
+        send(res, 200, await workoutRuleCommand(who, id, input));
+      else throw new ApiError(405, "method_not_allowed");
+      return;
+    }
     const serviceMatch = path.match(
       /^\/v1\/institutions\/([a-f0-9-]{36})\/(services|calendar|calendar-preview|analytics|assessment-history)$/,
     );
@@ -895,7 +913,15 @@ server.listen(
     ),
 );
 startInjuryRetention();
+const stopWorkoutScheduler =
+  process.env.RAFIK_DISABLE_WORKOUT_SCHEDULER === "true"
+    ? () => {}
+    : startWorkoutScheduler();
 for (const signal of ["SIGINT", "SIGTERM"] as const)
-  process.on(signal, () =>
-    server.close(() => void db.$disconnect().then(() => process.exit(0))),
+  process.on(
+    signal,
+    () => (
+      stopWorkoutScheduler(),
+      server.close(() => void db.$disconnect().then(() => process.exit(0)))
+    ),
   );

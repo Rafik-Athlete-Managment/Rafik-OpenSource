@@ -118,3 +118,5 @@ These use owned disposable databases/APIs. They cover populated identifier prese
 ## Retired-domain boundary
 
 `npm run test:retired-domains` migrates a populated disposable database and compares complete current institution snapshots/receipts. `npm run test:institution-api` covers removed gateways/aliases and explicit account/support privacy and replay. `npm run backend:test` uses current institution SQL assertions, not retired personal/team suites. Recovery checks upload current institution assets. Neither command resets preview data. Published beta.2 clients require the matching beta.3 upgrade; historical multi-institution browser journeys are not current acceptance.
+
+Scheduling changes: `npm run test:workout-scheduler` uses an owned disposable migrated database for policy/worker/DST checks; `npm run test:workout-sequence` covers progression, and `npm run test:workout-foundation` checks populated migration preservation. Do not combine stateful fixture files into one seeded database. The focused browser case is “plan scheduling switches” in delegated-sessions.e2e.ts, using the web isolation wrapper.

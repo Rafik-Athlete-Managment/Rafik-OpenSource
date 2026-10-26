@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## Recurring and automatic individual preparation — 26 October 2026
+
+Added the current event’s explicit day-only timing shape and worker checkpoint/diagnostic fields on existing recurrence storage, preserving prior dates, histories and exact receipts. Staff plan settings save/stop one opt-in weekly/automatic rule through current plan-specific authority. Future policy edits preserve the existing materialized workout. Worker transactions reuse institution/assignment locks, next-day selection and once-only progression; explicit weekly work can use recovery days, automatic work observes the published calendar cycle. Missing predecessors, restrictions, conflicts and lost authority remain visible general blocks. DST gaps/folds are not guessed; missed dates are not backfilled.
+
+Web agenda, calendar, event list/details and reports understand date-only work; default calendar reads stay timed-only unless clients opt in. Existing native attendance/assessment payloads are unchanged; native workout capture and queue migration remain later. An initial post-receipt kick and one-minute bounded poll are independent of policy acknowledgment. ADR 0032 records scope/trade-offs. Focused worker, populated migration, sequence, Swagger and desktop Chromium/phone WebKit cases passed; final limits are tracked in verification. Paired English/Arabic landing guidance is on draft PR #34 at `684d81c`. Release PR stays unmerged.
+
 ## Athlete My day and administrator Institution overview — 26 October 2026
 
 Founder selected athlete daily actions and administrator participation/activity oversight, then approved implementation. Dedicated AthleteDay and AdminOverview compositions replace conditional legacy overview blocks. Shared dashboard spacing follows existing tokens. Athlete actions reuse own workout, authorized appointments, diary and direct-coach messaging routes; a bounded diary query opens the existing Food diary tab. Admin reporting reuses the current analytics service, with 7/28/90-day periods, current-roster participation denominator, completed-workout daily trend and event-attendance entries. No assessment trend is invented. Current coach coverage and administrative actions follow reporting. Existing invitation recovery/link behavior remains, as does recovery of exact pending scheduling commands from the former admin agenda.

@@ -1,6 +1,6 @@
 # Beta.3 — sessions, workouts and backend consolidation
 
-Date: 22 October 2026. **Status: additive storage, fixed-time individual progression API and first web agenda/scheduling integration implemented on the release branch; beta.3 acceptance pending.** Target release: Squire `1.0.0-beta.3`. Detailed verification records establish only the checks actually run, not whole-release or Android acceptance. Beta.2 remains the published version.
+Date: 22 October 2026. **Status: additive storage, individual progression, opt-in weekly/automatic preparation and web scheduling/calendar integration implemented on the release branch; group/native beta.3 work and release acceptance pending.** Target release: Squire `1.0.0-beta.3`. Detailed verification records establish only the checks actually run, not whole-release or Android acceptance. Beta.2 remains the published version.
 
 The earlier [institution cleanup](../decisions/ADR-0026-single-institution-routing-and-task-retirement.md) and [frontend audit](../reference/frontend/README.md) form the first part of this release. The founder has now included session/workout consolidation, its Android impact and a review of legacy backend routes. Keep release work and its paired landing PR unmerged until the release is complete.
 
@@ -184,4 +184,10 @@ Sequence cursors, bounded weekly recurrence storage, unique assignment positions
 
 Staff can bind/reschedule a timed individual occurrence or explicitly skip one through the scoped API. Existing session commands start the linked workout and resolve completion transactionally once. Corrections preserve progression. Concurrent assignments are independent; the published non-rest cycle repeats. Current staff/plan authority is checked before receipt replay. Booking/start respects effective cannot-train status; ending/replacing plans cancels unstarted work and pauses started work.
 
-The web controls and recurring/day-only worker are not implemented. Additional group workouts, native offline workout capture/cache migration, capability discovery and historical occurrence backfill remain pending. No release/tag/APK is produced by this slice.
+At the fixed-time checkpoint, web controls and recurring/day-only preparation were pending. The later implementation below supersedes that limitation; additional group workouts, native offline workout capture/cache migration, capability discovery and historical occurrence backfill remain pending. No release/tag/APK was produced by that checkpoint.
+
+## Implemented recurring and automatic individual slice — 26 October 2026
+
+Authorized staff can opt a plan into one bounded weekly clock-based rule or automatic current-day preparation. Manual is the default. Rule save/stop uses exact receipts and current plan authority. Edits/stopping preserve already materialized work; reschedule/skip that workout separately. One next actionable occurrence is bound at a time; generation does not advance progression, backfill missed dates or create group work. Weekly rules can use recovery days; automatic rules follow the published calendar cycle anchored to assignment start, including missing/rest days, cannot-train restrictions and one automatic workout per assignment/date. DST gaps/folds require coach resolution.
+
+The API poll and optional one-shot operator pass use the existing institution/assignment locks and unique positions. New events distinguish real timed bounds from explicit day-only date/timezone with null bounds. Web agenda/calendar/list/detail and reporting handle this shape; calendar clients explicitly opt in to day-only reads. Default attendance reads retain timed-only form, and current native workout capture is not enabled by this server/web implementation. See [ADR 0032](../decisions/ADR-0032-opt-in-workout-preparation.md), operations and verification. Historical occurrence reconciliation, group prescriptions/results and native offline recording remain separate slices.

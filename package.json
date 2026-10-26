@@ -81,7 +81,9 @@
     "backend:inventory:database": "node apps/backend/scripts/backend-inventory.mjs --refresh-database",
     "test:institution-names": "node apps/backend/scripts/prisma/verify-institution-names.mjs",
     "test:institution-api": "node apps/backend/scripts/prisma/isolated-api.mjs tests/retired-domains.test.ts tests/backend-boundary.test.ts tests/institution-transport.test.ts",
-    "test:retired-domains": "npm run test:retired-domains --workspace @rafik/backend"
+    "test:retired-domains": "npm run test:retired-domains --workspace @rafik/backend",
+    "test:workout-scheduler": "node apps/backend/scripts/prisma/isolated-api.mjs tests/workout-scheduler.test.ts",
+    "workouts:prepare": "npm run workouts:prepare --workspace @rafik/backend"
   },
   "overrides": {
     "tar": "7.5.22",

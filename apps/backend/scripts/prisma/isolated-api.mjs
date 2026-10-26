@@ -26,6 +26,7 @@ const env = {
   ...process.env,
   PORT: String(port),
   RAFIK_TEST_API: api,
+  RAFIK_DISABLE_WORKOUT_SCHEDULER: "true",
   DATABASE_URL: `postgresql://rafik_api:rafik-local-api-only@127.0.0.1:55332/${database}`,
   RAFIK_TEST_FILES: ".local/browser-" + database.slice("rafik_browser_".length),
   MIGRATION_DATABASE_URL: `postgresql://rafik_migrate:rafik-local-migrations-only@127.0.0.1:55332/${database}`,

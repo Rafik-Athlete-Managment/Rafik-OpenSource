@@ -6,7 +6,13 @@ const props = defineProps<{
   month: string
   selected: string
   zone: string
-  events: { id: string; starts_at: string; title: string; state: string }[]
+  events: {
+    id: string
+    starts_at: string | null
+    training_date?: string
+    title: string
+    state: string
+  }[]
 }>()
 const emit = defineEmits<{ select: [date: string] }>()
 const first = computed(() => props.month.slice(0, 7) + '-01')
@@ -22,7 +28,10 @@ const cells = computed(() => {
     return {
       date,
       inside: date.slice(0, 7) === first.value.slice(0, 7),
-      events: props.events.filter((e) => localDate(props.zone, new Date(e.starts_at)) === date),
+      events: props.events.filter(
+        (e) =>
+          (e.starts_at ? localDate(props.zone, new Date(e.starts_at)) : e.training_date) === date,
+      ),
     }
   })
 })

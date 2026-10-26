@@ -335,5 +335,8 @@
   },
   "features/institution/AthleteDay.vue": {
     "purpose": "Athlete daily dashboard: own workout agenda, upcoming events, food-diary entry and assigned coach messaging."
+  },
+  "features/institution/WorkoutRuleSettings.vue": {
+    "purpose": "Staff plan scheduling policy: bounded weekly appointments or opt-in day-only preparation, diagnostics, exact-command recovery and future-rule stop/edit."
   }
 }

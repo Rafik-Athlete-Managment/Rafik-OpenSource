@@ -38,8 +38,10 @@ export type CalendarEvent = {
   id: string
   title: string
   kind: 'training' | 'assessment'
-  starts_at: string
-  ends_at: string
+  starts_at: string | null
+  ends_at: string | null
+  training_date: string
+  timing_mode: 'timed' | 'day'
   timezone: string
   location: string
   state: 'scheduled' | 'cancelled' | 'completed'

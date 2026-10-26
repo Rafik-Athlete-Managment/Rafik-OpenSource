@@ -246,7 +246,7 @@
           "Coach field work"
         ],
         "summary": "Read a bounded schedule or one authorized event",
-        "description": "Send view=trainer and a bounded from/to calendar-date window, or supply id to read one event detail before field work. The server checks current assignment and membership. For online-only correction history, send id, historyOnly=true, historyMember, historyKind (attendance or results) and historyOffset. Each read rechecks event authority; the selected athlete must be an event participant. History returns up to 25 items and next offset; it includes the original entry and later corrections, with recorded actor, timestamp and submitted values.",
+        "description": "Send view=trainer and a bounded from/to calendar-date window, or supply id to read one event detail before field work. The server checks current assignment and membership. For online-only correction history, send id, historyOnly=true, historyMember, historyKind (attendance or results) and historyOffset. Each read rechecks event authority; the selected athlete must be an event participant. History returns up to 25 items and next offset; it includes the original entry and later corrections, with recorded actor, timestamp and submitted values. Unreleased beta.3 adds explicit includeDayOnly opt-in. Existing Android attendance clients keep timed-only reads; a matching new native workout slice is still required.",
         "parameters": [
           {
             "name": "view",
@@ -336,6 +336,15 @@
               "minimum": 0,
               "maximum": 100000
             }
+          },
+          {
+            "name": "includeDayOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Opt in to day-only training events. Their starts_at/ends_at are null; use training_date/timezone. Without this flag lists remain timed-only; requesting a day-only detail returns day_only_event_requires_update."
           }
         ],
         "responses": {
@@ -419,7 +428,7 @@
           "Coach field work"
         ],
         "summary": "Schedule, reschedule or explicitly skip an individual plan workout",
-        "description": "Unreleased beta.3 server slice. Fixed-time individual scheduling only. Binds the next non-rest day from the immutable plan cycle without advancing its cursor. One unresolved workout blocks that assignment only. Skip requires a staff reason; completion advances through the existing session save command. Uses exact operation receipts and rechecks current plan authority before replay. No recurring worker, day-only records, group workout capture or new Android UI is enabled.",
+        "description": "Unreleased beta.3 server slice. Explicit staff scheduling uses fixed times; a day-only worker occurrence can be converted to a timed occurrence through reschedule. Binds the next non-rest day from the immutable plan cycle without advancing its cursor. One unresolved workout blocks that assignment only. Skip requires a staff reason; completion advances through the existing session save command. Uses exact operation receipts and rechecks current plan authority before replay. Recurring/automatic preparation is configured through workout-rules. Group workout capture and new Android workout UI remain pending.",
         "security": [
           {
             "mobileBearer": []
@@ -474,7 +483,7 @@
           "Coach field work"
         ],
         "summary": "Read authorized next-workout state without choosing an athlete first",
-        "description": "Unreleased beta.3 web integration. Read-only projection; never allocates a sequence position. Returns next immutable plan day, pending occurrence, resumable record, general participation restriction and action flags. Coach scope is primary athletes plus supporting sport-specific plans. Athlete scope is own assignments. due=true includes workouts awaiting scheduling, today/overdue unresolved occurrences and unfinished older records, in the signed-in account timezone. Recurrence and automatic scheduling remain pending.",
+        "description": "Unreleased beta.3 web integration. Read-only projection; never allocates a sequence position. Returns next immutable plan day, pending occurrence, resumable record, general participation restriction and action flags. Coach scope is primary athletes plus supporting sport-specific plans. Athlete scope is own assignments. due=true includes workouts awaiting scheduling, today/overdue unresolved occurrences and unfinished older records, in the signed-in account timezone. Day-only occurrences have null starts_at/ends_at and an explicit training_date/timezone. Day-only eligibility uses that timezone; clients must not invent a clock time.",
         "security": [
           {
             "mobileBearer": []
@@ -624,6 +633,104 @@
           },
           "409": {
             "description": "Stale version, future start, inactive/paused position, or another unresolved position."
+          }
+        }
+      }
+    },
+    "/v1/institution/workout-rules": {
+      "get": {
+        "tags": [
+          "Coach field work"
+        ],
+        "summary": "Read one authorized plan’s scheduling policy and worker diagnostics",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "admin",
+                "trainer"
+              ]
+            }
+          },
+          {
+            "name": "assignment",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "scheduler_enabled and up to 25 policies, active first. Dates, weekdays (ISO Monday=1), local_time/duration or null for automatic mode, last_generated_on, last_checked_at and general issue codes."
+          },
+          "403": {
+            "description": "Current staff/plan authority missing."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Coach field work"
+        ],
+        "summary": "Set or stop future weekly/automatic workout preparation",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Rafik-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "enum": [
+                "web",
+                "android"
+              ]
+            }
+          }
+        ],
+        "description": "Unreleased beta.3. Opt-in per plan. Exact operation receipt and current plan authority required on replay. Set replaces the active rule; rule_id/revision must match (null/null for manual). Existing materialized work is not changed: use workout-scheduling for that occurrence. Weekly rules use one uniquely resolvable local clock; DST gaps/folds surface an issue without shifting time. Automatic mode prepares the current eligible non-rest day with no clock time, at most once per assignment/day. Unresolved work blocks only that assignment. No missed-date backfill or group progression. A post-acknowledgment worker kick/poll is separate from saving the policy.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkoutRuleCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved rule or stop acknowledgment. Preparation happens separately and may be blocked."
+          },
+          "400": {
+            "description": "Invalid date window (maximum 366 days), weekday, timezone, time or duration."
+          },
+          "403": {
+            "description": "Current staff/plan authority missing."
+          },
+          "409": {
+            "description": "Stale rule identity/revision or unavailable assignment."
           }
         }
       }
@@ -1471,11 +1578,17 @@
                     "type": "integer"
                   },
                   "starts_at": {
-                    "type": "string",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
                     "format": "date-time"
                   },
                   "ends_at": {
-                    "type": "string",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
                     "format": "date-time"
                   },
                   "timezone": {
@@ -1644,6 +1757,91 @@
           "offset",
           "limit"
         ]
+      },
+      "WorkoutRuleCommand": {
+        "type": "object",
+        "required": [
+          "operation",
+          "action",
+          "view",
+          "assignment_id",
+          "rule_id",
+          "revision"
+        ],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "enum": [
+              "set-workout-rule",
+              "stop-workout-rule"
+            ]
+          },
+          "view": {
+            "enum": [
+              "admin",
+              "trainer"
+            ]
+          },
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rule_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "mode": {
+            "enum": [
+              "weekly",
+              "automatic"
+            ]
+          },
+          "starts_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "ends_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "weekdays": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 7,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            }
+          },
+          "local_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 480
+          }
+        },
+        "description": "For set-workout-rule also provide mode/starts_on/ends_on/timezone; weekly additionally requires weekdays/local_time/duration_minutes. Automatic ignores weekly-only fields. Stop changes only the future policy."
       }
     },
     "responses": {
