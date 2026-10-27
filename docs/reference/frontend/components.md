@@ -105,8 +105,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [components/OverflowMenu.vue](../../../apps/frontend/src/components/OverflowMenu.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Labelled menu for secondary or destructive record actions and the coach New menu; items navigate or emit a key while the caller owns the action.
-- **Direct rendered consumers:** [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/training`, `/training/:assignment`
+- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue), [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/members/:member`, `/people`, `/training`, `/training/:assignment`
 
 ## PageHeading
 

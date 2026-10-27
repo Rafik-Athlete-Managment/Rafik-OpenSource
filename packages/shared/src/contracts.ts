@@ -135,6 +135,13 @@ export type AthletePlanSummary = {
   sport: string | null
   revision: number
   adaptation_revision?: number
+  /** Read-only next-workout summary for current plans (same state rule as the workout agenda); null otherwise. */
+  next_workout?: {
+    state: WorkoutAgendaItem['state']
+    starts_at: string | null
+    training_date: string | null
+    timezone: string | null
+  } | null
   version: {
     id: string
     title: string

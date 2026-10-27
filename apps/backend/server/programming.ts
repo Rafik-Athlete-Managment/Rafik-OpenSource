@@ -1620,6 +1620,51 @@ export async function previousInstitutionPerformance(
 }
 
 /** Bounded, read-only projection. All roster filtering happens before pagination. */
+/** Calendar day at `now` in a zone, as a UTC-midnight date for date-column comparison. */
+export const localDay = (timezone: string, now: Date) =>
+  new Date(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now) + "T00:00:00Z",
+  );
+/** One rule for an assignment's next-workout state, shared by agenda and plan reads. */
+export function workoutState(
+  positionState: string | undefined,
+  occurrence:
+    | {
+        starts_at: Date | null;
+        ends_at: Date | null;
+        training_date: Date;
+      }
+    | null
+    | undefined,
+  unfinishedSession: boolean,
+  now: Date,
+  occurrenceToday: Date,
+): WorkoutAgendaItem["state"] {
+  return positionState === "paused"
+    ? "paused"
+    : unfinishedSession
+      ? "in_progress"
+      : !occurrence
+        ? "unscheduled"
+        : (
+              occurrence.starts_at
+                ? occurrence.starts_at > now
+                : occurrence.training_date > occurrenceToday
+            )
+          ? "scheduled"
+          : (
+                occurrence.ends_at
+                  ? occurrence.ends_at < now
+                  : occurrence.training_date < occurrenceToday
+              )
+            ? "overdue"
+            : "ready";
+}
 export async function workoutAgenda(
   actor: Actor,
   institution: string,
@@ -1807,14 +1852,7 @@ export async function workoutAgenda(
           ) ||
           days[a.sequence_cursor % days.length];
         const occurrenceToday = occurrence
-          ? new Date(
-              new Intl.DateTimeFormat("en-CA", {
-                timeZone: occurrence.timezone,
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              }).format(now) + "T00:00:00Z",
-            )
+          ? localDay(occurrence.timezone, now)
           : today;
         const blocked = restrictions.some(
           (r) =>
@@ -1829,26 +1867,13 @@ export async function workoutAgenda(
             : !day
               ? "no_workout_days"
               : null;
-        const state =
-          position?.state === "paused"
-            ? "paused"
-            : session
-              ? "in_progress"
-              : !occurrence
-                ? "unscheduled"
-                : (
-                      occurrence.starts_at
-                        ? occurrence.starts_at > now
-                        : occurrence.training_date > occurrenceToday
-                    )
-                  ? "scheduled"
-                  : (
-                        occurrence.ends_at
-                          ? occurrence.ends_at < now
-                          : occurrence.training_date < occurrenceToday
-                      )
-                    ? "overdue"
-                    : "ready";
+        const state = workoutState(
+          position?.state,
+          occurrence,
+          !!session,
+          now,
+          occurrenceToday,
+        );
         const exercises = (day?.exercises || []) as any[];
         const muscleCounts = new Map<string, number>();
         for (const exercise of exercises) {

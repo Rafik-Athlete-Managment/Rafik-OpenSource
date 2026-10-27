@@ -275,6 +275,9 @@ onMounted(async () => {
   if (!stored && route.query.makeup && route.query.member) {
     draft.value.participants = [String(route.query.member)]
     draft.value.title = l('Makeup session', 'جلسة تعويضية')
+  } else if (!stored && route.query.member) {
+    // Started from an athlete: preselect them; the people step still verifies authority.
+    draft.value.participants = [String(route.query.member)]
   }
   ready.value = true
 })

@@ -561,6 +561,7 @@ onMounted(async () => {
           >
             <div class="list-controls">
               <TabsList
+                v-if="view === 'admin'"
                 class="report-tabs ui-tabs"
                 :aria-label="l('People by role', 'الأشخاص حسب الدور')"
               >
@@ -640,7 +641,19 @@ onMounted(async () => {
                     <div class="person-identity">
                       <span class="avatar">{{ member.name.slice(0, 1) }}</span>
                       <div>
-                        <h2>{{ member.name }}</h2>
+                        <h2>
+                          <RouterLink
+                            class="person-name-link"
+                            :to="
+                              base +
+                              '/members/' +
+                              member.id +
+                              '?returnTo=' +
+                              encodeURIComponent(route.fullPath)
+                            "
+                            ><bdi dir="auto">{{ member.name }}</bdi></RouterLink
+                          >
+                        </h2>
                         <p class="person-meta">
                           {{ member.roles.map(roleName).join(' · ')
                           }}<template v-if="member.roles.includes('trainee')">
@@ -717,6 +730,29 @@ onMounted(async () => {
                         :title="l('Manage details', 'إدارة البيانات')"
                         ><PersonActionIcon kind="manage"
                       /></RouterLink>
+                      <OverflowMenu
+                        v-if="
+                          view === 'trainer' && member.active && member.roles.includes('trainee')
+                        "
+                        :label="l('More actions for ', 'إجراءات أخرى لـ ') + member.name"
+                        :items="[
+                          {
+                            key: 'assign',
+                            label: l('Assign a program', 'تعيين برنامج'),
+                            to: { path: '/plans', query: { athlete: member.id } },
+                          },
+                          {
+                            key: 'event',
+                            label: l('Schedule event', 'جدولة موعد'),
+                            to: { path: '/schedule/new', query: { member: member.id } },
+                          },
+                          {
+                            key: 'nutrition',
+                            label: l('Nutrition plan', 'خطة تغذية'),
+                            to: { path: '/nutrition', query: { member: member.id } },
+                          },
+                        ]"
+                      />
                     </div>
                   </article>
                 </section>

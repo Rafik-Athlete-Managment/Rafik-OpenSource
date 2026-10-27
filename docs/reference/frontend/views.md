@@ -159,7 +159,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Paginated/searchable program library and entry to create, preview or edit.
 - **Access:** Current institutional members; athletes receive only their own assigned immutable versions, staff authoring remains gated.
 - **Opens:** `/plans/:id`, `/training`
-- **Opened from views:** `/deliver/:id`, `/plans/:id`, `/training`, `/training/:assignment`
+- **Opened from views:** `/deliver/:id`, `/members/:member`, `/plans/:id`, `/training`, `/training/:assignment`
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -218,7 +218,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/members/:member`
 - **Purpose:** Person profile with real overview/plans/workouts/assessments/nutrition/participation/manage tabs according to subject role.
 - **Access:** Administrators can inspect/manage institutional people. Coaches can inspect their authorized athletes, not a staff directory; sensitive sections retain separate API restrictions.
-- **Opens:** `/access`, `/assessments/:member`, `/messages/:channel?`, `/nutrition`, `/password-setup/:token`, `/people`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workouts`
+- **Opens:** `/access`, `/assessments/:member`, `/messages/:channel?`, `/nutrition`, `/password-setup/:token`, `/people`, `/plans`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workouts`
 - **Opened from views:** `/people`, `/training/:assignment`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.

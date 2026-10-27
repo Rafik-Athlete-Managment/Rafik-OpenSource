@@ -38,10 +38,13 @@ const props = withDefaults(
     headingLevel?: number
     /** Dense staff rows with one primary action and a menu for the rest. */
     compact?: boolean
+    /** Open the scheduling panel for the first schedulable workout after the first load. */
+    autoSchedule?: boolean
   }>(),
   {
     due: false,
     compact: false,
+    autoSchedule: false,
     limit: 10,
     pageHeading: false,
   },
@@ -67,7 +70,8 @@ const timezone = ref(profile.value?.timezone || 'UTC'),
   minutes = ref(60),
   reason = ref('')
 let disposed = false,
-  generation = 0
+  generation = 0,
+  autoScheduled = false
 onUnmounted(() => {
   disposed = true
   generation++
@@ -99,6 +103,11 @@ async function load() {
       }
       data.value = result
       emit('loaded', result.total)
+      if (props.autoSchedule && !autoScheduled) {
+        autoScheduled = true
+        const item = result.items.find((x) => x.can_schedule)
+        if (item) edit(item, 'schedule-workout')
+      }
     }
   } catch (e) {
     if (!disposed && generation === seq) {
@@ -800,7 +809,7 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
   margin-block-start: var(--space-4);
 }
 .agenda-compact .record-row {
-  grid-template-columns: minmax(180px, 1.1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(180px, 1.1fr) minmax(0, 1fr) 11rem;
 }
 .agenda-compact-name {
   margin: 2px 0 0;

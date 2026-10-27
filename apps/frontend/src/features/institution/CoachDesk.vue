@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
-import { PhCalendarBlank, PhHeartbeat, PhInfo } from '@phosphor-icons/vue'
+import { PhCalendarBlank, PhHeartbeat, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'
 import { request } from '../../lib/backend'
 import { language as l, dateLabel, errorMessage } from '../../lib/i18n'
 import { institutionContext } from '../../app/institution'
@@ -11,7 +11,6 @@ import { localDate } from '../../lib/dates'
 import WorkoutAgenda from './WorkoutAgenda.vue'
 import UpcomingSessions from './UpcomingSessions.vue'
 import FollowUpPanel, { type FollowUpQueue } from './FollowUpPanel.vue'
-import { useFocusRefresh } from '../../lib/focus-refresh'
 type SharedStatus = {
   id: string
   athlete_name: string
@@ -72,8 +71,8 @@ async function loadStatus() {
     if (!disposed && current === generation) loading.value = false
   }
 }
+// Each status read is access-logged per athlete, so it refreshes only on request.
 onMounted(loadStatus)
-useFocusRefresh(loadStatus)
 // Separate counts per record type; they overlap in meaning and are never summed.
 const counts = ref<{ record?: number; planning?: number } & Partial<Record<FollowUpQueue, number>>>(
   {},
@@ -198,6 +197,15 @@ onUnmounted(() => {
           <h2 id="desk-status-title">
             <PhHeartbeat :size="22" aria-hidden="true" />{{ l('Athlete status', 'حالة الرياضيين') }}
           </h2>
+          <button
+            class="button small secondary icon-only"
+            :disabled="loading"
+            :aria-label="l('Refresh athlete status', 'تحديث حالة الرياضيين')"
+            :title="l('Refresh athlete status', 'تحديث حالة الرياضيين')"
+            @click="loadStatus"
+          >
+            <PhArrowClockwise :size="18" aria-hidden="true" />
+          </button>
         </header>
         <p v-if="loading && !statuses.length" class="small-print" role="status">
           {{ l('Checking shared status…', 'جارٍ التحقق من الحالة المشتركة…') }}

@@ -8,7 +8,21 @@ import { PhPlus, PhArrowRight, PhBarbell } from '@phosphor-icons/vue'
 import { request } from '../../lib/backend'
 import { useRoute } from 'vue-router'
 import { programContext } from './program-context'
-const context = programContext(useRoute())
+const route = useRoute()
+const context = programContext(route)
+// Athlete-first assignment (from People, a profile or follow-up): cards continue to delivery.
+const athlete = computed(() =>
+  context.view !== 'trainee' ? String(route.query.athlete || '') : '',
+)
+/** Latest published (immutable) version; drafts without one cannot be assigned. */
+const assignable = (planId: string) =>
+  versions.value.filter((v) => v.plan_id === planId).sort((a, b) => b.revision - a.revision)[0]
+const cardTarget = (planId: string) => {
+  const version = athlete.value ? assignable(planId) : undefined
+  return version
+    ? { path: context.base + '/deliver/' + version.id, query: { member: athlete.value } }
+    : context.base + '/plans/' + planId
+}
 const offset = ref(0),
   total = ref(0)
 let loadSequence = 0
@@ -87,6 +101,19 @@ onUnmounted(() => {
         ><PhPlus :size="18" aria-hidden="true" />{{ t('newPlan') }}</RouterLink
       >
     </PageHeading>
+    <section v-if="athlete" class="notice assign-mode" role="status">
+      <p>
+        {{
+          language(
+            'Choose a published program to assign. The athlete is already selected on the next step.',
+            'اختر برنامجاً منشوراً لتعيينه. الرياضي محدد مسبقاً في الخطوة التالية.',
+          )
+        }}
+      </p>
+      <RouterLink class="text-link" :to="{ query: { ...route.query, athlete: undefined } }">{{
+        language('Cancel assigning', 'إلغاء التعيين')
+      }}</RouterLink>
+    </section>
     <div class="list-controls">
       <label v-if="search || plans.some((p) => !p.archived)" class="plan-search"
         >{{ language('Search programs', 'البحث في البرامج')
@@ -115,7 +142,7 @@ onUnmounted(() => {
         <RouterLink
           v-for="p in context.institution ? filtered : filtered.slice(offset, offset + recordLimit)"
           :key="p.id"
-          :to="context.base + '/plans/' + p.id"
+          :to="cardTarget(p.id)"
           class="plan-card panel"
           ><ProgramCover :id="p.draft.presentation?.cover" />
           <div class="plan-card-top">
@@ -139,6 +166,13 @@ onUnmounted(() => {
             >
           </div>
           <h2>{{ p.title }}</h2>
+          <p v-if="athlete" class="assign-hint">
+            {{
+              assignable(p.id)
+                ? language('Assign this program', 'تعيين هذا البرنامج')
+                : language('Publish before assigning', 'انشر البرنامج قبل تعيينه')
+            }}
+          </p>
           <p v-if="p.draft.presentation?.goal">{{ p.draft.presentation.goal }}</p>
           <p v-if="p.draft.presentation?.level">
             {{
@@ -198,3 +232,19 @@ onUnmounted(() => {
     </PageState>
   </div>
 </template>
+<style scoped>
+.assign-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.assign-mode p {
+  margin: 0;
+}
+.assign-hint {
+  color: var(--accent);
+  font-weight: 600;
+}
+</style>
