@@ -275,3 +275,375 @@ Desktop should use one clear main work region and a smaller context region, stac
 Founder selected athlete daily actions and administrator participation/activity trends followed by administration, and approved implementation. Authorized sources were reviewed before implementation. Keep optional personal progress behind reliable data rather than fabricated analytics; detailed operational reporting remains on Analytics. Verification records inspected states and remaining founder usability coverage.
 
 Implementation reuses existing period analytics; institution-wide assessment trends lack an existing aggregate and were not added. Admin coverage follows activity rather than leading it. Athlete coach contacts use the existing authorized messaging entry point. See verification for actual rendered coverage; the original source findings above describe the pre-change page.
+
+## Coach dashboard UX revamp — 27 October 2026
+
+**Ground rule:** every function on every page stays. The revamp changes how a coach finds, reaches and uses those functions. API contracts, permissions, exact commands, revision checks, durable drafts, immutable program versions and existing routes stay as they are. A renamed or merged route keeps a redirect.
+
+### Evidence and limits
+
+- **Rendered:** signed in as the seeded coach (`orgtrainer@rafik.test`) on a local instance and captured 20 coach routes at 1440×1000 (light) and 390×844. Only the dashboard was also captured in dark. Desktop captures were extended to the full height of the workspace scroller.
+- **Source:** extracted every page's actions and labels from its Vue template. This covers dialogs, populated rows and flows the sparse seed data did not show: recording, review, nutrition editor, the assignment wizard and event-detail actions. These items are marked _(source)_.
+- **Not covered:** Arabic/RTL, WebKit, keyboard-only use, long or populated rosters, and any human usability observation. The seed has 1 coach, 1 athlete, 1 plan, 3 events and no recorded workouts.
+- **Environment:** Docker Hub rate-limited the Compose image pull (HTTP 429), so the database ran on the container's native PostgreSQL 16 instead of the project's 17.6. All 58+ migrations applied cleanly.
+
+### Cross-cutting findings
+
+| #   | Finding                                                                                                                                                                                                                                                                                                                                  | Evidence                      |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| X1  | **One entity, several names (logged for a later decision; no renames in this revamp).** Nav says "Workout history"; Athlete plans calls the same link "Session history". The empty state says "No recorded sessions". Participation is called "Injury status" (nav), "Athlete status" (dashboard) and "Participation" (profile tab).     | Rendered                      |
+| X2  | **Athlete data is split by data type, not by athlete.** Athlete plans, Workout history, Nutrition plans and Injury status are each a roster-wide directory. The athlete profile has the same six areas as tabs, but its Overview only shows membership metadata. A coach who thinks "what's going on with Sara?" has to visit 4–5 pages. | Rendered + source             |
+| X3  | **The nav accordion hides the other group.** `closeOtherGroups` collapses Coaching while you are in Library, so Overview and People disappear from view. There are 15 links in total, which fits on desktop without collapsing.                                                                                                          | Rendered + `DashboardNav.vue` |
+| X4  | **Low-frequency items in primary nav.** "My feedback" (a monthly workplace survey) sits at the same level as Schedule and Messages.                                                                                                                                                                                                      | Rendered                      |
+| X5  | **Manual refresh and submit everywhere.** There are separate "Refresh workouts" buttons (two on the dashboard), a Refresh text link on Messages, and an explicit Search button on most lists. Programs and People have no Search button, so search behaves inconsistently from page to page.                                             | Rendered                      |
+| X6  | **Directories are big cards with one button.** Athlete plans and the dashboard queue cards are about 300px tall per record. They don't show the next actionable fact (next workout, last activity, status), and only one action is reachable per card. People rows rely on icon-only buttons; the row itself is not a link.              | Rendered                      |
+| X7  | **Actions are not contextual.** You can't assign a program, schedule, start a nutrition plan or message from the athlete you're looking at. Each lives on its own page and you search for the athlete again there.                                                                                                                       | Rendered + source             |
+| X8  | **Navigation links styled as actions.** The assigned plan shows "Workout history / Assessment history / Athlete profile" as large buttons in one row with "Adapt" (primary) and "End plan" (filled danger).                                                                                                                              | Rendered                      |
+| X9  | **Caveat text dominates empty or simple states.** Athlete status and Injury status show three paragraphs of privacy caveats around one empty list.                                                                                                                                                                                       | Rendered                      |
+| X10 | **Header and back-link patterns vary.** Some pages use "← Athlete plans" with an icon, others plain "Back to people" text. One page has an overline above the title (Injury status). Program detail has a generic "Program details" title and repeats the program name lower down.                                                       | Rendered                      |
+
+### Page-by-page analysis and revamp
+
+Each entry lists the **functions to keep**, then **current interaction** problems, then the **revamp**.
+
+#### 1. Overview (`/dashboard`, CoachDesk)
+
+**Keep:** workouts to record (start/resume), today's events, athlete participation status and its link, the needs-scheduling queue (schedule, reschedule, skip with reason, view plan), the four follow-up queues (missed sessions, training to review, session outcomes, athletes without a plan), roster count, links to athlete plans and analytics, recovery of pending commands, and refresh.
+
+**Current problems:**
+
+- The filled primary header button is "Athlete plans", a navigation link. Recording, the coach's main daily task, has no primary affordance.
+- "1 · Primary-roster athletes" is a counter styled as a button.
+- "Open schedule" and "Open calendar" go to the same place.
+- Queue cards are large; one needs-scheduling card is about 320px.
+- The four follow-up accordions each take about 95px even at count 0. This contradicts the design system's "zero queues do not consume large empty cards".
+- There are two identical "Refresh workouts" buttons. On a phone the page is 2,300px tall with one record.
+
+**Revamp:**
+
+1. **Header:** greeting, date and timezone. One primary **New** menu: Schedule event, Assign program, Nutrition plan, Message. The roster count becomes plain text that links to People.
+2. **Attention strip:** separate clickable counts — To record · Needs scheduling · To review · Missed sessions · Outcomes needed · Without a plan · Restricted athletes. Each count jumps to or filters its queue. There is **no combined total** (approved rule). Counts at zero are de-emphasised.
+3. **Today's work column:** one chronological list of today's workouts to record and today's events, with type labels kept distinct. Rows are compact (time · athlete · workout/event · status tag · Start/Resume/Open). A row expands to the existing preview (duration, exercises, sets, muscle focus).
+4. **Side column:** Athlete status as a compact list. The caveat is one line ("No shared status = unknown, not cleared") with an info popover.
+5. **Planning:** Needs scheduling as compact rows, each with an inline **Schedule** popover. This reuses the existing scheduling form and commands.
+6. **Follow-up:** one tabbed panel that shows only non-zero queues. When all are zero it shows one "All caught up" line.
+7. **Refresh:** collections refresh on window focus and after acknowledged commands, using the existing refresh tokens. One small refresh control stays in the header.
+
+The approved order still holds (recording, then today's events, athlete status, planning, follow-up). This changes density and reachability, not priorities.
+
+#### 2. People (`/people`)
+
+**Keep:** search, membership filter, pagination and page size, open profile, message athlete, and the primary-coach display.
+
+**Current problems:**
+
+- A single "Athletes" tab is rendered as a tab bar.
+- A row shows only the name and primary coach. You can't scan who needs attention.
+- The only actions are two unlabeled icon buttons.
+
+**Revamp:**
+
+- Make it a roster table:
+  - **Name + sport** (the whole row opens the profile)
+  - **Responsibility** (primary or supporting)
+  - **Participation tag**, joined on the client from the existing participation-status read
+- Plan and next-workout details stay on Athlete plans and the profile; repeating them here would be redundant. No "last activity" column either: the dashboard follow-up queues and Analytics already surface inactive athletes.
+- A row action menu offers Message, Assign program, Nutrition plan and Open profile.
+- Filters: My primary / Supporting / All authorized, sport, membership.
+- Hide the tab bar when only one role is visible.
+- No new server data for this page.
+
+#### 3. Athlete profile (`/members/:member`) → athlete hub
+
+**Keep:** the six tabs (Overview, Plans, Sessions, Assessments, Nutrition, Participation), all their content, Message, manage workouts, and the coach-activity and consent information.
+
+**Current problems:** the Overview tab only shows join date, role, membership, coaches and sports. The only action is Message.
+
+**Revamp:**
+
+- **Header:** name, sport, primary coach, participation tag, and quick actions: Message, Assign program (opens the assignment flow with this athlete preselected), Schedule, Nutrition plan.
+- **Overview becomes a summary grid:**
+  - Next workout (with Start/Schedule)
+  - Active plans
+  - Last 3 sessions (with review state)
+  - Latest assessment
+  - Current nutrition plan and diary-sharing state
+  - Participation status
+- Each summary card has "View all" linking to its tab. Membership metadata moves into a small "Details" card.
+- This lets the roster-wide directories become secondary entry points instead of the only way in.
+
+#### 4. Athlete plans (`/training`)
+
+**Keep:** athlete search, plan-status filter, pagination, open assigned plan, Assign a program, and the link to workout history.
+
+**Current problems:**
+
+- One large card per assignment. It shows start/end dates but not what matters: the next workout, whether it is awaiting a schedule, and whether it is personalized.
+- There is an explicit Search button, and the header link is named "Session history".
+
+**Revamp:**
+
+- Compact rows: athlete · program (with a personalized badge from the existing `adaptation_revision`) · status · **next workout and state** · start/end.
+- **The one new server field in this revamp:** a read-only next-workout summary (state plus scheduled time) on each athlete-plans item. It reuses the existing scheduling projection, adds no new rules and saves opening every plan to find what needs scheduling.
+- Clicking the row opens the detail page.
+- An inline **Schedule** action appears for awaiting rows.
+- Quick filter chips: Needs scheduling, Overdue, Personalized.
+
+#### 5. Assigned plan (`/training/:assignment`)
+
+**Keep:** Adapt athlete plan, End plan, links to workout history, assessment history and the athlete profile; next workouts (schedule, reschedule, skip, start); the plan-scheduling policy (weekly, automatic, change, stop); program preview; and the recovery scope.
+
+**Current problems:** five equal buttons mix navigation, the primary action and a destructive action (X8). The scheduling policy is shown as prose ("Manual scheduling. Automatic preparation is off.") with a separate setup button. Program preview is a set of bare disclosure rows.
+
+**Revamp:**
+
+- **Breadcrumb:** Athlete plans / Sara Khalil / Build a steady foundation, plus the status tag.
+- **Actions:** **Adapt plan** is primary. **End plan** moves into a "⋯" overflow menu, with red text and the existing confirmation. The three history and profile links become a small link group under the title.
+- **Two-column layout:**
+  - **Left:** next workouts, then program preview as day tabs (the same pattern as program detail).
+  - **Right:** summary card with dates, library version or personalized revision, and the **Scheduling** summary ("Manual · Automatic preparation off") with an Edit button that opens the existing WorkoutRuleSettings form.
+
+#### 6. Workout history (`/workouts`), Review (`/review/:id`), Record (`/record/:session`)
+
+**Keep:**
+
+- **History:** athlete search, the list and open review.
+- **Review:** planned versus actual, athlete note, coach feedback, Save review, Continue reviewing, Continue workout for athlete.
+- **Record:** session choice, per-set check buttons, Save progress, Finish session, record history and corrections. _(source)_
+
+**Current problems:**
+
+- History has search only, with no status or date filters and no "needs review" view. That queue lives only on the dashboard.
+- The header carries unrelated cross-links (Schedule, Athlete plans).
+- Record and Review layouts could not be rendered because there were no sessions.
+
+**Revamp:**
+
+- **History:** a table with filter chips: **Needs review** (the same predicate as the dashboard queue), In progress, Completed, Reviewed. Also a date range and an athlete filter. A row opens Review.
+- **Review:** planned and actual side by side in one table per exercise. The feedback composer stays reachable while scrolling. **Next to review** moves through the queue without returning to the list.
+- **Record:** a focused task layout with a sticky header (athlete, workout, sets done of total, Save progress, Finish). Exercises are steps. Record history moves to a side drawer.
+- These need a populated-data render pass before the design is finalized.
+
+#### 7. Nutrition plans (`/nutrition`)
+
+**Keep:** search, status filter, create a plan (athlete-choice dialog), view plan, plan editor and history, example meal plan, food diary (sharing-dependent), corrections and removals, and drafts. _(mostly source)_
+
+**Current problems:** this is the same toolbar pattern as Athlete plans but with an explicit Search button. NutritionPage.vue (about 1,050 lines) puts plan, diary and history into one long page.
+
+**Revamp:**
+
+- The list becomes rows: athlete · plan version · effective dates · diary sharing · last diary entry.
+- "Create plan" is also reachable from the athlete profile and roster row.
+- The plan page gets tabs: **Plan** (read view, then Edit mode), **Food diary**, **History**. Draft and recovery banners stay inside the tab they belong to.
+
+#### 8. Schedule (`/schedule`, `/events`)
+
+**Keep:** month view and week agenda, period navigation, show cancelled, the selected-day bookings panel, the list view with search, type and status filters, Schedule event, open event, and existing date/view/filter URL parameters.
+
+**Current problems:**
+
+- Three overlapping period controls: a View select, a native month input and prev/next with a label.
+- Event chips are truncated ("Movement ba…"), have no time, and no type colour.
+- The list view is a separate route reached by a toggle button.
+
+**Revamp:**
+
+- **One calendar toolbar:** [Today] [‹ ›] _October 2026_ · **Month / Week / List tabs** · Type filter · Show cancelled · **Schedule event**. The tabs keep the view in the URL, and the existing `/events` list URLs keep working.
+- Chips show time and title, with a type colour plus a text or icon label.
+- Clicking a chip opens a popover with the essentials and "Open event". Clicking a day fills the side panel.
+- **Approved 27 October:** Month/Week/List tabs replace the earlier single-toggle rule.
+
+#### 9. Schedule event (`/schedule/new`)
+
+**Keep:** the 3-step flow (details, people, review), event type, assessment template search with More, groups-first people selection, repeat (up to 8 occurrences), timezone, location, the device draft, and Confirm schedule. The planned "existing workout picker vs custom event" slice is next.
+
+**Current problems:** event type is a select inside a full-width form, so 1,100px-wide inputs, against the 720–800px form-width rule. Review only happens at step 3.
+
+**Revamp:**
+
+- **Step 1 starts with type cards:** Training session, Assessment, and later "From an athlete's workout". This also gives the next slice a natural home.
+- **Form:** narrow details on the left, with a **live summary** on the right that becomes the review step on phones.
+- People: group first, then add individuals. Keep the draft and recovery behaviour unchanged.
+
+#### 10. Event detail (`/schedule/:id`)
+
+**Keep:** attendance per participant (present, absent, excused, checked in), record and correct results with history, session notes, reschedule, reassign staff, cancel with confirmation, complete or finish the event, book a makeup session, rate the session, and open plan workouts. _(many actions are source-only)_
+
+**Current problems:**
+
+- Each participant row has its own select and Save button.
+- Event-level actions are hidden or scattered.
+- The time shows "GMT+0" in an Asia/Dubai institution. not confirmed whether that is the stored event timezone or a display issue.
+
+**Revamp:**
+
+- **Header:** status and an action bar with Reschedule, Reassign staff and Complete. Cancel event goes into an overflow menu as danger.
+- **Participants table:** attendance as a segmented control per row. "Mark all present" stages the changes, and a single **Save attendance** sends the existing per-participant commands. Pending and uncertain state shows per row.
+- Results expand inline per participant. Correction history lives in a drawer.
+
+#### 11. Messages (`/messages`)
+
+**Keep:** Chats, New chat and Groups tabs; search; institution-inclusion; join; the thread with drafts and attachments; unread counts; load more; and the mounted list while a thread is open.
+
+**Current problems:**
+
+- The "Search" text link sits under the input, and a "Refresh" text link sits in the header.
+- The empty thread pane says "Keep the group in sync", which reads oddly before any conversation is chosen.
+- Starting a message to an athlete takes three steps.
+
+**Revamp:**
+
+- Typing in the list filters it immediately; Enter submits the server search. A **New message** button opens the person or group picker.
+- The empty pane offers "Start a conversation" plus recent primary-roster athletes.
+- Remove the manual Refresh link. Polling or refresh on focus already covers it; keep a retry on error.
+
+#### 12. Analytics (`/analytics`)
+
+**Keep:** the period presets and custom dates, the athlete filter, KPI cards with links, the three tabs, charts with data tables, "How to read", and the last-successful-report behaviour.
+
+**Current problems:** this page is in reasonable shape. "Filter by athlete" is a disclosure in the far corner. The donut has a single category. Help is one long disclosure at the bottom.
+
+**Revamp (light):**
+
+- One filter toolbar: period, athlete combobox, custom dates.
+- Every KPI card links to its filtered list.
+- "How to read" becomes per-chart info popovers.
+- Keep the chart and table equivalents.
+
+#### 13. Injury status (`/injuries`)
+
+**Keep:** the assigned-athlete status list, report, correct and close status, history where authorized, the privacy notice, and the athlete-side consent and own-records functions.
+
+**Current problems:** two caveat panels sit around "No shared active statuses."
+
+**Revamp:**
+
+- Make it a roster table with status and effective date, with per-row Report/Correct actions.
+- The privacy rule becomes one inline notice with a "Learn more" link.
+
+#### 14. My feedback (`/feedback`)
+
+**Keep:** the monthly 1–5 workplace rating, the non-anonymity notice, and save.
+
+**Revamp:**
+
+- Move it out of primary nav into the sidebar footer links (Support, Help, Settings).
+- Surface it on Overview as a dismissible once-a-month prompt.
+- The page and route stay.
+
+#### 15. Programs (`/plans`) and program detail (`/plans/:id`)
+
+**Keep:** search, pagination, new program, open, the plan studio editor (save draft, publish, duplicate day or week, alternatives, covers), make an editable copy, and assign.
+
+**Current problems:**
+
+- The detail page is titled "Program details", then "PROGRAM PREVIEW · Build a steady foundation". The lone Assign button floats above a divider.
+- Each exercise shows three 175px position images, so 4 exercises take 2,200px.
+- The list has no filters for level, goal, draft or published.
+
+**Revamp:**
+
+- **List:** filter chips for draft/published, level and goal, plus "Mine".
+- **Detail:** the page title is the program name, with an action bar: Assign (primary), Edit or Make an editable copy.
+- Day tabs stay. Exercise rows are compact (number, name, prescription, one thumbnail) and expand to the positions and cue.
+- Assign opens the existing wizard.
+- **Editor:** add a sticky outline (weeks and days) for navigating long programs, and an exercise-picker drawer. Save and publish semantics are unchanged.
+
+#### 16. Assign program (`/deliver/:id`)
+
+**Keep:** every step and rule: athlete search, overlapping-plan choice (keep or replace dialog), schedule mode, automatic preparation, dates, sport and goal, review, confirm.
+
+**Revamp:**
+
+- Make it launchable with context. From an athlete (profile or roster row), the athlete is preselected and you start at "choose program". From a program, the current flow is unchanged.
+- Steps and the sticky next bar stay.
+
+#### 17. Exercises (`/exercises`)
+
+**Keep:** search, library/equipment/body-area/recording-type/demonstration filters, sort, pagination, the master-detail preview with video and credits, and create/edit exercise.
+
+**Current problems:**
+
+- Six selects in two rows push results down.
+- The rendered "Videos first" sort control is clipped: its caret overlaps the text and the control is too narrow.
+- Pagination inside the list column overflows its edge: the next button crosses the divider.
+
+**Revamp:**
+
+- Search + **Filters** button (popover or drawer on phones) + active filter chips + Clear + sort, all on one row.
+- Fix the sort and pagination containment.
+- The detail pane is sticky on desktop.
+
+#### 18. Resources (`/resources`)
+
+**Keep:** search, available/archived filter, upload (dropzone with constraints), archive and restore, file details, more files.
+
+**Current problems:** the filters are boxed inside a card, against the toolbar rule. The large dropzone is always visible below the list.
+
+**Revamp:**
+
+- The toolbar is unboxed, with an **Upload** primary button in the header that opens the dropzone in a dialog. The inline dropzone remains only for an empty library.
+- Files show as tiles with previews; details open in a side panel.
+
+#### 19. Groups and Assessment templates (`/groups`, `/assessment-templates`)
+
+**Keep:** search, archived toggle, create and edit pages, drills and result bounds, member pickers, open group conversation, schedule an event.
+
+**Current problems:**
+
+- Generic empty copy ("Create your first item").
+- An orphan "Schedule an event ↗" link sits below.
+- **Observation:** the seed has one active group in this institution ("Foundation group", not archived), but the coach's Groups page shows "No training groups". The cause isn't confirmed. It may be coach scoping or a defect, and needs a check before redesign.
+
+**Revamp:**
+
+- Specific empty states with the create action inside.
+- Groups as rows showing member count, coaches and a conversation link.
+- Templates as a card grid. "Use in event" on a template opens the composer with it preselected.
+
+### Proposed navigation (coach)
+
+Flat, always-visible sections replace mutually exclusive accordions:
+
+- **Coaching:** Overview · People · Schedule · Messages
+- **Training:** Athlete plans · Workout history · Programs · Exercises
+- **Athlete care:** Nutrition plans · Injury status
+- **Setup:** Groups · Assessment templates · Resources
+- **Insights:** Analytics
+- **Sidebar footer:** My feedback beside Support, Help and Settings
+
+Routes and labels stay the same; only grouping changes.
+
+### Shared building blocks (build once, used by all pages)
+
+1. **PageHeader:** breadcrumb/back link, title, subtitle, primary action, and a "⋯" overflow for secondary or danger actions.
+2. **RecordList:** a responsive table with clickable rows and a row action menu, stacking on phones. It replaces the per-page card lists.
+3. **FilterToolbar:** search, filter chips and Clear, plus the existing ListPagination, unboxed. Search runs as you type (short debounce) and Enter submits immediately. A new query resets to the first page, keeps the previous results visible while loading, and accepts only the latest response. This replaces the explicit Search buttons.
+4. **New (quick-create) menu** in the dashboard header.
+5. **ContextDrawer/Dialog:** for in-place flows such as Schedule workout, edit scheduling policy, correction history and record history.
+6. **Auto-refresh hook:** refresh on focus and after acknowledgment, with a latest-response guard. It replaces scattered Refresh buttons; Retry stays on errors.
+
+### Founder decisions — 27 October 2026
+
+1. **Search:** search as you type; Enter submits immediately.
+2. **Schedule views:** Month / Week / List as tabs.
+3. **Naming:** undecided. X1 is logged as a known issue; no labels change in this revamp.
+4. **Navigation:** left to implementation judgement. Chosen: flat, always-visible sections; My feedback moves to the sidebar footer links.
+5. **New data:** allowed only where it clearly improves usability without redundancy. Result: one read-only next-workout summary on athlete-plans items. Participation on People reuses an existing read; plan and last-activity columns on People were dropped as redundant.
+
+### Suggested delivery order
+
+| Phase | Scope                                                                               | Why first                                |
+| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------- |
+| 0     | Shared building blocks, nav regroup                                                 | Every later page depends on them         |
+| 1     | Overview, Workout history, Review, Record                                           | The coach's daily loop                   |
+| 2     | People roster, Athlete profile hub, Athlete plans, Assigned plan, contextual Assign | Fixes X2 and X7                          |
+| 3     | Schedule toolbar, Event composer, Event detail                                      | Pairs with the next event-composer slice |
+| 4     | Programs and detail, Exercises, Resources, Groups, Templates                        | Library polish and the rendered defects  |
+| 5     | Messages, Nutrition, Participation, Analytics, Feedback                             | Lower frequency                          |
+
+Each phase gets:
+
+- Rendered checks: Chromium desktop and WebKit phone, English and Arabic, light and dark, populated, empty and error states.
+- Updates to `docs/DESIGN_SYSTEM.md`, `docs/known-issues/ui-ux-audit.md`, `docs/testing/instance-validation.md`, the frontend inventory, `CHANGELOG.md` and the ledger.
+- A PR into `codex/single-institution-cleanup`.

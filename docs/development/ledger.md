@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Coach UX revamp plan — 27 October 2026
+
+Audited the coach web dashboard: rendered captures of 20 coach routes at desktop and phone width, light theme, with a sparse seed, plus source extraction of actions the seed could not show. The page-by-page plan is in the [UI audit](../known-issues/ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026). Founder decisions: search as you type with Enter to submit; Month/Week/List tabs on Schedule; flat navigation sections; new server data only where it is not redundant. Terminology is deferred and logged in known issues with three rendered/unconfirmed observations. Work proceeds on `codex/single-institution-continuation` with PRs into `codex/single-institution-cleanup`. Documentation only; no application behavior, API or schema changed and no automated checks were rerun beyond documentation links.
+
 ## Founder workflow corrections — 26 October 2026
 
 Supporting/primary coaches remain selected in their original picker list, with immediate link/unlink and explicit multi-scope addition. Conversations/Start conversation/Groups replace the disclosure directory; an institution switch interleaves unjoined metadata and joined previews, with server filtering before pagination and stale-response protection.

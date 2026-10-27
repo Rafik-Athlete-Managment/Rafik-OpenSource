@@ -173,7 +173,7 @@ Keep native text/date/time inputs unless a real interaction problem justifies an
 
 Person selections must search the entire authorized roster, resolve names across pages and retain selections through filtering/reload. Show sports/specialties and primary/supporting responsibility where relevant. Filtered out is not deselected. Clear unavailable selections explicitly; never silently submit hidden IDs.
 
-Search behavior must be explicit: a labelled Search action/Enter when results are server submitted; no mix of delayed and submit-only behavior without a reason. New search/filter resets list page; opening/returning from a record preserves the previous query and page. Preserve previous results during refresh with a clear busy state; accept only the latest response.
+Search behavior must be explicit: a labelled Search action/Enter when results are server submitted; no mix of delayed and submit-only behavior without a reason. New search/filter resets list page; opening/returning from a record preserves the previous query and page. Preserve previous results during refresh with a clear busy state; accept only the latest response. **Approved change, 27 October 2026 (not yet implemented):** list searches will run as the person types, after a short debounce, and Enter submits immediately; explicit Search buttons are removed as each list migrates to the shared filter toolbar. The page-reset, preserved-results and latest-response rules above still apply. See the [coach UX revamp plan](known-issues/ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026).
 
 ### Password visibility
 
@@ -248,7 +248,7 @@ Nutrition plans and athlete programs use the same AthleteSearch control and athl
 
 Schedule is one navigation destination, represented by the existing calendar SVG. Calendar and list are alternate views selected by one navigation-style button labelled with the destination view and its SVG icon; legacy event URLs remain valid and highlight Schedule. Both group sessions and assessments share the list. Calendar opens on today’s institution-timezone date and displays at most four booking cards, with the shared previous/next controls when needed. Selecting another date or changing the period resets card pagination. Read all pages of the displayed calendar period before reporting its counts; do not silently omit today’s bookings behind an API page. Existing date/view/filter query values survive view switching.
 
-The Schedule view button changes its label and icon to the destination view. Use a restrained 160ms opacity/3px transition for the label and standard hover transitions; reduced-motion preferences remove movement. Do not add a separate segmented navigation bar for these two views.
+The Schedule view button changes its label and icon to the destination view. Use a restrained 160ms opacity/3px transition for the label and standard hover transitions; reduced-motion preferences remove movement. Do not add a separate segmented navigation bar for these two views. **Approved change, 27 October 2026 (not yet implemented):** Schedule will use Month, Week and List tabs in one calendar toolbar instead of the single view button. Legacy event URLs and existing date/view/filter query values remain valid.
 
 Calendar and list filter toolbars are unboxed wrapping flex layouts. Controls align at their lower edge; labels remain attached to inputs. Do not place a card background or border around ordinary filter/pagination controls. On narrow screens allow whole controls to wrap without shrinking touch targets.
 

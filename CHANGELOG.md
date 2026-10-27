@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Record the coach dashboard UX audit and phased revamp plan, founder decisions on search and Schedule views, and deferred terminology as a known issue. Documentation only; no behavior changes.
+
 - Keep supporting/primary coach selections in one checked list; add messaging directory tabs and per-row institution discovery; fix athlete-plan adaptation to update its existing assignment rather than publishing a library copy, preserving scheduled snapshots, cursor, policy, audit and exact recovery.
 
 - Separate light-theme cards from the page using a seven-percent ink tint and derive supporting text from the institution ink/canvas pair. Dark-theme surface tokens are unchanged.
