@@ -357,11 +357,6 @@ onMounted(() => load())
   align-items: start;
   gap: 24px;
 }
-/* The filter and period controls share one row across the calendar and booking columns. */
-.calendar-controls-layout > div {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
 .calendar-surface,
 .bookings-panel {
   min-width: 0;
