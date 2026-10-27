@@ -315,7 +315,7 @@ test('a delayed start acknowledgment keeps the write but never pulls the coach b
     await page.getByRole('button', { name: 'Record ' + plan.days[0].name, exact: true }).click()
     await expect.poll(() => starts).toBe(1)
     // The coach leaves before the acknowledgment arrives.
-    await page.getByRole('link', { name: 'Back to athlete plans' }).click()
+    await page.getByRole('link', { name: 'Back', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`${base}/training$`))
     release()
     await page.waitForTimeout(1500)
@@ -384,12 +384,14 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await expect(page.getByText('Personalized plan · revision 1', { exact: true })).toBeVisible()
     const agenda = page.getByRole('region', { name: 'Next workouts', exact: true })
     await agenda.getByRole('button', { name: 'Schedule workout', exact: true }).click()
+    const scheduleForm = page.getByRole('dialog', { name: 'Schedule the next workout' })
     await inspect(page, 'schedule-form', info)
-    await agenda
+    await scheduleForm
       .getByLabel('Date and time', { exact: true })
       .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))
-    await agenda.getByLabel('Duration (minutes)', { exact: true }).fill('45')
-    await agenda.getByRole('button', { name: 'Save schedule', exact: true }).click()
+    await scheduleForm.getByLabel('Duration (minutes)', { exact: true }).fill('45')
+    await scheduleForm.getByRole('button', { name: 'Save schedule', exact: true }).click()
+    await expect(scheduleForm).toHaveCount(0)
     await expect(agenda.getByText('Recording opens at the scheduled start time.')).toBeVisible()
     await page.route('**/v1/institution/workout-scheduling?**', (route) => route.abort('failed'))
     await agenda.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
@@ -516,7 +518,11 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
     })
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back')
     await expect(page.getByRole('heading', { name: 'Today’s work' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toBeVisible()
+    await expect(
+      page
+        .getByRole('region', { name: 'Needs scheduling', exact: true })
+        .getByRole('button', { name: 'Schedule', exact: true }),
+    ).toBeVisible()
     await expect(page.locator('.tag[data-status="unscheduled"]')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Athlete status', exact: true })).toBeVisible()
     await expect(
@@ -539,7 +545,7 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
     await expect(
       recordQueue.getByText('The backend does not confirm this workout queue.', { exact: false }),
     ).toBeVisible()
-    await expect(recordQueue.locator('.agenda-row')).toHaveCount(0)
+    await expect(recordQueue.locator('.record-row')).toHaveCount(0)
     await page.unroute(oldQueueUrl)
     await recordQueue.getByRole('button', { name: 'Refresh workouts', exact: true }).click()
     await expect(recordQueue.getByRole('alert')).toHaveCount(0)
@@ -591,8 +597,9 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
 
     await expect(page.getByRole('heading', { name: 'Today’s work', exact: true })).toBeVisible()
     const planning = page.getByRole('region', { name: 'Needs scheduling', exact: true })
-    await planning.getByRole('button', { name: 'Schedule workout', exact: true }).click()
-    await planning
+    await planning.getByRole('button', { name: 'Schedule', exact: true }).click()
+    const planningForm = page.getByRole('dialog', { name: 'Schedule the next workout' })
+    await planningForm
       .getByLabel('Date and time', { exact: true })
       .fill(new Date(Date.now() - 60000).toISOString().slice(0, 16))
     const savedSchedule = page.waitForResponse(
@@ -600,21 +607,21 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
         response.request().method() === 'POST' &&
         response.url().endsWith('/v1/institution/workout-scheduling'),
     )
-    await planning.getByRole('button', { name: 'Save schedule', exact: true }).click()
+    await planningForm.getByRole('button', { name: 'Save schedule', exact: true }).click()
     const scheduleResponse = await savedSchedule
     expect(scheduleResponse.status(), JSON.stringify(await scheduleResponse.json())).toBe(200)
     await page.screenshot({
       path: 'artifacts/r1e-desk-scheduled-' + info.project.name + '.png',
       fullPage: true,
     })
-    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toHaveCount(0)
-    await expect(recordQueue.locator('.agenda-row')).toHaveCount(1)
-    await expect(page.getByRole('heading', { name: 'Full body A', exact: true })).toHaveCount(1)
-    await recordQueue.getByRole('button', { name: 'Start workout', exact: true }).click()
+    await expect(planning.getByRole('button', { name: 'Schedule', exact: true })).toHaveCount(0)
+    await expect(recordQueue.locator('.record-row')).toHaveCount(1)
+    await expect(recordQueue.getByText(/Full body A/)).toHaveCount(1)
+    await recordQueue.getByRole('button', { name: 'Start', exact: true }).click()
     await expect(page).toHaveURL(/\/record\/[a-f0-9-]{36}$/)
     await page.goto('/dashboard')
-    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toHaveCount(1)
-    await expect(page.getByRole('heading', { name: 'Full body A', exact: true })).toHaveCount(1)
+    await expect(page.getByRole('link', { name: 'Resume', exact: true })).toHaveCount(1)
+    await expect(page.getByText(/Full body A/)).toHaveCount(1)
     await expect(page.getByRole('region', { name: 'Needs scheduling', exact: true })).toHaveCount(0)
     await inspect(page, 'coach-desk-single-record', info)
   } finally {
@@ -930,7 +937,7 @@ test('event template uses one search and preserves selection through no matches'
       })
     await f.login(page, f.coach, '/schedule/new')
     await page.getByLabel('Event name', { exact: true }).fill('Pre-season assessment')
-    await page.getByRole('combobox', { name: 'Event type', exact: true }).selectOption('assessment')
+    await page.getByRole('radio', { name: /^Assessor-led assessment/ }).check()
     await expect(page.getByLabel('Event name', { exact: true })).toHaveAttribute(
       'placeholder',
       'For example: Pre-season fitness assessment',
@@ -944,7 +951,7 @@ test('event template uses one search and preserves selection through no matches'
     await picker.getByRole('button', { name: 'More templates', exact: true }).click()
     await picker.getByRole('radio', { name: 'Fitness 6 1 test', exact: true }).check()
     await picker.getByRole('searchbox').fill('not-found')
-    await picker.getByRole('button', { name: 'Search templates', exact: true }).click()
+    await picker.getByRole('searchbox').press('Enter')
     await expect(
       picker.getByText('No templates match. Try another name or create a template.', {
         exact: true,
@@ -1035,13 +1042,15 @@ test('message directory tabs mix institution channels without exposing private p
       id: group,
     })
     await f.login(page, f.owner, '/messages')
-    await page.getByRole('tab', { name: 'Start conversation', exact: true }).click()
-    await expect(page.locator('.conversation-contacts > summary')).toHaveCount(0)
-    await page.getByRole('button', { name: /R4 Athlete.*Start your conversation/ }).click()
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
+    await page
+      .locator('.conversation-contacts')
+      .getByRole('button', { name: /R4 Athlete/ })
+      .click()
     await expect(page).toHaveURL(/\/messages\/[a-f0-9-]{36}$/)
     if ((page.viewportSize()?.width || 1440) <= 850)
       await page.getByRole('link', { name: 'Back', exact: true }).click()
-    await expect(page.getByRole('tab', { name: 'Conversations', exact: true })).toHaveAttribute(
+    await expect(page.getByRole('tab', { name: 'Chats', exact: true })).toHaveAttribute(
       'aria-selected',
       'true',
     )
@@ -1057,17 +1066,20 @@ test('message directory tabs mix institution channels without exposing private p
     await expect(
       page.locator('.conversation-list').getByRole('link', { name: /R4 Athlete/ }),
     ).toBeVisible()
-    await page.getByRole('tab', { name: 'Groups', exact: true }).click()
+    // Typing narrows the chat list immediately and keeps the directory mounted.
+    const search = page.getByRole('searchbox', { name: 'Search chats', exact: true })
+    await search.fill('Field group')
     await expect(unjoined).toBeVisible()
     await expect(
       page.locator('.conversation-list').getByRole('link', { name: /R4 Athlete/ }),
     ).toHaveCount(0)
     await expect(directory).toHaveAttribute('data-continuity', 'retained')
     await inspect(page, 'message-groups-mixed', info)
-    await page.getByRole('tab', { name: 'Start conversation', exact: true }).click()
+    await search.fill('')
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
     await expect(
       page.locator('.conversation-contacts').getByRole('button', { name: /R4 Athlete/ }),
-    ).toHaveCount(0)
+    ).toContainText('Open chat')
     await page.evaluate(() => {
       localStorage.setItem('rafik.locale', 'ar')
       localStorage.setItem('rafik.theme', 'dark')
@@ -1078,7 +1090,7 @@ test('message directory tabs mix institution channels without exposing private p
     await expect(conversations).toBeVisible()
     await conversations.focus()
     await conversations.press('ArrowLeft')
-    await expect(page.getByRole('tab', { name: 'بدء محادثة', exact: true })).toHaveAttribute(
+    await expect(page.getByRole('tab', { name: 'جهات الاتصال', exact: true })).toHaveAttribute(
       'aria-selected',
       'true',
     )

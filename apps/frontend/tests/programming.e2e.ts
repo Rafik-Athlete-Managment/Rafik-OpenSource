@@ -137,9 +137,9 @@ test('organization program authoring, reviewed delivery, recording and feedback 
     await expect(client.getByText('Keep the same load next time.', { exact: true })).toBeVisible()
     await page.goto(base + '/training')
     await page
-      .locator('.athlete-plan-card')
+      .locator('.athlete-plan-list .record-row')
       .filter({ hasText: 'Three-day foundation' })
-      .getByRole('button', { name: 'View assigned plan' })
+      .locator('.record-title a')
       .click()
     await page.getByRole('button', { name: 'Adapt this program', exact: true }).click()
     await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(

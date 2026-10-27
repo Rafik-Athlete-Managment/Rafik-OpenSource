@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Coach UX revamp — Messages correction, 27 October 2026
+
+Founder feedback: the phase 5 Messages search depended on Enter and the directory tabs were confusing. ChannelsPage now has two tabs, Chats and Contacts. Each tab filters instantly on the client (using the unfiltered first page as a base, so typing never waits for the server); a 250 ms debounced server search still refines results. Contacts list every authorized person, including those with an existing chat (marked "Open chat"), because direct-pair creation is idempotent. `?tab=people|groups|contacts` opens Contacts. ChannelThread: the generic `.message-log` 55dvh cap left dead space under the composer on tall windows; on the Messages page the log now fills the thread, the compose grid no longer stretches rows, and attach, privacy note and Send share one row (accessible name "Send message" kept). Evidence: Chromium 1600×1100, 1440×900, 1280×640 and 390×844 (English light, Arabic dark) measurements and screenshots; e2e selectors updated in communication, delegated-sessions and operations specs.
+
 ## Coach UX revamp phase 5 — 27 October 2026
 
 ChannelsPage: live search (Enter applies), Refresh kept because only the open thread polls, actionable empty pane, `?tab=people|groups`. NutritionPlans: live search, `?create=1` opens the athlete dialog (used by the Overview New menu). InjuryStatus coach view: record rows linking to profiles, semantic status tags and formatted dates; no extra reads. AnalyticsPage: athlete finder searches as you type. My feedback stays a page linked from the sidebar footer; a recurring Overview prompt was not added to keep the dashboard calm. Evidence: Chromium desktop/phone renders of Messages, Nutrition plans, Injury status and Analytics.

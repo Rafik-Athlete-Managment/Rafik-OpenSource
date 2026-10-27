@@ -78,12 +78,14 @@ test('organization staff schedule a group assessment, recover a result, correct 
     await expect(page.locator('.rafik-toast').filter({ hasText: /saved/i }).last()).toBeVisible()
     await page.goto(base + '/schedule/new')
     await page.getByLabel('Event name', { exact: true }).fill('Morning assessment')
-    await page.getByRole('combobox', { name: 'Event type', exact: true }).selectOption('assessment')
+    await page.getByRole('radio', { name: /^Assessor-led assessment/ }).check()
     await page.getByRole('radio', { name: 'Movement baseline 1 test', exact: true }).check()
     await page
       .getByRole('searchbox', { name: 'Find an assessment template', exact: true })
       .fill('No matching template')
-    await page.getByRole('button', { name: 'Search templates', exact: true }).click()
+    await page
+      .getByRole('searchbox', { name: 'Find an assessment template', exact: true })
+      .press('Enter')
     await expect(
       page.getByText('No templates match. Try another name or create a template.', { exact: true }),
     ).toBeVisible()
@@ -149,11 +151,12 @@ test('organization staff schedule a group assessment, recover a result, correct 
         .locator('.event-participant')
         .filter({ has: page.getByRole('heading', { name, exact: true }) })
       await card
-        .getByRole('combobox', { name: 'Attendance for ' + name, exact: true })
-        .selectOption('present')
-      await card.getByRole('button', { name: 'Save attendance', exact: true }).click()
+        .getByRole('group', { name: 'Attendance for ' + name, exact: true })
+        .getByRole('radio', { name: 'Present', exact: true })
+        .check()
+      await page.getByRole('button', { name: /^Save attendance/ }).click()
       await expect(
-        page.locator('.rafik-toast').filter({ hasText: 'Attendance recorded.' }).last(),
+        page.locator('.rafik-toast').filter({ hasText: 'Attendance saved for 1 athlete.' }).last(),
       ).toBeVisible()
       await card.getByRole('button', { name: 'Record result', exact: true }).click()
       await page
@@ -228,12 +231,9 @@ test('organization staff schedule a group assessment, recover a result, correct 
     await calendarRequest
     const navigation = page.getByRole('button', { name: 'Open navigation', exact: true })
     if (await navigation.isVisible()) await navigation.click()
-    // Sidebar groups collapse to the current section; open Administration to reach Analytics.
+    // Sidebar sections are always visible.
     const institutionNav = page.getByRole('navigation', { name: 'Institution navigation' })
-    const analyticsLink = institutionNav.getByRole('link', { name: 'Analytics', exact: true })
-    if (!(await analyticsLink.isVisible()))
-      await institutionNav.locator('summary').filter({ hasText: 'Administration' }).click()
-    await analyticsLink.click()
+    await institutionNav.getByRole('link', { name: 'Analytics', exact: true }).click()
     await expect(
       page.getByRole('heading', { name: 'Institution analytics', exact: true }),
     ).toBeVisible()

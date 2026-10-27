@@ -39,33 +39,28 @@ test('organization conversations preserve scope, compact layout, drafts and exac
         response.request().method() === 'GET',
     )
     await f.login(page, f.owner, base)
-    await page.getByRole('tab', { name: 'Start conversation', exact: true }).click()
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
     await expect(page.getByRole('button', { name: 'New conversation', exact: true })).toHaveCount(0)
     await initialList
     const athlete = page
       .locator('.conversation-contacts')
       .getByRole('button', { name: /R4 Athlete/ })
     await expect(athlete).toBeVisible()
-    // The successful click creates a conversation and removes this contact from
-    // the People list during SPA navigation. Dispatch the button's real click
-    // handler without Playwright retrying against the intentionally removed row.
-    await athlete.evaluate((element) => (element as HTMLButtonElement).click())
+    await athlete.click()
     await expect(page).toHaveURL(/\/messages\/[a-f0-9-]{36}$/)
     await expect(page.locator('.swal2-toast')).toHaveCount(0)
     await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toHaveCount(0)
-    await expect(
-      page.locator('.conversation-contacts').getByRole('button', { name: /R4 Athlete/ }),
-    ).toHaveCount(0)
-    await expect(
-      page.locator('.conversation-contacts').getByText(/No available people/),
-    ).toHaveCount(0)
+    // Opening a contact returns to Chats; the contact stays listed and reopens the same chat.
+    await expect(page.getByRole('tab', { name: 'Chats', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
     const channel = new URL(page.url()).pathname.split('/').at(-1)!
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
+    await expect(athlete).toContainText('Open chat')
     await page.goto(base)
     await expect(page.locator('.conversation-directory')).toHaveCSS('overflow-y', 'auto')
     await expect(page.locator('.conversation-list')).toHaveCSS('overflow-y', 'visible')
-    await expect(
-      page.locator('.conversation-contacts').getByRole('button', { name: /R4 Athlete/ }),
-    ).toHaveCount(0)
     await page
       .locator('.conversation-list')
       .getByRole('link', { name: /R4 Athlete/ })
@@ -191,11 +186,11 @@ test('organization conversations preserve scope, compact layout, drafts and exac
       expect(await layoutIssues(client)).toEqual([])
       expect((await client.locator('.conversation-person').boundingBox())!.height).toBeLessThan(130)
     }
+    // Chats narrow while typing; no Enter is required.
     await client
-      .getByRole('searchbox', { name: 'Search people and conversations', exact: true })
+      .getByRole('searchbox', { name: 'Search chats', exact: true })
       .fill('no matching group')
-    await client.getByRole('button', { name: 'Search', exact: true }).click()
-    await expect(client.getByText(/No matching conversations/)).toBeVisible()
+    await expect(client.getByText('No chats match this search.')).toBeVisible()
   } finally {
     await clientContext.close()
     await f.cleanup()

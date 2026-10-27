@@ -239,10 +239,11 @@ function toggleDone(entry: Entry, kind: ExerciseKind | undefined) {
 }
 const historyOpen = ref(false)
 const setsDone = computed(() => entries.value.filter((e) => e.completed).length)
-// Return to wherever recording was opened from (dashboard, plan or history).
+// Return to the work page recording was opened from; anything else falls back to plans.
 const backTarget = computed(() => {
   const previous = (window.history.state as { back?: unknown } | null)?.back
-  return typeof previous === 'string' && !previous.startsWith('/record/')
+  return typeof previous === 'string' &&
+    /^\/(dashboard|training|workouts|members|athletes|people|schedule)(\/|\?|$)/.test(previous)
     ? previous
     : base + '/training'
 })

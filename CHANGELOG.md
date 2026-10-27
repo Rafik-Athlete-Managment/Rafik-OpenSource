@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Messages follows the common chat-app pattern: a Chats tab for existing conversations and a Contacts tab for groups and people. Search filters the current tab as you type (no Enter needed) while the server search refines in the background. Opening a contact reopens its existing private chat and returns to Chats. The composer puts attach, privacy note and Send on one row, and the message history now fills tall windows instead of leaving empty space below the composer.
 - Coach UX revamp, phase 5: Messages, Nutrition plans and the Analytics athlete finder search as you type; the empty conversation pane offers Start a conversation and `?tab=` opens a directory tab. Coach Injury status lists shared statuses as rows with profile links, status tags, formatted dates and the unknown-is-not-cleared rule. Nutrition plans open athlete choice from `?create=1`.
 
 - Coach UX revamp, phase 4: read-only program pages use the program name as the title, put Make an editable copy and Assign in the action bar and show compact reference positions. Exercises fixes the clipped sort control and overflowing pagination. Resources moves upload into a dialog from the header (an empty library keeps the inline dropzone) and takes filters out of the boxed panel. Groups and assessment templates search as you type and explain their empty states, including that coaches see groups they created or belong to.

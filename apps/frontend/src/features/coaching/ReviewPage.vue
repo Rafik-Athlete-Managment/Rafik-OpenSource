@@ -21,8 +21,7 @@ const id = String(route.params.id)
 const previous = (window.history.state as { back?: unknown } | null)?.back
 const back =
   typeof previous === 'string' &&
-  !previous.startsWith('/review/') &&
-  !previous.startsWith('/record/')
+  /^\/(dashboard|training|workouts|members|athletes|people|schedule)(\/|\?|$)/.test(previous)
     ? previous
     : { path: context.base + '/workouts', query: { search: route.query.search } }
 const next = ref<string | null>()

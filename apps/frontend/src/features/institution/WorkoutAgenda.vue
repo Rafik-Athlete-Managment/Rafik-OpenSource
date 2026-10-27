@@ -448,10 +448,25 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
           <PhArrowClockwise :size="18" aria-hidden="true" />
           {{ l('Refresh workouts', 'تحديث التمارين') }}
         </button>
+        <button
+          v-else
+          class="button small secondary icon-only"
+          :disabled="loading || locked"
+          :aria-label="l('Refresh workouts', 'تحديث التمارين')"
+          :title="l('Refresh workouts', 'تحديث التمارين')"
+          @click="load"
+        >
+          <PhArrowClockwise :size="18" aria-hidden="true" />
+        </button>
       </div>
     </header>
     <CommandStatus :command="command" />
-    <p v-if="error && data" class="notice error" role="alert">{{ error }}</p>
+    <p v-if="error && data" class="notice error" role="alert">
+      {{ error }}
+      <button type="button" class="text-link" :disabled="loading" @click="load">
+        {{ l('Retry', 'إعادة المحاولة') }}
+      </button>
+    </p>
     <PageState :loading="loading && !data" :error="!data ? error : ''" @retry="load">
       <template v-if="data">
         <p v-if="queue && !data.items.length" class="small-print">

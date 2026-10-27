@@ -139,7 +139,9 @@ test('first launch creates the super admin and an invited member can join withou
   if (!(await roleDashboard.count()))
     await page.getByRole('button', { name: 'Open navigation' }).click()
   await expect(roleDashboard.getByRole('link', { name: 'People & access' })).toBeVisible()
-  await expect(roleDashboard.locator('details[open]')).toHaveCount(1)
+  // Navigation sections are flat and always visible; no group hides another.
+  await expect(roleDashboard.locator('details')).toHaveCount(0)
+  await expect(roleDashboard.getByRole('link', { name: 'Exercises', exact: true })).toBeVisible()
   if (await page.getByRole('button', { name: 'Close navigation' }).isVisible())
     await page.getByRole('button', { name: 'Close navigation' }).click()
   await screenshot(page, 'administrator')

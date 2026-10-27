@@ -83,9 +83,10 @@ test('organization coach starts a private conversation with their assigned athle
     })
     await f.login(page, f.coach, `/messages`)
     await page.setViewportSize({ width: 320, height: 568 })
-    // Conversations start from the People directory; the coach is always one of the two participants.
+    // Chats start from Contacts; the coach is always one of the two participants.
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
     await page
-      .getByRole('region', { name: 'People', exact: true })
+      .locator('.conversation-contacts')
       .getByRole('button', { name: /R4 Athlete/ })
       .click()
     await expect(page).toHaveURL(/messages\/[a-f0-9-]{36}$/)
