@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
 import { profile } from '../../app/auth'
 import { request } from '../../lib/backend'
-import { errorMessage, language as l } from '../../lib/i18n'
+import { dateLabel, errorMessage, language as l } from '../../lib/i18n'
 import { localDate } from '../../lib/dates'
 
 const context = programContext(useRoute()),
@@ -255,28 +255,42 @@ onMounted(load)
       </section>
     </template>
 
-    <section v-else-if="view === 'trainer'" class="panel">
-      <h2>{{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</h2>
-      <p>
+    <section v-else-if="view === 'trainer'" aria-labelledby="assigned-status-title">
+      <h2 id="assigned-status-title">{{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</h2>
+      <p class="small-print">
         {{
           l(
-            'Only active status and effective date for your assigned athletes are shown. No medical details or history are available.',
-            'تظهر الحالة الفعالة وتاريخ سريانها للرياضيين المعيّنين إليك فقط. لا تتوفر تفاصيل طبية أو سجل سابق.',
+            'Only active status and effective date for your assigned athletes are shown. No medical details or history are available. An athlete without a shared status is unknown, not cleared to train.',
+            'تظهر الحالة الفعالة وتاريخ سريانها للرياضيين المعيّنين إليك فقط. لا تتوفر تفاصيل طبية أو سجل سابق. الرياضي دون حالة مشتركة حالته غير معروفة، وليس مصرحاً له بالتدريب.',
           )
         }}
       </p>
-      <p v-if="!items.length">
+      <p v-if="!items.length" class="small-print">
         {{ l('No shared active statuses.', 'لا توجد حالات نشطة مشتركة.') }}
       </p>
-      <ul>
-        <li v-for="item in items" :key="item.id">
-          <strong>{{ item.athlete_name }}</strong> —
-          {{
-            item.participation === 'modified'
-              ? l('Modified participation', 'مشاركة معدلة')
-              : l('Unavailable', 'غير متاح للمشاركة')
-          }}
-          · {{ item.effective_from }}
+      <ul v-else class="record-list">
+        <li v-for="item in items" :key="item.id" class="record-row">
+          <div class="record-title">
+            <RouterLink :to="'/members/' + item.athlete_member_id"
+              ><bdi dir="auto">{{ item.athlete_name }}</bdi></RouterLink
+            >
+          </div>
+          <div class="record-meta">
+            <span
+              class="tag"
+              :data-status="item.participation === 'modified' ? 'paused' : 'unavailable'"
+              >{{
+                item.participation === 'modified'
+                  ? l('Modified participation', 'مشاركة معدلة')
+                  : l('Unavailable', 'غير متاح للمشاركة')
+              }}</span
+            >
+            <span
+              ><small>{{ l('Effective', 'سارية منذ') }}</small
+              >{{ dateLabel(item.effective_from) }}</span
+            >
+          </div>
+          <div class="record-actions" />
         </li>
       </ul>
     </section>

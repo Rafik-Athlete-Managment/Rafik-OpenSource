@@ -8,6 +8,7 @@ import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import ChannelThread from './ChannelThread.vue'
+import { useLiveSearch } from '../../lib/live-search'
 import type { Member, Institution } from './types'
 const route = useRoute(),
   router = useRouter(),
@@ -193,6 +194,7 @@ watch(
   },
   { immediate: true },
 )
+const live = useLiveSearch(search, () => load())
 onMounted(() => {
   void load()
   void loadPeople()
@@ -227,14 +229,13 @@ watch(
     </p>
     <div class="conversation-layout">
       <aside class="conversation-inbox">
-        <form class="conversation-search" @submit.prevent="load()">
+        <form class="conversation-search" @submit.prevent="live.submit()">
           <label
             >{{ l('Search people and conversations', 'ابحث عن الأشخاص والمحادثات')
             }}<input
               :placeholder="l('Search people and conversations…', 'ابحث عن أشخاص ومحادثات…')"
               v-model="search"
               type="search" /></label
-          ><button class="text-link">{{ l('Search', 'بحث') }}</button
           ><button
             v-if="view === 'admin'"
             type="button"
@@ -422,20 +423,26 @@ watch(
         @refresh="load()"
       />
       <div v-else class="conversation-placeholder">
-        <h2>{{ l('Keep the group in sync', 'ابقَ على تواصل مع المجموعة') }}</h2>
+        <h2>{{ l('No conversation open', 'لا توجد محادثة مفتوحة') }}</h2>
         <p>
           {{
             l(
-              'Choose a conversation. Each one has its own visible participant list.',
-              'اختر محادثة. لكل محادثة قائمة واضحة بمشاركيها.',
+              'Choose a conversation, or start one with someone you work with. Each conversation has its own visible participant list.',
+              'اختر محادثة أو ابدأ محادثة مع شخص تعمل معه. لكل محادثة قائمة واضحة بمشاركيها.',
             )
           }}
         </p>
+        <button type="button" class="button secondary" @click="tab = 'people'">
+          {{ l('Start a conversation', 'بدء محادثة') }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 <style scoped>
+.conversation-placeholder .button {
+  margin-block-start: var(--space-4);
+}
 .organization-messages {
   min-width: 0;
 }

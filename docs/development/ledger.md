@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Coach UX revamp phase 5 — 27 October 2026
+
+ChannelsPage: live search (Enter applies), Refresh kept because only the open thread polls, actionable empty pane, `?tab=people|groups`. NutritionPlans: live search, `?create=1` opens the athlete dialog (used by the Overview New menu). InjuryStatus coach view: record rows linking to profiles, semantic status tags and formatted dates; no extra reads. AnalyticsPage: athlete finder searches as you type. My feedback stays a page linked from the sidebar footer; a recurring Overview prompt was not added to keep the dashboard calm. Evidence: Chromium desktop/phone renders of Messages, Nutrition plans, Injury status and Analytics.
+
 ## Coach UX revamp phase 4 — 27 October 2026
 
 PlanEditor read-only view: h1 is the program title, the duplicate preview heading is hidden, Make an editable copy joins the action bar and Assign is primary there; reference-position images are capped in previews. ExercisesPage: sort select keeps inherited caret padding; list pagination footer padded inside the list pane. ResourcesPage: header Upload opens a dialog that cannot be dismissed during an upload; first use keeps the inline dropzone (no second entry point); filters moved out of the list panel. ServiceCatalog: live search (Enter applies), archived toggle reloads, contextual empty copy. Investigated the Groups observation: `services?kind=groups` intentionally limits coaches to groups they created or belong to. No API change. Evidence: Chromium desktop/phone renders of program detail, Exercises, Resources and Groups.

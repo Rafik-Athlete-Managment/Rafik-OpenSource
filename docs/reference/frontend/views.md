@@ -219,7 +219,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Person profile with real overview/plans/workouts/assessments/nutrition/participation/manage tabs according to subject role.
 - **Access:** Administrators can inspect/manage institutional people. Coaches can inspect their authorized athletes, not a staff directory; sensitive sections retain separate API restrictions.
 - **Opens:** `/access`, `/assessments/:member`, `/messages/:channel?`, `/nutrition`, `/password-setup/:token`, `/people`, `/plans`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workouts`
-- **Opened from views:** `/people`, `/training/:assignment`
+- **Opened from views:** `/injuries`, `/people`, `/training/:assignment`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -350,7 +350,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/injuries`
 - **Purpose:** Consent-gated participation status, reporting/correction/closure, policy configuration and athlete export.
 - **Access:** Athletes manage their own sensitive record; designated primary coaches receive limited status; administrators configure policy, not unrestricted injury details.
-- **Opens:** None; see entry/dynamic rules.
+- **Opens:** `/members/:member`
 - **Opened from views:** None; see entry/dynamic rules.
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
@@ -376,7 +376,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Profile management of identity/access, active state, coach links, sports and password reset issuance.
 - **Access:** Administrators only through the profile Manage tab; each write is authorized and revision checked.
 - **Opens:** `/access`, `/password-setup/:token`
-- **Opened from views:** `/people`, `/training/:assignment`
+- **Opened from views:** `/injuries`, `/people`, `/training/:assignment`
 - **Embedded by:** `features/institution/AthleteProfile.vue`
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 

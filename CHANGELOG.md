@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Coach UX revamp, phase 5: Messages, Nutrition plans and the Analytics athlete finder search as you type; the empty conversation pane offers Start a conversation and `?tab=` opens a directory tab. Coach Injury status lists shared statuses as rows with profile links, status tags, formatted dates and the unknown-is-not-cleared rule. Nutrition plans open athlete choice from `?create=1`.
+
 - Coach UX revamp, phase 4: read-only program pages use the program name as the title, put Make an editable copy and Assign in the action bar and show compact reference positions. Exercises fixes the clipped sort control and overflowing pagination. Resources moves upload into a dialog from the header (an empty library keeps the inline dropzone) and takes filters out of the boxed panel. Groups and assessment templates search as you type and explain their empty states, including that coaches see groups they created or belong to.
 
 - Coach UX revamp, phase 3: the Schedule calendar keeps its original controls and layout; calendar chips show start time and an event-type colour; the event list searches as you type. Event creation starts with Training/Assessment choice cards and shows a live summary; template search is live. Event detail puts status and Reschedule/Complete in the header, moves Reassign and Cancel (with confirmation) into a menu, opens rescheduling and staffing in side panels, and records attendance with per-athlete choices, Mark everyone present and one Save that sends each changed athlete's exact command.

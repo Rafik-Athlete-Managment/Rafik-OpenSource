@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLiveSearch } from '../../lib/live-search'
 import { institutionContext } from '../../app/institution'
 
 import { PhTray } from '@phosphor-icons/vue'
@@ -87,20 +88,21 @@ async function load() {
     if (!disposed && current === generation) loading.value = false
   }
 }
-function navigate(page = 0) {
-  return router.push({
+function navigate(page = 0, replace = false) {
+  return router[replace ? 'replace' : 'push']({
     query: {
       limit: route.query.limit,
-      ...(search.value ? { search: search.value } : {}),
+      ...(search.value.trim() ? { search: search.value.trim() } : {}),
       ...(status.value !== 'active' ? { status: status.value } : {}),
       ...(page ? { offset: page } : {}),
     },
   })
 }
+const live = useLiveSearch(search, () => navigate(0, true))
 watch(
   () => route.fullPath,
   () => {
-    search.value = String(route.query.search || '')
+    live.restore(String(route.query.search || ''))
     status.value = String(route.query.status || 'active')
     void load()
   },
@@ -176,7 +178,7 @@ function create(ids: string[]) {
       </DialogPortal>
     </DialogRoot>
     <div class="list-toolbar">
-      <form class="nutrition-plan-filters" @submit.prevent="navigate()">
+      <form class="nutrition-plan-filters" @submit.prevent="live.submit()">
         <AthleteSearch v-model="search" /><label
           >{{ l('Plan status', 'حالة الخطة')
           }}<select v-model="status" @change="navigate()">
@@ -189,7 +191,7 @@ function create(ids: string[]) {
             </option>
             <option value="all">{{ l('All plans', 'جميع الخطط') }}</option>
           </select></label
-        ><button class="button secondary" :disabled="loading">{{ l('Search', 'بحث') }}</button>
+        >
       </form>
       <div class="list-toolbar-pagination">
         <ListPagination
@@ -272,7 +274,7 @@ function create(ids: string[]) {
 <style scoped>
 .nutrition-plan-filters {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 16px;
   align-items: end;
 }

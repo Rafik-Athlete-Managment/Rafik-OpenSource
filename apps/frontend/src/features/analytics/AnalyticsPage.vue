@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLiveSearch } from '../../lib/live-search'
 import { institutionContext } from '../../app/institution'
 
 import PageHeading from '../../components/PageHeading.vue'
@@ -136,6 +137,7 @@ const attendance = computed(
     })) || [],
 )
 onMounted(() => load())
+const live = useLiveSearch(search, () => load())
 </script>
 <template>
   <div class="container page analytics-page">
@@ -182,17 +184,15 @@ onMounted(() => load())
       <details class="analytics-person-filter">
         <summary>{{ selectedPerson?.name || l('Filter by athlete', 'تصفية حسب الرياضي') }}</summary>
         <div class="person-filter-panel">
-          <form @submit.prevent="load()">
+          <form @submit.prevent="live.submit()">
             <label
               >{{ l('Find an athlete', 'البحث عن رياضي')
               }}<input
                 :placeholder="l('Search athlete names…', 'ابحث بأسماء الرياضيين…')"
                 type="search"
                 v-model="search"
-                maxlength="100" /></label
-            ><button class="button small secondary" :disabled="loading">
-              {{ l('Find', 'بحث') }}
-            </button>
+                maxlength="100"
+            /></label>
           </form>
           <label
             >{{ l('Athlete', 'الرياضي')
