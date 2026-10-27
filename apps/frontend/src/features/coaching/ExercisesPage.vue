@@ -894,12 +894,17 @@ onMounted(async () => {
   max-width: 280px;
 }
 .catalog-sort {
+  /* Keep the inherited end padding so the caret never covers the label. */
   width: auto;
-  max-width: 150px;
-  min-width: 0;
-  font-size: 0.8rem;
-  padding: 0.4rem;
+  min-width: 10rem;
+  min-height: 40px;
+  font-size: var(--text-small);
+  padding-block: 0.4rem;
   margin: 0;
+}
+.catalog-list-pane > .list-pagination {
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--line);
 }
 .catalog-summary {
   display: flex;

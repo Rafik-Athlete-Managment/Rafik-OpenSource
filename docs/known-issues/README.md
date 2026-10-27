@@ -5,8 +5,8 @@
 The [coach dashboard UX revamp plan](ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026) is approved for phased implementation; nothing is implemented yet. Open items:
 
 - **Terminology (deferred by founder):** one record type is labelled "Workout history" in navigation, "Session history" on Athlete plans and "recorded sessions" in its empty state. Participation status is labelled "Injury status", "Athlete status" and "Participation" on different screens. The founder has not chosen names; do not rename these labels until a decision is recorded.
-- **Groups observation (unconfirmed):** in a seeded local instance, the coach's Groups page showed "No training groups" while one active, unarchived group existed in the same institution. Coach scoping or a defect could explain it; confirm the authorized read before redesigning the page.
-- **Exercises layout (rendered, 1440px):** the "Videos first" sort control clips its label under the caret, and the next-page button crosses the list column edge.
+- **Groups observation (resolved, intended scoping):** coaches see groups they created or belong to; the seeded group was created by an administrator without the coach as a member. The coach empty state now says so.
+- **Exercises layout (fixed in phase 4):** the sort control keeps its caret padding and the list pagination has its own padded footer.
 - **Event time display (rendered, cause unconfirmed):** a seeded event showed "GMT+0" in an Asia/Dubai institution. Check whether this is the stored event timezone or a display defect.
 
 ## Founder walkthrough follow-up — 25 October 2026

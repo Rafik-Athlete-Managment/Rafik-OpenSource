@@ -510,19 +510,26 @@ function removeDay() {
                   ? language('Create a program', 'إنشاء برنامج')
                   : editable
                     ? language('Edit program', 'تعديل البرنامج')
-                    : language('Program details', 'تفاصيل البرنامج')
+                    : title
           }}
         </component>
       </div>
     </PageHeading>
     <!-- One sticky action bar keeps preview, assign, save and publish reachable while editing. -->
     <div
-      v-if="!loading && (editable || (assignableVersionId && context.view !== 'trainee'))"
+      v-if="!loading && context.view !== 'trainee' && (editable || assignableVersionId || !isNew)"
       class="editor-toolbar"
       role="toolbar"
       :aria-label="language('Program actions', 'إجراءات البرنامج')"
     >
       <!-- View and copy tools sit apart from the save/assign/publish flow. -->
+      <div v-if="!editable" class="editor-toolbar-tools">
+        <button type="button" class="button secondary small" :disabled="busy" @click="duplicate">
+          <PhCopy :size="18" aria-hidden="true" />{{
+            language('Make an editable copy', 'إنشاء نسخة للتعديل')
+          }}
+        </button>
+      </div>
       <div v-if="editable" class="editor-toolbar-tools">
         <button type="button" class="button secondary small" @click="preview = !preview">
           <PhEye :size="18" aria-hidden="true" />{{
@@ -544,7 +551,8 @@ function removeDay() {
       <div class="editor-toolbar-actions">
         <RouterLink
           v-if="assignableVersionId && !published && context.view !== 'trainee'"
-          class="button secondary small"
+          class="button small"
+          :class="{ secondary: editable }"
           :to="context.base + '/deliver/' + assignableVersionId"
         >
           {{ language('Assign this program', 'تعيين هذا البرنامج') }}
@@ -741,22 +749,16 @@ function removeDay() {
           <section v-else class="program-preview-heading">
             <ProgramCover :id="draft.presentation?.cover" />
             <div>
-              <p class="overline">{{ language('Program preview', 'معاينة البرنامج') }}</p>
-              <h2>{{ title }}</h2>
+              <template v-if="editable">
+                <p class="overline">{{ language('Program preview', 'معاينة البرنامج') }}</p>
+                <h2>{{ title }}</h2>
+              </template>
               <p v-if="draft.description">
                 {{ locale === 'ar' ? draft.descriptionAr || draft.description : draft.description }}
               </p>
               <p v-if="draft.presentation?.goal">{{ draft.presentation.goal }}</p>
             </div>
           </section>
-          <button
-            v-if="!editable && context.view !== 'trainee'"
-            type="button"
-            class="button secondary"
-            @click="duplicate"
-          >
-            {{ language('Make an editable copy', 'إنشاء نسخة للتعديل') }}
-          </button>
           <details open v-if="!preview" class="program-schedule">
             <summary>
               {{ language('Program schedule', 'جدول البرنامج') }}
@@ -963,7 +965,9 @@ function removeDay() {
                   {{ language('Pair with previous exercise', 'اربط بالتمرين السابق') }}</button
                 ><PrescriptionFields v-model="day.exercises[i]!"
               /></template>
-              <ExerciseDemo :exercise="catalog.find((e) => e.id === ex.exerciseId) || ex.info" />
+              <div :class="{ 'preview-demo': preview || !editable }">
+                <ExerciseDemo :exercise="catalog.find((e) => e.id === ex.exerciseId) || ex.info" />
+              </div>
               <p v-if="preview">
                 {{
                   locale === 'ar'
@@ -1053,6 +1057,15 @@ function removeDay() {
   </div>
 </template>
 
+<style scoped>
+/* Read-only and athlete previews show reference positions as compact thumbnails. */
+.preview-demo :deep(.demo-positions) {
+  max-width: 330px;
+}
+.preview-demo :deep(.exercise-demo) {
+  margin-block: var(--space-3);
+}
+</style>
 <style>
 .editor-toolbar {
   position: sticky;

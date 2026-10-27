@@ -549,7 +549,7 @@ input[type='radio'] {
 }
 
 .list-toolbar > .catalog-search-form {
-  grid-template-columns: minmax(180px, 1fr) auto auto;
+  grid-template-columns: minmax(180px, 1fr) auto;
 }
 .list-toolbar > form > .check-label {
   display: flex;

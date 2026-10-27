@@ -15,6 +15,7 @@ import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import MemberPicker from './MemberPicker.vue'
 import ListPagination from '../../components/ListPagination.vue'
+import { useLiveSearch } from '../../lib/live-search'
 import PageState from '../../components/PageState.vue'
 import type { Institution } from './types'
 import type { Drill, TrainingGroup, AssessmentTemplate } from './service-types'
@@ -67,6 +68,7 @@ const { recordLimit, appliedLimit, pageSizes, acceptLimit, changeLimit } = useLi
     void load(0)
   },
 )
+const live = useLiveSearch(search, () => load())
 async function load(page = 0) {
   if (disposed) return
   const current = ++generation
@@ -401,7 +403,7 @@ onMounted(initialize)
         }}</RouterLink>
       </p>
       <div class="list-toolbar">
-        <form class="catalog-search-form" @submit.prevent="load()">
+        <form class="catalog-search-form" @submit.prevent="live.submit()">
           <label
             >{{
               templates
@@ -416,8 +418,10 @@ onMounted(initialize)
               v-model="search"
               type="search" /></label
           ><label class="check-label"
-            ><input v-model="archived" type="checkbox" />{{ l('Archived', 'مؤرشف') }}</label
-          ><button class="button secondary" :disabled="loading">{{ l('Search', 'بحث') }}</button>
+            ><input v-model="archived" type="checkbox" @change="load()" />{{
+              l('Archived', 'مؤرشف')
+            }}</label
+          >
         </form>
         <div class="list-toolbar-pagination">
           <ListPagination
@@ -440,10 +444,25 @@ onMounted(initialize)
               : l('No training groups', 'لا توجد مجموعات تدريبية')
           "
           :description="
-            l(
-              'Create your first item or adjust the search and archive filter.',
-              'أنشئ أول عنصر أو عدّل البحث ومرشح الأرشفة.',
-            )
+            search || archived
+              ? l(
+                  'Nothing matches. Try another name or clear the archive filter.',
+                  'لا توجد نتائج مطابقة. جرّب اسماً آخر أو أزل مرشح الأرشفة.',
+                )
+              : templates
+                ? l(
+                    'Create a template to define the drills you record in assessments.',
+                    'أنشئ قالباً لتحديد الاختبارات التي تسجلها في التقييمات.',
+                  )
+                : view === 'trainer'
+                  ? l(
+                      'Groups you create or belong to appear here. Create one to schedule people together.',
+                      'تظهر هنا المجموعات التي أنشأتها أو تنتمي إليها. أنشئ مجموعة لجدولة الأشخاص معاً.',
+                    )
+                  : l(
+                      'Create a group to schedule people together.',
+                      'أنشئ مجموعة لجدولة الأشخاص معاً.',
+                    )
           "
         />
         <div :class="{ 'assessment-template-grid': templates }">
