@@ -14,6 +14,18 @@ import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import MemberPicker from './MemberPicker.vue'
+import SidePanel from '../../components/SidePanel.vue'
+import OverflowMenu from '../../components/OverflowMenu.vue'
+import { notifySuccess } from '../../lib/feedback'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from 'reka-ui'
 import PageState from '../../components/PageState.vue'
 import type { EventDetail, EventPerson } from './service-types'
 import type { Institution } from './types'
@@ -204,7 +216,8 @@ const command = useCommand<'change'>(
   (_, args) => request(endpoint, { method: 'POST', body: JSON.stringify(args) }),
   {
     successMessage: (_, args) => {
-      if (args.action === 'attendance') return l('Attendance recorded.', 'تم تسجيل الحضور.')
+      if (args.action === 'attendance')
+        return savingAttendance ? false : l('Attendance recorded.', 'تم تسجيل الحضور.')
       if (args.action === 'result') return l('Assessment result saved.', 'تم حفظ نتيجة التقييم.')
       if (args.action === 'reschedule') return l('Session rescheduled.', 'تمت إعادة جدولة الجلسة.')
       if (args.action === 'cancel') return l('Session cancelled.', 'تم إلغاء الجلسة.')
@@ -214,6 +227,71 @@ const command = useCommand<'change'>(
   },
 )
 const locked = computed(() => command.state.busy || !!command.state.pending || !command.state.ready)
+// Event-level changes for scheduled, non-workout events; the server still checks authority.
+const changeable = computed(
+  () =>
+    !!data.value &&
+    view !== 'trainee' &&
+    data.value.event.state === 'scheduled' &&
+    !data.value.event.workout_snapshot?.assignment_id,
+)
+const finishable = computed(() => writable.value && changeable.value)
+const eventMenu = computed(() => [
+  ...(view === 'admin'
+    ? [{ key: 'staff', label: l('Reassign staff', 'إعادة تعيين الموظفين'), disabled: locked.value }]
+    : []),
+  ...(!data.value?.results.length
+    ? [
+        {
+          key: 'cancel',
+          label: l('Cancel event…', 'إلغاء الموعد…'),
+          danger: true,
+          disabled: locked.value,
+        },
+      ]
+    : []),
+])
+function eventAction(key: string) {
+  if (key === 'staff') changingStaff.value = true
+  if (key === 'cancel') cancelOpen.value = true
+}
+const attendanceChanges = computed(() => trainees.value.filter(attendanceDirty).length)
+function markAll(value: string) {
+  for (const p of trainees.value) attendance.value[p.member_id] = value
+}
+let savingAttendance = false
+/** Sends each changed row as its own exact command; stops at the first unresolved result. */
+async function saveAttendance() {
+  const staged = { ...attendance.value }
+  const queue = trainees.value.filter(attendanceDirty).map((p) => p.member_id)
+  let sent = 0
+  savingAttendance = true
+  try {
+    for (const member of queue) {
+      const person = data.value?.people.find((p) => p.member_id === member)
+      if (!person) break
+      await run({
+        action: 'attendance',
+        member,
+        revision: person.revision,
+        attendance: staged[member],
+      })
+      if (command.state.pending || command.state.error) break
+      sent++
+    }
+  } finally {
+    savingAttendance = false
+    // Reloads reset the map; keep anything not yet acknowledged visible as a change.
+    for (const member of queue.slice(sent)) attendance.value[member] = staged[member]!
+  }
+  if (sent)
+    notifySuccess(
+      l(
+        `Attendance saved for ${sent} ${sent === 1 ? 'athlete' : 'athletes'}.`,
+        `تم حفظ الحضور لـ ${sent} من الرياضيين.`,
+      ),
+    )
+}
 const run = (args: Record<string, unknown>) =>
   command.run('change', {
     id: eid,
@@ -298,6 +376,43 @@ onMounted(load)
           }}
         </p>
         <h1>{{ data?.event.title || l('Event', 'الموعد') }}</h1>
+        <span v-if="data" class="tag event-state-tag" :data-status="data.event.state">{{
+          data.event.state === 'cancelled'
+            ? l('Cancelled', 'ملغي')
+            : data.event.state === 'completed'
+              ? l('Completed', 'مكتمل')
+              : l('Scheduled', 'مجدول')
+        }}</span>
+      </div>
+      <div v-if="changeable" class="actions event-actions">
+        <button
+          v-if="!started"
+          type="button"
+          class="button secondary"
+          :disabled="locked"
+          @click="editingTime = true"
+        >
+          {{ l('Reschedule', 'إعادة الجدولة') }}
+        </button>
+        <button
+          v-if="finishable"
+          type="button"
+          class="button"
+          :disabled="locked"
+          @click="run({ action: 'finish' })"
+        >
+          {{
+            data?.event.kind === 'training'
+              ? l('Complete session', 'إكمال الجلسة')
+              : l('Finish event', 'إنهاء الموعد')
+          }}
+        </button>
+        <OverflowMenu
+          v-if="eventMenu.length"
+          :label="l('More event actions', 'إجراءات أخرى للموعد')"
+          :items="eventMenu"
+          @select="eventAction"
+        />
       </div>
     </PageHeading>
     <CommandStatus :command="command" />
@@ -338,13 +453,6 @@ onMounted(load)
               )
             }}
           </p>
-          <span class="tag" :data-status="data.event.state">{{
-            data.event.state === 'cancelled'
-              ? l('Cancelled', 'ملغي')
-              : data.event.state === 'completed'
-                ? l('Completed', 'مكتمل')
-                : l('Scheduled', 'مجدول')
-          }}</span>
         </section>
         <RouterLink
           v-if="
@@ -367,140 +475,137 @@ onMounted(load)
           "
           >{{ l('Open plan workouts', 'فتح تمارين الخطة') }}</RouterLink
         >
-        <div
-          v-if="
-            view !== 'trainee' &&
-            data.event.state === 'scheduled' &&
-            !data.event.workout_snapshot?.assignment_id
-          "
-          class="event-tools"
+        <SidePanel
+          v-model:open="editingTime"
+          :locked="locked"
+          :title="l('Change this occurrence', 'تغيير هذا الموعد')"
+          :description="data.event.title"
         >
-          <button
-            v-if="!started"
-            class="text-link"
-            @click="editingTime = !editingTime"
-            :disabled="locked"
+          <form
+            class="event-change"
+            @submit.prevent="
+              previewTimes.length
+                ? run({ action: 'reschedule', local, zone, minutes })
+                : previewTime()
+            "
           >
-            {{ l('Reschedule this event', 'إعادة جدولة هذا الموعد') }}</button
-          ><button
-            v-if="view === 'admin'"
-            class="text-link"
-            @click="changingStaff = !changingStaff"
-            :disabled="locked"
-          >
-            {{ l('Reassign staff', 'إعادة تعيين الموظفين') }}</button
-          ><button
-            v-if="!data.results.length"
-            class="text-link danger-action"
-            @click="cancelOpen = !cancelOpen"
-            :disabled="locked"
-          >
-            {{ l('Cancel event', 'إلغاء الموعد') }}
-          </button>
-        </div>
-        <form
-          v-if="editingTime"
-          class="panel event-change"
-          @submit.prevent="
-            previewTimes.length
-              ? run({ action: 'reschedule', local, zone, minutes })
-              : previewTime()
-          "
+            <fieldset :disabled="locked" class="form-fields">
+              <label
+                >{{ l('Local date and time', 'التاريخ والوقت المحلي')
+                }}<input type="datetime-local" v-model="local" required /></label
+              ><TimezonePicker
+                v-model="zone"
+                :label="l('Timezone', 'المنطقة الزمنية')"
+                :disabled="locked"
+              /><label
+                >{{ l('Minutes', 'الدقائق')
+                }}<select v-model.number="minutes">
+                  <option v-for="n in [15, 30, 45, 60, 90, 120]" :key="n" :value="n">
+                    {{ n }}
+                  </option>
+                </select></label
+              >
+              <p class="small-print">
+                {{
+                  l(
+                    'Only this occurrence changes. Participant conflicts are checked before saving.',
+                    'يتغير هذا الموعد فقط. تُفحص تعارضات المشاركين قبل الحفظ.',
+                  )
+                }}
+              </p>
+              <p v-if="previewError" role="alert" class="notice error">{{ previewError }}</p>
+              <p v-for="time in previewTimes" :key="time.starts_at">
+                {{ previewLabel(time.starts_at) }} — {{ previewLabel(time.ends_at) }}
+              </p>
+              <button class="button">
+                {{
+                  previewTimes.length
+                    ? l('Confirm new time', 'تأكيد الوقت الجديد')
+                    : l('Review new time', 'مراجعة الوقت الجديد')
+                }}
+              </button>
+            </fieldset>
+          </form>
+          <CommandStatus :command="command" />
+        </SidePanel>
+        <SidePanel
+          v-if="organization"
+          v-model:open="changingStaff"
+          :locked="locked"
+          :title="l('Assign active coaches', 'تعيين مدربين نشطين')"
+          :description="data.event.title"
         >
-          <fieldset :disabled="locked" class="form-fields">
-            <h2>{{ l('Change this occurrence', 'تغيير هذا الموعد') }}</h2>
-            <label
-              >{{ l('Local date and time', 'التاريخ والوقت المحلي')
-              }}<input type="datetime-local" v-model="local" required /></label
-            ><TimezonePicker
-              v-model="zone"
-              :label="l('Timezone', 'المنطقة الزمنية')"
-              :disabled="locked"
-            /><label
-              >{{ l('Minutes', 'الدقائق')
-              }}<select v-model.number="minutes">
-                <option v-for="n in [15, 30, 45, 60, 90, 120]" :key="n" :value="n">{{ n }}</option>
-              </select></label
+          <form class="event-change" @submit.prevent="run({ action: 'staff', staff: newStaff })">
+            <fieldset :disabled="locked" class="form-fields">
+              <MemberPicker
+                :institution="id"
+                view="admin"
+                role="trainer"
+                :max="8"
+                v-model="newStaff"
+                :exclude-ids="trainees.map((p) => p.member_id)"
+              />
+              <p class="small-print">
+                {{
+                  l(
+                    'The selected staff can see this event and its participant results. Existing history is preserved.',
+                    'يمكن للموظفين المحددين رؤية الموعد ونتائج المشاركين. يُحفظ السجل السابق.',
+                  )
+                }}
+              </p>
+              <button class="button" :disabled="!newStaff.length">
+                {{ l('Confirm staff assignment', 'تأكيد تعيين الموظفين') }}
+              </button>
+            </fieldset>
+          </form>
+          <CommandStatus :command="command" />
+        </SidePanel>
+        <DialogRoot v-model:open="cancelOpen">
+          <DialogPortal>
+            <DialogOverlay class="ui-dialog-overlay" />
+            <DialogContent
+              class="ui-dialog"
+              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+              @interact-outside="locked && $event.preventDefault()"
+              @escape-key-down="locked && $event.preventDefault()"
             >
-            <p class="small-print">
-              {{
-                l(
-                  'Only this occurrence changes. Participant conflicts are checked before saving.',
-                  'يتغير هذا الموعد فقط. تُفحص تعارضات المشاركين قبل الحفظ.',
-                )
-              }}
-            </p>
-            <p v-if="previewError" role="alert" class="notice error">{{ previewError }}</p>
-            <p v-for="time in previewTimes" :key="time.starts_at">
-              {{ previewLabel(time.starts_at) }} — {{ previewLabel(time.ends_at) }}
-            </p>
-            <button class="button">
-              {{
-                previewTimes.length
-                  ? l('Confirm new time', 'تأكيد الوقت الجديد')
-                  : l('Review new time', 'مراجعة الوقت الجديد')
-              }}
-            </button>
-          </fieldset>
-        </form>
-        <form
-          v-if="changingStaff && organization"
-          class="panel event-change"
-          @submit.prevent="run({ action: 'staff', staff: newStaff })"
-        >
-          <fieldset :disabled="locked" class="form-fields">
-            <h2>{{ l('Assign active coaches', 'تعيين مدربين نشطين') }}</h2>
-            <MemberPicker
-              :institution="id"
-              view="admin"
-              role="trainer"
-              :max="8"
-              v-model="newStaff"
-              :exclude-ids="trainees.map((p) => p.member_id)"
-            />
-            <p class="small-print">
-              {{
-                l(
-                  'The selected staff can see this event and its participant results. Existing history is preserved.',
-                  'يمكن للموظفين المحددين رؤية الموعد ونتائج المشاركين. يُحفظ السجل السابق.',
-                )
-              }}
-            </p>
-            <button class="button" :disabled="!newStaff.length">
-              {{ l('Confirm staff assignment', 'تأكيد تعيين الموظفين') }}
-            </button>
-          </fieldset>
-        </form>
-        <section v-if="cancelOpen" class="panel event-change">
-          <h2>{{ l('Cancel this event?', 'إلغاء هذا الموعد؟') }}</h2>
-          <p>
-            {{ data.event.title }} ·
-            {{ label(data.event.starts_at || data.event.training_date + 'T12:00:00Z') }}
-          </p>
-          <label v-if="!started" class="check-label"
-            ><input v-model="futureSeries" type="checkbox" />{{
-              l(
-                'Also cancel later scheduled events in this series',
-                'إلغاء المواعيد التالية المجدولة من هذه السلسلة أيضاً',
-              )
-            }}</label
-          >
-          <p>
-            {{
-              l(
-                'Cancelled events stay in the calendar history. An event with recorded results cannot be cancelled.',
-                'تبقى المواعيد الملغاة في سجل التقويم. لا يمكن إلغاء موعد بنتائج مسجلة.',
-              )
-            }}
-          </p>
-          <button
-            class="button danger-action"
-            :disabled="locked"
-            @click="run({ action: 'cancel', future_series: futureSeries })"
-          >
-            {{ l('Confirm cancellation', 'تأكيد الإلغاء') }}
-          </button>
-        </section>
+              <DialogTitle>{{ l('Cancel this event?', 'إلغاء هذا الموعد؟') }}</DialogTitle>
+              <DialogDescription>
+                {{ data.event.title }} ·
+                {{ label(data.event.starts_at || data.event.training_date + 'T12:00:00Z') }}.
+                {{
+                  l(
+                    'Cancelled events stay in the calendar history. An event with recorded results cannot be cancelled.',
+                    'تبقى المواعيد الملغاة في سجل التقويم. لا يمكن إلغاء موعد بنتائج مسجلة.',
+                  )
+                }}
+              </DialogDescription>
+              <label v-if="!started" class="check-label"
+                ><input v-model="futureSeries" type="checkbox" :disabled="locked" />{{
+                  l(
+                    'Also cancel later scheduled events in this series',
+                    'إلغاء المواعيد التالية المجدولة من هذه السلسلة أيضاً',
+                  )
+                }}</label
+              >
+              <CommandStatus :command="command" />
+              <div class="ui-dialog-actions">
+                <DialogClose as-child
+                  ><button type="button" class="button secondary" :disabled="locked">
+                    {{ l('Keep event', 'الإبقاء على الموعد') }}
+                  </button></DialogClose
+                ><button
+                  type="button"
+                  class="button danger-button"
+                  :disabled="locked"
+                  @click="run({ action: 'cancel', future_series: futureSeries })"
+                >
+                  {{ l('Confirm cancellation', 'تأكيد الإلغاء') }}
+                </button>
+              </div>
+            </DialogContent>
+          </DialogPortal>
+        </DialogRoot>
         <section v-if="selected && person && writable" class="panel result-editor">
           <div class="heading-actions">
             <h2 tabindex="-1">{{ person.name }}</h2>
@@ -557,6 +662,34 @@ onMounted(load)
               )
             }}
           </p>
+          <div v-if="writable && trainees.length" class="attendance-bar">
+            <button
+              type="button"
+              class="button secondary small"
+              :disabled="locked"
+              @click="markAll('present')"
+            >
+              {{ l('Mark everyone present', 'تحديد الجميع حاضرين') }}
+            </button>
+            <button
+              type="button"
+              class="button small"
+              :disabled="locked || !attendanceChanges"
+              @click="saveAttendance"
+            >
+              {{ l('Save attendance', 'حفظ الحضور')
+              }}<template v-if="attendanceChanges"> · {{ attendanceChanges }}</template>
+            </button>
+            <button
+              v-if="attendanceChanges"
+              type="button"
+              class="text-link"
+              :disabled="locked"
+              @click="load"
+            >
+              {{ l('Discard changes', 'تجاهل التغييرات') }}
+            </button>
+          </div>
           <article v-for="p in trainees" :key="p.member_id" class="event-participant">
             <div>
               <h3>{{ p.name }}</h3>
@@ -569,32 +702,18 @@ onMounted(load)
               </p>
             </div>
             <div v-if="writable" class="participant-actions">
-              <label class="sr-only" :for="'attendance-' + p.member_id"
-                >{{ l('Attendance for', 'حضور') }} {{ p.name }}</label
-              ><select
-                :id="'attendance-' + p.member_id"
-                v-model="attendance[p.member_id]"
-                :disabled="locked"
-              >
-                <option value="unmarked">{{ l('Not recorded', 'لم يسجل') }}</option>
-                <option value="present">{{ l('Present', 'حاضر') }}</option>
-                <option value="absent">{{ l('Absent', 'غائب') }}</option>
-                <option value="excused">{{ l('Excused', 'بعذر') }}</option>
-              </select>
+              <fieldset class="filter-chips attendance-choice" :disabled="locked">
+                <legend>{{ l('Attendance for', 'حضور') }} {{ p.name }}</legend>
+                <label v-for="option in ['present', 'absent', 'excused', 'unmarked']" :key="option"
+                  ><input
+                    v-model="attendance[p.member_id]"
+                    type="radio"
+                    :name="'attendance-' + p.member_id"
+                    :value="option"
+                  />{{ attendanceName(option) }}</label
+                >
+              </fieldset>
               <button
-                class="button secondary small"
-                :disabled="locked || !attendanceDirty(p)"
-                @click="
-                  run({
-                    action: 'attendance',
-                    member: p.member_id,
-                    revision: p.revision,
-                    attendance: attendance[p.member_id],
-                  })
-                "
-              >
-                {{ l('Save attendance', 'حفظ الحضور') }}</button
-              ><button
                 v-if="data.event.kind === 'assessment' && p.attendance === 'present'"
                 class="button small"
                 :disabled="locked"
@@ -630,22 +749,6 @@ onMounted(load)
               >{{ l('Book an independent makeup session', 'حجز جلسة تعويضية مستقلة') }}</RouterLink
             >
           </article>
-          <button
-            v-if="
-              writable &&
-              data.event.state === 'scheduled' &&
-              !data.event.workout_snapshot?.assignment_id
-            "
-            class="button"
-            :disabled="locked"
-            @click="run({ action: 'finish' })"
-          >
-            {{
-              data.event.kind === 'training'
-                ? l('Complete session', 'إكمال الجلسة')
-                : l('Finish event', 'إنهاء الموعد')
-            }}
-          </button>
         </section>
         <section v-if="data.results.length && !selected" class="event-results">
           <h2>{{ l('Recorded results', 'النتائج المسجلة') }}</h2>
@@ -716,13 +819,26 @@ onMounted(load)
   font-weight: 650;
   font-size: 1.15rem;
 }
-.event-tools {
+.event-actions {
+  gap: var(--space-3);
+}
+.event-state-tag {
+  display: inline-block;
+  margin-block-start: var(--space-2);
+}
+.attendance-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 28px;
-  margin-block: 20px;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block: var(--space-3) var(--space-4);
 }
-.event-change,
+.attendance-bar .button {
+  margin: 0;
+}
+.attendance-choice label {
+  min-height: 40px;
+}
 .result-editor {
   max-width: 740px;
   margin-block: 24px;

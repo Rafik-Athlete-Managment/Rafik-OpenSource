@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { addDays, localDate } from '../lib/dates'
 import { language as l, locale } from '../lib/i18n'
-const props = defineProps<{
+type Props = {
   month: string
   selected: string
   zone: string
@@ -12,8 +12,11 @@ const props = defineProps<{
     training_date?: string
     title: string
     state: string
+    kind?: string
+    workout_snapshot?: { assignment_id?: string } | null
   }[]
-}>()
+}
+const props = defineProps<Props>()
 const emit = defineEmits<{ select: [date: string] }>()
 const first = computed(() => props.month.slice(0, 7) + '-01')
 const cells = computed(() => {
@@ -35,6 +38,19 @@ const cells = computed(() => {
     }
   })
 })
+const time = (value: string) =>
+  new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: props.zone,
+  }).format(new Date(value))
+/** Colour supplements the event title; it never carries meaning on its own. */
+const kindOf = (e: Props['events'][number]) =>
+  e.workout_snapshot?.assignment_id
+    ? 'workout'
+    : e.kind === 'assessment'
+      ? 'assessment'
+      : 'training'
 const label = (date: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     dateStyle: 'full',
@@ -91,8 +107,10 @@ function keyboard(event: KeyboardEvent) {
         :key="e.id"
         class="month-event"
         :class="{ cancelled: e.state === 'cancelled' }"
+        :data-kind="kindOf(e)"
         dir="auto"
-        >{{ e.title }}</span
+        ><bdi v-if="e.starts_at" class="month-event-time">{{ time(e.starts_at) }}</bdi>
+        {{ e.title }}</span
       >
       <small v-if="cell.events.length > 2" class="month-more">+{{ cell.events.length - 2 }}</small>
       <span v-if="cell.events.length" class="month-count"
@@ -164,6 +182,16 @@ function keyboard(event: KeyboardEvent) {
   padding: 3px 4px;
   background: var(--surface-soft);
   border-inline-start: 2px solid var(--accent);
+}
+.month-event[data-kind='assessment'] {
+  border-inline-start-color: light-dark(#155a91, #8cc4f2);
+}
+.month-event[data-kind='workout'] {
+  border-inline-start-color: light-dark(#8a5a00, #f0cb7a);
+}
+.month-event-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 .cancelled {
   text-decoration: line-through;

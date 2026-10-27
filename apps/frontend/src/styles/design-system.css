@@ -537,7 +537,7 @@ input[type='radio'] {
 
 .list-toolbar > .schedule-list-filters {
   flex-basis: 580px;
-  grid-template-columns: minmax(160px, 1fr) repeat(2, minmax(120px, 150px)) auto;
+  grid-template-columns: minmax(160px, 1fr) repeat(2, minmax(120px, 170px));
 }
 @media (max-width: 700px) {
   .list-toolbar > .schedule-list-filters {

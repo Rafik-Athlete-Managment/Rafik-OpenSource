@@ -105,8 +105,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [components/OverflowMenu.vue](../../../apps/frontend/src/components/OverflowMenu.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Labelled menu for secondary or destructive record actions and the coach New menu; items navigate or emit a key while the caller owns the action.
-- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue), [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/members/:member`, `/people`, `/training`, `/training/:assignment`
+- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue), [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/members/:member`, `/people`, `/schedule/:id`, `/training`, `/training/:assignment`
 
 ## PageHeading
 
@@ -169,8 +169,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [components/SidePanel.vue](../../../apps/frontend/src/components/SidePanel.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Contextual side panel dialog for in-place tasks (scheduling, record history) with locked dismissal during writes and explicit focus return.
-- **Direct rendered consumers:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/record/:session`, `/training`, `/training/:assignment`
+- **Direct rendered consumers:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/record/:session`, `/schedule/:id`, `/training`, `/training/:assignment`
 
 ## TimezonePicker
 

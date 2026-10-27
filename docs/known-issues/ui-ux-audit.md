@@ -451,7 +451,7 @@ The approved order still holds (recording, then today's events, athlete status, 
 - **One calendar toolbar:** [Today] [‹ ›] _October 2026_ · **Month / Week / List tabs** · Type filter · Show cancelled · **Schedule event**. The tabs keep the view in the URL, and the existing `/events` list URLs keep working.
 - Chips show time and title, with a type colour plus a text or icon label.
 - Clicking a chip opens a popover with the essentials and "Open event". Clicking a day fills the side panel.
-- **Approved 27 October:** Month/Week/List tabs replace the earlier single-toggle rule.
+- **Outcome 27 October:** tabs were implemented, then reverted at founder request. The original view select, period input and List view button remain; the toolbar now spans the content width so it stays on one desktop row, and calendar chips show the start time and event type colour.
 
 #### 9. Schedule event (`/schedule/new`)
 
@@ -626,7 +626,7 @@ Routes and labels stay the same; only grouping changes.
 ### Founder decisions — 27 October 2026
 
 1. **Search:** search as you type; Enter submits immediately.
-2. **Schedule views:** Month / Week / List as tabs.
+2. **Schedule views:** first approved as Month / Week / List tabs; after seeing the result the founder preferred the original toolbar, so it was restored with filters and period navigation on one desktop row.
 3. **Naming:** undecided. X1 is logged as a known issue; no labels change in this revamp.
 4. **Navigation:** left to implementation judgement. Chosen: flat, always-visible sections; My feedback moves to the sidebar footer links.
 5. **New data:** allowed only where it clearly improves usability without redundancy. Result: one read-only next-workout summary on athlete-plans items. Participation on People reuses an existing read; plan and last-activity columns on People were dropped as redundant.
