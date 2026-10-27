@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 
-import { PhTray } from '@phosphor-icons/vue'
+import {
+  PhTray,
+  PhPlus,
+  PhCalendarPlus,
+  PhClipboardText,
+  PhBowlFood,
+  PhChatCircle,
+} from '@phosphor-icons/vue'
+import OverflowMenu from '../../components/OverflowMenu.vue'
 import { useListPageSize } from '../../lib/list-page-size'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -403,16 +411,42 @@ onMounted(async () => {
         v-if="section === 'overview' && view === 'trainer' && data"
         class="coach-header-actions actions"
       >
-        <RouterLink class="button secondary" to="/people"
-          >{{ data.summary.trainees }} ·
-          {{ l('Primary-roster athletes', 'رياضيو القائمة الأساسية') }}</RouterLink
+        <RouterLink class="text-link" to="/people"
+          >{{ data.summary.trainees }}
+          {{ l('primary-roster athletes', 'رياضيون في القائمة الأساسية') }}</RouterLink
         >
-        <RouterLink class="button" to="/training">{{
-          l('Athlete plans', 'خطط الرياضيين')
-        }}</RouterLink>
-        <RouterLink class="button secondary" to="/analytics">{{
-          l('View analytics', 'عرض التحليلات')
-        }}</RouterLink>
+        <OverflowMenu
+          primary
+          :icon="PhPlus"
+          :text="l('New', 'جديد')"
+          :label="l('Create something new', 'إنشاء عنصر جديد')"
+          :items="[
+            {
+              key: 'event',
+              label: l('Schedule event', 'جدولة موعد'),
+              icon: PhCalendarPlus,
+              to: '/schedule/new',
+            },
+            {
+              key: 'assign',
+              label: l('Assign a program', 'تعيين برنامج'),
+              icon: PhClipboardText,
+              to: '/plans',
+            },
+            {
+              key: 'nutrition',
+              label: l('Nutrition plan', 'خطة تغذية'),
+              icon: PhBowlFood,
+              to: { path: '/nutrition', query: { create: '1' } },
+            },
+            {
+              key: 'message',
+              label: l('Message', 'رسالة'),
+              icon: PhChatCircle,
+              to: { path: '/messages', query: { tab: 'people' } },
+            },
+          ]"
+        />
       </div>
     </PageHeading>
     <CommandStatus :command="command" />

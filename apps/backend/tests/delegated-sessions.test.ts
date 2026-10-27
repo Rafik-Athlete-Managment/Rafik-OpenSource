@@ -322,6 +322,39 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     (await call(support, ws + "/sessions", reviewZero)).data,
     reviewedZero.data,
   );
+  // History status filters apply before counting/paging and use the follow-up review rule.
+  const filtered = async (status: string) => {
+    const r = await call(
+      primary,
+      `${ws}/delivery?view=trainer&history=true&status=${status}&limit=50`,
+    );
+    assert.equal(r.status, 200, JSON.stringify(r));
+    assert.equal(r.data.total, r.data.sessions.length);
+    return r.data.sessions.map((x: any) => x.id as string);
+  };
+  const awaiting = await filtered("awaiting_review"),
+    reviewed = await filtered("reviewed"),
+    unfinished = await filtered("in_progress");
+  assert.ok(
+    awaiting.includes(delegated.data.id) && !awaiting.includes(own.data.id),
+  );
+  assert.ok(
+    reviewed.includes(own.data.id) && !reviewed.includes(delegated.data.id),
+  );
+  assert.ok(
+    unfinished.includes(supported.data.id) &&
+      !unfinished.includes(own.data.id) &&
+      !unfinished.includes(delegated.data.id),
+  );
+  assert.equal(
+    (
+      await call(
+        primary,
+        `${ws}/delivery?view=trainer&history=true&status=unknown`,
+      )
+    ).status,
+    400,
+  );
   const ownHistory = await call(
     athlete,
     "/v1/workouts/" + own.data.id + "/history?view=trainee",

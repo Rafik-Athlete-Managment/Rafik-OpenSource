@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 
-import { PhCheck } from '@phosphor-icons/vue'
+import { PhCheck, PhArrowLeft, PhClockCounterClockwise } from '@phosphor-icons/vue'
+import SidePanel from '../../components/SidePanel.vue'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -236,14 +237,25 @@ function toggleDone(entry: Entry, kind: ExerciseKind | undefined) {
   }
   entry.completed = checked
 }
+const historyOpen = ref(false)
+const setsDone = computed(() => entries.value.filter((e) => e.completed).length)
+// Return to wherever recording was opened from (dashboard, plan or history).
+const backTarget = computed(() => {
+  const previous = (window.history.state as { back?: unknown } | null)?.back
+  return typeof previous === 'string' && !previous.startsWith('/record/')
+    ? previous
+    : base + '/training'
+})
 const dayName = (d: PlanDay) => (locale.value === 'ar' ? d.nameAr || d.name : d.name)
 onMounted(load)
 </script>
 <template>
   <div class="container page delegated-workout">
-    <RouterLink class="back-link" :to="base + '/training'">{{
-      l('Back to athlete plans', 'العودة إلى خطط الرياضيين')
-    }}</RouterLink>
+    <RouterLink class="back-link" :to="backTarget"
+      ><PhArrowLeft :size="18" class="back-arrow" aria-hidden="true" />{{
+        l('Back', 'رجوع')
+      }}</RouterLink
+    >
     <p v-if="loading" role="status">{{ l('Loading…', 'جارٍ التحميل…') }}</p>
     <p v-else-if="error" role="alert" class="notice error">
       {{ error }}
@@ -317,6 +329,33 @@ onMounted(load)
         >{{ l('Review workout', 'مراجعة التمرين') }}</RouterLink
       >
       <form v-if="session.can_record" class="form-stack" @submit.prevent="save(true)">
+        <div class="record-toolbar">
+          <p class="record-progress" role="status">
+            <strong>{{ setsDone }} / {{ entries.length }}</strong>
+            {{ l('sets checked', 'مجموعات محددة') }}
+          </p>
+          <div class="actions">
+            <button
+              type="button"
+              class="button secondary small"
+              :aria-expanded="historyOpen"
+              @click="historyOpen = true"
+            >
+              <PhClockCounterClockwise :size="18" aria-hidden="true" />{{
+                l('Record history', 'سجل التعديلات')
+              }}</button
+            ><button
+              type="button"
+              class="button secondary small"
+              :disabled="locked"
+              @click="save(false)"
+            >
+              {{ l('Save progress', 'حفظ التقدم') }}</button
+            ><button class="button small" :disabled="locked || !entries.some((e) => e.completed)">
+              {{ l('Finish session', 'إنهاء الحصة') }}
+            </button>
+          </div>
+        </div>
         <p class="small-print">
           {{
             l(
@@ -339,8 +378,8 @@ onMounted(load)
             >
               <span>{{ l('Set', 'المجموعة') }} {{ entry.set_index + 1 }}</span>
               <label v-for="field in setFields(exercise.kind)" :key="field"
-                >{{ fieldLabel(field, entry.unit)
-                }}<input
+                ><span class="set-field-label">{{ fieldLabel(field, entry.unit) }}</span
+                ><input
                   type="number"
                   :inputmode="field === 'reps' ? 'numeric' : 'decimal'"
                   :min="measureLimits[field].min"
@@ -375,16 +414,32 @@ onMounted(load)
           <label
             >{{ l('Note', 'ملاحظة') }}<textarea v-model="note" maxlength="2000" rows="2" />
           </label>
-          <div class="actions">
-            <button type="button" class="button secondary" @click="save(false)">
-              {{ l('Save progress', 'حفظ التقدم') }}</button
-            ><button class="button" :disabled="!entries.some((e) => e.completed)">
-              {{ l('Finish session', 'إنهاء الحصة') }}
-            </button>
-          </div>
         </fieldset>
       </form>
-      <section class="panel" aria-labelledby="record-history">
+      <SidePanel
+        v-if="session.can_record"
+        v-model:open="historyOpen"
+        :title="l('Record history', 'سجل التعديلات')"
+        :description="session.member_name + ' · ' + session.prescription.name"
+      >
+        <ol class="record-history">
+          <li v-for="item in history" :key="item.version">
+            <strong dir="auto">{{ item.actor_name }}</strong>
+            ·
+            {{
+              item.action === 'start'
+                ? l('started', 'بدأ')
+                : item.by === 'athlete'
+                  ? l('corrected (athlete)', 'صحّح (الرياضي)')
+                  : item.completed
+                    ? l('saved as completed', 'حفظ كمكتملة')
+                    : l('saved progress', 'حفظ التقدم')
+            }}
+            · {{ dateLabel(item.created_at) }}
+          </li>
+        </ol>
+      </SidePanel>
+      <section v-else class="panel" aria-labelledby="record-history">
         <h2 id="record-history">{{ l('Record history', 'سجل التعديلات') }}</h2>
         <ol class="record-history">
           <li v-for="item in history" :key="item.version">
@@ -455,6 +510,55 @@ onMounted(load)
   }
   .delegated-set > span {
     grid-column: 1 / -1;
+  }
+}
+.record-toolbar {
+  position: sticky;
+  top: var(--dashboard-sticky-top, 0);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) 0;
+  border-block-end: 1px solid var(--line);
+  background: var(--page);
+}
+.record-toolbar .actions {
+  gap: var(--space-2);
+}
+.record-toolbar .button {
+  margin: 0;
+}
+.record-progress {
+  margin: 0;
+  color: var(--muted);
+}
+.record-progress strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.back-arrow:dir(rtl) {
+  transform: scaleX(-1);
+}
+/* Desktop: name each measure once per exercise; inputs keep their accessible labels. */
+@media (min-width: 521px) {
+  .delegated-set:not(:first-of-type) .set-field-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .delegated-set:not(:first-of-type) {
+    align-items: center;
   }
 }
 .record-history {

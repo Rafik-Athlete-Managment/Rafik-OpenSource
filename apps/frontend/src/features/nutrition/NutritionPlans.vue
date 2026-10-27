@@ -105,7 +105,14 @@ watch(
     void load()
   },
 )
-onMounted(() => load())
+onMounted(() => {
+  void load()
+  // Contextual "New nutrition plan" links open the athlete choice directly.
+  if (route.query.create === '1') {
+    creating.value = true
+    void router.replace({ query: { ...route.query, create: undefined } })
+  }
+})
 onUnmounted(() => {
   disposed = true
   generation++

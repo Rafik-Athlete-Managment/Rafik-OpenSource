@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { PhTray } from '@phosphor-icons/vue'
+import { PhTray, PhCaretRight } from '@phosphor-icons/vue'
+import { useLiveSearch } from '../../lib/live-search'
 import { useListPageSize } from '../../lib/list-page-size'
 import PageHeading from '../../components/PageHeading.vue'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
@@ -24,7 +25,14 @@ const data = ref<History>(),
   offset = ref(0),
   loading = ref(false),
   error = ref(''),
-  search = ref(String(route.query.search || ''))
+  search = ref(String(route.query.search || '')),
+  status = ref(String(route.query.status || ''))
+const statuses = [
+  ['', ['All', 'الكل']],
+  ['awaiting_review', ['Awaiting review', 'بانتظار المراجعة']],
+  ['in_progress', ['In progress', 'قيد التنفيذ']],
+  ['reviewed', ['Reviewed', 'تمت المراجعة']],
+] as const
 let generation = 0,
   disposed = false
 const { recordLimit, appliedLimit, pageSizes, acceptLimit, changeLimit } = useListPageSize(
@@ -41,6 +49,7 @@ async function load() {
     view: context.view,
     history: 'true',
     search: String(route.query.search || ''),
+    ...(route.query.status ? { status: String(route.query.status) } : {}),
     limit: String(recordLimit.value),
     offset: String(Math.max(0, Number(route.query.offset) || 0)),
   })
@@ -59,19 +68,22 @@ async function load() {
     if (!disposed && current === generation) loading.value = false
   }
 }
-function navigate(page = 0) {
-  return router.push({
+function navigate(page = 0, replace = false) {
+  return router[replace ? 'replace' : 'push']({
     query: {
       limit: route.query.limit,
       ...(search.value.trim() ? { search: search.value.trim() } : {}),
+      ...(status.value ? { status: status.value } : {}),
       ...(page ? { offset: page } : {}),
     },
   })
 }
+const live = useLiveSearch(search, () => navigate(0, true))
 watch(
-  () => [route.query.search, route.query.offset],
+  () => [route.query.search, route.query.status, route.query.offset],
   () => {
-    search.value = String(route.query.search || '')
+    live.restore(String(route.query.search || ''))
+    status.value = String(route.query.status || '')
     void load()
   },
 )
@@ -80,6 +92,18 @@ onUnmounted(() => {
   disposed = true
   generation++
 })
+const state = (session: Session) =>
+  session.status !== 'completed'
+    ? 'in_progress'
+    : session.reviewed_at
+      ? 'reviewed'
+      : 'awaiting_review'
+const stateLabel = (session: Session) =>
+  ({
+    in_progress: l('In progress', 'قيد التنفيذ'),
+    awaiting_review: l('Awaiting review', 'بانتظار المراجعة'),
+    reviewed: l('Reviewed', 'تمت المراجعة'),
+  })[state(session)]
 const name = (id: string) =>
   data.value?.members.find((m) => m.id === id)?.name || l('Former member', 'عضو سابق')
 </script>
@@ -98,17 +122,9 @@ const name = (id: string) =>
           }}
         </p>
       </div>
-      <div class="actions">
-        <RouterLink
-          v-if="context.view !== 'trainee'"
-          class="button secondary"
-          :to="context.base + '/events'"
-          >{{ l('Schedule', 'الجدول') }}</RouterLink
-        >
+      <div v-if="context.view === 'trainee'" class="actions">
         <RouterLink class="button secondary" :to="context.base + '/training'">{{
-          context.view === 'trainee'
-            ? l('My training', 'تدريبي')
-            : l('Athlete plans', 'خطط الرياضيين')
+          l('My training', 'تدريبي')
         }}</RouterLink>
       </div>
     </PageHeading>
@@ -116,10 +132,21 @@ const name = (id: string) =>
       <form
         v-if="context.view !== 'trainee'"
         class="history-search-form"
-        @submit.prevent="navigate()"
+        @submit.prevent="live.submit()"
       >
         <AthleteSearch v-model="search" />
-        <button class="button secondary" :disabled="loading">{{ l('Search', 'بحث') }}</button>
+        <fieldset class="filter-chips">
+          <legend>{{ l('Workout status', 'حالة التمرين') }}</legend>
+          <label v-for="[value, text] in statuses" :key="value"
+            ><input
+              v-model="status"
+              type="radio"
+              name="session-status"
+              :value="value"
+              @change="navigate()"
+            />{{ l(text[0], text[1]) }}</label
+          >
+        </fieldset>
       </form>
       <h2 v-else class="list-section-label">{{ l('Recorded sessions', 'الحصص المسجلة') }}</h2>
       <div class="list-toolbar-pagination">
@@ -148,114 +175,79 @@ const name = (id: string) =>
           <PhTray :size="28" aria-hidden="true" />
           <h2>
             {{
-              search
-                ? l('No sessions match this search.', 'لا توجد حصص مطابقة لهذا البحث.')
+              search || status
+                ? l('No workouts match this view.', 'لا توجد تمارين مطابقة لهذا العرض.')
                 : l('No recorded sessions yet.', 'لا توجد حصص مسجّلة بعد.')
             }}
           </h2>
           <p>
             {{
               l(
-                search
-                  ? 'Try another athlete name or clear the search.'
+                search || status
+                  ? 'Try another athlete name or status, or clear the filters.'
                   : 'Workouts appear here once an athlete starts an assigned session. Scheduled events stay in Schedule.',
-                search
-                  ? 'جرّب اسم رياضي آخر أو امسح البحث.'
+                search || status
+                  ? 'جرّب اسم رياضي أو حالة أخرى، أو امسح عوامل التصفية.'
                   : 'تظهر التمارين هنا عندما يبدأ الرياضي حصة معيّنة. تبقى المواعيد المجدولة في الجدول.',
               )
             }}
           </p>
         </section>
-        <ol v-else class="session-list">
-          <li v-for="session in data.sessions" :key="session.id">
-            <RouterLink
-              class="session-row"
-              :to="
-                context.view === 'trainee'
-                  ? '/workout/' + session.id + '?institution=' + context.institution
-                  : context.base + '/review/' + session.id
-              "
-            >
-              <div>
-                <p class="overline" dir="auto">
-                  {{
-                    context.view === 'trainee'
-                      ? l('Your workout', 'تمرينك')
-                      : name(session.member_id)
-                  }}
-                </p>
-                <h2 dir="auto">{{ session.prescription.name }}</h2>
-                <p dir="auto">{{ session.title }} · {{ dateLabel(session.started_at) }}</p>
-              </div>
-              <span
-                class="tag"
-                :data-status="
-                  session.reviewed_at
-                    ? 'reviewed'
-                    : session.status === 'completed'
-                      ? 'awaiting_review'
-                      : 'in_progress'
+        <ol v-else class="record-list session-list">
+          <li v-for="session in data.sessions" :key="session.id" class="record-row">
+            <div class="record-title">
+              <RouterLink
+                :to="
+                  context.view === 'trainee'
+                    ? '/workout/' + session.id + '?institution=' + context.institution
+                    : context.base + '/review/' + session.id
                 "
-                >{{
-                  session.status === 'completed'
-                    ? session.reviewed_at
-                      ? l('Reviewed', 'تمت المراجعة')
-                      : l('Awaiting review', 'بانتظار المراجعة')
-                    : l('In progress', 'قيد التنفيذ')
-                }}</span
-              ><span aria-hidden="true">↗</span>
-            </RouterLink>
+                ><bdi dir="auto">{{
+                  context.view === 'trainee' ? session.prescription.name : name(session.member_id)
+                }}</bdi></RouterLink
+              >
+              <small
+                ><template v-if="context.view !== 'trainee'"
+                  ><bdi dir="auto">{{ session.prescription.name }}</bdi> · </template
+                ><bdi dir="auto">{{ session.title }}</bdi></small
+              >
+            </div>
+            <div class="record-meta">
+              <span class="tag" :data-status="state(session)">{{ stateLabel(session) }}</span>
+              <span
+                ><small>{{ l('Started', 'بدأ') }}</small
+                >{{ dateLabel(session.started_at) }}</span
+              >
+              <span v-if="session.completed_at"
+                ><small>{{ l('Completed', 'اكتمل') }}</small
+                >{{ dateLabel(session.completed_at) }}</span
+              >
+            </div>
+            <div class="record-actions" aria-hidden="true">
+              <PhCaretRight :size="18" class="row-caret" />
+            </div>
           </li>
-        </ol>
-      </template></PageState
-    >
+        </ol> </template
+    ></PageState>
   </div>
 </template>
 <style scoped>
-.history-filter {
-  margin-block: 20px;
-}
-.session-list {
-  list-style: none;
-  margin: 20px 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-.session-row {
+.history-search-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
-  align-items: center;
-  padding: var(--space-6);
-  color: var(--ink);
-  text-decoration: none;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
+  align-items: end;
+  gap: var(--space-4);
 }
-.session-row:hover {
-  border-color: var(--accent);
+.history-search-form .athlete-search {
+  flex: 1 1 320px;
 }
-.session-row > div {
-  min-width: 0;
-  flex: 1 1 230px;
-  overflow-wrap: anywhere;
+.session-list {
+  margin-block: 0;
 }
-.session-row h2 {
-  margin: 6px 0;
-  font-size: var(--text-panel);
-}
-.session-row p {
-  margin: 0;
-}
-.session-row .overline {
+.row-caret {
   color: var(--muted);
 }
-@media (max-width: 500px) {
-  .session-row {
-    padding: 18px;
-    gap: 12px;
-  }
+.row-caret:dir(rtl) {
+  transform: scaleX(-1);
 }
 </style>

@@ -100,6 +100,14 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Direct rendered consumers:** [features/coaching/ExercisesPage.vue](../../../apps/frontend/src/features/coaching/ExercisesPage.vue)
 - **Views using it:** `/exercises`, `/exercises/:editor`
 
+## OverflowMenu
+
+- **Source:** [components/OverflowMenu.vue](../../../apps/frontend/src/components/OverflowMenu.vue)
+- **Kind:** Reusable/domain component.
+- **Purpose:** Labelled menu for secondary or destructive record actions and the coach New menu; items navigate or emit a key while the caller owns the action.
+- **Direct rendered consumers:** [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/training`, `/training/:assignment`
+
 ## PageHeading
 
 - **Source:** [components/PageHeading.vue](../../../apps/frontend/src/components/PageHeading.vue)
@@ -155,6 +163,14 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Purpose:** Shared section heading, description and action grouping.
 - **Direct rendered consumers:** [features/institution/CoachingTeam.vue](../../../apps/frontend/src/features/institution/CoachingTeam.vue), [features/institution/MemberManagement.vue](../../../apps/frontend/src/features/institution/MemberManagement.vue), [features/institution/SportsSettings.vue](../../../apps/frontend/src/features/institution/SportsSettings.vue)
 - **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/members/:member`, `/people`
+
+## SidePanel
+
+- **Source:** [components/SidePanel.vue](../../../apps/frontend/src/components/SidePanel.vue)
+- **Kind:** Reusable/domain component.
+- **Purpose:** Contextual side panel dialog for in-place tasks (scheduling, record history) with locked dismissal during writes and explicit focus return.
+- **Direct rendered consumers:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/record/:session`, `/training`, `/training/:assignment`
 
 ## TimezonePicker
 
@@ -593,7 +609,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Shared read-only next-workout projection, fixed-time scheduling/reschedule/skip and occurrence-bound start/resume with durable command recovery.
-- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue), [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue), [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue), [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue)
+- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue), [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue), [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue)
 - **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/training`, `/training/:assignment`
 
 ## WorkoutRuleSettings

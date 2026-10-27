@@ -41,7 +41,11 @@ const items = ref<Channel[]>([]),
   error = ref(''),
   peopleError = ref(''),
   manage = ref(false),
-  tab = ref<'conversations' | 'people' | 'groups'>('conversations')
+  tab = ref<'conversations' | 'people' | 'groups'>(
+    route.query.tab === 'people' || route.query.tab === 'groups'
+      ? route.query.tab
+      : 'conversations',
+  )
 const contacts = computed(() =>
   people.value
     .filter((person) => person.active && person.id !== institutionSelf.value?.id)

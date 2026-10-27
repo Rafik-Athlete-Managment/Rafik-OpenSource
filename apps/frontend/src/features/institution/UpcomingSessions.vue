@@ -8,7 +8,12 @@ import { request } from '../../lib/backend'
 import { localDate, addDays } from '../../lib/dates'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import type { CalendarEvent } from './service-types'
-const props = defineProps<{ todayOnly?: boolean; omitWorkouts?: boolean; headingLevel?: number }>()
+const props = defineProps<{
+  todayOnly?: boolean
+  omitWorkouts?: boolean
+  headingLevel?: number
+  hideLink?: boolean
+}>()
 const route = useRoute(),
   id = institutionContext().institution,
   view = institutionContext().view,
@@ -53,7 +58,7 @@ onMounted(async () => {
       <component :is="headingLevel === 3 ? 'h3' : 'h2'">{{
         todayOnly ? l('Today’s events', 'مواعيد اليوم') : l('Coming up', 'القادم')
       }}</component>
-      <RouterLink :to="base + '/schedule'" class="text-link"
+      <RouterLink v-if="!hideLink" :to="base + '/schedule'" class="text-link"
         >{{ l('Open calendar', 'فتح التقويم') }} ↗</RouterLink
       >
     </div>

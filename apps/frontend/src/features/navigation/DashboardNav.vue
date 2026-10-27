@@ -15,7 +15,9 @@ import {
   PhGear,
   PhBowlFood,
   PhClockCounterClockwise,
-  PhCaretDown,
+  PhPersonSimpleRun,
+  PhUsersThree,
+  PhHeartbeat,
 } from '@phosphor-icons/vue'
 import { language as l } from '../../lib/i18n'
 const props = defineProps<{ base: string; role: string }>()
@@ -83,29 +85,39 @@ const groups = computed(() =>
             items: [
               ['/dashboard', l('Overview', 'نظرة عامة'), PhHouse],
               ['/people', l('People', 'الأشخاص'), PhUsers],
-              ['/training', l('Athlete plans', 'خطط الرياضيين'), PhBarbell],
-              ['/workouts', l('Workout history', 'سجل التمارين'), PhClockCounterClockwise],
-              ['/nutrition', l('Nutrition plans', 'خطط التغذية'), PhBowlFood],
               ['/schedule', l('Schedule', 'الجدول'), PhCalendarBlank],
               ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
-              ['/analytics', l('Analytics', 'التحليلات'), PhChartLine],
+            ],
+          },
+          {
+            name: l('Training', 'خطط التدريب'),
+            items: [
+              ['/training', l('Athlete plans', 'خطط الرياضيين'), PhBarbell],
+              ['/workouts', l('Workout history', 'سجل التمارين'), PhClockCounterClockwise],
+              ['/plans', l('Programs', 'البرامج'), PhClipboardText],
+              ['/exercises', l('Exercises', 'التمارين'), PhPersonSimpleRun],
+            ],
+          },
+          {
+            name: l('Athlete care', 'رعاية الرياضيين'),
+            items: [
+              ['/nutrition', l('Nutrition plans', 'خطط التغذية'), PhBowlFood],
               ...(props.role === 'trainer'
-                ? [
-                    ['/injuries', l('Injury status', 'حالة الإصابة'), PhListChecks],
-                    ['/feedback', l('My feedback', 'تقييماتي'), PhClipboardText],
-                  ]
+                ? [['/injuries', l('Injury status', 'حالة الإصابة'), PhHeartbeat]]
                 : []),
             ],
           },
           {
-            name: l('Library', 'المكتبة'),
+            name: l('Setup', 'الإعداد'),
             items: [
-              ['/plans', l('Programs', 'البرامج'), PhClipboardText],
-              ['/exercises', l('Exercises', 'التمارين'), PhBarbell],
-              ['/resources', l('Resources', 'الموارد'), PhFolder],
-              ['/groups', l('Groups', 'المجموعات'), PhUsers],
+              ['/groups', l('Groups', 'المجموعات'), PhUsersThree],
               ['/assessment-templates', l('Assessment templates', 'قوالب التقييم'), PhListChecks],
+              ['/resources', l('Resources', 'الموارد'), PhFolder],
             ],
+          },
+          {
+            name: l('Insights', 'المؤشرات'),
+            items: [['/analytics', l('Analytics', 'التحليلات'), PhChartLine]],
           },
         ],
 )
@@ -115,79 +127,50 @@ function selected(path: string) {
     ? current === props.base + path || current.startsWith(props.base + path + '/')
     : current === props.base
 }
-function closeOtherGroups(event: Event) {
-  const opened = event.currentTarget as HTMLDetailsElement
-  if (!opened.open) return
-  opened.parentElement?.querySelectorAll<HTMLDetailsElement>('details[open]').forEach((group) => {
-    if (group !== opened) group.open = false
-  })
-}
 </script>
 <template>
   <nav class="dashboard-navigation" :aria-label="l('Institution navigation', 'تنقل المؤسسة')">
-    <details
-      v-for="group in groups"
-      :key="group.name"
-      :open="group.items.some((item) => selected(String(item[0])))"
-      @toggle="closeOtherGroups"
-    >
-      <summary>
-        <span>{{ group.name }}</span
-        ><PhCaretDown :size="15" aria-hidden="true" />
-      </summary>
-      <div class="dashboard-navigation-links">
-        <RouterLink
-          v-for="item in group.items"
-          :key="String(item[0])"
-          :to="base + String(item[0])"
-          :class="{ selected: selected(String(item[0])) }"
-          :aria-current="selected(String(item[0])) ? 'page' : undefined"
-          @click="emit('navigate')"
-          ><component :is="item[2]" :size="18" aria-hidden="true" /><span>{{
-            item[1]
-          }}</span></RouterLink
-        >
-      </div>
-    </details>
+    <section v-for="(group, index) in groups" :key="group.name" class="navigation-group">
+      <h2 :id="'navigation-group-' + index">{{ group.name }}</h2>
+      <ul class="dashboard-navigation-links" :aria-labelledby="'navigation-group-' + index">
+        <li v-for="item in group.items" :key="String(item[0])">
+          <RouterLink
+            :to="base + String(item[0])"
+            :class="{ selected: selected(String(item[0])) }"
+            :aria-current="selected(String(item[0])) ? 'page' : undefined"
+            @click="emit('navigate')"
+            ><component :is="item[2]" :size="18" aria-hidden="true" /><span>{{
+              item[1]
+            }}</span></RouterLink
+          >
+        </li>
+      </ul>
+    </section>
   </nav>
 </template>
 <style scoped>
 .dashboard-navigation {
   display: grid;
-  gap: 8px;
+  gap: 12px;
   padding: 16px 12px;
 }
-details {
+.navigation-group {
   min-width: 0;
 }
-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 8px 12px;
-  border-radius: 7px;
+.navigation-group h2 {
+  margin: 0;
+  padding: 8px 12px 4px;
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 700;
-  cursor: pointer;
-  list-style: none;
-}
-summary::-webkit-details-marker {
-  display: none;
-}
-summary svg {
-  flex: 0 0 auto;
-  transition: transform 150ms ease;
-}
-details[open] > summary svg {
-  transform: rotate(180deg);
+  line-height: 1.4;
 }
 .dashboard-navigation-links {
   display: grid;
   gap: 2px;
-  padding-inline-start: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 a {
   display: flex;

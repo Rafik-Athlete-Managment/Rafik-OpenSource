@@ -28,7 +28,7 @@ import {
   type Role,
   access,
 } from "./institution.ts";
-import type { Prisma } from "./generated/prisma/client.ts";
+import { Prisma } from "./generated/prisma/client.ts";
 type Member = Awaited<ReturnType<typeof access>>;
 type Input = Record<string, unknown>;
 const json = (v: unknown) => v as Prisma.InputJsonValue;
@@ -707,6 +707,28 @@ export async function delivery(
               ? { id: self.id }
               : {}),
       };
+      // Optional status filter, applied before counting and paging. "Awaiting review" uses
+      // the follow-up rule: completed with no (or an empty) reviewed_at in the document.
+      const status = query.get("status");
+      if (
+        status &&
+        !["in_progress", "awaiting_review", "reviewed"].includes(status)
+      )
+        throw new ApiError(400, "invalid_request");
+      const unreviewed = {
+        OR: [
+          { document: { path: ["reviewed_at"], equals: Prisma.AnyNull } },
+          { document: { path: ["reviewed_at"], equals: "" } },
+        ],
+      };
+      const state =
+        status === "in_progress"
+          ? { completed_at: null }
+          : status === "awaiting_review"
+            ? { completed_at: { not: null }, ...unreviewed }
+            : status === "reviewed"
+              ? { completed_at: { not: null }, NOT: unreviewed }
+              : {};
       const cursor = query.get("before");
       if (
         cursor &&
@@ -716,13 +738,19 @@ export async function delivery(
             institution_id: id,
             institution_members: scope,
             ...workouts,
+            ...state,
           },
         }))
       )
         throw new ApiError(400, "invalid_request");
       const take = pageSize(query, 10);
       const page = await tx.institution_sessions.findMany({
-        where: { institution_id: id, institution_members: scope, ...workouts },
+        where: {
+          institution_id: id,
+          institution_members: scope,
+          ...workouts,
+          ...state,
+        },
         include: {
           institution_members: {
             select: { id: true, name: true, active: true },
@@ -748,7 +776,12 @@ export async function delivery(
           })
         : [];
       const total = await tx.institution_sessions.count({
-        where: { institution_id: id, institution_members: scope, ...workouts },
+        where: {
+          institution_id: id,
+          institution_members: scope,
+          ...workouts,
+          ...state,
+        },
       });
       return {
         total,

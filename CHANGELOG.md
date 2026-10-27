@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Coach UX revamp, phases 0–1: flat always-visible navigation sections (My feedback moves to the sidebar footer links); shared overflow menu, side panel, record-row, attention-strip and filter-chip patterns; search-as-you-type with Enter to submit. Coach Overview leads with separate clickable counts, compact workout rows with one primary action and a menu, scheduling/skip in a side panel, a New menu, and one tabbed follow-up panel that shows only non-empty queues. Workout history gains server-side status filters (awaiting review, in progress, reviewed). Recording gets a sticky progress/save bar and history panel; Review shows status, keeps feedback in view and offers Next to review. No permission, command or schema change.
+
 - Record the coach dashboard UX audit and phased revamp plan, founder decisions on search and Schedule views, and deferred terminology as a known issue. Documentation only; no behavior changes.
 
 - Keep supporting/primary coach selections in one checked list; add messaging directory tabs and per-row institution discovery; fix athlete-plan adaptation to update its existing assignment rather than publishing a library copy, preserving scheduled snapshots, cursor, policy, audit and exact recovery.

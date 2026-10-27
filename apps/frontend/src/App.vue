@@ -113,6 +113,10 @@ onUnmounted(() => window.removeEventListener('online', online))
                 <RouterLink v-if="platform" to="/platform">{{
                   language('Platform operations', 'عمليات المنصة')
                 }}</RouterLink>
+                <RouterLink to="/support">{{ language('Support', 'الدعم') }}</RouterLink>
+                <RouterLink v-if="currentContext?.role === 'trainer'" to="/feedback">{{
+                  language('My feedback', 'تقييماتي')
+                }}</RouterLink>
                 <RouterLink to="/help">{{ t('help') }}</RouterLink
                 ><RouterLink to="/settings">{{ t('settings') }}</RouterLink
                 ><RouterLink v-if="localPreview" to="/local-preview">{{
@@ -191,6 +195,9 @@ onUnmounted(() => window.removeEventListener('online', online))
           language('Platform operations', 'عمليات المنصة')
         }}</RouterLink>
         <RouterLink to="/support">{{ language('Support', 'الدعم') }}</RouterLink>
+        <RouterLink v-if="currentContext?.role === 'trainer'" to="/feedback">{{
+          language('My feedback', 'تقييماتي')
+        }}</RouterLink>
         <RouterLink to="/help">{{ t('help') }}</RouterLink
         ><RouterLink to="/settings">{{ t('settings') }}</RouterLink
         ><RouterLink v-if="localPreview" to="/local-preview">{{ t('localPreview') }}</RouterLink
