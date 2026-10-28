@@ -1,5 +1,9 @@
 # Verification record
 
+## Timezone popup layer — 28 October 2026
+
+Rendered the real SidePanel and TimezonePicker together in a temporary local component fixture, 1280×720 Chromium/IAB, English/light. Before correction the expanded options were hidden by the panel; after changing layer 60 to 120 and reloading, the searched Dubai option was visibly inside the popup and pointer selection updated the model without closing the panel. Arrow/Enter selection of London also updated the value and kept focus on the combobox. Added this pointer-selection case to the scheduling browser regression, which has not yet run against the database. This evidence covers the isolated components, not authenticated scheduling, WebKit, Arabic or phone layouts. Removed the temporary fixture.
+
 ## Calendar plan-workout entry — 28 October 2026
 
 Frontend `vue-tsc --noEmit`, inventory generation/coverage checks and documentation link checks passed. The production build passed outside the sandbox after its initial Windows native-dependency/process-access failure. Added, but not yet executed, a focused isolated browser regression for authorized assignment/day preservation, server search, no independent calendar write and returning to custom creation. Assessment tests select their explicit entry choice. End-to-end and rendered responsive/RTL/theme acceptance remain blocked by the current Windows reservation of local PostgreSQL port 55332. No schema/API write implementation changed; no Android build or full browser suite was run.

@@ -130,7 +130,8 @@ const options = computed(() =>
   place-items: center;
 }
 .timezone-options {
-  z-index: 60;
+  /* Portaled options must sit above modal backdrops (100) and panels (101). */
+  z-index: 120;
   width: var(--reka-combobox-trigger-width);
   min-width: min(320px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);

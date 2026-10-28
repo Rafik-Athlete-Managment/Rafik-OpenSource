@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+Portaled selection menus must use the popup layer above modal backdrops and panels (currently popup 120, backdrop 100, panel 101). Check the actual positioned wrapper as well as the content, since Popper copies the content layer when mounting. Verify pointer and keyboard selection inside the dialog; DOM presence alone does not establish visibility.
+
 Scheduling creation presents explicit plan-workout, custom-event and assessment choices. Plan workouts use the shared paginated agenda and athlete-name search, with no duplicate event-name field. Existing scheduled/unfinished work links back to Athlete plans. Custom events and assessments keep their established details/people/review flow. Keep durable recovery visible and prevent switching choices while a write is active or uncertain.
 
 Sidebar navigation uses one expanded section at a time; opening another closes the previous section. Route changes reveal the current section. Disclosure headings are keyboard-operable buttons with expanded state and restrained, reduced-motion-aware transitions. On desktop, utility links and appearance controls sit outside the navigation scroll area in a compact footer. Keep overflow reachable in short windows rather than hiding scrollbars or clipping commands.

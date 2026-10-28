@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix timezone options opening behind scheduling side panels. The shared picker now uses the overlay-popup layer above modal backdrops and panels.
+
 - Schedule an event now separates plan workouts, custom attendance events and assessments. Plan workouts reuse the authorized planning queue and exact scheduling command, without a second event name or duplicate workout. Existing custom drafts and makeup links remain recoverable.
 
 - Restore single-open collapsible sidebar sections, automatically opening the active route's section. Keep desktop utility commands outside the navigation scroller in a vertical column; retain scrolling for short windows and reduced-motion support.

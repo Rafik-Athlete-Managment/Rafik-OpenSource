@@ -952,6 +952,11 @@ test('calendar entry schedules the existing plan workout without a separate name
     await finder.press('Enter')
     await page.getByRole('button', { name: 'Schedule workout', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Schedule the next workout', exact: true })
+    const timezonePicker = dialog.getByRole('combobox', { name: 'Timezone', exact: true })
+    await timezonePicker.fill('Dubai')
+    await page.getByRole('option', { name: 'Asia/Dubai · UTC+4', exact: true }).click()
+    await expect(timezonePicker).toHaveValue('Asia/Dubai · UTC+4')
+    await expect(dialog).toBeVisible()
     await dialog
       .getByLabel('Date and time', { exact: true })
       .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))

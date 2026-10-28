@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Timezone popup over scheduling panels — 28 October 2026
+
+Reproduced with the real SidePanel and TimezonePicker in an isolated local browser page: the options were mounted at layer 60, behind the backdrop (100) and panel (101). Moved timezone options to the existing popup layer 120. After reload, pointer selection of Asia/Dubai and keyboard selection of Europe/London worked with the panel remaining open. The browser regression now selects a timezone through the panel before scheduling. This isolated component check does not establish authenticated scheduling or backend persistence; those remain blocked by the local database-port reservation. Temporary test page removed after inspection.
+
 ## Plan-workout scheduling entry point — 28 October 2026
 
 The approved next slice adds three explicit choices to EventComposer: Workout from a plan, Custom event and Assessor-led assessment. The plan choice reuses WorkoutAgenda's server-paginated planning queue (10 per page), bounded athlete-name search and exact scheduling command; acknowledgment returns to the calendar. No separate event name, allocator, backend endpoint, migration or Android change. Already scheduled/unfinished plans remain reachable through Athlete plans. Existing custom drafts, makeup links and command recovery retain their original scope. Mode switches are blocked during active/uncertain writes, and acknowledgment navigation checks the original route and mounted state. Added a focused browser regression for assignment/day identity, search and absence of independent calendar writes; existing assessment fixtures now select their entry choice before filling fields. Frontend typecheck passed; real API/browser acceptance is blocked by the Windows database-port reservation, so this is implementation awaiting validation rather than release acceptance. Group prescriptions/results remain the next slice.
