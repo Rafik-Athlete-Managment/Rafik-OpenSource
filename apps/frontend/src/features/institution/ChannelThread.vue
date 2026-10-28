@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { preferredTimezone } from '../../lib/display-time'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { user, profile } from '../../app/auth'
+import { user } from '../../app/auth'
 import { request } from '../../lib/backend'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
@@ -215,7 +216,7 @@ function stamp(value: string) {
   return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
-    timeZone: profile.value?.timezone || 'UTC',
+    timeZone: preferredTimezone.value,
   }).format(new Date(value))
 }
 watch(

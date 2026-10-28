@@ -2,7 +2,8 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { PhCalendarBlank, PhHeartbeat, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'
 import { request } from '../../lib/backend'
-import { language as l, dateLabel, errorMessage } from '../../lib/i18n'
+import { language as l, errorMessage } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import { institutionContext } from '../../app/institution'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
@@ -231,7 +232,10 @@ onUnmounted(() => {
                   : l('Modified participation', 'مشاركة معدلة')
               }}</span
             >
-            <small>{{ l('Effective', 'سارية منذ') }} {{ dateLabel(item.effective_from) }}</small>
+            <small
+              >{{ l('Effective', 'سارية منذ') }}
+              {{ dateLabel(item.effective_from.slice(0, 10)) }}</small
+            >
           </li>
         </ul>
         <p v-else-if="!loading && !error" class="small-print">

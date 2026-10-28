@@ -4,7 +4,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
 import { request } from '../../lib/backend'
-import { language as l, errorMessage, dateLabel } from '../../lib/i18n'
+import { language as l, errorMessage } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import RatingForm from './RatingForm.vue'
 const context = programContext(useRoute()),
   endpoint = `/v1/institution/feedback`

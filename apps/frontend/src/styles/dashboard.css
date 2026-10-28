@@ -14,6 +14,15 @@
 .dashboard-menu-trigger {
   display: none;
 }
+.drawer-clock {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 1023px) {
+  .header-actions > .desktop-clock {
+    display: none;
+  }
+}
 .dashboard-sidebar {
   display: none;
 }
@@ -157,9 +166,9 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     flex-shrink: 0;
-    gap: 4px;
+    gap: 2px;
     border-top: 1px solid var(--line);
-    padding: 12px 16px;
+    padding: 10px 16px;
     margin-top: auto;
     max-height: 70%;
     overflow-y: auto;
@@ -170,7 +179,7 @@
   .dashboard-utilities > a {
     display: flex;
     align-items: center;
-    min-height: 44px;
+    min-height: 32px;
     overflow-wrap: anywhere;
   }
   .dashboard-utilities > label {
@@ -257,10 +266,15 @@
 
 .dashboard-drawer .dashboard-utilities {
   display: grid;
-  gap: 14px;
-  padding: 20px 24px;
+  gap: 2px;
+  padding: 12px 20px;
   border-top: 1px solid var(--line);
   font-size: 0.85rem;
+}
+.dashboard-drawer .dashboard-utilities > a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
 }
 @media (min-width: 1024px) {
   #app:has(.dashboard-frame):has(.organization-messages) {

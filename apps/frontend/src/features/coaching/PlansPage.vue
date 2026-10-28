@@ -27,7 +27,8 @@ const offset = ref(0),
   total = ref(0)
 let loadSequence = 0
 import type { Plan, PlanVersion } from '../../lib/domain'
-import { language, t, errorMessage, dateLabel } from '../../lib/i18n'
+import { language, t, errorMessage } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import ListPagination from '../../components/ListPagination.vue'
 import PageState from '../../components/PageState.vue'
 const search = ref('')

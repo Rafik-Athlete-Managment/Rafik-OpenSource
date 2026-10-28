@@ -1,5 +1,4 @@
 import { ref, watch } from 'vue'
-import { formatDate } from './dates'
 export const locale = ref<'en' | 'ar'>(localStorage.getItem('rafik.locale') === 'ar' ? 'ar' : 'en')
 export const language = (en: string, ar: string) => (locale.value === 'ar' ? ar : en)
 export const words = {
@@ -111,7 +110,6 @@ watch(
   },
   { immediate: true },
 )
-export const dateLabel = (value: string) => formatDate(value, locale.value)
 export function errorMessage(error: unknown): string {
   const raw =
     error instanceof Error

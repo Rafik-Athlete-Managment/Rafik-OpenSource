@@ -10,7 +10,8 @@ import {
   PhBowlFood,
   PhClockCounterClockwise,
 } from '@phosphor-icons/vue'
-import { language as l, dateLabel, locale } from '../../lib/i18n'
+import { language as l, locale } from '../../lib/i18n'
+import { dateLabel, preferredTimezone } from '../../lib/display-time'
 import type { Institution } from './types'
 
 const props = defineProps<{ data: Institution; loading: boolean }>()
@@ -125,6 +126,7 @@ const time = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar' : 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: preferredTimezone.value,
   }).format(new Date(value))
 // Newest first, grouped under one heading per calendar day.
 const days = computed(() => {

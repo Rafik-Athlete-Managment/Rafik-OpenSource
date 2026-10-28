@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { preferredTimezone } from '../../lib/display-time'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, ref } from 'vue'
 import { PhChatCircle, PhCalendarBlank, PhBell, PhStar, PhChecks } from '@phosphor-icons/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '../../lib/backend'
-import { profile } from '../../app/auth'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import PageState from '../../components/PageState.vue'
 import NotificationPreferences from './NotificationPreferences.vue'
@@ -38,7 +38,7 @@ const stamp = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
-    timeZone: profile.value?.timezone || 'UTC',
+    timeZone: preferredTimezone.value,
   }).format(new Date(value))
 async function load(append = false) {
   loading.value = true

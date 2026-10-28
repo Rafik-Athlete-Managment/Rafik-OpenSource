@@ -1,5 +1,9 @@
 # Verification record
 
+## Preferred timezone and clock — 28 October 2026
+
+Focused date tests (4), frontend typecheck, final production build, frontend inventory and documentation checks passed. Tests cover date-only and midnight-date transport, viewer/device timezone differences, midnight boundaries, DST and invalid preference fallback. Rendered the real TimezoneClock and DashboardNav in a temporary synthetic shell using the application's styles: 1280×720 desktop and 390×844 phone drawer, English/light and Arabic/dark. Inspected clock placement, Settings link, LTR numeric time within RTL, reactive Dubai/Los Angeles preference changes, fixed date-only labels and no document overflow in the Arabic phone fixture. Restored browser size/language and removed temporary fixtures. This is component/synthetic-layout evidence, not authenticated settings persistence, every migrated view, physical hardware or WebKit acceptance. Database-backed acceptance remains pending; Android was not rebuilt.
+
 ## Timezone popup layer — 28 October 2026
 
 Rendered the real SidePanel and TimezonePicker together in a temporary local component fixture, 1280×720 Chromium/IAB, English/light. Before correction the expanded options were hidden by the panel; after changing layer 60 to 120 and reloading, the searched Dubai option was visibly inside the popup and pointer selection updated the model without closing the panel. Arrow/Enter selection of London also updated the value and kept focus on the combobox. Added this pointer-selection case to the scheduling browser regression, which has not yet run against the database. This evidence covers the isolated components, not authenticated scheduling, WebKit, Arabic or phone layouts. Removed the temporary fixture.

@@ -5,6 +5,9 @@
   "components/AppUpdates.vue": {
     "purpose": "Service-worker update status and explicit check; postpones activation until existing tabs close."
   },
+  "components/TimezoneClock.vue": {
+    "purpose": "Account-timezone digital clock linking to settings, shown in the desktop header and phone navigation menu."
+  },
   "components/AthleteSearch.vue": {
     "purpose": "Shared bilingual athlete-name search input with a model binding."
   },

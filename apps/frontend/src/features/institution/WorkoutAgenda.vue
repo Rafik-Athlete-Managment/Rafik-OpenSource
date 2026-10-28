@@ -7,6 +7,7 @@ import { profile } from '../../app/auth'
 import { request } from '../../lib/backend'
 import { language as l, locale, errorMessage } from '../../lib/i18n'
 import { localDate } from '../../lib/dates'
+import { preferredTimezone, timestampLabel } from '../../lib/display-time'
 import { useCommand } from '../../lib/commands'
 import PageState from '../../components/PageState.vue'
 import EmptyState from '../../components/EmptyState.vue'
@@ -308,11 +309,9 @@ const blockedLabel = (item: WorkoutAgendaItem) =>
 const when = (item: WorkoutAgendaItem) =>
   !item.occurrence?.starts_at
     ? item.occurrence?.training_date + ' · ' + l('No fixed time', 'دون وقت محدد')
-    : new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
-        timeZone: item.occurrence!.timezone,
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(new Date(item.occurrence!.starts_at))
+    : timestampLabel(item.occurrence.starts_at)
+const displayZone = (item: WorkoutAgendaItem) =>
+  item.occurrence?.starts_at ? preferredTimezone.value : item.occurrence?.timezone || ''
 watch(
   () => props.assignment,
   () => {
@@ -520,7 +519,7 @@ const exerciseLabel = (name: string) =>
               <small class="agenda-when"
                 ><PhCalendarBlank :size="14" aria-hidden="true" />{{
                   item.occurrence
-                    ? when(item) + ' · ' + item.occurrence.timezone
+                    ? when(item) + ' · ' + displayZone(item)
                     : l('Not scheduled yet', 'لم يُجدول بعد')
                 }}</small
               >
@@ -619,7 +618,7 @@ const exerciseLabel = (name: string) =>
               </p>
               <span class="tag" :data-status="item.state">{{ l(...states[item.state]) }}</span>
               <p v-if="item.occurrence">
-                {{ when(item) }} · <bdi>{{ item.occurrence.timezone }}</bdi>
+                {{ when(item) }} · <bdi>{{ displayZone(item) }}</bdi>
               </p>
               <p v-if="item.blocked" class="small-print">{{ blockedLabel(item) }}</p>
               <p v-else-if="item.state === 'scheduled'" class="small-print">

@@ -10,7 +10,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
-import { profile } from '../../app/auth'
+import { preferredTimezone } from '../../lib/display-time'
 import { localDate } from '../../lib/dates'
 import ListPagination from '../../components/ListPagination.vue'
 import PageState from '../../components/PageState.vue'
@@ -20,11 +20,11 @@ const route = useRoute(),
 const institution = institutionContext().institution,
   view = institutionContext().view
 const base = ''
-const zone = profile.value?.timezone || 'UTC'
+const zone = preferredTimezone
 const format = (value: string, parts: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     ...parts,
-    timeZone: zone,
+    timeZone: zone.value,
   }).format(new Date(value))
 /** Same-day events show one date and a time range; longer events show both ends. */
 function when(event: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'training_date'>) {
@@ -32,7 +32,8 @@ function when(event: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'training_dat
     return event.training_date + ' · ' + l('No fixed time', 'دون وقت محدد')
   const day = { weekday: 'short', day: 'numeric', month: 'short' } as const,
     clock = { hour: '2-digit', minute: '2-digit' } as const
-  return localDate(zone, new Date(event.starts_at)) === localDate(zone, new Date(event.ends_at))
+  return localDate(zone.value, new Date(event.starts_at)) ===
+    localDate(zone.value, new Date(event.ends_at))
     ? `${format(event.starts_at, day)} · ${format(event.starts_at, clock)}–${format(event.ends_at, clock)}`
     : `${format(event.starts_at, { ...day, ...clock })} — ${format(event.ends_at, { ...day, ...clock })}`
 }
@@ -155,6 +156,9 @@ onUnmounted(() => {
         }}</RouterLink>
       </div>
     </PageHeading>
+    <p class="small-print">
+      {{ l('Times shown in', 'تُعرض الأوقات حسب') }} <bdi>{{ zone }}</bdi>
+    </p>
     <div class="list-toolbar">
       <form class="event-filters schedule-list-filters" @submit.prevent="live.submit()">
         <label

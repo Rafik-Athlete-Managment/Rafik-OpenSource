@@ -326,28 +326,28 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
 
 | Source                                                                                                         | Kind           | Expression                                                                                         | Matched route shapes           |
 | -------------------------------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
-| [App.vue](../../../apps/frontend/src/App.vue):82                                                               | anchor         | `"#main"`                                                                                          | None; see entry/dynamic rules. |
-| [App.vue](../../../apps/frontend/src/App.vue):113                                                              | RouterLink     | `"/platform"`                                                                                      | `/platform`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):116                                                              | RouterLink     | `"/support"`                                                                                       | `/support`                     |
-| [App.vue](../../../apps/frontend/src/App.vue):117                                                              | RouterLink     | `"/feedback"`                                                                                      | `/feedback`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):120                                                              | RouterLink     | `"/help"`                                                                                          | `/help`                        |
-| [App.vue](../../../apps/frontend/src/App.vue):121                                                              | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):122                                                              | RouterLink     | `"/local-preview"`                                                                                 | `/local-preview`               |
-| [App.vue](../../../apps/frontend/src/App.vue):125                                                              | RouterLink     | `"/privacy"`                                                                                       | `/privacy`                     |
-| [App.vue](../../../apps/frontend/src/App.vue):140                                                              | RouterLink     | `user ? currentContext?.path \|\| '/dashboard' : '/'`                                              | `/dashboard`                   |
-| [App.vue](../../../apps/frontend/src/App.vue):166                                                              | RouterLink     | `"/notifications"`                                                                                 | `/notifications`               |
-| [App.vue](../../../apps/frontend/src/App.vue):172                                                              | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):181                                                              | RouterLink     | `"/login"`                                                                                         | `/login`                       |
-| [App.vue](../../../apps/frontend/src/App.vue):194                                                              | RouterLink     | `"/platform"`                                                                                      | `/platform`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):197                                                              | RouterLink     | `"/support"`                                                                                       | `/support`                     |
-| [App.vue](../../../apps/frontend/src/App.vue):198                                                              | RouterLink     | `"/feedback"`                                                                                      | `/feedback`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):201                                                              | RouterLink     | `"/help"`                                                                                          | `/help`                        |
-| [App.vue](../../../apps/frontend/src/App.vue):202                                                              | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
-| [App.vue](../../../apps/frontend/src/App.vue):203                                                              | RouterLink     | `"/local-preview"`                                                                                 | `/local-preview`               |
-| [App.vue](../../../apps/frontend/src/App.vue):204                                                              | RouterLink     | `"/privacy"`                                                                                       | `/privacy`                     |
-| [App.vue](../../../apps/frontend/src/App.vue):234                                                              | RouterLink     | `"/help"`                                                                                          | `/help`                        |
-| [App.vue](../../../apps/frontend/src/App.vue):235                                                              | RouterLink     | `"/privacy"`                                                                                       | `/privacy`                     |
-| [App.vue](../../../apps/frontend/src/App.vue):236                                                              | RouterLink     | `"/local-preview"`                                                                                 | `/local-preview`               |
+| [App.vue](../../../apps/frontend/src/App.vue):83                                                               | anchor         | `"#main"`                                                                                          | None; see entry/dynamic rules. |
+| [App.vue](../../../apps/frontend/src/App.vue):115                                                              | RouterLink     | `"/platform"`                                                                                      | `/platform`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):118                                                              | RouterLink     | `"/support"`                                                                                       | `/support`                     |
+| [App.vue](../../../apps/frontend/src/App.vue):119                                                              | RouterLink     | `"/feedback"`                                                                                      | `/feedback`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):122                                                              | RouterLink     | `"/help"`                                                                                          | `/help`                        |
+| [App.vue](../../../apps/frontend/src/App.vue):123                                                              | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):124                                                              | RouterLink     | `"/local-preview"`                                                                                 | `/local-preview`               |
+| [App.vue](../../../apps/frontend/src/App.vue):127                                                              | RouterLink     | `"/privacy"`                                                                                       | `/privacy`                     |
+| [App.vue](../../../apps/frontend/src/App.vue):142                                                              | RouterLink     | `user ? currentContext?.path \|\| '/dashboard' : '/'`                                              | `/dashboard`                   |
+| [App.vue](../../../apps/frontend/src/App.vue):169                                                              | RouterLink     | `"/notifications"`                                                                                 | `/notifications`               |
+| [App.vue](../../../apps/frontend/src/App.vue):175                                                              | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):184                                                              | RouterLink     | `"/login"`                                                                                         | `/login`                       |
+| [App.vue](../../../apps/frontend/src/App.vue):197                                                              | RouterLink     | `"/platform"`                                                                                      | `/platform`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):200                                                              | RouterLink     | `"/support"`                                                                                       | `/support`                     |
+| [App.vue](../../../apps/frontend/src/App.vue):201                                                              | RouterLink     | `"/feedback"`                                                                                      | `/feedback`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):204                                                              | RouterLink     | `"/help"`                                                                                          | `/help`                        |
+| [App.vue](../../../apps/frontend/src/App.vue):205                                                              | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
+| [App.vue](../../../apps/frontend/src/App.vue):206                                                              | RouterLink     | `"/local-preview"`                                                                                 | `/local-preview`               |
+| [App.vue](../../../apps/frontend/src/App.vue):207                                                              | RouterLink     | `"/privacy"`                                                                                       | `/privacy`                     |
+| [App.vue](../../../apps/frontend/src/App.vue):237                                                              | RouterLink     | `"/help"`                                                                                          | `/help`                        |
+| [App.vue](../../../apps/frontend/src/App.vue):238                                                              | RouterLink     | `"/privacy"`                                                                                       | `/privacy`                     |
+| [App.vue](../../../apps/frontend/src/App.vue):239                                                              | RouterLink     | `"/local-preview"`                                                                                 | `/local-preview`               |
 | [components/ExerciseDemo.vue](../../../apps/frontend/src/components/ExerciseDemo.vue):76                       | anchor         | `"https://github.com/bryllim/workout-guide"`                                                       | None; see entry/dynamic rules. |
 | [components/ExerciseDemo.vue](../../../apps/frontend/src/components/ExerciseDemo.vue):79                       | anchor         | `media.licenseUrl`                                                                                 | None; see entry/dynamic rules. |
 | [components/ExerciseDemo.vue](../../../apps/frontend/src/components/ExerciseDemo.vue):84                       | anchor         | `exercise.media_url`                                                                               | None; see entry/dynamic rules. |
@@ -360,6 +360,7 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
 | [components/OverflowMenu.vue](../../../apps/frontend/src/components/OverflowMenu.vue):38                       | router.push    | `item.to`                                                                                          | None; see entry/dynamic rules. |
 | [components/ResourceAsset.vue](../../../apps/frontend/src/components/ResourceAsset.vue):64                     | anchor         | `source`                                                                                           | None; see entry/dynamic rules. |
 | [components/ScheduleViewSwitch.vue](../../../apps/frontend/src/components/ScheduleViewSwitch.vue):11           | RouterLink     | `{ path: base + (view === 'calendar' ? '/events' : '/schedule'), query: route.query }`             | `/events`, `/schedule`         |
+| [components/TimezoneClock.vue](../../../apps/frontend/src/components/TimezoneClock.vue):31                     | RouterLink     | `"/settings"`                                                                                      | `/settings`                    |
 | [features/account/AccessPage.vue](../../../apps/frontend/src/features/account/AccessPage.vue):15               | router.replace | `'/dashboard'`                                                                                     | `/dashboard`                   |
 | [features/account/AccessPage.vue](../../../apps/frontend/src/features/account/AccessPage.vue):24               | router.replace | `'/login'`                                                                                         | `/login`                       |
 | [features/account/EntryPage.vue](../../../apps/frontend/src/features/account/EntryPage.vue):17                 | router.replace | `contexts.value[0]?.path \|\| '/access'`                                                           | `/access`                      |
@@ -369,9 +370,9 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
 | [features/account/LocalPreview.vue](../../../apps/frontend/src/features/account/LocalPreview.vue):18           | router.push    | `role === 'operator' ? '/platform' : '/dashboard'`                                                 | `/dashboard`, `/platform`      |
 | [features/account/LoginPage.vue](../../../apps/frontend/src/features/account/LoginPage.vue):23                 | router.replace | `route.query.next ? next.value : contexts.value[0]?.path \|\| next.value`                          | None; see entry/dynamic rules. |
 | [features/account/PasswordSetupPage.vue](../../../apps/frontend/src/features/account/PasswordSetupPage.vue):32 | router.replace | `contexts.value[0]?.path \|\| '/access'`                                                           | `/access`                      |
-| [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue):194          | RouterLink     | `"/training"`                                                                                      | `/training`                    |
-| [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue):79           | router.replace | `'/'`                                                                                              | `/`                            |
-| [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue):97           | router.replace | `'/'`                                                                                              | `/`                            |
+| [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue):200          | RouterLink     | `"/training"`                                                                                      | `/training`                    |
+| [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue):80           | router.replace | `'/'`                                                                                              | `/`                            |
+| [features/account/SettingsPage.vue](../../../apps/frontend/src/features/account/SettingsPage.vue):98           | router.replace | `'/'`                                                                                              | `/`                            |
 | [features/account/SetupPage.vue](../../../apps/frontend/src/features/account/SetupPage.vue):180                | RouterLink     | `"/login"`                                                                                         | `/login`                       |
 | [features/account/SetupPage.vue](../../../apps/frontend/src/features/account/SetupPage.vue):25                 | router.replace | `'/login'`                                                                                         | `/login`                       |
 | [features/account/SetupPage.vue](../../../apps/frontend/src/features/account/SetupPage.vue):57                 | router.replace | `admin?.path \|\| '/access'`                                                                       | `/access`                      |
@@ -403,15 +404,15 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
 
 | [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue):794 | RouterLink | `context.base + '/exercises'` | `/exercises` |
 | [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue):460 | router.push | `context.base + '/plans/new' + (route.query.member ? '?member=' + route.query.member : '')` | `/plans/:id` |
-| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):105 | RouterLink | `context.base + '/plans/new'` | `/plans/:id` |
-| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):118 | RouterLink | `{ query: { ...route.query, athlete: undefined } }` | None; see entry/dynamic rules. |
-| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):150 | RouterLink | `cardTarget(p.id)` | None; see entry/dynamic rules. |
-| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):215 | RouterLink | `context.base + '/training'` | `/training` |
-| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):235 | RouterLink | `context.base + '/plans/new'` | `/plans/:id` |
-| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):112 | RouterLink | `back` | None; see entry/dynamic rules. |
-| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):137 | RouterLink | `'/record/' + session.id` | `/record/:session` |
-| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):225 | RouterLink | `'/review/' + next` | `/review/:id` |
-| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):237 | RouterLink | `back` | None; see entry/dynamic rules. |
+| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):106 | RouterLink | `context.base + '/plans/new'` | `/plans/:id` |
+| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):119 | RouterLink | `{ query: { ...route.query, athlete: undefined } }` | None; see entry/dynamic rules. |
+| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):151 | RouterLink | `cardTarget(p.id)` | None; see entry/dynamic rules. |
+| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):216 | RouterLink | `context.base + '/training'` | `/training` |
+| [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue):236 | RouterLink | `context.base + '/plans/new'` | `/plans/:id` |
+| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):113 | RouterLink | `back` | None; see entry/dynamic rules. |
+| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):138 | RouterLink | `'/record/' + session.id` | `/record/:session` |
+| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):226 | RouterLink | `'/review/' + next` | `/review/:id` |
+| [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue):238 | RouterLink | `back` | None; see entry/dynamic rules. |
 | [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue):105 | RouterLink | `"/analytics"` | `/analytics` |
 | [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue):190 | RouterLink | `"/people"` | `/people` |
 | [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue):194 | RouterLink | `"/people?filter=trainer"` | `/people` |
@@ -420,7 +421,7 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
 | [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue):222 | RouterLink | `"/training"` | `/training` |
 | [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue):230 | RouterLink | `"/institution-settings"` | `/institution-settings` |
 | [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue):238 | RouterLink | `"/activity"` | `/activity` |
-| [features/institution/AssessmentHistory.vue](../../../apps/frontend/src/features/institution/AssessmentHistory.vue):101 | RouterLink | `base + '/training?member=' + member` | `/training` |
+| [features/institution/AssessmentHistory.vue](../../../apps/frontend/src/features/institution/AssessmentHistory.vue):102 | RouterLink | `base + '/training?member=' + member` | `/training` |
 | [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue):123 | RouterLink | `{
          path: '/training',
          query: {
@@ -448,110 +449,72 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
 | [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue):64 | RouterLink | `"/nutrition"` | `/nutrition` |
 | [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue):83 | RouterLink | `{ path: '/messages', query: { to: coach.id } }` | `/messages/:channel?` |
 | [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue):98 | RouterLink | `"/messages"` | `/messages/:channel?` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):148 | RouterLink | `context.base + '/workouts'` | `/workouts` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):151 | RouterLink | `context.base + '/plans'` | `/plans` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):211 | RouterLink | `context.base + '/plans'` | `/plans` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):218 | RouterLink | `'/training/' + plan.id` | `/training/:assignment` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):256 | RouterLink | `{ path: '/training/' + plan.id, query: { schedule: '1' } }` | `/training/:assignment` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):86 | router.push | `{
-       path: '/training/' + id,
-       query: { ...route.query, assignment: undefined },
-     }` | `/training/:assignment` |
-| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):122 | router.replace | `{
-       path: '/training/' + String(route.query.assignment),
-       query: { ...route.query, assignment: undefined },
-     }` | `/training/:assignment` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):233 | RouterLink | `backPath` | None; see entry/dynamic rules. |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):275 | RouterLink | `                base +
-               '/messages?to=' +
-               encodeURIComponent(member.id) +
-               '&title=' +
-               encodeURIComponent(member.name)
-             ` | `/messages/:channel?` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):287 | RouterLink | `{ path: base + '/plans', query: { athlete: member.id } }` | `/plans` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):382 | RouterLink | `base + '/review/' + s.id` | `/review/:id` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):541 | RouterLink | `{ path: base + '/training', query: { search: member.name } }` | `/training` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):562 | RouterLink | `base + '/training/' + plan.id` | `/training/:assignment` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):585 | RouterLink | `{ path: base + '/workouts', query: { search: member.name } }` | `/workouts` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):600 | RouterLink | `base + (s.recorded_mode === 'delegated' ? '/record/' : '/review/') + s.id` | `/record/:session`, `/review/:id` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):631 | RouterLink | `base + '/assessments/' + member.id` | `/assessments/:member` |
-| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):663 | RouterLink | `base + '/nutrition?member=' + member.id` | `/nutrition` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):145 | RouterLink | `context.base + '/workouts'` | `/workouts` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):148 | RouterLink | `context.base + '/plans'` | `/plans` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):208 | RouterLink | `context.base + '/plans'` | `/plans` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):215 | RouterLink | `'/training/' + plan.id` | `/training/:assignment` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):253 | RouterLink | `{ path: '/training/' + plan.id, query: { schedule: '1' } }` | `/training/:assignment` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):87 | router.push | `{       path: '/training/' + id,       query: { ...route.query, assignment: undefined },     }` | `/training/:assignment` |
+| [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue):119 | router.replace | `{       path: '/training/' + String(route.query.assignment),       query: { ...route.query, assignment: undefined },     }` | `/training/:assignment` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):234 | RouterLink | `backPath` | None; see entry/dynamic rules. |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):276 | RouterLink | `               base +               '/messages?to=' +               encodeURIComponent(member.id) +               '&title=' +               encodeURIComponent(member.name)             ` | `/messages/:channel?` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):288 | RouterLink | `{ path: base + '/plans', query: { athlete: member.id } }` | `/plans` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):383 | RouterLink | `base + '/review/' + s.id` | `/review/:id` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):543 | RouterLink | `{ path: base + '/training', query: { search: member.name } }` | `/training` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):564 | RouterLink | `base + '/training/' + plan.id` | `/training/:assignment` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):587 | RouterLink | `{ path: base + '/workouts', query: { search: member.name } }` | `/workouts` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):602 | RouterLink | `base + (s.recorded_mode === 'delegated' ? '/record/' : '/review/') + s.id` | `/record/:session`, `/review/:id` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):633 | RouterLink | `base + '/assessments/' + member.id` | `/assessments/:member` |
+| [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue):665 | RouterLink | `base + '/nutrition?member=' + member.id` | `/nutrition` |
 | [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue):40 | RouterLink | `'/workout/' + work.id` | `/workout/:id` |
-| [features/institution/ChannelThread.vue](../../../apps/frontend/src/features/institution/ChannelThread.vue):293 | RouterLink | `base` | None; see entry/dynamic rules. |
+| [features/institution/ChannelThread.vue](../../../apps/frontend/src/features/institution/ChannelThread.vue):294 | RouterLink | `base` | None; see entry/dynamic rules. |
 | [features/institution/ChannelsPage.vue](../../../apps/frontend/src/features/institution/ChannelsPage.vue):422 | RouterLink | `base + '/' + c.id + (search ? '?search=' + encodeURIComponent(search) : '')` | None; see entry/dynamic rules. |
 | [features/institution/ChannelsPage.vue](../../../apps/frontend/src/features/institution/ChannelsPage.vue):138 | router.push | `base + '/' + args.id` | None; see entry/dynamic rules. |
 | [features/institution/ChannelsPage.vue](../../../apps/frontend/src/features/institution/ChannelsPage.vue):153 | router.push | `base + '/' + (result as { id: string }).id` | None; see entry/dynamic rules. |
 | [features/institution/ChannelsPage.vue](../../../apps/frontend/src/features/institution/ChannelsPage.vue):186 | router.replace | `base + '/' + channel.id` | None; see entry/dynamic rules. |
-| [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue):146 | anchor | `'#' + item.target` | None; see entry/dynamic rules. |
-| [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue):166 | RouterLink | `"/schedule"` | `/schedule` |
-| [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue):248 | RouterLink | `"/injuries"` | `/injuries` |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):419 | RouterLink | `"/people"` | `/people` |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):652 | RouterLink | `                                base +
-                               '/members/' +
-                               member.id +
-                               '?returnTo=' +
-                               encodeURIComponent(route.fullPath)
-                             ` | `/members/:member` |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):700 | RouterLink | `                            base +
-                           '/messages?to=' +
-                           encodeURIComponent(member.id) +
-                           '&title=' +
-                           encodeURIComponent(member.name)
-                         ` | `/messages/:channel?` |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):714 | RouterLink | `                            base +
-                           '/members/' +
-                           member.id +
-                           '?tab=manage&returnTo=' +
-                           encodeURIComponent(route.fullPath)
-                         ` | `/members/:member` |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):908 | RouterLink | `"/access"` | `/access` |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):204 | router.replace | `{
-         query: {
-           ...route.query,
-           filter: filter.value === 'trainee' ? undefined : filter.value,
-           state: memberState.value === 'active' ? undefined : memberState.value,
-           search: search.value \|\| undefined,
-           sport: sportFilter.value \|\| undefined,
-           offset: offset \|\| undefined,
-         },
-       }` | None; see entry/dynamic rules. |
-| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):290 | router.push | `'/access'` | `/access` |
-| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):255 | RouterLink | `backTarget` | None; see entry/dynamic rules. |
-| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):329 | RouterLink | `'/review/' + session.id` | `/review/:id` |
-| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):143 | router.replace | `'${base}/record/${started.value}'` | None; see entry/dynamic rules. |
-| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):159 | router.replace | `'/review/' + id` | `/review/:id` |
+| [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue):147 | anchor | `'#' + item.target` | None; see entry/dynamic rules. |
+| [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue):167 | RouterLink | `"/schedule"` | `/schedule` |
+| [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue):252 | RouterLink | `"/injuries"` | `/injuries` |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):420 | RouterLink | `"/people"` | `/people` |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):653 | RouterLink | `                               base +                               '/members/' +                               member.id +                               '?returnTo=' +                               encodeURIComponent(route.fullPath)                             ` | `/members/:member` |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):701 | RouterLink | `                           base +                           '/messages?to=' +                           encodeURIComponent(member.id) +                           '&title=' +                           encodeURIComponent(member.name)                         ` | `/messages/:channel?` |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):715 | RouterLink | `                           base +                           '/members/' +                           member.id +                           '?tab=manage&returnTo=' +                           encodeURIComponent(route.fullPath)                         ` | `/members/:member` |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):909 | RouterLink | `"/access"` | `/access` |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):205 | router.replace | `{         query: {           ...route.query,           filter: filter.value === 'trainee' ? undefined : filter.value,           state: memberState.value === 'active' ? undefined : memberState.value,           search: search.value \|\| undefined,           sport: sportFilter.value \|\| undefined,           offset: offset \|\| undefined,         },       }` | None; see entry/dynamic rules. |
+| [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue):291 | router.push | `'/access'` | `/access` |
+| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):256 | RouterLink | `backTarget` | None; see entry/dynamic rules. |
+| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):330 | RouterLink | `'/review/' + session.id` | `/review/:id` |
+| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):144 | router.replace | `'${base}/record/${started.value}'` | None; see entry/dynamic rules. |
+| [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue):160 | router.replace | `'/review/' + id` | `/review/:id` |
 | [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue):328 | RouterLink | `base + '/schedule'` | `/schedule` |
 | [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue):440 | RouterLink | `"/training"` | `/training` |
 | [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue):494 | RouterLink | `base + '/assessment-templates/new?forEvent=' + draft.id` | `/assessment-templates/:editor` |
 | [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue):46 | router.push | `'/schedule'` | `/schedule` |
 | [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue):206 | router.push | `base + '/schedule/' + (result as CalendarEvent[])[0]!.id` | `/schedule/:id` |
-| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):366 | RouterLink | `base + '/schedule' + (route.query.from ? '?from=' + route.query.from : '')` | `/schedule` |
-| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):464 | RouterLink | `base + '/feedback'` | `/feedback` |
-| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):471 | RouterLink | `              view === 'trainee'
-               ? '/training'
-               : '/training/' + data.event.workout_snapshot.assignment_id
-           ` | `/training`, `/training/:assignment` |
-| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):748 | RouterLink | `base + '/schedule/new?makeup=' + eid + '&member=' + p.member_id` | `/schedule/new` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):129 | RouterLink | `context.base + '/review/' + s.id` | `/review/:id` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):147 | RouterLink | `context.base + '/workouts?status=awaiting_review'` | `/workouts` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):173 | RouterLink | `context.base + '/schedule/new?makeup=' + s.id + '&member=' + s.member_id` | `/schedule/new` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):182 | RouterLink | `context.base + '/schedule'` | `/schedule` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):198 | RouterLink | `context.base + '/schedule/' + s.id` | `/schedule/:id` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):213 | RouterLink | `context.base + '/schedule'` | `/schedule` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):229 | RouterLink | `context.base + '/members/' + m.id` | `/members/:member` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):239 | RouterLink | `context.base + '/plans?athlete=' + m.id` | `/plans` |
-| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):248 | RouterLink | `context.base + '/people'` | `/people` |
-| [features/institution/InjuryStatus.vue](../../../apps/frontend/src/features/institution/InjuryStatus.vue):291 | RouterLink | `'/members/' + item.athlete_member_id` | `/members/:member` |
+| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):367 | RouterLink | `base + '/schedule' + (route.query.from ? '?from=' + route.query.from : '')` | `/schedule` |
+| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):468 | RouterLink | `base + '/feedback'` | `/feedback` |
+| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):475 | RouterLink | `             view === 'trainee'               ? '/training'               : '/training/' + data.event.workout_snapshot.assignment_id           ` | `/training`, `/training/:assignment` |
+| [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue):752 | RouterLink | `base + '/schedule/new?makeup=' + eid + '&member=' + p.member_id` | `/schedule/new` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):130 | RouterLink | `context.base + '/review/' + s.id` | `/review/:id` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):148 | RouterLink | `context.base + '/workouts?status=awaiting_review'` | `/workouts` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):174 | RouterLink | `context.base + '/schedule/new?makeup=' + s.id + '&member=' + s.member_id` | `/schedule/new` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):183 | RouterLink | `context.base + '/schedule'` | `/schedule` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):199 | RouterLink | `context.base + '/schedule/' + s.id` | `/schedule/:id` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):214 | RouterLink | `context.base + '/schedule'` | `/schedule` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):230 | RouterLink | `context.base + '/members/' + m.id` | `/members/:member` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):240 | RouterLink | `context.base + '/plans?athlete=' + m.id` | `/plans` |
+| [features/institution/FollowUpPanel.vue](../../../apps/frontend/src/features/institution/FollowUpPanel.vue):249 | RouterLink | `context.base + '/people'` | `/people` |
+| [features/institution/InjuryStatus.vue](../../../apps/frontend/src/features/institution/InjuryStatus.vue):292 | RouterLink | `'/members/' + item.athlete_member_id` | `/members/:member` |
 | [features/institution/InvitationPage.vue](../../../apps/frontend/src/features/institution/InvitationPage.vue):49 | router.push | `'/dashboard'` | `/dashboard` |
 | [features/institution/InvitationPage.vue](../../../apps/frontend/src/features/institution/InvitationPage.vue):79 | router.replace | `'/dashboard'` | `/dashboard` |
 | [features/institution/MemberManagement.vue](../../../apps/frontend/src/features/institution/MemberManagement.vue):58 | router.replace | `'/access'` | `/access` |
-| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):164 | RouterLink | `base + '/schedule/new'` | `/schedule/new` |
-| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):296 | RouterLink | `base + '/schedule/' + e.id + '?from=' + start` | `/schedule/:id` |
-| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):110 | router.replace | `{       query: { ...route.query, from: start.value, day: selectedDay.value, mode: mode.value },     }` | None; see entry/dynamic rules. |
-| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):141 | router.replace | `{ query: { ...route.query, day: selectedDay.value } }` | None; see entry/dynamic rules. |
-| [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue):153 | RouterLink | `base + '/schedule/new'` | `/schedule/new` |
-| [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue):239 | RouterLink | `base + '/schedule/' + event.id` | `/schedule/:id` |
-| [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue):255 | RouterLink | `base + '/workouts'` | `/workouts` |
+| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):168 | RouterLink | `base + '/schedule/new'` | `/schedule/new` |
+| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):300 | RouterLink | `base + '/schedule/' + e.id + '?from=' + start` | `/schedule/:id` |
+| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):111 | router.replace | `{       query: { ...route.query, from: start.value, day: selectedDay.value, mode: mode.value },     }` | None; see entry/dynamic rules. |
+| [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue):142 | router.replace | `{ query: { ...route.query, day: selectedDay.value } }` | None; see entry/dynamic rules. |
+| [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue):154 | RouterLink | `base + '/schedule/new'` | `/schedule/new` |
+| [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue):243 | RouterLink | `base + '/schedule/' + event.id` | `/schedule/:id` |
+| [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue):259 | RouterLink | `base + '/workouts'` | `/workouts` |
 | [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue):225 | RouterLink | `listPath` | None; see entry/dynamic rules. |
 | [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue):402 | RouterLink | `listPath + '/' + resume` | None; see entry/dynamic rules. |
 | [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue):523 | RouterLink | `base + '/messages?group=' + encodeURIComponent(item.id)` | `/messages/:channel?` |
@@ -563,30 +526,27 @@ These expressions are recorded rather than guessed when variable-only. A reviewe
      }` | None; see entry/dynamic rules. |
 | [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue):168 | router.push | `listPath` | None; see entry/dynamic rules. |
 | [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue):202 | router.replace | `{ path: listPath + '/new', query: forEvent ? { forEvent } : {} }` | None; see entry/dynamic rules. |
-| [features/institution/SessionHistory.vue](../../../apps/frontend/src/features/institution/SessionHistory.vue):126 | RouterLink | `context.base + '/training'` | `/training` |
-| [features/institution/SessionHistory.vue](../../../apps/frontend/src/features/institution/SessionHistory.vue):200 | RouterLink | `                    context.view === 'trainee'
-                     ? '/workout/' + session.id + '?institution=' + context.institution
-                     : context.base + '/review/' + session.id
-                 ` | `/review/:id`, `/workout/:id` |
+| [features/institution/SessionHistory.vue](../../../apps/frontend/src/features/institution/SessionHistory.vue):127 | RouterLink | `context.base + '/training'` | `/training` |
+| [features/institution/SessionHistory.vue](../../../apps/frontend/src/features/institution/SessionHistory.vue):201 | RouterLink | `                   context.view === 'trainee'                     ? '/workout/' + session.id + '?institution=' + context.institution                     : context.base + '/review/' + session.id                 ` | `/review/:id`, `/workout/:id` |
 | [features/institution/UpcomingSessions.vue](../../../apps/frontend/src/features/institution/UpcomingSessions.vue):62 | RouterLink | `base + '/schedule'` | `/schedule` |
 | [features/institution/UpcomingSessions.vue](../../../apps/frontend/src/features/institution/UpcomingSessions.vue):82 | RouterLink | `base + '/schedule/' + e.id` | `/schedule/:id` |
-| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):450 | RouterLink | `"/workouts"` | `/workouts` |
-| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):454 | RouterLink | `"/training"` | `/training` |
-| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):562 | RouterLink | `sessionLink(item)` | None; see entry/dynamic rules. |
-| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):711 | RouterLink | `'/training/' + item.assignment_id` | `/training/:assignment` |
-| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):717 | RouterLink | `sessionLink(item)` | None; see entry/dynamic rules. |
-| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):272 | router.push | `context.view === 'trainee'         ? '/workout/${started.value}?institution=${context.institution}'         : startedMode.value === 'delegated'           ? '/record/${started.value}'           : '/review/${started.value}'` | `/record/:session`, `/review/:id`, `/workout/:id` |
+| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):449 | RouterLink | `"/workouts"` | `/workouts` |
+| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):453 | RouterLink | `"/training"` | `/training` |
+| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):561 | RouterLink | `sessionLink(item)` | None; see entry/dynamic rules. |
+| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):710 | RouterLink | `'/training/' + item.assignment_id` | `/training/:assignment` |
+| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):716 | RouterLink | `sessionLink(item)` | None; see entry/dynamic rules. |
+| [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue):273 | router.push | `context.view === 'trainee'         ? '/workout/${started.value}?institution=${context.institution}'         : startedMode.value === 'delegated'           ? '/record/${started.value}'           : '/review/${started.value}'` | `/record/:session`, `/review/:id`, `/workout/:id` |
 | [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue):170 | RouterLink | `base + String(item[0])` | None; see entry/dynamic rules. |
 | [features/notifications/NotificationsPage.vue](../../../apps/frontend/src/features/notifications/NotificationsPage.vue):160 | RouterLink | `"/dashboard"` | `/dashboard` |
 | [features/notifications/NotificationsPage.vue](../../../apps/frontend/src/features/notifications/NotificationsPage.vue):72 | router.push | `item.href` | None; see entry/dynamic rules. |
-| [features/nutrition/NutritionPage.vue](../../../apps/frontend/src/features/nutrition/NutritionPage.vue):409 | RouterLink | `'/nutrition'` | `/nutrition` |
-| [features/nutrition/NutritionPage.vue](../../../apps/frontend/src/features/nutrition/NutritionPage.vue):241 | router.replace | `{ query: selected.value ? { member: selected.value } : {} }` | None; see entry/dynamic rules. |
+| [features/nutrition/NutritionPage.vue](../../../apps/frontend/src/features/nutrition/NutritionPage.vue):410 | RouterLink | `'/nutrition'` | `/nutrition` |
+| [features/nutrition/NutritionPage.vue](../../../apps/frontend/src/features/nutrition/NutritionPage.vue):242 | router.replace | `{ query: selected.value ? { member: selected.value } : {} }` | None; see entry/dynamic rules. |
 | [features/nutrition/NutritionPlans.vue](../../../apps/frontend/src/features/nutrition/NutritionPlans.vue):265 | RouterLink | `base + '/nutrition?member=' + plan.member_id + '&plan=' + plan.id` | `/nutrition` |
 | [features/nutrition/NutritionPlans.vue](../../../apps/frontend/src/features/nutrition/NutritionPlans.vue):115 | router.replace | `{ query: { ...route.query, create: undefined } }` | None; see entry/dynamic rules. |
 | [features/nutrition/NutritionPlans.vue](../../../apps/frontend/src/features/nutrition/NutritionPlans.vue):123 | router.push | `{ path: base + '/nutrition', query: { member: ids[0] } }` | `/nutrition` |
 | [features/public/NotFound.vue](../../../apps/frontend/src/features/public/NotFound.vue):18 | RouterLink | `"/"` | `/` |
 | [features/public/PrivacyPage.vue](../../../apps/frontend/src/features/public/PrivacyPage.vue):49 | RouterLink | `"/help"` | `/help` |
-| [features/support/SupportPage.vue](../../../apps/frontend/src/features/support/SupportPage.vue):90 | RouterLink | `"/dashboard"` | `/dashboard` |
+| [features/support/SupportPage.vue](../../../apps/frontend/src/features/support/SupportPage.vue):91 | RouterLink | `"/dashboard"` | `/dashboard` |
 | [features/training/WorkoutPage.vue](../../../apps/frontend/src/features/training/WorkoutPage.vue):379 | RouterLink | `returnPath` | None; see entry/dynamic rules. |
 | [features/training/WorkoutPage.vue](../../../apps/frontend/src/features/training/WorkoutPage.vue):768 | RouterLink | `'/feedback'` | `/feedback` |
 | [features/training/WorkoutPage.vue](../../../apps/frontend/src/features/training/WorkoutPage.vue):771 | RouterLink | `returnPath` | None; see entry/dynamic rules. |

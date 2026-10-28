@@ -8,7 +8,8 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { AthletePlanPage, WorkoutAgenda } from '@rafik/shared/contracts'
 import { request } from '../../lib/backend'
-import { language as l, errorMessage, dateLabel, locale } from '../../lib/i18n'
+import { language as l, errorMessage, locale } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import { exerciseName } from '../../lib/prescriptions'
 import {
   measureFields,

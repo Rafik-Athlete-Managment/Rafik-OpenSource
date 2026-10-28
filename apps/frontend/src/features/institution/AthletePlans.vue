@@ -16,6 +16,7 @@ import type {
 import { request } from '../../lib/backend'
 import { language as l, locale, errorMessage } from '../../lib/i18n'
 import { formatDate } from '../../lib/dates'
+import { timestampLabel } from '../../lib/display-time'
 import { programContext } from '../coaching/program-context'
 import ListPagination from '../../components/ListPagination.vue'
 import PageState from '../../components/PageState.vue'
@@ -109,11 +110,7 @@ const nextWhen = (plan: AthletePlanSummary) => {
   const next = plan.next_workout
   if (!next?.training_date) return ''
   if (!next.starts_at) return formatDate(next.training_date, locale.value)
-  return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
-    timeZone: next.timezone || undefined,
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(next.starts_at))
+  return timestampLabel(next.starts_at)
 }
 const planLabel = (plan: AthletePlanSummary) => [plan.goal, plan.sport].filter(Boolean).join(' · ')
 onMounted(() => {

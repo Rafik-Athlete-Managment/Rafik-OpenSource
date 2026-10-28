@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DashboardNav from './features/navigation/DashboardNav.vue'
+import TimezoneClock from './components/TimezoneClock.vue'
 import {
   DialogRoot,
   DialogTrigger,
@@ -103,8 +104,9 @@ onUnmounted(() => window.removeEventListener('online', online))
               </div>
               <DialogDescription class="sr-only">{{
                 language('Choose an institution section.', 'اختر قسماً في المؤسسة.')
-              }}</DialogDescription
-              ><DashboardNav
+              }}</DialogDescription>
+              <div class="drawer-clock"><TimezoneClock @click="menuOpen = false" /></div>
+              <DashboardNav
                 :base="dashboardBase"
                 :role="currentContext?.role || 'admin'"
                 @navigate="menuOpen = false"
@@ -152,6 +154,7 @@ onUnmounted(() => window.removeEventListener('online', online))
           ></RouterLink
         >
         <div class="header-actions">
+          <TimezoneClock v-if="user && !focused" class="desktop-clock" />
           <button
             class="icon-button language-button"
             @click="locale = locale === 'en' ? 'ar' : 'en'"

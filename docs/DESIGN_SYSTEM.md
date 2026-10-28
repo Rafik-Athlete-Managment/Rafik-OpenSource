@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+Read-only timestamps use the account's preferred display timezone consistently, including their date labels and calendar grouping. Show a clear zone label in schedules and the navigation clock. Date-only workouts and calendar dates never move between days. Booking and recurring-rule editors retain an explicit authoring zone; do not silently rewrite appointments when changing a display preference. The compact digital clock appears in the desktop header and phone drawer, links to Settings and does not announce every tick to assistive technology. Utility footer links remain one column with 2px gaps, compact 32px desktop rows and at least 44px phone targets.
+
 Portaled selection menus must use the popup layer above modal backdrops and panels (currently popup 120, backdrop 100, panel 101). Check the actual positioned wrapper as well as the content, since Popper copies the content layer when mounting. Verify pointer and keyboard selection inside the dialog; DOM presence alone does not establish visibility.
 
 Scheduling creation presents explicit plan-workout, custom-event and assessment choices. Plan workouts use the shared paginated agenda and athlete-name search, with no duplicate event-name field. Existing scheduled/unfinished work links back to Athlete plans. Custom events and assessments keep their established details/people/review flow. Keep durable recovery visible and prevent switching choices while a write is active or uncertain.

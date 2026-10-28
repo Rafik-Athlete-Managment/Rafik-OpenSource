@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Web timestamps now follow the account timezone across workout/event summaries, history, activity, messages and notifications. Add a timezone-labelled digital clock linking to account settings in the desktop header and phone menu. Keep date-only values and explicit booking/recurrence zones unchanged. Tighten the vertical utility footer spacing.
+
 - Fix timezone options opening behind scheduling side panels. The shared picker now uses the overlay-popup layer above modal backdrops and panels.
 
 - Schedule an event now separates plan workouts, custom attendance events and assessments. Plan workouts reuse the authorized planning queue and exact scheduling command, without a second event name or duplicate workout. Existing custom drafts and makeup links remain recoverable.

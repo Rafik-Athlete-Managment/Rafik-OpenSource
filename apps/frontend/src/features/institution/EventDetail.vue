@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { preferredTimezone } from '../../lib/display-time'
 import { localDate } from '../../lib/dates'
 import { institutionContext } from '../../app/institution'
 
@@ -130,7 +131,7 @@ const label = (value: string) =>
     hour: '2-digit',
     minute: '2-digit',
     timeZoneName: 'shortOffset',
-    timeZone: data.value?.event.timezone || 'UTC',
+    timeZone: preferredTimezone.value,
   }).format(new Date(value))
 const attendanceName = (value: string) =>
   l(
@@ -427,6 +428,9 @@ onMounted(load)
                   label(data.event.ends_at)
                 : data.event.training_date + ' · ' + l('No fixed time', 'دون وقت محدد')
             }}
+          </p>
+          <p v-if="data.event.starts_at" class="small-print">
+            {{ l('Times shown in', 'تُعرض الأوقات حسب') }} <bdi>{{ preferredTimezone }}</bdi>
           </p>
           <p>{{ data.event.location || l('Location to be agreed', 'الموقع يحدد لاحقاً') }}</p>
           <p>

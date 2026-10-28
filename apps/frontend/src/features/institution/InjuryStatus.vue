@@ -5,7 +5,8 @@ import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
 import { profile } from '../../app/auth'
 import { request } from '../../lib/backend'
-import { dateLabel, errorMessage, language as l } from '../../lib/i18n'
+import { errorMessage, language as l } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import { localDate } from '../../lib/dates'
 
 const context = programContext(useRoute()),
@@ -304,7 +305,7 @@ onMounted(load)
             >
             <span
               ><small>{{ l('Effective', 'سارية منذ') }}</small
-              >{{ dateLabel(item.effective_from) }}</span
+              >{{ dateLabel(item.effective_from.slice(0, 10)) }}</span
             >
           </div>
           <div class="record-actions" />

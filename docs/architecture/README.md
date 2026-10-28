@@ -1,5 +1,9 @@
 # Rafik architecture
 
+## Viewer timezone
+
+The existing account profile owns the preferred timezone; no new storage or API is required. `lib/display-time.ts` derives a reactive display zone from the profile with validated device/UTC fallback. Timestamp dates and times use that zone, including activity grouping, event/workout summaries, messages, diagnostics and calendar views. `lib/dates.ts` keeps date-only values fixed to their calendar day; default calendar-date formatting uses UTC even when transported as midnight timestamps. Explicit authoring/recurrence timezones and date-only eligibility rules remain authoritative. Display preference changes never rewrite event timestamps, recurrence clocks, historical documents or exact commands. The navigation clock consumes the same preference and links to the existing account settings flow.
+
 ## Calendar scheduling entry point
 
 EventComposer separates plan-workout scheduling from custom attendance events and assessments. The plan path embeds the existing WorkoutAgenda planning projection and posts to the same `/v1/institution/workout-scheduling` command service; it never creates a parallel `/calendar` event or calculates eligibility locally. Search is server-side athlete-name matching, with server totals and bounded pagination. The new entry point has a distinct durable command scope, keeps command recovery mounted across mode changes and guards post-acknowledgment navigation against leaving the original route. Existing custom-event drafts/receipts and makeup links retain their original identities. There is no schema or native contract change in this slice.

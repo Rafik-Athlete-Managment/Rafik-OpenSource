@@ -2,6 +2,7 @@
 import { notifySuccess } from '../../lib/feedback'
 import PageHeading from '../../components/PageHeading.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'
+import { timestampLabel } from '../../lib/display-time'
 import AppUpdates from '../../components/AppUpdates.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -153,7 +154,12 @@ function cancelDelete() {
         </p>
         <TimezonePicker id="timezone" v-model="zone" :label="t('timezone')" :disabled="busy" />
         <p class="small-print">
-          {{ language('Used to keep workout dates consistent.', 'لتوحيد تواريخ حصصك.') }}
+          {{
+            language(
+              'Times and the navigation clock use this timezone. Booking timezones and date-only workouts keep their original meaning.',
+              'تستخدم الأوقات وساعة التنقل هذه المنطقة الزمنية. تبقى مناطق الحجز وتواريخ التمارين دون وقت ثابت كما حُددت.',
+            )
+          }}
         </p>
         <button class="button" :disabled="busy">{{ busy ? t('saving') : t('save') }}</button>
       </form>
@@ -208,7 +214,7 @@ function cancelDelete() {
           <ul class="event-list">
             <li v-for="(e, i) in diagnostics" :key="i">
               <code>{{ e.name }}</code
-              ><time>{{ new Date(e.at).toLocaleString() }}</time>
+              ><time>{{ timestampLabel(e.at) }}</time>
             </li>
           </ul>
           <button

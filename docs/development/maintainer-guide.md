@@ -1,5 +1,7 @@
 # Maintainer guide
 
+Use `lib/display-time.ts` for viewer-facing timestamp labels and the reactive account timezone. Keep `lib/dates.ts` pure for date/instant conversion tests. A date-only value is a calendar date, not an instant: do not convert it to the viewer's zone. Keep booking inputs and recurrence previews in their explicitly selected zone, and retain source event zones for eligibility. Clock and display-preference changes must not alter command payloads or scheduling authority.
+
 Calendar creation choices live in EventComposer. Plan workouts reuse WorkoutAgenda's planning queue and scheduling commands; keep eligibility, cursor/revision checks and allocation on the existing backend. Custom events and assessments retain their own durable calendar command/draft scope. Avoid adding a second workout form or creating a named attendance event when scheduling an assigned workout. The canonical instance walkthrough covers founder validation; group prescriptions/results and native recording remain separate slices.
 
 ## Assigned-plan details and adaptation

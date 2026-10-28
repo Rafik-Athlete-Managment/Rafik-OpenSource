@@ -31,6 +31,13 @@ Open `http://127.0.0.1:5173`. A fresh database opens the first-run super-admin s
 
 Use an empty synthetic institution or your existing local demo; do not reset another dataset. In **People & access**, invite a coach and at least two athletes using separate synthetic email identifiers. Redeem each single-use link and set passwords. Assign the coach responsibility for the athletes. Each membership has one role; use separate accounts to review different dashboards.
 
+### Preferred timezone and navigation clock — unreleased web change
+
+1. For each synthetic administrator, coach and athlete account, save a timezone different from the device's zone in personal Settings. Expect the desktop clock and zone label to change after acknowledgment; on a phone open the navigation menu to find the clock. The clock links back to Settings. Reload and sign out/in: the preference must persist for that account without carrying another account's preference across sign-in.
+2. Open the same clearly named timed event/workout before and after changing zones. Its displayed time/date should change consistently in its summary, calendar and history, while the stored booking and prescription stay the same. Use an event near midnight to check which calendar day contains it. Messages, notifications and activity dates/times should follow the same preference.
+3. Date-only workouts and plan/nutrition dates must retain their original date. In a booking/recurrence editor, verify the explicit authoring zone and local time remain unchanged until deliberately edited.
+4. Check English/Arabic, light/dark, desktop/phone, keyboard access to the clock and compact footer links. This does not validate Android or change training eligibility.
+
 ## Administrator
 
 ### Institution overview

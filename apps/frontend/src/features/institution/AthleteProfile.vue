@@ -8,7 +8,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { AthletePlanPage } from '@rafik/shared/contracts'
 import { request } from '../../lib/backend'
-import { language as l, errorMessage, dateLabel } from '../../lib/i18n'
+import { language as l, errorMessage } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import { formatDate } from '../../lib/dates'
 import { locale } from '../../lib/i18n'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
@@ -461,7 +462,8 @@ onMounted(load)
                       : l('Modified participation', 'مشاركة معدلة')
                   }}</span
                 >
-                {{ l('since', 'منذ') }} {{ dateLabel(participation.data.effective_from) }}
+                {{ l('since', 'منذ') }}
+                {{ dateLabel(participation.data.effective_from.slice(0, 10)) }}
               </p>
               <p v-else class="small-print">
                 {{

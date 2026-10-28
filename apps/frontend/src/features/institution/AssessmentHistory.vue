@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { preferredTimezone } from '../../lib/display-time'
 import { institutionContext } from '../../app/institution'
 
 import PageHeading from '../../components/PageHeading.vue'
@@ -35,7 +36,7 @@ const from = ref(addDays(localDate(profile.value?.timezone || 'UTC'), -89)),
 const dateLabel = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     dateStyle: 'medium',
-    timeZone: profile.value?.timezone || 'UTC',
+    timeZone: preferredTimezone.value,
   }).format(new Date(value))
 const key = (r: Result, d: Drill) =>
   r.template_id + ':' + r.template_revision + ':' + d.key + ':' + JSON.stringify(r.definition)

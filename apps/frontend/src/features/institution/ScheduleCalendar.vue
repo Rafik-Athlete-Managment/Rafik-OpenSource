@@ -7,7 +7,7 @@ import ListPagination from '../../components/ListPagination.vue'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { profile } from '../../app/auth'
+import { preferredTimezone } from '../../lib/display-time'
 import { request } from '../../lib/backend'
 import { localDate, addDays } from '../../lib/dates'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
@@ -19,8 +19,8 @@ const route = useRoute(),
   id = institutionContext().institution,
   view = institutionContext().view,
   base = '',
-  zone = profile.value?.timezone || 'UTC'
-const today = localDate(zone),
+  zone = preferredTimezone
+const today = localDate(zone.value),
   start = ref(String(route.query.from || today.slice(0, 7) + '-01')),
   mode = ref(String(route.query.mode || 'month')),
   selectedDay = ref(String(route.query.day ?? today)),
@@ -41,7 +41,7 @@ const visible = computed(() =>
     (e) =>
       (showCancelled.value || e.state !== 'cancelled') &&
       (!selectedDay.value ||
-        (e.starts_at ? localDate(zone, new Date(e.starts_at)) : e.training_date) ===
+        (e.starts_at ? localDate(zone.value, new Date(e.starts_at)) : e.training_date) ===
           selectedDay.value),
   ),
 )
@@ -56,20 +56,21 @@ const bookingsOn = (day: string) =>
   items.value.filter(
     (event) =>
       (showCancelled.value || event.state !== 'cancelled') &&
-      (event.starts_at ? localDate(zone, new Date(event.starts_at)) : event.training_date) === day,
+      (event.starts_at ? localDate(zone.value, new Date(event.starts_at)) : event.training_date) ===
+        day,
   ).length
 const date = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-    timeZone: zone,
+    timeZone: zone.value,
   }).format(new Date(value))
 const time = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: zone,
+    timeZone: zone.value,
   }).format(new Date(value))
 const periodLabel = computed(() =>
   mode.value === 'month'
@@ -99,7 +100,7 @@ async function load() {
     let cursor: number | null = 0
     while (cursor !== null) {
       const result: { items: CalendarEvent[]; next: number | null } = await request(
-        `/v1/institution/calendar?includeDayOnly=true&view=${view}&from=${start.value}&to=${end.value}&zone=${encodeURIComponent(zone)}&offset=${cursor}`,
+        `/v1/institution/calendar?includeDayOnly=true&view=${view}&from=${start.value}&to=${end.value}&zone=${encodeURIComponent(zone.value)}&offset=${cursor}`,
       )
       if (current !== generation) return
       collected.push(...result.items)
@@ -141,6 +142,9 @@ watch(selectedDay, () => {
   void router.replace({ query: { ...route.query, day: selectedDay.value } })
 })
 onMounted(() => load())
+watch(zone, () => {
+  void load()
+})
 </script>
 <template>
   <div class="container page institution-calendar">

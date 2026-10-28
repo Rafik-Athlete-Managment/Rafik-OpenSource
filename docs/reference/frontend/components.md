@@ -172,6 +172,14 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Direct rendered consumers:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
 - **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/record/:session`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 
+## TimezoneClock
+
+- **Source:** [components/TimezoneClock.vue](../../../apps/frontend/src/components/TimezoneClock.vue)
+- **Kind:** Reusable/domain component.
+- **Purpose:** Account-timezone digital clock linking to settings, shown in the desktop header and phone navigation menu.
+- **Direct rendered consumers:** [App.vue](../../../apps/frontend/src/App.vue)
+- **Views using it:** Application shell; available on every route, conditional on shell state.
+
 ## TimezonePicker
 
 - **Source:** [components/TimezonePicker.vue](../../../apps/frontend/src/components/TimezonePicker.vue)

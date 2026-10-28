@@ -4,7 +4,7 @@ import { PhCalendarBlank, PhCaretRight } from '@phosphor-icons/vue'
 
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { profile } from '../../app/auth'
+import { preferredTimezone } from '../../lib/display-time'
 import { request } from '../../lib/backend'
 import { localDate, addDays } from '../../lib/dates'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
@@ -19,8 +19,8 @@ const route = useRoute(),
   id = institutionContext().institution,
   view = institutionContext().view,
   base = '',
-  zone = profile.value?.timezone || 'UTC',
-  today = localDate(zone)
+  zone = preferredTimezone,
+  today = localDate(zone.value)
 const events = ref<CalendarEvent[]>([]),
   error = ref(''),
   loading = ref(true)
@@ -29,12 +29,12 @@ const label = (date: string) =>
     weekday: 'short',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: zone,
+    timeZone: zone.value,
   }).format(new Date(date))
 onMounted(async () => {
   try {
     const result = await request<{ items: CalendarEvent[] }>(
-      `/v1/institution/calendar?view=${view}&from=${today}&to=${props.todayOnly ? today : addDays(today, 7)}&zone=${encodeURIComponent(zone)}`,
+      `/v1/institution/calendar?view=${view}&from=${today}&to=${props.todayOnly ? today : addDays(today, 7)}&zone=${encodeURIComponent(zone.value)}`,
     )
     events.value = result.items
       .filter(
