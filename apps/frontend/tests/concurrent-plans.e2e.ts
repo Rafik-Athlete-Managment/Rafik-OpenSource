@@ -145,13 +145,17 @@ test('coach adds a concurrent goal-specific plan, the athlete sees both, then pl
 
     // End one plan from the staff plan detail.
     await page.goto(`/training?status=active`)
-    const card = page.locator('.athlete-plan-card').filter({ hasText: 'Speed block' })
-    await expect(card.getByText('Match speed · Football')).toBeVisible()
-    await card.getByRole('button', { name: 'View assigned plan' }).click()
-    await page.getByRole('button', { name: 'End plan', exact: true }).click()
-    await expect(page.locator('.athlete-plan-card').filter({ hasText: 'Speed block' })).toHaveCount(
-      0,
-    )
+    const card = page.locator('.athlete-plan-list .record-row').filter({ hasText: 'Speed block' })
+    await expect(card.getByText(/Match speed · Football/)).toBeVisible()
+    await card.locator('.record-title a').click()
+    await page.getByRole('button', { name: 'More plan actions', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'End plan…' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'End plan', exact: true }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await page.goto(`/training?status=active`)
+    await expect(
+      page.locator('.athlete-plan-list .record-row').filter({ hasText: 'Speed block' }),
+    ).toHaveCount(0)
 
     // Replacing is an explicit per-athlete choice.
     await page.goto(`${base}/deliver/${mobility}?member=${athlete.id}`)

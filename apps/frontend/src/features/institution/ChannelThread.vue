@@ -9,7 +9,7 @@ import CommandStatus from '../../components/CommandStatus.vue'
 import ResourceUpload, { type UploadedAsset } from '../../components/ResourceUpload.vue'
 import ResourceAsset from '../../components/ResourceAsset.vue'
 import ChannelEditor from './ChannelEditor.vue'
-import { PhImage, PhPaperclip, PhX } from '@phosphor-icons/vue'
+import { PhImage, PhPaperclip, PhPaperPlaneRight, PhX } from '@phosphor-icons/vue'
 const props = defineProps<{ institution: string; view: string; id: string; base: string }>(),
   emit = defineEmits<{ refresh: [] }>()
 type Message = {
@@ -263,6 +263,20 @@ onMounted(async () => {
       : []
   ready.value = true
   await load(false, true)
+  await nextTick()
+  // Opening a chat puts the cursor in the message box, unless focus already moved elsewhere
+  // (route changes focus <main> for screen readers; that still counts as "not moved").
+  // Touch devices are skipped so the on-screen keyboard does not cover the history.
+  const active = document.activeElement
+  if (
+    !disposed &&
+    !window.matchMedia?.('(pointer: coarse)').matches &&
+    (!active ||
+      active === document.body ||
+      active.matches('main') ||
+      !!active.closest('.conversation-inbox'))
+  )
+    composer.value?.focus({ preventScroll: true })
   poll = setInterval(() => {
     if (!document.hidden && !editing.value) void load()
   }, 20000)
@@ -446,20 +460,20 @@ onUnmounted(() => {
             }
           "
         />
-        <ResourceUpload
-          :key="uploadVersion"
-          :institution="institution"
-          :view="view"
-          :channel="id"
-          purpose="message"
-          composer
-          :remaining="10 - attachments.length"
-          :disabled="locked || attachments.length >= 10"
-          @busy="uploading = $event"
-          @uploaded="addAttachment"
-        />
         <div class="composer-actions">
-          <small>{{
+          <ResourceUpload
+            :key="uploadVersion"
+            :institution="institution"
+            :view="view"
+            :channel="id"
+            purpose="message"
+            composer
+            :remaining="10 - attachments.length"
+            :disabled="locked || attachments.length >= 10"
+            @busy="uploading = $event"
+            @uploaded="addAttachment"
+          />
+          <small class="composer-note">{{
             data.channel.private_pair
               ? l('Private to the two participants', 'خاص بالمشاركين الاثنين')
               : l(
@@ -467,8 +481,13 @@ onUnmounted(() => {
                   'محادثة جماعية · يمكن لمديري المؤسسة الانضمام',
                 )
           }}</small
-          ><button class="button" :disabled="locked || (!text.trim() && !attachments.length)">
-            {{ l('Send message', 'إرسال الرسالة') }}
+          ><button
+            class="button composer-send"
+            :disabled="locked || (!text.trim() && !attachments.length)"
+            :aria-label="l('Send message', 'إرسال الرسالة')"
+          >
+            <PhPaperPlaneRight :size="18" aria-hidden="true" class="send-icon" />
+            <span>{{ l('Send', 'إرسال') }}</span>
           </button>
         </div></template
       >

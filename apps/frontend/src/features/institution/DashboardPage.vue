@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 
-import { PhTray } from '@phosphor-icons/vue'
+import {
+  PhTray,
+  PhPlus,
+  PhCalendarPlus,
+  PhClipboardText,
+  PhBowlFood,
+  PhChatCircle,
+} from '@phosphor-icons/vue'
+import OverflowMenu from '../../components/OverflowMenu.vue'
 import { useListPageSize } from '../../lib/list-page-size'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -19,6 +27,7 @@ import CoachDesk from './CoachDesk.vue'
 import AdminOverview from './AdminOverview.vue'
 import AthleteDay from './AthleteDay.vue'
 import './role-dashboard.css'
+import ActivityLog from './ActivityLog.vue'
 import BrandingSettings from './BrandingSettings.vue'
 import SportsSettings from './SportsSettings.vue'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
@@ -340,6 +349,10 @@ onMounted(async () => {
     <PageHeading class="work-heading">
       <div>
         <p class="overline">{{ roleName(view) }}</p>
+        <!-- Which institution this workspace belongs to; overlines are hidden in the dashboard shell. -->
+        <p v-if="section === 'overview' && data" class="dashboard-institution">
+          <bdi dir="auto">{{ data.institution.name }}</bdi>
+        </p>
         <h1>
           {{
             section === 'people'
@@ -403,16 +416,42 @@ onMounted(async () => {
         v-if="section === 'overview' && view === 'trainer' && data"
         class="coach-header-actions actions"
       >
-        <RouterLink class="button secondary" to="/people"
-          >{{ data.summary.trainees }} ·
-          {{ l('Primary-roster athletes', 'رياضيو القائمة الأساسية') }}</RouterLink
+        <RouterLink class="text-link" to="/people"
+          >{{ data.summary.trainees }}
+          {{ l('primary-roster athletes', 'رياضيون في القائمة الأساسية') }}</RouterLink
         >
-        <RouterLink class="button" to="/training">{{
-          l('Athlete plans', 'خطط الرياضيين')
-        }}</RouterLink>
-        <RouterLink class="button secondary" to="/analytics">{{
-          l('View analytics', 'عرض التحليلات')
-        }}</RouterLink>
+        <OverflowMenu
+          primary
+          :icon="PhPlus"
+          :text="l('New', 'جديد')"
+          :label="l('Create something new', 'إنشاء عنصر جديد')"
+          :items="[
+            {
+              key: 'event',
+              label: l('Schedule event', 'جدولة موعد'),
+              icon: PhCalendarPlus,
+              to: '/schedule/new',
+            },
+            {
+              key: 'assign',
+              label: l('Assign a program', 'تعيين برنامج'),
+              icon: PhClipboardText,
+              to: '/plans',
+            },
+            {
+              key: 'nutrition',
+              label: l('Nutrition plan', 'خطة تغذية'),
+              icon: PhBowlFood,
+              to: { path: '/nutrition', query: { create: '1' } },
+            },
+            {
+              key: 'message',
+              label: l('Message', 'رسالة'),
+              icon: PhChatCircle,
+              to: { path: '/messages', query: { tab: 'people' } },
+            },
+          ]"
+        />
       </div>
     </PageHeading>
     <CommandStatus :command="command" />
@@ -527,6 +566,7 @@ onMounted(async () => {
           >
             <div class="list-controls">
               <TabsList
+                v-if="view === 'admin'"
                 class="report-tabs ui-tabs"
                 :aria-label="l('People by role', 'الأشخاص حسب الدور')"
               >
@@ -606,7 +646,19 @@ onMounted(async () => {
                     <div class="person-identity">
                       <span class="avatar">{{ member.name.slice(0, 1) }}</span>
                       <div>
-                        <h2>{{ member.name }}</h2>
+                        <h2>
+                          <RouterLink
+                            class="person-name-link"
+                            :to="
+                              base +
+                              '/members/' +
+                              member.id +
+                              '?returnTo=' +
+                              encodeURIComponent(route.fullPath)
+                            "
+                            ><bdi dir="auto">{{ member.name }}</bdi></RouterLink
+                          >
+                        </h2>
                         <p class="person-meta">
                           {{ member.roles.map(roleName).join(' · ')
                           }}<template v-if="member.roles.includes('trainee')">
@@ -643,19 +695,6 @@ onMounted(async () => {
                     </div>
                     <div class="person-actions">
                       <RouterLink
-                        class="person-action"
-                        :to="
-                          base +
-                          '/members/' +
-                          member.id +
-                          '?returnTo=' +
-                          encodeURIComponent(route.fullPath)
-                        "
-                        :aria-label="l('Profile for ', 'ملف ') + member.name"
-                        :title="l('Open profile', 'فتح الملف')"
-                        ><PersonActionIcon kind="profile"
-                      /></RouterLink>
-                      <RouterLink
                         v-if="member.active && member.user_id && member.id !== data.self.id"
                         class="person-action"
                         :to="
@@ -671,7 +710,7 @@ onMounted(async () => {
                       /></RouterLink>
                       <RouterLink
                         v-if="view === 'admin'"
-                        class="person-action"
+                        class="button secondary small"
                         :to="
                           base +
                           '/members/' +
@@ -680,9 +719,31 @@ onMounted(async () => {
                           encodeURIComponent(route.fullPath)
                         "
                         :aria-label="l('Manage ', 'إدارة ') + member.name"
-                        :title="l('Manage details', 'إدارة البيانات')"
-                        ><PersonActionIcon kind="manage"
-                      /></RouterLink>
+                        ><PersonActionIcon kind="manage" />{{ l('Manage', 'إدارة') }}</RouterLink
+                      >
+                      <OverflowMenu
+                        v-if="
+                          view === 'trainer' && member.active && member.roles.includes('trainee')
+                        "
+                        :label="l('More actions for ', 'إجراءات أخرى لـ ') + member.name"
+                        :items="[
+                          {
+                            key: 'assign',
+                            label: l('Assign a program', 'تعيين برنامج'),
+                            to: { path: '/plans', query: { athlete: member.id } },
+                          },
+                          {
+                            key: 'event',
+                            label: l('Schedule event', 'جدولة موعد'),
+                            to: { path: '/schedule/new', query: { member: member.id } },
+                          },
+                          {
+                            key: 'nutrition',
+                            label: l('Nutrition plan', 'خطة تغذية'),
+                            to: { path: '/nutrition', query: { member: member.id } },
+                          },
+                        ]"
+                      />
                     </div>
                   </article>
                 </section>
@@ -722,59 +783,12 @@ onMounted(async () => {
             </button>
           </section>
         </template>
-        <section v-else-if="section === 'activity' && view === 'admin'" class="panel">
-          <h2>{{ l('Recent institution changes', 'تغييرات المؤسسة الأخيرة') }}</h2>
-          <p v-if="!data.events.length">
-            {{ l('No changes recorded yet.', 'لا تغييرات مسجلة بعد.') }}
-          </p>
-          <ol class="organization-events">
-            <li v-for="event in data.events" :key="event.id">
-              <strong>{{
-                l(
-                  {
-                    member_invited: 'Invitation created',
-                    invitation_revoked: 'Invitation revoked',
-                    member_joined: 'Member joined',
-                    trainer_assigned: 'Coach responsibility updated',
-                    member_roles_changed: 'Member roles updated',
-                    member_removed: 'Membership deactivated',
-                    organization_created: 'Institution created',
-                    organization_renamed: 'Institution renamed',
-                    nutrition_plan_published: 'Nutrition plan published',
-                    nutrition_sharing_changed: 'Nutrition sharing changed',
-                  }[event.kind] || 'Institution updated',
-                  {
-                    member_invited: 'إنشاء دعوة',
-                    invitation_revoked: 'إلغاء دعوة',
-                    member_joined: 'انضمام عضو',
-                    trainer_assigned: 'تحديث مسؤولية المدرب',
-                    member_roles_changed: 'تحديث الأدوار',
-                    member_removed: 'إلغاء تنشيط عضوية',
-                    organization_created: 'إنشاء المؤسسة',
-                    organization_renamed: 'تغيير اسم المؤسسة',
-                    nutrition_plan_published: 'نشر خطة التغذية',
-                    nutrition_sharing_changed: 'تغيير مشاركة التغذية',
-                  }[event.kind] || 'تحديث المؤسسة',
-                )
-              }}</strong
-              ><span>{{
-                data.members.find(
-                  (m) => m.id === event.subject_id || m.user_id === event.subject_id,
-                )?.name
-              }}</span
-              ><time>{{ dateLabel(event.created_at) }}</time>
-            </li>
-          </ol>
-          <button
-            v-if="data.eventsNext !== null"
-            type="button"
-            class="text-link"
-            :disabled="extraLoading"
-            @click="loadExtra('events')"
-          >
-            {{ l('Earlier activity', 'نشاط أقدم') }}
-          </button>
-        </section>
+        <ActivityLog
+          v-else-if="section === 'activity' && view === 'admin'"
+          :data="data"
+          :loading="extraLoading"
+          @more="loadExtra('events')"
+        />
         <section
           v-else-if="section === 'settings' && view === 'admin'"
           class="institution-settings"

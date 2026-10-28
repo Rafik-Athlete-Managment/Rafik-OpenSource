@@ -63,9 +63,15 @@ test('admin defines sports and specialties, links people, and the coach filter s
     await f.login(page, f.owner, base + '/institution-settings')
     const settings = page.getByRole('region', { name: 'Sports and specialties' })
     const add = async (name: string, kind: 'Sport' | 'Coaching specialty') => {
-      await settings.getByLabel('Name', { exact: true }).first().fill(name)
+      // Type first; the Add button names what it adds.
       await settings.getByRole('radio', { name: kind, exact: true }).check()
-      await settings.getByRole('button', { name: 'Add', exact: true }).click()
+      await settings.getByLabel('Name', { exact: true }).first().fill(name)
+      await settings
+        .getByRole('button', {
+          name: kind === 'Sport' ? 'Add sport' : 'Add specialty',
+          exact: true,
+        })
+        .click()
       await expect(settings.getByText(name, { exact: true })).toBeVisible()
     }
     await add('Footbal', 'Sport')

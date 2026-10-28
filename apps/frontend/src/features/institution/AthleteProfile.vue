@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 
-import { PhTray } from '@phosphor-icons/vue'
+import { PhTray, PhArrowRight, PhClipboardText } from '@phosphor-icons/vue'
+import OverflowMenu from '../../components/OverflowMenu.vue'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -209,6 +210,21 @@ async function load() {
   await Promise.all(jobs)
 }
 const showNutrition = computed(() => relation.value === 'admin' || relation.value === 'primary')
+// Plan, event and nutrition creation start here for the people responsible for this athlete.
+const canPlan = computed(
+  () =>
+    athlete.value &&
+    member.value?.active &&
+    (relation.value === 'admin' || relation.value === 'primary'),
+)
+const sessionState = (s: { status: string; reviewed_at?: string }) =>
+  s.status !== 'completed' ? 'in_progress' : s.reviewed_at ? 'reviewed' : 'awaiting_review'
+const sessionLabel = (s: { status: string; reviewed_at?: string }) =>
+  ({
+    in_progress: l('In progress', 'قيد التنفيذ'),
+    awaiting_review: l('Awaiting review', 'بانتظار المراجعة'),
+    reviewed: l('Reviewed', 'تمت المراجعة'),
+  })[sessionState(s)]
 const showParticipation = computed(() => relation.value === 'admin' || relation.value === 'primary')
 onMounted(load)
 </script>
@@ -252,18 +268,44 @@ onMounted(load)
             }}
           </p>
         </div>
-        <RouterLink
-          v-if="member.active && member.user_id && member.id !== self && view !== 'trainee'"
-          class="button secondary"
-          :to="
-            base +
-            '/messages?to=' +
-            encodeURIComponent(member.id) +
-            '&title=' +
-            encodeURIComponent(member.name)
-          "
-          >{{ l('Message', 'مراسلة') }}</RouterLink
-        >
+        <div class="actions profile-actions">
+          <RouterLink
+            v-if="member.active && member.user_id && member.id !== self && view !== 'trainee'"
+            class="button secondary"
+            :to="
+              base +
+              '/messages?to=' +
+              encodeURIComponent(member.id) +
+              '&title=' +
+              encodeURIComponent(member.name)
+            "
+            >{{ l('Message', 'مراسلة') }}</RouterLink
+          >
+          <RouterLink
+            v-if="canPlan"
+            class="button"
+            :to="{ path: base + '/plans', query: { athlete: member.id } }"
+            ><PhClipboardText :size="18" aria-hidden="true" />{{
+              l('Assign a program', 'تعيين برنامج')
+            }}</RouterLink
+          >
+          <OverflowMenu
+            v-if="canPlan"
+            :label="l('More actions for ', 'إجراءات أخرى لـ ') + member.name"
+            :items="[
+              {
+                key: 'event',
+                label: l('Schedule event', 'جدولة موعد'),
+                to: { path: base + '/schedule/new', query: { member: member.id } },
+              },
+              {
+                key: 'nutrition',
+                label: l('Nutrition plan', 'خطة تغذية'),
+                to: { path: base + '/nutrition', query: { member: member.id } },
+              },
+            ]"
+          />
+        </div>
       </PageHeading>
       <TabsRoot
         v-model="activeTab"
@@ -292,8 +334,151 @@ onMounted(load)
         </TabsList>
 
         <TabsContent value="overview" class="profile-tab-panel"
-          ><section id="profile-overview" class="panel" aria-labelledby="overview-heading">
-            <h2 id="overview-heading">{{ l('Overview', 'نظرة عامة') }}</h2>
+          ><div v-if="athlete && view !== 'trainee'" class="profile-summary">
+            <section class="panel" aria-labelledby="summary-plans">
+              <h2 id="summary-plans">{{ l('Plans', 'الخطط') }}</h2>
+              <p v-if="plans.loading" class="small-print" role="status">
+                {{ l('Loading…', 'جارٍ التحميل…') }}
+              </p>
+              <p v-else-if="plans.denied || plans.error" class="small-print">
+                {{ plans.error || l('Not available for your role.', 'غير متاح لدورك.') }}
+              </p>
+              <template v-else>
+                <p class="profile-metric">{{ plans.data?.total || 0 }}</p>
+                <p v-for="plan in plans.data?.items.slice(0, 2)" :key="plan.id" class="small-print">
+                  <bdi dir="auto">{{ plan.version.title }}</bdi
+                  ><template v-if="plan.next_workout">
+                    ·
+                    {{
+                      plan.next_workout.state === 'unscheduled'
+                        ? l('Next workout awaiting schedule', 'التمرين التالي بانتظار الجدولة')
+                        : plan.next_workout.state === 'overdue'
+                          ? l('Next workout overdue', 'التمرين التالي متأخر')
+                          : plan.next_workout.state === 'in_progress'
+                            ? l('Workout in progress', 'تمرين قيد التنفيذ')
+                            : l('Next workout scheduled', 'التمرين التالي مجدول')
+                    }}</template
+                  >
+                </p>
+              </template>
+              <button type="button" class="text-link" @click="activeTab = 'plans'">
+                {{ l('View plans', 'عرض الخطط') }}
+                <PhArrowRight :size="16" class="directional" aria-hidden="true" />
+              </button>
+            </section>
+            <section class="panel" aria-labelledby="summary-sessions">
+              <h2 id="summary-sessions">{{ l('Recent workouts', 'أحدث التمارين') }}</h2>
+              <p v-if="sessions.loading" class="small-print" role="status">
+                {{ l('Loading…', 'جارٍ التحميل…') }}
+              </p>
+              <p v-else-if="sessions.denied || sessions.error" class="small-print">
+                {{ sessions.error || l('Not available for your role.', 'غير متاح لدورك.') }}
+              </p>
+              <p v-else-if="!sessions.data?.length" class="small-print">
+                {{ l('No recorded sessions yet.', 'لا توجد حصص مسجلة بعد.') }}
+              </p>
+              <ul v-else class="profile-list">
+                <li v-for="s in sessions.data.slice(0, 3)" :key="s.id">
+                  <RouterLink :to="base + '/review/' + s.id"
+                    ><bdi dir="auto">{{ s.title }}</bdi></RouterLink
+                  >
+                  <span class="tag" :data-status="sessionState(s)">{{ sessionLabel(s) }}</span>
+                  <small>{{ dateLabel(s.started_at) }}</small>
+                </li>
+              </ul>
+              <button type="button" class="text-link" @click="activeTab = 'sessions'">
+                {{ l('View sessions', 'عرض الحصص') }}
+                <PhArrowRight :size="16" class="directional" aria-hidden="true" />
+              </button>
+            </section>
+            <section class="panel" aria-labelledby="summary-assessments">
+              <h2 id="summary-assessments">{{ l('Assessments', 'التقييمات') }}</h2>
+              <p v-if="assessments.loading" class="small-print" role="status">
+                {{ l('Loading…', 'جارٍ التحميل…') }}
+              </p>
+              <p v-else-if="assessments.denied || assessments.error" class="small-print">
+                {{ assessments.error || l('Not available for your role.', 'غير متاح لدورك.') }}
+              </p>
+              <p v-else-if="!assessments.data?.length" class="small-print">
+                {{
+                  l('No assessment results in this period.', 'لا توجد نتائج تقييم في هذه الفترة.')
+                }}
+              </p>
+              <p v-else class="small-print">
+                {{ l('Latest', 'الأحدث') }}:
+                <bdi dir="auto">{{ assessments.data[0]!.title }}</bdi> ·
+                {{ dateLabel(assessments.data[0]!.starts_at) }}
+              </p>
+              <button type="button" class="text-link" @click="activeTab = 'assessments'">
+                {{ l('View assessments', 'عرض التقييمات') }}
+                <PhArrowRight :size="16" class="directional" aria-hidden="true" />
+              </button>
+            </section>
+            <section v-if="showNutrition" class="panel" aria-labelledby="summary-nutrition">
+              <h2 id="summary-nutrition">{{ l('Nutrition', 'التغذية') }}</h2>
+              <p v-if="nutrition.loading" class="small-print" role="status">
+                {{ l('Loading…', 'جارٍ التحميل…') }}
+              </p>
+              <p v-else-if="nutrition.denied || nutrition.error" class="small-print">
+                {{ nutrition.error || l('Not available for your role.', 'غير متاح لدورك.') }}
+              </p>
+              <p v-else class="small-print">
+                {{
+                  nutrition.data?.current
+                    ? l('Current plan · version ', 'الخطة الحالية · النسخة ') +
+                      nutrition.data.current.revision
+                    : l('No current nutrition plan.', 'لا توجد خطة تغذية حالية.')
+                }}
+                ·
+                {{
+                  nutrition.data?.canReadDiary
+                    ? l('Diary shared', 'السجل مشترك')
+                    : l('Diary not shared', 'السجل غير مشترك')
+                }}
+              </p>
+              <button type="button" class="text-link" @click="activeTab = 'nutrition'">
+                {{ l('View nutrition', 'عرض التغذية') }}
+                <PhArrowRight :size="16" class="directional" aria-hidden="true" />
+              </button>
+            </section>
+            <section v-if="showParticipation" class="panel" aria-labelledby="summary-participation">
+              <h2 id="summary-participation">{{ l('Participation', 'المشاركة') }}</h2>
+              <p v-if="participation.loading" class="small-print" role="status">
+                {{ l('Loading…', 'جارٍ التحميل…') }}
+              </p>
+              <p v-else-if="participation.denied || participation.error" class="small-print">
+                {{ participation.error || l('Not available for your role.', 'غير متاح لدورك.') }}
+              </p>
+              <p v-else-if="participation.data?.kind === 'status'" class="small-print">
+                <span
+                  class="tag"
+                  :data-status="
+                    participation.data.participation === 'unavailable' ? 'unavailable' : 'paused'
+                  "
+                  >{{
+                    participation.data.participation === 'unavailable'
+                      ? l('Unavailable', 'غير متاح')
+                      : l('Modified participation', 'مشاركة معدلة')
+                  }}</span
+                >
+                {{ l('since', 'منذ') }} {{ dateLabel(participation.data.effective_from) }}
+              </p>
+              <p v-else class="small-print">
+                {{
+                  l(
+                    'No shared status. Unknown, not cleared to train.',
+                    'لا توجد حالة مشتركة. غير معروفة، وليست تصريحاً بالتدريب.',
+                  )
+                }}
+              </p>
+              <button type="button" class="text-link" @click="activeTab = 'participation'">
+                {{ l('View participation', 'عرض المشاركة') }}
+                <PhArrowRight :size="16" class="directional" aria-hidden="true" />
+              </button>
+            </section>
+          </div>
+          <section id="profile-overview" class="panel" aria-labelledby="overview-heading">
+            <h2 id="overview-heading">{{ l('Details', 'التفاصيل') }}</h2>
             <dl class="profile-facts">
               <div v-if="member.email">
                 <dt>{{ l('Account email', 'بريد الحساب') }}</dt>
@@ -351,9 +536,11 @@ onMounted(load)
           ><section id="profile-plans" class="panel" aria-labelledby="plans-heading">
             <div class="heading-actions">
               <h2 id="plans-heading">{{ l('Active plans', 'الخطط النشطة') }}</h2>
-              <RouterLink class="text-link" :to="base + '/training?member=' + member.id">{{
-                l('All plans', 'جميع الخطط')
-              }}</RouterLink>
+              <RouterLink
+                class="text-link"
+                :to="{ path: base + '/training', query: { search: member.name } }"
+                >{{ l('All plans', 'جميع الخطط') }}</RouterLink
+              >
             </div>
             <p v-if="plans.loading" role="status">{{ l('Loading…', 'جارٍ التحميل…') }}</p>
             <p v-else-if="plans.denied" class="small-print">
@@ -393,9 +580,11 @@ onMounted(load)
           ><section id="profile-sessions" class="panel" aria-labelledby="sessions-heading">
             <div class="heading-actions">
               <h2 id="sessions-heading">{{ l('Recent sessions', 'الحصص الأخيرة') }}</h2>
-              <RouterLink class="text-link" :to="base + '/workouts?member=' + member.id">{{
-                l('Workout history', 'سجل التمارين')
-              }}</RouterLink>
+              <RouterLink
+                class="text-link"
+                :to="{ path: base + '/workouts', query: { search: member.name } }"
+                >{{ l('Workout history', 'سجل التمارين') }}</RouterLink
+              >
             </div>
             <p v-if="sessions.loading" role="status">{{ l('Loading…', 'جارٍ التحميل…') }}</p>
             <p v-else-if="sessions.denied" class="small-print">
@@ -706,6 +895,31 @@ onMounted(load)
   max-width: 60ch;
   color: var(--muted);
   line-height: 1.65;
+}
+.profile-actions {
+  gap: var(--space-3);
+}
+.profile-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-4);
+  margin-block-end: var(--space-5);
+}
+.athlete-profile .profile-summary .panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  margin: 0;
+}
+.profile-summary h2 {
+  margin: 0;
+  font-size: var(--text-panel);
+}
+.profile-summary p {
+  margin: 0;
+}
+.profile-summary .text-link {
+  justify-self: start;
 }
 .profile-metric {
   font-size: 1.65rem;

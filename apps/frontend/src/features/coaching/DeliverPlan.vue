@@ -916,14 +916,19 @@ onMounted(load)
   gap: var(--space-2);
   min-height: 48px;
   padding-inline: var(--space-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control, 8px);
-  background: var(--page);
+  background: var(--field);
+  box-shadow: var(--shadow-xs);
   color: var(--muted);
 }
 .search-field:focus-within {
   border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.search-field input,
+.search-field input:focus-visible {
+  box-shadow: none;
 }
 .search-field input {
   flex: 1;
@@ -951,7 +956,7 @@ onMounted(load)
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-control, 8px);
-  background: var(--page);
+  background: var(--field);
   color: var(--ink);
   text-align: start;
   font: inherit;

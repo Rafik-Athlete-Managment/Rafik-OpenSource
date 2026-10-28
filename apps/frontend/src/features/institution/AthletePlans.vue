@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { PhTray } from '@phosphor-icons/vue'
+import { PhTray, PhCalendarPlus } from '@phosphor-icons/vue'
+import OverflowMenu from '../../components/OverflowMenu.vue'
+import { useLiveSearch } from '../../lib/live-search'
+import type { WorkoutAgendaItem } from '@rafik/shared/contracts'
 import AthleteSearch from '../../components/AthleteSearch.vue'
 import { useListPageSize } from '../../lib/list-page-size'
 import PageHeading from '../../components/PageHeading.vue'
@@ -67,8 +70,8 @@ async function load() {
     if (!disposed && current === generation) loading.value = false
   }
 }
-function navigate(offset = 0) {
-  return router.push({
+function navigate(offset = 0, replace = false) {
+  return router[replace ? 'replace' : 'push']({
     query: {
       limit: route.query.limit,
       ...(search.value.trim() ? { search: search.value.trim() } : {}),
@@ -85,14 +88,33 @@ function selectAssignment(id?: string) {
       query: { ...route.query, assignment: undefined },
     })
 }
+const live = useLiveSearch(search, () => navigate(0, true))
 watch(
   () => [route.query.status, route.query.search, route.query.offset],
   () => {
     status.value = String(route.query.status || 'active')
-    search.value = String(route.query.search || '')
+    live.restore(String(route.query.search || ''))
     void load()
   },
 )
+const nextStates: Record<WorkoutAgendaItem['state'], [string, string]> = {
+  unscheduled: ['Awaiting schedule', 'بانتظار الجدولة'],
+  scheduled: ['Scheduled', 'مجدول'],
+  ready: ['Ready to start', 'جاهز للبدء'],
+  overdue: ['Overdue', 'متأخر'],
+  in_progress: ['In progress', 'قيد التنفيذ'],
+  paused: ['Paused', 'متوقف مؤقتاً'],
+}
+const nextWhen = (plan: AthletePlanSummary) => {
+  const next = plan.next_workout
+  if (!next?.training_date) return ''
+  if (!next.starts_at) return formatDate(next.training_date, locale.value)
+  return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
+    timeZone: next.timezone || undefined,
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(next.starts_at))
+}
 const planLabel = (plan: AthletePlanSummary) => [plan.goal, plan.sport].filter(Boolean).join(' · ')
 onMounted(() => {
   void load()
@@ -132,7 +154,7 @@ onUnmounted(() => {
       </div>
     </PageHeading>
     <div class="list-toolbar">
-      <form class="plan-filters" @submit.prevent="navigate()">
+      <form class="plan-filters" @submit.prevent="live.submit()">
         <AthleteSearch v-model="search" />
         <label
           >{{ l('Plan status', 'حالة الخطة') }}
@@ -147,7 +169,6 @@ onUnmounted(() => {
             <option value="all">{{ l('All plans', 'جميع الخطط') }}</option>
           </select>
         </label>
-        <button class="button secondary" :disabled="loading">{{ l('Search', 'بحث') }}</button>
       </form>
       <div class="list-toolbar-pagination">
         <ListPagination
@@ -191,57 +212,83 @@ onUnmounted(() => {
             l('Browse programs', 'استعراض البرامج')
           }}</RouterLink>
         </section>
-        <div v-else class="athlete-plan-grid">
-          <article v-for="plan in data.items" :key="plan.id" class="athlete-plan-card">
-            <div class="heading-actions">
-              <p class="plan-athlete" dir="auto">{{ plan.member_name }}</p>
-              <span class="tag" :data-status="plan.status">{{ label(plan.status) }}</span>
+        <ul v-else class="record-list athlete-plan-list">
+          <li v-for="plan in data.items" :key="plan.id" class="record-row">
+            <div class="record-title">
+              <RouterLink :to="'/training/' + plan.id"
+                ><bdi dir="auto">{{ plan.member_name }}</bdi></RouterLink
+              >
+              <small
+                ><bdi dir="auto">{{ plan.version.title }}</bdi
+                ><template v-if="plan.adaptation_revision">
+                  · {{ l('Personalized', 'مخصصة') }}</template
+                ><template v-if="planLabel(plan)">
+                  · <bdi dir="auto">{{ planLabel(plan) }}</bdi></template
+                ></small
+              >
+              <small v-if="!plan.member_active">{{
+                l('Inactive institution membership', 'عضوية المؤسسة غير نشطة')
+              }}</small>
             </div>
-            <h2 dir="auto">{{ plan.version.title }}</h2>
-            <span v-if="plan.adaptation_revision" class="tag" data-status="active">{{
-              l('Personalized', 'مخصصة')
-            }}</span>
-            <p v-if="planLabel(plan)" class="tag plan-sport" dir="auto">{{ planLabel(plan) }}</p>
-            <p class="small-print">
-              {{ l('Version', 'النسخة') }} {{ plan.version.revision }} ·
-              {{
-                plan.schedule_mode === 'cycle'
-                  ? l('Repeating cycle', 'دورة متكررة')
-                  : l('Flexible schedule', 'جدول مرن')
-              }}
-            </p>
-            <dl>
-              <div>
-                <dt>{{ l('Starts', 'البداية') }}</dt>
-                <dd>{{ formatDate(plan.start_date, locale) }}</dd>
-              </div>
-              <div>
-                <dt>{{ l('Ends', 'النهاية') }}</dt>
-                <dd>
-                  {{
-                    plan.end_date
-                      ? formatDate(plan.end_date, locale)
-                      : l('No end date', 'دون تاريخ انتهاء')
-                  }}
-                </dd>
-              </div>
-            </dl>
-            <p v-if="!plan.member_active" class="small-print">
-              {{ l('Inactive institution membership', 'عضوية المؤسسة غير نشطة') }}
-            </p>
-            <button class="button secondary" @click="selectAssignment(plan.id)">
-              {{ l('View assigned plan', 'عرض الخطة المعيّنة') }}
-            </button>
-          </article>
-        </div>
-      </template></PageState
-    >
+            <div class="record-meta">
+              <span class="tag" :data-status="plan.status">{{ label(plan.status) }}</span>
+              <span v-if="plan.next_workout"
+                ><small>{{ l('Next workout', 'التمرين التالي') }}</small
+                ><span
+                  >{{ l(...nextStates[plan.next_workout.state])
+                  }}<template v-if="nextWhen(plan)"> · {{ nextWhen(plan) }}</template></span
+                ></span
+              >
+              <span
+                ><small>{{ l('Dates', 'التواريخ') }}</small
+                >{{ formatDate(plan.start_date, locale) }} –
+                {{
+                  plan.end_date
+                    ? formatDate(plan.end_date, locale)
+                    : l('No end date', 'دون تاريخ انتهاء')
+                }}</span
+              >
+            </div>
+            <div class="record-actions">
+              <RouterLink
+                v-if="plan.next_workout?.state === 'unscheduled'"
+                class="button small secondary"
+                :to="{ path: '/training/' + plan.id, query: { schedule: '1' } }"
+                ><PhCalendarPlus :size="18" aria-hidden="true" />{{
+                  l('Schedule', 'جدولة')
+                }}</RouterLink
+              >
+              <OverflowMenu
+                compact
+                :label="l('More actions for ', 'إجراءات أخرى لـ ') + plan.member_name"
+                :items="[
+                  {
+                    key: 'plan',
+                    label: l('View assigned plan', 'عرض الخطة المعيّنة'),
+                    to: '/training/' + plan.id,
+                  },
+                  {
+                    key: 'history',
+                    label: l('Workout history', 'سجل التمارين'),
+                    to: { path: '/workouts', query: { search: plan.member_name } },
+                  },
+                  {
+                    key: 'profile',
+                    label: l('Athlete profile', 'ملف الرياضي'),
+                    to: '/members/' + plan.member_id,
+                  },
+                ]"
+              />
+            </div>
+          </li>
+        </ul> </template
+    ></PageState>
   </div>
 </template>
 <style scoped>
 .plan-filters {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 16px;
   align-items: end;
 }
@@ -249,63 +296,27 @@ onUnmounted(() => {
   margin: 0;
   min-width: 0;
 }
-.athlete-filter {
-  margin-block: 18px;
+.athlete-plan-list .record-row {
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 1.8fr) 170px;
 }
-.athlete-plan-grid {
+.athlete-plan-list .record-meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
-  gap: 18px;
+  grid-template-columns: 7.5rem minmax(0, 1.2fr) minmax(0, 1fr);
 }
-.athlete-plan-card {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-6);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-  min-width: 0;
+.athlete-plan-list .record-meta > .tag {
+  align-self: center;
 }
-.athlete-plan-card h2 {
-  font-size: var(--text-panel);
-  margin-block: 12px 4px;
-  overflow-wrap: anywhere;
+@media (max-width: 760px) {
+  .athlete-plan-list .record-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .athlete-plan-list .record-meta {
+    display: flex;
+  }
 }
-.plan-athlete {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.plan-sport {
-  align-self: flex-start;
-  max-width: 100%;
-  margin-block: 4px;
-}
-.athlete-plan-card dl {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 32px;
-  margin-block: 20px;
-}
-.athlete-plan-card dt {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-.athlete-plan-card dd {
-  margin: 4px 0 0;
-}
-.athlete-plan-card > button {
-  margin-top: auto;
-  align-self: start;
-}
-
 @media (max-width: 650px) {
   .plan-filters {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .athlete-plan-card {
-    padding: 20px;
   }
 }
 </style>

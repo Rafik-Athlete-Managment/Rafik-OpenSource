@@ -134,20 +134,23 @@ test('coach browses later pages of athlete plans, nutrition plans and events, th
     // Athlete plans: a record from the later page stays selected through reload and close.
     await f.login(page, f.coach, base + '/training')
     await expect(page.getByText('26 matching assignments')).toBeVisible()
-    const firstPage = await page.locator('.athlete-plan-card .overline').allTextContents()
+    const firstPage = await page.locator('.athlete-plan-list .record-title a').allTextContents()
     expect(firstPage).toHaveLength(24)
     await page
       .getByRole('navigation', { name: 'Plan pages' })
       .getByRole('button', { name: 'Next' })
       .click()
     await expect(page).toHaveURL(/offset=24/)
-    await expect(page.locator('.athlete-plan-card')).toHaveCount(2)
-    const later = (await page.locator('.athlete-plan-card .overline').first().textContent())!.trim()
+    await expect(page.locator('.athlete-plan-list .record-row')).toHaveCount(2)
+    const later = (await page
+      .locator('.athlete-plan-list .record-title a')
+      .first()
+      .textContent())!.trim()
     expect(firstPage).not.toContain(later)
     await page
-      .locator('.athlete-plan-card')
+      .locator('.athlete-plan-list .record-row')
       .filter({ hasText: later })
-      .getByRole('button', { name: 'View assigned plan' })
+      .locator('.record-title a')
       .click()
     const detail = page.getByRole('region', { name: 'Assigned plan' })
     await expect(detail.getByRole('heading', { name: 'Preseason conditioning' })).toBeVisible()
@@ -159,17 +162,19 @@ test('coach browses later pages of athlete plans, nutrition plans and events, th
     await detail.getByRole('link', { name: 'Athlete plans', exact: true }).click()
     await expect(detail).toHaveCount(0)
     await expect(page).toHaveURL(/offset=24/)
-    await expect(page.locator('.athlete-plan-card').filter({ hasText: later })).toBeVisible()
+    await expect(
+      page.locator('.athlete-plan-list .record-row').filter({ hasText: later }),
+    ).toBeVisible()
     await page.getByLabel('Search athletes').fill(later.slice(0, 18))
-    await page.getByRole('button', { name: 'Search', exact: true }).click()
+    await page.getByLabel('Search athletes').press('Enter')
     await expect(page.getByText('1 matching assignments')).toBeVisible()
     await page.reload()
     await expect(page.getByLabel('Search athletes')).toHaveValue(later.slice(0, 18))
-    await expect(page.locator('.athlete-plan-card')).toHaveCount(1)
+    await expect(page.locator('.athlete-plan-list .record-row')).toHaveCount(1)
 
     // Nutrition plans: later-page selection opens the athlete editor and returns to the same page.
     await page.goto(base + '/nutrition')
-    await expect(page.locator('.athlete-plan-card, article')).not.toHaveCount(0)
+    await expect(page.locator('.athlete-plan-list .record-row, article')).not.toHaveCount(0)
     const pages = page.getByRole('navigation', { name: 'Nutrition plan pages' })
     await pages.getByRole('button', { name: 'Next' }).click()
     await expect(page).toHaveURL(/offset=10/)
@@ -190,7 +195,6 @@ test('coach browses later pages of athlete plans, nutrition plans and events, th
     // Events: filters plus a later page, then the event detail and back.
     await page.goto(base + '/events')
     await page.getByLabel('Activity type').selectOption('training')
-    await page.getByRole('button', { name: 'Search', exact: true }).click()
     await expect(page).toHaveURL(/kind=training/)
     await page
       .getByRole('navigation', { name: 'Event pages' })
@@ -219,7 +223,7 @@ test('coach browses later pages of athlete plans, nutrition plans and events, th
     })
     await page.setViewportSize({ width: 320, height: 740 })
     await page.goto(base + '/training?status=active&offset=24')
-    await expect(page.locator('.athlete-plan-card')).toHaveCount(2)
+    await expect(page.locator('.athlete-plan-list .record-row')).toHaveCount(2)
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
     await inspect(page, 'athlete-plans-ar-dark-320', info)
     await page.goto(base + '/events?offset=24')
@@ -242,6 +246,7 @@ test('multiple message attachments survive reload, exact retry and recipient rev
     const { institution, endpoint, join } = await prepareInstitution(f, 'Madar attachments')
     await join(f.client, ['trainee'])
     await f.login(page, f.owner, `/messages`)
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
     await page.getByRole('button', { name: /R4 Athlete/ }).click()
     await expect(page).toHaveURL(/\/messages\/[a-f0-9-]{36}$/)
     const channel = page.url().split('/').at(-1)!

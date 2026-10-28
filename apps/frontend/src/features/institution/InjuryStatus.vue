@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
 import { profile } from '../../app/auth'
 import { request } from '../../lib/backend'
-import { errorMessage, language as l } from '../../lib/i18n'
+import { dateLabel, errorMessage, language as l } from '../../lib/i18n'
 import { localDate } from '../../lib/dates'
 
 const context = programContext(useRoute()),
@@ -16,8 +16,10 @@ const context = programContext(useRoute()),
   data = ref<any>(),
   participation = ref('modified'),
   effective = ref(localDate(profile.value?.timezone || 'UTC')),
-  ageGroup = ref('adult'),
-  guardian = ref(false)
+  // Consent setup is chosen per athlete, beside the athlete it applies to.
+  ageGroups = ref<Record<string, string>>({}),
+  guardians = ref<Record<string, boolean>>({}),
+  setupFilter = ref<'pending' | 'all'>('pending')
 const view = context.view
 const items = computed(() => data.value?.items || [])
 async function load() {
@@ -42,7 +44,9 @@ async function command(action: string, values: Record<string, unknown> = {}) {
           ? l('Participation status recorded.', 'تم تسجيل حالة المشاركة.')
           : action === 'close'
             ? l('Injury record closed.', 'تم إغلاق سجل الإصابة.')
-            : l('Injury record updated.', 'تم تحديث سجل الإصابة.'),
+            : action === 'configure'
+              ? l('Consent setup saved.', 'تم حفظ إعداد الموافقة.')
+              : l('Injury record updated.', 'تم تحديث سجل الإصابة.'),
     })
     await load()
   } catch (e) {
@@ -69,11 +73,22 @@ function update(record: any, action: 'correct' | 'close') {
     revision: record.revision,
   })
 }
+const ageOf = (member: any) => ageGroups.value[member.member_id] || member.age_group || 'adult'
+const needsSetup = (member: any) => !member.age_group
+const setupMembers = computed(() =>
+  (data.value?.members || []).filter(
+    (member: any) => setupFilter.value === 'all' || needsSetup(member),
+  ),
+)
+const pendingSetup = computed(
+  () => (data.value?.members || []).filter((member: any) => needsSetup(member)).length,
+)
 async function configure(member: any) {
+  const age = ageOf(member)
   await command('configure', {
     member_id: member.member_id,
-    age_group: ageGroup.value,
-    guardian_authorized: ageGroup.value === 'minor' ? guardian.value : false,
+    age_group: age,
+    guardian_authorized: age === 'minor' ? !!guardians.value[member.member_id] : false,
     revision: member.revision || 0,
   })
 }
@@ -218,10 +233,9 @@ onMounted(load)
             )
           }}
         </p>
-        <button class="button secondary" :disabled="busy" @click="exportRecords">
-          {{ l('Download my records', 'تنزيل سجلاتي') }}
-        </button>
-        <p v-if="!items.length">{{ l('No records yet.', 'لا توجد سجلات بعد.') }}</p>
+        <p v-if="!items.length" class="small-print">
+          {{ l('No records yet.', 'لا توجد سجلات بعد.') }}
+        </p>
         <article v-for="record in items" :key="record.id" class="record">
           <strong>{{
             record.participation === 'modified'
@@ -252,37 +266,54 @@ onMounted(load)
             </ul>
           </details>
         </article>
+        <button class="button secondary" :disabled="busy" @click="exportRecords">
+          {{ l('Download my records', 'تنزيل سجلاتي') }}
+        </button>
       </section>
     </template>
 
-    <section v-else-if="view === 'trainer'" class="panel">
-      <h2>{{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</h2>
-      <p>
+    <section v-else-if="view === 'trainer'" aria-labelledby="assigned-status-title">
+      <h2 id="assigned-status-title">{{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</h2>
+      <p class="small-print">
         {{
           l(
-            'Only active status and effective date for your assigned athletes are shown. No medical details or history are available.',
-            'تظهر الحالة الفعالة وتاريخ سريانها للرياضيين المعيّنين إليك فقط. لا تتوفر تفاصيل طبية أو سجل سابق.',
+            'Only active status and effective date for your assigned athletes are shown. No medical details or history are available. An athlete without a shared status is unknown, not cleared to train.',
+            'تظهر الحالة الفعالة وتاريخ سريانها للرياضيين المعيّنين إليك فقط. لا تتوفر تفاصيل طبية أو سجل سابق. الرياضي دون حالة مشتركة حالته غير معروفة، وليس مصرحاً له بالتدريب.',
           )
         }}
       </p>
-      <p v-if="!items.length">
+      <p v-if="!items.length" class="small-print">
         {{ l('No shared active statuses.', 'لا توجد حالات نشطة مشتركة.') }}
       </p>
-      <ul>
-        <li v-for="item in items" :key="item.id">
-          <strong>{{ item.athlete_name }}</strong> —
-          {{
-            item.participation === 'modified'
-              ? l('Modified participation', 'مشاركة معدلة')
-              : l('Unavailable', 'غير متاح للمشاركة')
-          }}
-          · {{ item.effective_from }}
+      <ul v-else class="record-list">
+        <li v-for="item in items" :key="item.id" class="record-row">
+          <div class="record-title">
+            <RouterLink :to="'/members/' + item.athlete_member_id"
+              ><bdi dir="auto">{{ item.athlete_name }}</bdi></RouterLink
+            >
+          </div>
+          <div class="record-meta">
+            <span
+              class="tag"
+              :data-status="item.participation === 'modified' ? 'paused' : 'unavailable'"
+              >{{
+                item.participation === 'modified'
+                  ? l('Modified participation', 'مشاركة معدلة')
+                  : l('Unavailable', 'غير متاح للمشاركة')
+              }}</span
+            >
+            <span
+              ><small>{{ l('Effective', 'سارية منذ') }}</small
+              >{{ dateLabel(item.effective_from) }}</span
+            >
+          </div>
+          <div class="record-actions" />
         </li>
       </ul>
     </section>
 
-    <section v-else class="panel">
-      <h2>{{ l('Consent setup', 'إعداد الموافقة') }}</h2>
+    <section v-else class="panel consent-setup" aria-labelledby="consent-setup-title">
+      <h2 id="consent-setup-title">{{ l('Consent setup', 'إعداد الموافقة') }}</h2>
       <p>
         {{
           l(
@@ -291,39 +322,136 @@ onMounted(load)
           )
         }}
       </p>
-      <label
-        >{{ l('Age group for setup', 'الفئة العمرية للإعداد')
-        }}<select v-model="ageGroup">
-          <option value="adult">{{ l('Adult', 'بالغ') }}</option>
-          <option value="minor">{{ l('Minor', 'قاصر') }}</option>
-        </select></label
-      ><label v-if="ageGroup === 'minor'"
-        ><input v-model="guardian" type="checkbox" />
-        {{ l('Guardian authorization verified', 'تم التحقق من موافقة ولي الأمر') }}</label
-      >
-      <article v-for="member in data.members" :key="member.member_id" class="record">
-        <strong>{{ member.name }}</strong
-        ><span
-          >{{ member.age_group || l('Not configured', 'غير مُعد') }} ·
-          {{
-            member.athlete_assented_at
-              ? l('Athlete agreed', 'وافق الرياضي')
-              : l('Athlete assent pending', 'موافقة الرياضي معلقة')
-          }}</span
-        ><button
-          class="button"
-          :disabled="busy || (ageGroup === 'minor' && !guardian)"
-          @click="configure(member)"
+      <fieldset class="filter-chips">
+        <legend>{{ l('Show athletes', 'عرض الرياضيين') }}</legend>
+        <label
+          ><input v-model="setupFilter" type="radio" value="pending" />{{
+            l('Needs setup', 'بحاجة إلى إعداد')
+          }}
+          ({{ pendingSetup }})</label
+        ><label
+          ><input v-model="setupFilter" type="radio" value="all" />{{
+            l('All athletes', 'كل الرياضيين')
+          }}
+          ({{ data.members.length }})</label
         >
-          {{ l('Save consent setup', 'حفظ إعداد الموافقة') }}
-        </button>
-      </article>
+      </fieldset>
+      <p v-if="!setupMembers.length" class="small-print">
+        {{
+          setupFilter === 'pending'
+            ? l('Every athlete has a consent setup.', 'لكل رياضي إعداد موافقة.')
+            : l('No athletes yet.', 'لا يوجد رياضيون بعد.')
+        }}
+      </p>
+      <ul v-else class="consent-list">
+        <li v-for="member in setupMembers" :key="member.member_id" class="consent-row">
+          <div class="consent-person">
+            <strong
+              ><bdi dir="auto">{{ member.name }}</bdi></strong
+            >
+            <span class="consent-tags">
+              <span class="tag" :data-status="member.age_group ? 'active' : 'pending'">{{
+                member.age_group === 'minor'
+                  ? l('Minor', 'قاصر')
+                  : member.age_group === 'adult'
+                    ? l('Adult', 'بالغ')
+                    : l('Not configured', 'غير مُعد')
+              }}</span>
+              <span class="tag" :data-status="member.athlete_assented_at ? 'active' : 'pending'">{{
+                member.athlete_assented_at
+                  ? l('Athlete agreed', 'وافق الرياضي')
+                  : l('Athlete assent pending', 'موافقة الرياضي معلقة')
+              }}</span>
+            </span>
+          </div>
+          <form class="consent-form" @submit.prevent="configure(member)">
+            <label
+              >{{ l('Age group', 'الفئة العمرية')
+              }}<select
+                :value="ageOf(member)"
+                :disabled="busy"
+                :aria-label="l('Age group for ', 'الفئة العمرية لـ ') + member.name"
+                @change="ageGroups[member.member_id] = ($event.target as HTMLSelectElement).value"
+              >
+                <option value="adult">{{ l('Adult', 'بالغ') }}</option>
+                <option value="minor">{{ l('Minor', 'قاصر') }}</option>
+              </select></label
+            >
+            <label v-if="ageOf(member) === 'minor'" class="consent-guardian"
+              ><input v-model="guardians[member.member_id]" type="checkbox" :disabled="busy" />{{
+                l('Guardian authorization verified', 'تم التحقق من موافقة ولي الأمر')
+              }}</label
+            >
+            <button
+              class="button secondary small"
+              :disabled="busy || (ageOf(member) === 'minor' && !guardians[member.member_id])"
+              :aria-label="l('Save consent setup for ', 'حفظ إعداد الموافقة لـ ') + member.name"
+            >
+              {{ member.age_group ? l('Update', 'تحديث') : l('Save setup', 'حفظ الإعداد') }}
+            </button>
+          </form>
+        </li>
+      </ul>
     </section>
   </section>
 </template>
 
 <style scoped>
-.injury-page {
+.consent-setup > .filter-chips {
+  margin-block: var(--space-4);
+}
+.consent-setup .consent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.consent-row {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.consent-person {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.consent-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.consent-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.consent-form > label:first-child {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: 600;
+}
+.consent-form select {
+  width: auto;
+  min-width: 120px;
+  margin: 0;
+}
+.consent-form > .button {
+  margin: 0;
+}
+.consent-guardian {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
 }
 .eyebrow {
   color: var(--muted);

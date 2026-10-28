@@ -191,6 +191,18 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
   );
   assert.equal(future.items[0].state, "scheduled");
   assert.equal(future.items[0].can_start, false);
+  // Athlete plans carry the same next-workout state as the agenda (overdue and scheduled).
+  const plans = await fetch(base + "/athlete-plans?view=trainer&status=all", {
+    headers: { Cookie: auth, "x-rafik-client": "web" },
+  }).then((r) => r.json());
+  const summary = (id: string) =>
+    plans.items.find((p: any) => p.id === id)?.next_workout;
+  assert.equal(summary(assignment)?.state, "overdue");
+  assert.equal(summary(other.id)?.state, "scheduled");
+  assert.equal(
+    summary(other.id)?.starts_at,
+    future.items[0].occurrence.starts_at,
+  );
   const early = await call(
     auth,
     "/sessions",

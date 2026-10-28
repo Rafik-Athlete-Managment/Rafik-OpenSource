@@ -13,6 +13,8 @@ import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import MemberPicker from './MemberPicker.vue'
+import { useLiveSearch } from '../../lib/live-search'
+import { PhBarbell, PhListChecks } from '@phosphor-icons/vue'
 import PageState from '../../components/PageState.vue'
 import type { Institution } from './types'
 import type { TrainingGroup, AssessmentTemplate, CalendarEvent } from './service-types'
@@ -141,6 +143,15 @@ async function catalogPage(kind: 'templates' | 'groups', append = false) {
     groupNext.value = page.next
   }
 }
+const templateLive = useLiveSearch(templateSearch, () => findCatalog('templates'))
+const whenLabel = computed(() => {
+  if (!draft.value.local) return ''
+  return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(draft.value.local + ':00Z'))
+})
 async function findCatalog(kind: 'templates' | 'groups', append = false) {
   if (catalogBusy.value[kind]) return
   catalogBusy.value[kind] = true
@@ -275,6 +286,9 @@ onMounted(async () => {
   if (!stored && route.query.makeup && route.query.member) {
     draft.value.participants = [String(route.query.member)]
     draft.value.title = l('Makeup session', 'جلسة تعويضية')
+  } else if (!stored && route.query.member) {
+    // Started from an athlete: preselect them; the people step still verifies authority.
+    draft.value.participants = [String(route.query.member)]
   }
   ready.value = true
 })
@@ -311,347 +325,507 @@ onMounted(async () => {
     <CommandStatus :command="command" />
     <p v-if="error && !loading" role="alert" class="notice error">{{ error }}</p>
     <PageState :loading="loading" :error="loadError" @retry="load">
-      <form v-if="data" @submit.prevent="step === 3 ? submit() : advance()">
-        <fieldset :disabled="locked" class="form-fields">
-          <section
-            v-if="step === 1"
-            ref="stepPanel"
-            tabindex="-1"
-            :aria-label="l('Event details', 'تفاصيل الموعد')"
-            class="panel"
-          >
-            <label
-              >{{ l('Event name', 'اسم الموعد')
-              }}<input
-                v-model="draft.title"
-                required
-                maxlength="100"
-                :placeholder="
-                  draft.kind === 'assessment'
-                    ? l(
-                        'For example: Pre-season fitness assessment',
-                        'مثال: تقييم اللياقة قبل الموسم',
-                      )
-                    : l('For example: First-team training', 'مثال: تدريب الفريق الأول')
-                "
-            /></label>
-            <label
-              >{{ l('Event type', 'نوع الموعد')
-              }}<select v-model="draft.kind">
-                <option value="training">{{ l('Training session', 'حصة تدريب') }}</option>
-                <option value="assessment">
-                  {{ l('Assessor-led assessment', 'تقييم بإشراف مقيم') }}
-                </option>
-              </select></label
-            >
+      <div v-if="data" class="composer-layout" :class="{ reviewing: step === 3 }">
+        <form @submit.prevent="step === 3 ? submit() : advance()">
+          <fieldset :disabled="locked" class="form-fields">
             <section
-              v-if="draft.kind === 'assessment'"
-              class="template-picker"
-              :aria-label="l('Assessment template', 'قالب التقييم')"
+              v-if="step === 1"
+              ref="stepPanel"
+              tabindex="-1"
+              :aria-label="l('Event details', 'تفاصيل الموعد')"
+              class="panel"
             >
-              <div class="template-picker-heading">
-                <h2>{{ l('Assessment template', 'قالب التقييم') }}</h2>
-                <RouterLink
-                  :to="base + '/assessment-templates/new?forEvent=' + draft.id"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-link"
-                  >{{ l('Create a template ↗ (new tab)', 'إنشاء قالب ↗ (تبويب جديد)') }}</RouterLink
+              <fieldset class="event-kind">
+                <legend>{{ l('Event type', 'نوع الموعد') }}</legend>
+                <label class="kind-card" :class="{ selected: draft.kind === 'training' }"
+                  ><input v-model="draft.kind" type="radio" name="event-kind" value="training" />
+                  <PhBarbell :size="24" aria-hidden="true" />
+                  <span
+                    ><strong>{{ l('Training session', 'حصة تدريب') }}</strong
+                    ><small>{{
+                      l(
+                        'Group or individual training with attendance.',
+                        'تدريب جماعي أو فردي مع تسجيل الحضور.',
+                      )
+                    }}</small></span
+                  ></label
                 >
+                <label class="kind-card" :class="{ selected: draft.kind === 'assessment' }"
+                  ><input v-model="draft.kind" type="radio" name="event-kind" value="assessment" />
+                  <PhListChecks :size="24" aria-hidden="true" />
+                  <span
+                    ><strong>{{ l('Assessor-led assessment', 'تقييم بإشراف مقيم') }}</strong
+                    ><small>{{
+                      l(
+                        'Record results for each athlete using a template.',
+                        'سجّل نتائج كل رياضي باستخدام قالب.',
+                      )
+                    }}</small></span
+                  ></label
+                >
+              </fieldset>
+              <label
+                >{{ l('Event name', 'اسم الموعد')
+                }}<input
+                  v-model="draft.title"
+                  required
+                  maxlength="100"
+                  :placeholder="
+                    draft.kind === 'assessment'
+                      ? l(
+                          'For example: Pre-season fitness assessment',
+                          'مثال: تقييم اللياقة قبل الموسم',
+                        )
+                      : l('For example: First-team training', 'مثال: تدريب الفريق الأول')
+                  "
+              /></label>
+              <section
+                v-if="draft.kind === 'assessment'"
+                class="template-picker"
+                :aria-label="l('Assessment template', 'قالب التقييم')"
+              >
+                <div class="template-picker-heading">
+                  <h2>{{ l('Assessment template', 'قالب التقييم') }}</h2>
+                  <RouterLink
+                    :to="base + '/assessment-templates/new?forEvent=' + draft.id"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-link"
+                    >{{
+                      l('Create a template ↗ (new tab)', 'إنشاء قالب ↗ (تبويب جديد)')
+                    }}</RouterLink
+                  >
+                </div>
+                <p class="small-print">
+                  {{
+                    l(
+                      'Choose the tests you will record. Search the library or create a new template.',
+                      'اختر الاختبارات التي ستسجلها. ابحث في المكتبة أو أنشئ قالباً جديداً.',
+                    )
+                  }}
+                </p>
+                <div class="template-search-row">
+                  <label
+                    >{{ l('Find an assessment template', 'البحث عن قالب تقييم')
+                    }}<input
+                      v-model="templateSearch"
+                      type="search"
+                      :placeholder="l('Search templates by name…', 'ابحث عن القوالب بالاسم…')"
+                      @keydown.enter.prevent="templateLive.submit()"
+                  /></label>
+                </div>
+                <p v-if="selectedTemplate" class="template-selection" role="status">
+                  {{ l('Selected:', 'المحدد:') }}
+                  <strong dir="auto">{{ selectedTemplate.title }}</strong> ·
+                  {{ testCount(selectedTemplate.definition.length) }}
+                </p>
+                <div
+                  class="template-options"
+                  role="radiogroup"
+                  :aria-label="l('Choose an assessment template', 'اختر قالب تقييم')"
+                  :aria-busy="catalogBusy.templates"
+                >
+                  <label
+                    v-for="template in templates"
+                    :key="template.id"
+                    class="template-option"
+                    :class="{ selected: draft.template === template.id }"
+                  >
+                    <input
+                      type="radio"
+                      name="assessment-template"
+                      :value="template.id"
+                      :checked="draft.template === template.id"
+                      @change="chooseTemplate(template)"
+                    />
+                    <span
+                      ><strong dir="auto">{{ template.title }}</strong
+                      ><small>{{ testCount(template.definition.length) }}</small></span
+                    >
+                  </label>
+                </div>
+                <p v-if="!catalogBusy.templates && !templates.length" class="small-print">
+                  {{
+                    l(
+                      'No templates match. Try another name or create a template.',
+                      'لا توجد قوالب مطابقة. جرّب اسماً آخر أو أنشئ قالباً.',
+                    )
+                  }}
+                </p>
+                <div class="actions">
+                  <button
+                    v-if="templateNext !== null"
+                    type="button"
+                    class="button small secondary"
+                    :disabled="catalogBusy.templates"
+                    @click="findCatalog('templates', true)"
+                  >
+                    {{ l('More templates', 'المزيد من القوالب') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-link"
+                    :disabled="catalogBusy.templates"
+                    @click="refreshTemplates"
+                  >
+                    {{ l('Refresh templates', 'تحديث القوالب') }}
+                  </button>
+                </div>
+              </section>
+              <div class="service-field-row">
+                <label
+                  >{{ l('Local date and time', 'التاريخ والوقت المحلي')
+                  }}<input v-model="draft.local" type="datetime-local" required /></label
+                ><TimezonePicker
+                  v-model="draft.zone"
+                  :label="l('Timezone', 'المنطقة الزمنية')"
+                  :disabled="locked"
+                />
               </div>
+              <label
+                >{{ l('Duration', 'المدة')
+                }}<select v-model.number="draft.minutes">
+                  <option v-for="n in [15, 30, 45, 60, 90, 120]" :key="n" :value="n">
+                    {{ n }} {{ l('minutes', 'دقيقة') }}
+                  </option>
+                </select></label
+              >
+              <label
+                >{{ l('Location or meeting link', 'الموقع أو رابط الاجتماع')
+                }}<input v-model="draft.location" maxlength="500"
+              /></label>
+              <details>
+                <summary>{{ l('Repeat this event', 'تكرار الموعد') }}</summary>
+                <div class="service-field-row">
+                  <label
+                    >{{ l('Occurrences (up to 8)', 'عدد المواعيد (حتى 8)')
+                    }}<input
+                      v-model.number="draft.count"
+                      type="number"
+                      min="1"
+                      max="8"
+                      required /></label
+                  ><label
+                    >{{ l('Repeat every', 'التكرار كل')
+                    }}<select v-model.number="draft.every">
+                      <option :value="7">{{ l('Week', 'أسبوع') }}</option>
+                      <option :value="14">{{ l('Two weeks', 'أسبوعين') }}</option>
+                    </select></label
+                  >
+                </div>
+              </details>
+            </section>
+            <section
+              v-else-if="step === 2"
+              ref="stepPanel"
+              tabindex="-1"
+              :aria-label="l('Choose people', 'اختيار الأشخاص')"
+              class="panel"
+            >
+              <MemberPicker
+                v-if="view === 'admin'"
+                :institution="id"
+                :view="view"
+                role="trainer"
+                :max="8"
+                v-model="draft.staff"
+                :exclude-ids="draft.participants"
+                :label="l('Coaches / assessors', 'المدربون / المقيمون')"
+                @options="trainerOptions = $event"
+              />
+              <p v-else>
+                {{
+                  l('You are the assigned coach for this event.', 'أنت المدرب المعيّن لهذا الموعد.')
+                }}
+              </p>
+              <h2>{{ l('Athletes', 'الرياضيون') }}</h2>
+              <details class="group-shortcut">
+                <summary>{{ l('Start with a training group', 'ابدأ بمجموعة تدريب') }}</summary>
+                <div class="form-fields">
+                  <label
+                    >{{ l('Find a group (optional)', 'البحث عن مجموعة (اختياري)')
+                    }}<input
+                      :placeholder="l('Type to search…', 'اكتب للبحث…')"
+                      v-model="groupSearch"
+                      type="search"
+                      @keydown.enter.prevent="findCatalog('groups')" /></label
+                  ><button
+                    type="button"
+                    class="text-link"
+                    :disabled="catalogBusy.groups"
+                    @click="findCatalog('groups')"
+                  >
+                    {{ l('Search groups', 'البحث في المجموعات') }}</button
+                  ><button
+                    v-if="groupNext !== null"
+                    type="button"
+                    class="text-link"
+                    :disabled="catalogBusy.groups"
+                    @click="findCatalog('groups', true)"
+                  >
+                    {{ l('More groups', 'المزيد من المجموعات') }}
+                  </button>
+                </div>
+                <label v-if="groups.length"
+                  >{{ l('Start with a group (optional)', 'ابدأ بمجموعة (اختياري)')
+                  }}<select v-model="group" @change="groupMembers">
+                    <option value="">
+                      {{ l('Choose people individually', 'اختيار الأشخاص فردياً') }}
+                    </option>
+                    <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
+                  </select></label
+                >
+              </details>
+              <MemberPicker
+                :institution="id"
+                :view="view"
+                role="trainee"
+                v-model="draft.participants"
+                :exclude-ids="draft.staff"
+                :label="l('Find athletes', 'البحث عن رياضيين')"
+                @options="data!.members = $event"
+              />
+            </section>
+            <section
+              v-else
+              ref="stepPanel"
+              tabindex="-1"
+              :aria-label="l('Review schedule', 'مراجعة الجدول')"
+              class="panel event-review"
+            >
+              <h2>{{ draft.title }}</h2>
+              <p>{{ draft.location }} · {{ draft.zone }}</p>
+              <p v-if="selectedTemplate">
+                {{ selectedTemplate.title }} · {{ selectedTemplate.definition.length }}
+                {{ l('drills', 'اختبارات') }}
+              </p>
+              <h3>{{ l('People', 'الأشخاص') }}</h3>
+              <p>
+                {{ l('Coaches / assessors', 'المدربون / المقيمون') }}:
+                {{
+                  view === 'trainer'
+                    ? profile?.display_name
+                    : staff
+                        .filter((m) => draft.staff.includes(m.id))
+                        .map((m) => m.name)
+                        .join(' · ')
+                }}
+              </p>
+              <ul>
+                <li v-for="m in chosen" :key="m.id">
+                  {{ m.name }}
+                </li>
+              </ul>
+              <h3>{{ l('Dates to schedule', 'المواعيد للجدولة') }}</h3>
+              <ol>
+                <li v-for="time in times" :key="time.starts_at">
+                  {{ timeLabel(time.starts_at) }} — {{ timeLabel(time.ends_at) }}
+                </li>
+              </ol>
               <p class="small-print">
                 {{
                   l(
-                    'Choose the tests you will record. Search the library or create a new template.',
-                    'اختر الاختبارات التي ستسجلها. ابحث في المكتبة أو أنشئ قالباً جديداً.',
+                    'These dates and people are fixed for this series. Later group changes will not add or remove event participants. Any conflict rejects the entire series.',
+                    'هذه التواريخ والأشخاص ثابتون لهذه السلسلة. تغييرات المجموعة لاحقاً لا تضيف أو تحذف المشاركين. أي تعارض يرفض السلسلة كاملة.',
                   )
                 }}
               </p>
-              <div class="template-search-row">
-                <label
-                  >{{ l('Find an assessment template', 'البحث عن قالب تقييم')
-                  }}<input
-                    v-model="templateSearch"
-                    type="search"
-                    :placeholder="l('Search templates by name…', 'ابحث عن القوالب بالاسم…')"
-                    @keydown.enter.prevent="findCatalog('templates')"
-                /></label>
-                <button
-                  type="button"
-                  class="button secondary"
-                  :disabled="catalogBusy.templates"
-                  @click="findCatalog('templates')"
-                >
-                  {{ l('Search templates', 'البحث في القوالب') }}
-                </button>
-              </div>
-              <p v-if="selectedTemplate" class="template-selection" role="status">
-                {{ l('Selected:', 'المحدد:') }}
-                <strong dir="auto">{{ selectedTemplate.title }}</strong> ·
-                {{ testCount(selectedTemplate.definition.length) }}
-              </p>
-              <div
-                class="template-options"
-                role="radiogroup"
-                :aria-label="l('Choose an assessment template', 'اختر قالب تقييم')"
-                :aria-busy="catalogBusy.templates"
-              >
-                <label
-                  v-for="template in templates"
-                  :key="template.id"
-                  class="template-option"
-                  :class="{ selected: draft.template === template.id }"
-                >
-                  <input
-                    type="radio"
-                    name="assessment-template"
-                    :value="template.id"
-                    :checked="draft.template === template.id"
-                    @change="chooseTemplate(template)"
-                  />
-                  <span
-                    ><strong dir="auto">{{ template.title }}</strong
-                    ><small>{{ testCount(template.definition.length) }}</small></span
-                  >
-                </label>
-              </div>
-              <p v-if="!catalogBusy.templates && !templates.length" class="small-print">
+              <p class="small-print">
                 {{
                   l(
-                    'No templates match. Try another name or create a template.',
-                    'لا توجد قوالب مطابقة. جرّب اسماً آخر أو أنشئ قالباً.',
+                    'During a repeated daylight-saving hour, preview uses standard time. Review the displayed instants before confirming.',
+                    'خلال ساعة مكررة بسبب التوقيت الصيفي تستخدم المعاينة التوقيت القياسي. راجع الأوقات قبل التأكيد.',
                   )
                 }}
               </p>
-              <div class="actions">
-                <button
-                  v-if="templateNext !== null"
-                  type="button"
-                  class="button small secondary"
-                  :disabled="catalogBusy.templates"
-                  @click="findCatalog('templates', true)"
-                >
-                  {{ l('More templates', 'المزيد من القوالب') }}
-                </button>
-                <button
-                  type="button"
-                  class="text-link"
-                  :disabled="catalogBusy.templates"
-                  @click="refreshTemplates"
-                >
-                  {{ l('Refresh templates', 'تحديث القوالب') }}
-                </button>
-              </div>
             </section>
-            <div class="service-field-row">
-              <label
-                >{{ l('Local date and time', 'التاريخ والوقت المحلي')
-                }}<input v-model="draft.local" type="datetime-local" required /></label
-              ><TimezonePicker
-                v-model="draft.zone"
-                :label="l('Timezone', 'المنطقة الزمنية')"
-                :disabled="locked"
-              />
-            </div>
-            <label
-              >{{ l('Duration', 'المدة')
-              }}<select v-model.number="draft.minutes">
-                <option v-for="n in [15, 30, 45, 60, 90, 120]" :key="n" :value="n">
-                  {{ n }} {{ l('minutes', 'دقيقة') }}
-                </option>
-              </select></label
-            >
-            <label
-              >{{ l('Location or meeting link', 'الموقع أو رابط الاجتماع')
-              }}<input v-model="draft.location" maxlength="500"
-            /></label>
-            <details>
-              <summary>{{ l('Repeat this event', 'تكرار الموعد') }}</summary>
-              <div class="service-field-row">
-                <label
-                  >{{ l('Occurrences (up to 8)', 'عدد المواعيد (حتى 8)')
-                  }}<input
-                    v-model.number="draft.count"
-                    type="number"
-                    min="1"
-                    max="8"
-                    required /></label
-                ><label
-                  >{{ l('Repeat every', 'التكرار كل')
-                  }}<select v-model.number="draft.every">
-                    <option :value="7">{{ l('Week', 'أسبوع') }}</option>
-                    <option :value="14">{{ l('Two weeks', 'أسبوعين') }}</option>
-                  </select></label
-                >
-              </div>
-            </details>
-          </section>
-          <section
-            v-else-if="step === 2"
-            ref="stepPanel"
-            tabindex="-1"
-            :aria-label="l('Choose people', 'اختيار الأشخاص')"
-            class="panel"
-          >
-            <MemberPicker
-              v-if="view === 'admin'"
-              :institution="id"
-              :view="view"
-              role="trainer"
-              :max="8"
-              v-model="draft.staff"
-              :exclude-ids="draft.participants"
-              :label="l('Coaches / assessors', 'المدربون / المقيمون')"
-              @options="trainerOptions = $event"
-            />
-            <p v-else>
-              {{
-                l('You are the assigned coach for this event.', 'أنت المدرب المعيّن لهذا الموعد.')
-              }}
-            </p>
-            <h2>{{ l('Athletes', 'الرياضيون') }}</h2>
-            <details class="group-shortcut">
-              <summary>{{ l('Start with a training group', 'ابدأ بمجموعة تدريب') }}</summary>
-              <div class="form-fields">
-                <label
-                  >{{ l('Find a group (optional)', 'البحث عن مجموعة (اختياري)')
-                  }}<input
-                    :placeholder="l('Type to search…', 'اكتب للبحث…')"
-                    v-model="groupSearch"
-                    type="search"
-                    @keydown.enter.prevent="findCatalog('groups')" /></label
-                ><button
-                  type="button"
-                  class="text-link"
-                  :disabled="catalogBusy.groups"
-                  @click="findCatalog('groups')"
-                >
-                  {{ l('Search groups', 'البحث في المجموعات') }}</button
-                ><button
-                  v-if="groupNext !== null"
-                  type="button"
-                  class="text-link"
-                  :disabled="catalogBusy.groups"
-                  @click="findCatalog('groups', true)"
-                >
-                  {{ l('More groups', 'المزيد من المجموعات') }}
-                </button>
-              </div>
-              <label v-if="groups.length"
-                >{{ l('Start with a group (optional)', 'ابدأ بمجموعة (اختياري)')
-                }}<select v-model="group" @change="groupMembers">
-                  <option value="">
-                    {{ l('Choose people individually', 'اختيار الأشخاص فردياً') }}
-                  </option>
-                  <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
-                </select></label
+            <div class="actions">
+              <button v-if="step > 1" type="button" class="button secondary" @click="step--">
+                {{ l('Back', 'رجوع') }}</button
+              ><button
+                class="button"
+                :disabled="
+                  step === 2 &&
+                  (!draft.staff.length ||
+                    !chosen.length ||
+                    chosen.length !== draft.participants.length ||
+                    (view === 'admin' &&
+                      draft.staff.some(
+                        (id) =>
+                          !staff.some(
+                            (m) => m.id === id && m.active && m.roles.includes('trainer'),
+                          ),
+                      )))
+                "
               >
-            </details>
-            <MemberPicker
-              :institution="id"
-              :view="view"
-              role="trainee"
-              v-model="draft.participants"
-              :exclude-ids="draft.staff"
-              :label="l('Find athletes', 'البحث عن رياضيين')"
-              @options="data!.members = $event"
-            />
-          </section>
-          <section
-            v-else
-            ref="stepPanel"
-            tabindex="-1"
-            :aria-label="l('Review schedule', 'مراجعة الجدول')"
-            class="panel event-review"
-          >
-            <h2>{{ draft.title }}</h2>
-            <p>{{ draft.location }} · {{ draft.zone }}</p>
-            <p v-if="selectedTemplate">
-              {{ selectedTemplate.title }} · {{ selectedTemplate.definition.length }}
-              {{ l('drills', 'اختبارات') }}
-            </p>
-            <h3>{{ l('People', 'الأشخاص') }}</h3>
-            <p>
-              {{ l('Coaches / assessors', 'المدربون / المقيمون') }}:
+                {{
+                  step === 3
+                    ? l('Confirm schedule', 'تأكيد الجدول')
+                    : step === 2
+                      ? l('Review schedule', 'مراجعة الجدول')
+                      : l('Choose people', 'اختيار الأشخاص')
+                }}
+              </button>
+            </div>
+            <p class="small-print draft-status" role="status">
               {{
-                view === 'trainer'
-                  ? profile?.display_name
-                  : staff
-                      .filter((m) => draft.staff.includes(m.id))
-                      .map((m) => m.name)
-                      .join(' · ')
+                saved
+                  ? l('Draft saved on this device.', 'حُفظت المسودة على هذا الجهاز.')
+                  : l(
+                      'Changes are saved on this device as you type.',
+                      'تُحفظ التغييرات على هذا الجهاز أثناء الكتابة.',
+                    )
               }}
             </p>
-            <ul>
-              <li v-for="m in chosen" :key="m.id">
-                {{ m.name }}
-              </li>
-            </ul>
-            <h3>{{ l('Dates to schedule', 'المواعيد للجدولة') }}</h3>
-            <ol>
-              <li v-for="time in times" :key="time.starts_at">
-                {{ timeLabel(time.starts_at) }} — {{ timeLabel(time.ends_at) }}
-              </li>
-            </ol>
-            <p class="small-print">
-              {{
-                l(
-                  'These dates and people are fixed for this series. Later group changes will not add or remove event participants. Any conflict rejects the entire series.',
-                  'هذه التواريخ والأشخاص ثابتون لهذه السلسلة. تغييرات المجموعة لاحقاً لا تضيف أو تحذف المشاركين. أي تعارض يرفض السلسلة كاملة.',
-                )
-              }}
-            </p>
-            <p class="small-print">
-              {{
-                l(
-                  'During a repeated daylight-saving hour, preview uses standard time. Review the displayed instants before confirming.',
-                  'خلال ساعة مكررة بسبب التوقيت الصيفي تستخدم المعاينة التوقيت القياسي. راجع الأوقات قبل التأكيد.',
-                )
-              }}
-            </p>
-          </section>
-          <div class="actions">
-            <button v-if="step > 1" type="button" class="button secondary" @click="step--">
-              {{ l('Back', 'رجوع') }}</button
-            ><button
-              class="button"
-              :disabled="
-                step === 2 &&
-                (!draft.staff.length ||
-                  !chosen.length ||
-                  chosen.length !== draft.participants.length ||
-                  (view === 'admin' &&
-                    draft.staff.some(
-                      (id) =>
-                        !staff.some((m) => m.id === id && m.active && m.roles.includes('trainer')),
-                    )))
-              "
-            >
-              {{
-                step === 3
-                  ? l('Confirm schedule', 'تأكيد الجدول')
-                  : step === 2
-                    ? l('Review schedule', 'مراجعة الجدول')
-                    : l('Choose people', 'اختيار الأشخاص')
-              }}
-            </button>
-          </div>
-          <p class="small-print draft-status" role="status">
-            {{
-              saved
-                ? l('Draft saved on this device.', 'حُفظت المسودة على هذا الجهاز.')
-                : l(
-                    'Changes are saved on this device as you type.',
-                    'تُحفظ التغييرات على هذا الجهاز أثناء الكتابة.',
-                  )
-            }}
-          </p>
-        </fieldset>
-      </form>
+          </fieldset>
+        </form>
+        <aside v-if="step < 3" class="composer-summary panel" :aria-label="l('Summary', 'الملخص')">
+          <h2>{{ l('Summary', 'الملخص') }}</h2>
+          <dl>
+            <div>
+              <dt>{{ l('Type', 'النوع') }}</dt>
+              <dd>
+                {{
+                  draft.kind === 'assessment'
+                    ? l('Assessor-led assessment', 'تقييم بإشراف مقيم')
+                    : l('Training session', 'حصة تدريب')
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ l('Name', 'الاسم') }}</dt>
+              <dd>
+                <bdi dir="auto">{{ draft.title || l('Not named yet', 'لم يُسمَّ بعد') }}</bdi>
+              </dd>
+            </div>
+            <div v-if="draft.kind === 'assessment'">
+              <dt>{{ l('Template', 'القالب') }}</dt>
+              <dd>
+                <bdi dir="auto">{{
+                  selectedTemplate?.title || l('Not chosen yet', 'لم يُختر بعد')
+                }}</bdi>
+              </dd>
+            </div>
+            <div>
+              <dt>{{ l('When', 'الموعد') }}</dt>
+              <dd>
+                {{ whenLabel }} · <bdi>{{ draft.zone }}</bdi> · {{ draft.minutes }}
+                {{ l('minutes', 'دقيقة') }}
+                <template v-if="draft.count > 1"
+                  ><br />{{ draft.count }} {{ l('occurrences', 'مواعيد') }}</template
+                >
+              </dd>
+            </div>
+            <div v-if="draft.location">
+              <dt>{{ l('Location', 'الموقع') }}</dt>
+              <dd>
+                <bdi dir="auto">{{ draft.location }}</bdi>
+              </dd>
+            </div>
+            <div>
+              <dt>{{ l('Athletes', 'الرياضيون') }}</dt>
+              <dd>{{ draft.participants.length }}</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
     </PageState>
   </div>
 </template>
 <style scoped>
+.composer-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) minmax(240px, 320px);
+  gap: var(--space-8);
+  align-items: start;
+}
+.composer-layout.reviewing {
+  grid-template-columns: minmax(0, 760px);
+}
+.composer-layout > form {
+  min-width: 0;
+}
+.composer-summary {
+  position: sticky;
+  top: var(--space-4);
+  margin: 0;
+}
+.composer-summary h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-panel);
+}
+.composer-summary dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.composer-summary dt {
+  color: var(--muted);
+  font-size: var(--text-caption);
+}
+.composer-summary dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.event-kind {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: 0;
+}
+.event-kind legend {
+  margin-block-end: var(--space-2);
+  font-weight: 600;
+}
+.event-composer .kind-card {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--field);
+  cursor: pointer;
+}
+.kind-card input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.kind-card > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+.kind-card span {
+  display: grid;
+  gap: var(--space-1);
+}
+.kind-card small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.event-composer .kind-card.selected {
+  border-color: var(--accent);
+  background: var(--tint);
+}
+.kind-card:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (max-width: 1100px) {
+  .composer-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .composer-summary {
+    position: static;
+  }
+}
 .template-picker {
   margin-block: var(--space-5);
   padding-block: var(--space-4);

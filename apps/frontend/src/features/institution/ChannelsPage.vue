@@ -8,6 +8,7 @@ import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import ChannelThread from './ChannelThread.vue'
+import { useLiveSearch } from '../../lib/live-search'
 import type { Member, Institution } from './types'
 const route = useRoute(),
   router = useRouter(),
@@ -41,22 +42,40 @@ const items = ref<Channel[]>([]),
   error = ref(''),
   peopleError = ref(''),
   manage = ref(false),
-  tab = ref<'conversations' | 'people' | 'groups'>('conversations')
+  // Two tabs, as in common chat apps: existing chats, and contacts to start a new one.
+  // Older ?tab=people|groups links open Contacts.
+  tab = ref<'chats' | 'contacts'>(
+    route.query.tab === 'people' || route.query.tab === 'groups' || route.query.tab === 'contacts'
+      ? 'contacts'
+      : 'chats',
+  )
+const term = computed(() => search.value.trim().toLocaleLowerCase())
+const matches = (text: string) => !term.value || text.toLocaleLowerCase().includes(term.value)
+// Everyone you can message. Choosing someone you already talk to reopens that chat.
 const contacts = computed(() =>
   people.value
     .filter((person) => person.active && person.id !== institutionSelf.value?.id)
-    .filter((person) => !directPeople.value.includes(person.id))
-    .filter(
-      (person) => !search.value || person.name.toLowerCase().includes(search.value.toLowerCase()),
-    )
+    .filter((person) => matches(person.name))
     .sort((a, b) => a.name.localeCompare(b.name)),
 )
+// Unfiltered first-page results, so typing can narrow instantly before the server answers.
+const baseItems = ref<Channel[]>([]),
+  baseGroups = ref<{ id: string; name: string }[]>([])
+const unique = <T extends { id: string }>(list: T[]) => [
+  ...new Map(list.map((item) => [item.id, item])).values(),
+]
+const contactGroups = computed(() =>
+  unique([...groups.value, ...baseGroups.value]).filter((group) => matches(group.name)),
+)
 let loadGeneration = 0
+// Filter what is already loaded at once; the debounced server search then finds older chats.
 const visibleChannels = computed(() =>
-  tab.value === 'groups' ? items.value.filter((item) => !item.private_pair) : items.value,
+  term.value
+    ? unique([...items.value, ...baseItems.value]).filter((item) => matches(item.title))
+    : items.value,
 )
 function moveTab(event: KeyboardEvent, current: typeof tab.value, direction: number) {
-  const options = ['conversations', 'people', 'groups'] as const
+  const options = ['chats', 'contacts'] as const
   const delta = locale.value === 'ar' ? -direction : direction
   tab.value = options[(options.indexOf(current) + delta + options.length) % options.length]!
   ;(event.currentTarget as HTMLElement).parentElement
@@ -78,9 +97,13 @@ async function load(append = false) {
       directPeople: string[]
       groups: { id: string; name: string }[]
     }>(
-      `/v1/institution/communication?view=${view}&search=${encodeURIComponent(search.value)}&offset=${append ? next.value || 0 : 0}&manage=${manage.value}&tab=${tab.value}`,
+      `/v1/institution/communication?view=${view}&search=${encodeURIComponent(search.value.trim())}&offset=${append ? next.value || 0 : 0}&manage=${manage.value}`,
     )
     if (generation !== loadGeneration) return
+    if (!search.value.trim() && !append) {
+      baseItems.value = result.items
+      baseGroups.value = result.groups
+    }
     items.value = append ? [...items.value, ...result.items] : result.items
     directPeople.value = result.directPeople
     groups.value = result.groups
@@ -126,7 +149,7 @@ const joinConversation = (id: string) =>
 const direct = useCommand<'direct'>(
   `channel-direct:${institution}:${view}`,
   async (_, result) => {
-    tab.value = 'conversations'
+    tab.value = 'chats'
     await router.push(base + '/' + (result as { id: string }).id)
   },
   (_, args) =>
@@ -159,6 +182,7 @@ const openGroup = useCommand<'open-group'>(
   `channel-group:${institution}:${view}`,
   async (_, result) => {
     const channel = result as { id: string }
+    tab.value = 'chats'
     await router.replace(base + '/' + channel.id)
   },
   (_, args) =>
@@ -189,12 +213,10 @@ watch(
   },
   { immediate: true },
 )
+const live = useLiveSearch(search, () => load(), 250)
 onMounted(() => {
   void load()
   void loadPeople()
-})
-watch(tab, () => {
-  void load()
 })
 watch(
   () => route.fullPath,
@@ -223,16 +245,46 @@ watch(
     </p>
     <div class="conversation-layout">
       <aside class="conversation-inbox">
-        <form class="conversation-search" @submit.prevent="load()">
+        <div
+          class="conversation-tabs ui-tabs"
+          role="tablist"
+          :aria-label="l('Message directory', 'دليل الرسائل')"
+        >
+          <button
+            v-for="option in ['chats', 'contacts'] as const"
+            :id="'message-tab-' + option"
+            :key="option"
+            type="button"
+            role="tab"
+            :aria-selected="tab === option"
+            :tabindex="tab === option ? 0 : -1"
+            :data-state="tab === option ? 'active' : 'inactive'"
+            aria-controls="message-directory-panel"
+            @click="tab = option"
+            @keydown.right.prevent="moveTab($event, option, 1)"
+            @keydown.left.prevent="moveTab($event, option, -1)"
+          >
+            {{ option === 'chats' ? l('Chats', 'المحادثات') : l('Contacts', 'جهات الاتصال') }}
+          </button>
+        </div>
+        <form class="conversation-search" role="search" @submit.prevent="live.submit()">
           <label
-            >{{ l('Search people and conversations', 'ابحث عن الأشخاص والمحادثات')
-            }}<input
-              :placeholder="l('Search people and conversations…', 'ابحث عن أشخاص ومحادثات…')"
+            ><span class="sr-only">{{
+              tab === 'chats'
+                ? l('Search chats', 'البحث في المحادثات')
+                : l('Search contacts', 'البحث في جهات الاتصال')
+            }}</span
+            ><input
+              :placeholder="
+                tab === 'chats'
+                  ? l('Search chats…', 'ابحث في المحادثات…')
+                  : l('Search people and groups…', 'ابحث عن أشخاص ومجموعات…')
+              "
               v-model="search"
-              type="search" /></label
-          ><button class="text-link">{{ l('Search', 'بحث') }}</button
-          ><button
-            v-if="view === 'admin'"
+              type="search"
+          /></label>
+          <button
+            v-if="view === 'admin' && tab === 'chats'"
             type="button"
             role="switch"
             :aria-checked="manage"
@@ -244,43 +296,8 @@ watch(
           </button>
         </form>
         <div class="conversation-directory">
-          <div
-            class="conversation-tabs ui-tabs"
-            role="tablist"
-            :aria-label="l('Message directory', 'دليل الرسائل')"
-          >
-            <button
-              v-for="option in ['conversations', 'people', 'groups'] as const"
-              :id="'message-tab-' + option"
-              :key="option"
-              type="button"
-              role="tab"
-              :aria-selected="tab === option"
-              :aria-label="
-                option === 'conversations'
-                  ? l('Conversations', 'المحادثات')
-                  : option === 'people'
-                    ? l('Start conversation', 'بدء محادثة')
-                    : l('Groups', 'المجموعات')
-              "
-              :tabindex="tab === option ? 0 : -1"
-              :data-state="tab === option ? 'active' : 'inactive'"
-              aria-controls="message-directory-panel"
-              @click="tab = option"
-              @keydown.right.prevent="moveTab($event, option, 1)"
-              @keydown.left.prevent="moveTab($event, option, -1)"
-            >
-              {{
-                option === 'conversations'
-                  ? l('Chats', 'المحادثات')
-                  : option === 'people'
-                    ? l('New chat', 'محادثة جديدة')
-                    : l('Groups', 'المجموعات')
-              }}
-            </button>
-          </div>
           <div id="message-directory-panel" role="tabpanel" :aria-labelledby="'message-tab-' + tab">
-            <div v-show="tab === 'people'" class="conversation-contacts">
+            <div v-show="tab === 'contacts'" class="conversation-contacts">
               <p v-if="peopleLoading" role="status" class="small-print">
                 {{ l('Loading people…', 'جارٍ تحميل الأشخاص…') }}
               </p>
@@ -291,79 +308,97 @@ watch(
                 </button>
               </p>
               <p
-                v-else-if="
-                  !contacts.length && !groups.length && !items.length && !search && !loading
-                "
-                class="small-print"
+                v-else-if="!contacts.length && !contactGroups.length"
+                class="small-print contact-empty"
               >
                 {{
-                  l('No available people match this search.', 'لا يوجد أشخاص متاحون يطابقون البحث.')
+                  search
+                    ? l(
+                        'No people or groups match this search.',
+                        'لا يوجد أشخاص أو مجموعات مطابقة.',
+                      )
+                    : l('No contacts available yet.', 'لا توجد جهات اتصال متاحة بعد.')
                 }}
               </p>
-              <button
-                v-for="person in contacts"
-                :key="person.id"
-                type="button"
-                class="conversation-person contact-person"
-                :disabled="direct.state.busy || !!direct.state.pending"
-                @click="openDirect(person)"
-              >
-                <span class="avatar">{{ person.name.slice(0, 1) }}</span>
-                <span class="grow">
-                  <strong dir="auto">{{ person.name }}</strong>
-                  <small>{{
-                    person.roles
-                      .map((role) =>
-                        l(
-                          role === 'admin'
-                            ? 'Administrator'
-                            : role === 'trainer'
-                              ? 'Coach'
-                              : 'Athlete',
-                          role === 'admin' ? 'مسؤول' : role === 'trainer' ? 'مدرب' : 'رياضي',
-                        ),
-                      )
-                      .join(' · ')
-                  }}</small>
-                  <small>{{ l('Start your conversation', 'ابدأ محادثتك') }}</small>
-                </span>
-              </button>
-            </div>
-            <div v-show="tab === 'groups'" class="conversation-contacts">
-              <button
-                v-for="group in groups"
-                :key="group.id"
-                type="button"
-                class="conversation-person contact-person"
-                :disabled="openGroup.state.busy || !!openGroup.state.pending"
-                @click="startGroup(group.id)"
-              >
-                <span class="avatar">{{ group.name.slice(0, 1) }}</span>
-                <span class="grow"
-                  ><strong dir="auto">{{ group.name }}</strong
-                  ><small>{{
-                    l('Group · Start your conversation', 'مجموعة · ابدأ محادثتك')
-                  }}</small></span
+              <template v-if="contactGroups.length">
+                <h2 class="contact-section">{{ l('Groups', 'المجموعات') }}</h2>
+                <button
+                  v-for="group in contactGroups"
+                  :key="group.id"
+                  type="button"
+                  class="conversation-person contact-person"
+                  :disabled="openGroup.state.busy || !!openGroup.state.pending"
+                  @click="startGroup(group.id)"
                 >
-              </button>
+                  <span class="avatar">{{ group.name.slice(0, 1) }}</span>
+                  <span class="grow"
+                    ><strong dir="auto">{{ group.name }}</strong
+                    ><small>{{ l('Start a group chat', 'ابدأ محادثة جماعية') }}</small></span
+                  >
+                </button>
+              </template>
+              <template v-if="contacts.length">
+                <h2 class="contact-section">{{ l('People', 'الأشخاص') }}</h2>
+                <button
+                  v-for="person in contacts"
+                  :key="person.id"
+                  type="button"
+                  class="conversation-person contact-person"
+                  :disabled="direct.state.busy || !!direct.state.pending"
+                  @click="openDirect(person)"
+                >
+                  <span class="avatar">{{ person.name.slice(0, 1) }}</span>
+                  <span class="grow">
+                    <strong dir="auto">{{ person.name }}</strong>
+                    <small
+                      >{{
+                        person.roles
+                          .map((role) =>
+                            l(
+                              role === 'admin'
+                                ? 'Administrator'
+                                : role === 'trainer'
+                                  ? 'Coach'
+                                  : 'Athlete',
+                              role === 'admin' ? 'مسؤول' : role === 'trainer' ? 'مدرب' : 'رياضي',
+                            ),
+                          )
+                          .join(' · ')
+                      }}<template v-if="directPeople.includes(person.id)">
+                        · {{ l('Open chat', 'فتح المحادثة') }}</template
+                      ></small
+                    >
+                  </span>
+                </button>
+              </template>
             </div>
 
-            <p v-if="tab !== 'people' && loading && !items.length" role="status" class="notice">
+            <p v-if="tab === 'chats' && loading && !items.length" role="status" class="notice">
               {{ l('Loading…', 'جارٍ التحميل…') }}
             </p>
             <nav
-              v-show="tab !== 'people'"
+              v-show="tab === 'chats'"
               class="conversation-list"
-              :aria-label="l('Conversations', 'المحادثات')"
+              :aria-label="l('Chats', 'المحادثات')"
             >
-              <div v-if="!loading && !visibleChannels.length" class="conversation-empty notice">
+              <div
+                v-if="!loading && !visibleChannels.length"
+                class="conversation-empty small-print"
+              >
                 <p>
                   {{
                     search
-                      ? l('No matching conversations.', 'لا توجد محادثات مطابقة.')
-                      : l('No conversations yet.', 'لا توجد محادثات بعد.')
+                      ? l('No chats match this search.', 'لا توجد محادثات مطابقة.')
+                      : l('No chats yet.', 'لا توجد محادثات بعد.')
                   }}
                 </p>
+                <button type="button" class="text-link" @click="tab = 'contacts'">
+                  {{
+                    search
+                      ? l('Search contacts instead', 'ابحث في جهات الاتصال')
+                      : l('Start a chat from Contacts', 'ابدأ محادثة من جهات الاتصال')
+                  }}
+                </button>
               </div>
               <template v-for="c in visibleChannels" :key="c.id"
                 ><article v-if="!c.joined" class="conversation-person">
@@ -418,20 +453,45 @@ watch(
         @refresh="load()"
       />
       <div v-else class="conversation-placeholder">
-        <h2>{{ l('Keep the group in sync', 'ابقَ على تواصل مع المجموعة') }}</h2>
+        <h2>{{ l('No conversation open', 'لا توجد محادثة مفتوحة') }}</h2>
         <p>
           {{
             l(
-              'Choose a conversation. Each one has its own visible participant list.',
-              'اختر محادثة. لكل محادثة قائمة واضحة بمشاركيها.',
+              'Choose a conversation, or start one with someone you work with. Each conversation has its own visible participant list.',
+              'اختر محادثة أو ابدأ محادثة مع شخص تعمل معه. لكل محادثة قائمة واضحة بمشاركيها.',
             )
           }}
         </p>
+        <button type="button" class="button secondary" @click="tab = 'contacts'">
+          {{ l('Start a conversation', 'بدء محادثة') }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 <style scoped>
+.contact-section {
+  margin: var(--space-3) 0 var(--space-1);
+  padding-inline: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.contact-empty {
+  padding: var(--space-3) var(--space-2);
+}
+.conversation-empty {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  padding: var(--space-4) var(--space-2);
+}
+.conversation-empty p {
+  margin: 0;
+}
+.conversation-placeholder .button {
+  margin-block-start: var(--space-4);
+}
 .organization-messages {
   min-width: 0;
 }

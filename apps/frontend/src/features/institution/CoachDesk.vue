@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { PhCalendarBlank, PhHeartbeat, PhArrowClockwise } from '@phosphor-icons/vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { PhCalendarBlank, PhHeartbeat, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'
 import { request } from '../../lib/backend'
 import { language as l, dateLabel, errorMessage } from '../../lib/i18n'
 import { institutionContext } from '../../app/institution'
@@ -10,7 +10,7 @@ import { profile } from '../../app/auth'
 import { localDate } from '../../lib/dates'
 import WorkoutAgenda from './WorkoutAgenda.vue'
 import UpcomingSessions from './UpcomingSessions.vue'
-import FollowUpPanel from './FollowUpPanel.vue'
+import FollowUpPanel, { type FollowUpQueue } from './FollowUpPanel.vue'
 type SharedStatus = {
   id: string
   athlete_name: string
@@ -71,7 +71,65 @@ async function loadStatus() {
     if (!disposed && current === generation) loading.value = false
   }
 }
+// Each status read is access-logged per athlete, so it refreshes only on request.
 onMounted(loadStatus)
+// Separate counts per record type; they overlap in meaning and are never summed.
+const counts = ref<{ record?: number; planning?: number } & Partial<Record<FollowUpQueue, number>>>(
+  {},
+)
+const followUpQueue = ref<FollowUpQueue>('reviews')
+const strip = computed(() => [
+  {
+    key: 'record',
+    target: 'desk-record',
+    label: l('To record', 'للتسجيل'),
+    value: counts.value.record,
+  },
+  {
+    key: 'planning',
+    target: 'desk-planning',
+    label: l('Need scheduling', 'تحتاج إلى جدولة'),
+    value: counts.value.planning,
+  },
+  {
+    key: 'reviews',
+    target: 'follow-up',
+    label: l('To review', 'للمراجعة'),
+    value: counts.value.reviews,
+  },
+  {
+    key: 'missed',
+    target: 'follow-up',
+    label: l('Missed sessions', 'جلسات فائتة'),
+    value: counts.value.missed,
+  },
+  {
+    key: 'outcomes',
+    target: 'follow-up',
+    label: l('Outcomes needed', 'نتائج مطلوبة'),
+    value: counts.value.outcomes,
+  },
+  {
+    key: 'unplanned',
+    target: 'follow-up',
+    label: l('Without a plan', 'بلا خطة'),
+    value: counts.value.unplanned,
+  },
+  {
+    key: 'restricted',
+    target: 'desk-status',
+    label: l('Shared restrictions', 'قيود مشتركة'),
+    value: loading.value || error.value ? undefined : statuses.value.length,
+  },
+])
+async function jump(key: string, target: string) {
+  if (['reviews', 'missed', 'outcomes', 'unplanned'].includes(key))
+    followUpQueue.value = key as FollowUpQueue
+  await nextTick()
+  const element = document.getElementById(target)
+  element?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  element?.focus({ preventScroll: true })
+}
 onUnmounted(() => {
   disposed = true
   generation++
@@ -81,8 +139,21 @@ onUnmounted(() => {
   <div class="coach-desk">
     <CommandStatus :command="previousDashboard" />
     <CommandStatus :command="previousToday" />
+    <nav :aria-label="l('Needs your attention', 'يحتاج إلى انتباهك')">
+      <ul class="attention-strip">
+        <li v-for="item in strip" :key="item.key">
+          <a
+            :href="'#' + item.target"
+            :data-zero="item.value === 0"
+            @click.prevent="jump(item.key, item.target)"
+            ><strong>{{ item.value ?? '–' }}</strong
+            ><span>{{ item.label }}</span></a
+          >
+        </li>
+      </ul>
+    </nav>
     <div class="desk-columns">
-      <section class="desk-today" aria-labelledby="desk-today-title">
+      <section class="desk-today panel" aria-labelledby="desk-today-title">
         <header class="desk-section-heading">
           <div>
             <p class="overline">
@@ -92,46 +163,57 @@ onUnmounted(() => {
               <PhCalendarBlank :size="24" aria-hidden="true" />{{ l('Today’s work', 'عمل اليوم') }}
             </h2>
           </div>
-          <RouterLink to="/schedule" class="button small secondary">{{
+          <RouterLink to="/schedule" class="text-link">{{
             l('Open schedule', 'فتح الجدول')
           }}</RouterLink>
         </header>
-        <WorkoutAgenda
-          queue="actionable"
-          command-scope="recording"
-          :refresh-token="revision + actionableRevision"
-          :limit="4"
+        <div id="desk-record" tabindex="-1" class="desk-anchor">
+          <WorkoutAgenda
+            queue="actionable"
+            command-scope="recording"
+            compact
+            :refresh-token="revision + actionableRevision"
+            :limit="10"
+            :heading-level="3"
+            @changed="planningRevision++"
+            @loaded="counts.record = $event"
+          />
+        </div>
+        <UpcomingSessions
+          :key="'events:' + revision"
+          today-only
+          omit-workouts
+          hide-link
           :heading-level="3"
-          @changed="planningRevision++"
         />
-        <UpcomingSessions :key="'events:' + revision" today-only omit-workouts :heading-level="3" />
       </section>
-      <aside class="desk-status panel" aria-labelledby="desk-status-title">
+      <aside
+        id="desk-status"
+        tabindex="-1"
+        class="desk-status panel"
+        aria-labelledby="desk-status-title"
+      >
         <header class="desk-section-heading">
           <h2 id="desk-status-title">
-            <PhHeartbeat :size="24" aria-hidden="true" />{{ l('Athlete status', 'حالة الرياضيين') }}
+            <PhHeartbeat :size="22" aria-hidden="true" />{{ l('Athlete status', 'حالة الرياضيين') }}
           </h2>
           <button
-            class="button small secondary"
+            class="button small secondary icon-only"
             :disabled="loading"
-            @click="loadStatus"
             :aria-label="l('Refresh athlete status', 'تحديث حالة الرياضيين')"
+            :title="l('Refresh athlete status', 'تحديث حالة الرياضيين')"
+            @click="loadStatus"
           >
             <PhArrowClockwise :size="18" aria-hidden="true" />
           </button>
         </header>
-        <p class="small-print">
-          {{
-            l(
-              'Shared participation restrictions from your primary roster. No clinical details.',
-              'قيود المشاركة المشتركة من قائمتك الأساسية. دون تفاصيل طبية.',
-            )
-          }}
-        </p>
-        <p v-if="loading" class="small-print" role="status">
+        <p v-if="loading && !statuses.length" class="small-print" role="status">
           {{ l('Checking shared status…', 'جارٍ التحقق من الحالة المشتركة…') }}
         </p>
-        <p v-if="error" class="notice error" role="alert">{{ error }}</p>
+        <p v-if="error" class="notice error" role="alert">
+          {{ error }}
+          <button class="text-link" @click="loadStatus">{{ l('Retry', 'إعادة المحاولة') }}</button>
+        </p>
         <ul
           v-if="statuses.length"
           class="desk-status-list"
@@ -153,13 +235,13 @@ onUnmounted(() => {
           </li>
         </ul>
         <p v-else-if="!loading && !error" class="small-print">
-          {{ l('No active shared restrictions returned.', 'لم تُرجع الخدمة قيوداً نشطة مشتركة.') }}
+          {{ l('No restrictions shared with you.', 'لا توجد قيود مشتركة معك.') }}
         </p>
         <p class="desk-status-boundary small-print">
-          {{
+          <PhInfo :size="16" aria-hidden="true" />{{
             l(
-              'No shared status means unknown, not cleared to train. Confirm participation with the athlete before recording.',
-              'عدم مشاركة حالة يعني أنها غير معروفة، وليس تصريحاً بالتدريب. أكد المشاركة مع الرياضي قبل التسجيل.',
+              'No shared status means unknown, not cleared to train. Confirm with the athlete before recording.',
+              'عدم مشاركة حالة يعني أنها غير معروفة، وليس تصريحاً بالتدريب. أكد مع الرياضي قبل التسجيل.',
             )
           }}
         </p>
@@ -168,22 +250,33 @@ onUnmounted(() => {
         }}</RouterLink>
       </aside>
     </div>
-    <section class="desk-planning" :aria-label="l('Planning', 'التخطيط')">
+    <section
+      id="desk-planning"
+      tabindex="-1"
+      class="desk-planning desk-anchor"
+      :aria-label="l('Planning', 'التخطيط')"
+    >
       <WorkoutAgenda
         queue="planning"
-        :refresh-token="revision + planningRevision"
-        :limit="4"
+        compact
         hide-empty
+        :refresh-token="revision + planningRevision"
+        :limit="10"
         @changed="actionableRevision++"
+        @loaded="counts.planning = $event"
       />
     </section>
-    <FollowUpPanel compact />
+    <FollowUpPanel
+      v-model:queue="followUpQueue"
+      :refresh-token="revision + actionableRevision"
+      @counts="counts = { ...counts, ...$event }"
+    />
   </div>
 </template>
 <style scoped>
 .coach-desk {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 .desk-columns {
   display: grid;
@@ -217,8 +310,38 @@ onUnmounted(() => {
 .desk-section-heading .overline {
   margin-block: 0 var(--space-2);
 }
+/* Today's work is one card: a header, then each queue as its own bordered list. */
+.desk-today {
+  display: grid;
+  gap: var(--space-6);
+  margin: 0;
+}
+.desk-today > .desk-section-heading {
+  align-items: flex-end;
+  padding-block-end: var(--space-4);
+  border-block-end: 1px solid var(--line);
+}
+.desk-today :deep(.workout-agenda),
+.desk-today :deep(.organization-upcoming) {
+  margin: 0;
+}
+.desk-today :deep(.organization-upcoming h3) {
+  font-size: var(--text-panel);
+  margin: 0;
+}
+.desk-planning :deep(.workout-agenda) {
+  margin: 0;
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
 .desk-status h2 {
   font-size: var(--text-panel);
+}
+.desk-status > .small-print {
+  margin-block: var(--space-3);
 }
 .desk-status-list {
   list-style: none;
@@ -246,11 +369,31 @@ onUnmounted(() => {
   width: fit-content;
 }
 .desk-status-boundary {
-  padding-block-start: var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding-block-start: var(--space-3);
   border-block-start: 1px solid var(--line);
 }
-.desk-planning :deep(.workout-agenda) {
-  margin-block: 0;
+.desk-status-boundary svg {
+  flex: 0 0 auto;
+  margin-block-start: 3px;
+}
+.desk-anchor:focus,
+.desk-status:focus {
+  outline: none;
+}
+.coach-desk > nav {
+  min-width: 0;
+}
+.attention-strip {
+  margin: 0;
+}
+@media (max-width: 520px) {
+  .desk-today,
+  .desk-planning :deep(.workout-agenda) {
+    padding: var(--space-4);
+  }
 }
 @media (max-width: 1050px) {
   .desk-columns {

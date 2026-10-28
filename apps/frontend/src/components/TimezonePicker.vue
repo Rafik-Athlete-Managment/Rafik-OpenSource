@@ -96,16 +96,18 @@ const options = computed(() =>
 .timezone-anchor {
   display: flex;
   align-items: center;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid var(--control-border);
+  background: var(--field);
+  box-shadow: var(--shadow-xs);
   border-radius: 8px;
   min-width: 0;
 }
 .timezone-anchor:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 .timezone-anchor input {
+  box-shadow: none;
   border: 0;
   background: transparent;
   margin: 0;
@@ -113,7 +115,9 @@ const options = computed(() =>
   width: 100%;
   text-overflow: ellipsis;
 }
-.timezone-anchor input:focus {
+.timezone-anchor input:focus,
+.timezone-anchor input:focus-visible {
+  box-shadow: none;
   outline: none;
 }
 .timezone-anchor button {
@@ -136,7 +140,7 @@ const options = computed(() =>
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 10px;
-  box-shadow: 0 12px 32px #0002;
+  box-shadow: var(--shadow);
 }
 .timezone-hint {
   padding: 12px;

@@ -161,6 +161,8 @@
   margin: 0;
   padding: 0;
   border: 0;
+  background: none;
+  box-shadow: none;
 }
 .institution-settings-grid h2,
 .institution-settings-grid h3 {
@@ -442,4 +444,23 @@
     margin-inline-start: 0;
     width: 100%;
   }
+}
+.person-name-link {
+  color: var(--ink);
+  text-decoration: none;
+}
+.person-name-link:hover,
+.person-name-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.person-actions .button.overflow-trigger {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
 }

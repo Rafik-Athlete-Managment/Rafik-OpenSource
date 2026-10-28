@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import EmptyState from '../../components/EmptyState.vue'
 import PageHeading from '../../components/PageHeading.vue'
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { programContext } from '../coaching/program-context'
 import ResourceUpload from '../../components/ResourceUpload.vue'
@@ -11,6 +11,17 @@ import { language as l, errorMessage } from '../../lib/i18n'
 import { user } from '../../app/auth'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
+import { PhUploadSimple } from '@phosphor-icons/vue'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from 'reka-ui'
+import { locale } from '../../lib/i18n'
 const context = programContext(useRoute()),
   search = ref(''),
   archived = ref(false),
@@ -90,7 +101,13 @@ watch([search, archived], () => {
   clearTimeout(timer)
   timer = setTimeout(() => load(), 200)
 })
+const uploadOpen = ref(false)
+// An empty library shows the inline dropzone instead of a second upload entry point.
+const firstUse = computed(
+  () => !loading.value && !assets.value.length && !search.value && !archived.value,
+)
 function uploaded() {
+  uploadOpen.value = false
   archived.value = false
   void load()
 }
@@ -114,40 +131,81 @@ onUnmounted(() => {
             )
           }}
         </p>
-      </div></PageHeading
+      </div>
+      <button
+        v-if="!firstUse"
+        type="button"
+        class="button"
+        aria-haspopup="dialog"
+        @click="uploadOpen = true"
+      >
+        <PhUploadSimple :size="18" aria-hidden="true" />{{ l('Upload file', 'رفع ملف') }}
+      </button></PageHeading
     >
+    <DialogRoot v-model:open="uploadOpen">
+      <DialogPortal>
+        <DialogOverlay class="ui-dialog-overlay" />
+        <DialogContent
+          class="ui-dialog"
+          :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+          @interact-outside="uploading && $event.preventDefault()"
+          @escape-key-down="uploading && $event.preventDefault()"
+        >
+          <DialogTitle>{{ l('Upload a demonstration', 'رفع شرح') }}</DialogTitle>
+          <DialogDescription>{{
+            l(
+              'New uploads are private until included in an institution-shared exercise or a published assignment.',
+              'تكون الملفات الجديدة خاصة حتى تضمينها في تمرين مشترك للمؤسسة أو تكليف منشور.',
+            )
+          }}</DialogDescription>
+          <ResourceUpload
+            :institution="context.institution"
+            :view="context.view"
+            purpose="exercise"
+            @uploaded="uploaded"
+            @busy="uploading = $event"
+          />
+          <div class="ui-dialog-actions">
+            <DialogClose as-child
+              ><button type="button" class="button secondary" :disabled="uploading">
+                {{ l('Close', 'إغلاق') }}
+              </button></DialogClose
+            >
+          </div>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
     <CommandStatus :command="command" />
     <p v-if="error" role="alert" class="notice error">
       {{ error }}
       <button class="text-link" @click="load()">{{ l('Retry', 'إعادة المحاولة') }}</button>
     </p>
+    <div class="field-pair resource-filters">
+      <label
+        >{{ l('Search files', 'البحث عن ملف')
+        }}<input
+          :placeholder="l('Search filenames…', 'ابحث بأسماء الملفات…')"
+          v-model="search"
+          type="search" /></label
+      ><label
+        >{{ l('Show', 'عرض')
+        }}<select v-model="archived">
+          <option :value="false">{{ l('Available files', 'الملفات المتاحة') }}</option>
+          <option :value="true">{{ l('Archived files', 'الملفات المؤرشفة') }}</option>
+        </select></label
+      >
+    </div>
     <div class="resource-columns" :class="{ 'with-selection': !!selected }">
       <section class="panel resource-list">
-        <div class="field-pair">
-          <label
-            >{{ l('Search files', 'البحث عن ملف')
-            }}<input
-              :placeholder="l('Search filenames…', 'ابحث بأسماء الملفات…')"
-              v-model="search"
-              type="search" /></label
-          ><label
-            >{{ l('Show', 'عرض')
-            }}<select v-model="archived">
-              <option :value="false">{{ l('Available files', 'الملفات المتاحة') }}</option>
-              <option :value="true">{{ l('Archived files', 'الملفات المؤرشفة') }}</option>
-            </select></label
-          >
-        </div>
         <p v-if="loading" role="status">{{ l('Loading files…', 'جارٍ تحميل الملفات…') }}</p>
         <EmptyState
           v-if="!loading && !assets.length"
           compact
           :title="l('No files in this view', 'لا توجد ملفات في هذا العرض')"
           :description="
-            l(
-              'Upload a demonstration below, or adjust the search and archive filter.',
-              'ارفع شرحاً أدناه أو عدّل البحث ومرشح الأرشفة.',
-            )
+            search || archived
+              ? l('Adjust the search and archive filter.', 'عدّل البحث ومرشح الأرشفة.')
+              : l('Upload your first exercise demonstration below.', 'ارفع أول شرح لتمرين أدناه.')
           "
         />
         <ul class="resource-items" tabindex="0" :aria-label="l('Files', 'الملفات')">
@@ -175,19 +233,21 @@ onUnmounted(() => {
         >
           {{ l('More files', 'المزيد من الملفات') }}
         </button>
-        <ResourceUpload
-          :institution="context.institution"
-          :view="context.view"
-          purpose="exercise"
-          @uploaded="uploaded"
-          @busy="uploading = $event"
-        />
-        <small>{{
-          l(
-            'New uploads are private until included in an institution-shared exercise or a published assignment.',
-            'تكون الملفات الجديدة خاصة حتى تضمينها في تمرين مشترك للمؤسسة أو تكليف منشور.',
-          )
-        }}</small>
+        <template v-if="firstUse && !uploadOpen">
+          <ResourceUpload
+            :institution="context.institution"
+            :view="context.view"
+            purpose="exercise"
+            @uploaded="uploaded"
+            @busy="uploading = $event"
+          />
+          <small>{{
+            l(
+              'New uploads are private until included in an institution-shared exercise or a published assignment.',
+              'تكون الملفات الجديدة خاصة حتى تضمينها في تمرين مشترك للمؤسسة أو تكليف منشور.',
+            )
+          }}</small>
+        </template>
       </section>
       <section class="panel resource-detail" v-if="selected">
         <h2>{{ selected.filename }}</h2>
@@ -215,6 +275,9 @@ onUnmounted(() => {
   </div>
 </template>
 <style scoped>
+.resource-filters {
+  margin-block: 0 var(--space-4);
+}
 .resource-columns > .panel {
   margin: 0;
 }

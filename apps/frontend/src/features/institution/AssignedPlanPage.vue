@@ -9,6 +9,17 @@ import {
   PhPencilSimple,
   PhStopCircle,
 } from '@phosphor-icons/vue'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from 'reka-ui'
+import OverflowMenu from '../../components/OverflowMenu.vue'
+import { formatDate } from '../../lib/dates'
 import type { AthletePlanPage, AthletePlanSummary } from '@rafik/shared/contracts'
 import { institutionContext } from '../../app/institution'
 import { request } from '../../lib/backend'
@@ -76,6 +87,15 @@ const endPlan = () =>
     assignment: detail.value!.id,
     revision: detail.value!.revision,
   })
+// A Schedule link from Athlete plans opens the scheduling panel once, then clears the query.
+const scheduleOnOpen = route.query.schedule === '1'
+if (scheduleOnOpen) void router.replace({ query: { ...route.query, schedule: undefined } })
+const confirmingEnd = ref(false)
+const endLocked = computed(() => !ending.state.ready || ending.state.busy || !!ending.state.pending)
+async function confirmEnd() {
+  await endPlan()
+  if (!disposed && !ending.state.pending && !ending.state.error) confirmingEnd.value = false
+}
 function adapt() {
   return router.replace({
     query: {
@@ -117,13 +137,15 @@ onMounted(load)
       ><template v-if="detail">
         <PageHeading
           ><div>
-            <p class="overline">
-              <bdi>{{ detail.member_name }}</bdi> · {{ l('Assigned plan', 'الخطة المعيّنة') }}
-            </p>
+            <p class="overline">{{ l('Assigned plan', 'الخطة المعيّنة') }}</p>
             <h1>
               <bdi>{{ detail.version.title }}</bdi>
             </h1>
             <p>
+              <RouterLink :to="'/athletes/' + detail.member_id"
+                ><bdi dir="auto">{{ detail.member_name }}</bdi></RouterLink
+              >
+              ·
               <span v-if="detail.goal || detail.sport"
                 >{{ [detail.goal, detail.sport].filter(Boolean).join(' · ') }} ·
               </span>
@@ -145,7 +167,30 @@ onMounted(load)
                   : l('Ended / replaced', 'متوقف / مستبدل')
           }}</span></PageHeading
         >
-        <nav class="assigned-actions" :aria-label="l('Plan actions', 'إجراءات الخطة')">
+        <ul class="context-links" :aria-label="l('Related records', 'سجلات مرتبطة')">
+          <li>
+            <RouterLink :to="'/athletes/' + detail.member_id"
+              ><PhUser :size="18" aria-hidden="true" />{{
+                l('Athlete profile', 'ملف الرياضي')
+              }}</RouterLink
+            >
+          </li>
+          <li>
+            <RouterLink :to="{ path: '/workouts', query: { search: detail.member_name } }"
+              ><PhBarbell :size="18" aria-hidden="true" />{{
+                l('Workout history', 'سجل التمارين')
+              }}</RouterLink
+            >
+          </li>
+          <li>
+            <RouterLink :to="'/assessments/' + detail.member_id"
+              ><PhChartLine :size="18" aria-hidden="true" />{{
+                l('Assessment history', 'سجل التقييمات')
+              }}</RouterLink
+            >
+          </li>
+        </ul>
+        <div class="assigned-actions" role="group" :aria-label="l('Plan actions', 'إجراءات الخطة')">
           <button class="button" @click="adapt">
             <PhPencilSimple :size="18" aria-hidden="true" />{{
               adapting
@@ -153,85 +198,176 @@ onMounted(load)
                 : l('Adapt athlete plan', 'تعديل خطة الرياضي')
             }}
           </button>
-          <RouterLink class="button secondary" :to="'/workouts?member=' + detail.member_id"
-            ><PhBarbell :size="18" aria-hidden="true" />{{
-              l('Workout history', 'سجل التمارين')
-            }}</RouterLink
-          >
-          <RouterLink class="button secondary" :to="'/assessments/' + detail.member_id"
-            ><PhChartLine :size="18" aria-hidden="true" />{{
-              l('Assessment history', 'سجل التقييمات')
-            }}</RouterLink
-          >
-          <RouterLink class="button secondary" :to="'/athletes/' + detail.member_id"
-            ><PhUser :size="18" aria-hidden="true" />{{
-              l('Athlete profile', 'ملف الرياضي')
-            }}</RouterLink
-          >
-          <button
+          <OverflowMenu
             v-if="detail.state === 'active'"
-            class="button danger-button"
-            :disabled="!ending.state.ready || ending.state.busy || !!ending.state.pending"
-            @click="endPlan"
-          >
-            <PhStopCircle :size="18" aria-hidden="true" />{{ l('End plan', 'إنهاء الخطة') }}
-          </button>
-        </nav>
+            :label="l('More plan actions', 'إجراءات أخرى للخطة')"
+            :items="[
+              {
+                key: 'end',
+                label: l('End plan…', 'إنهاء الخطة…'),
+                icon: PhStopCircle,
+                danger: true,
+                disabled: endLocked,
+              },
+            ]"
+            @select="confirmingEnd = true"
+          />
+        </div>
+        <DialogRoot v-model:open="confirmingEnd">
+          <DialogPortal>
+            <DialogOverlay class="ui-dialog-overlay" />
+            <DialogContent
+              class="ui-dialog"
+              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+              @interact-outside="endLocked && $event.preventDefault()"
+              @escape-key-down="endLocked && $event.preventDefault()"
+            >
+              <DialogTitle>{{ l('End this plan?', 'إنهاء هذه الخطة؟') }}</DialogTitle>
+              <DialogDescription>
+                {{
+                  l(
+                    'The plan stops for ' +
+                      detail.member_name +
+                      '. Recorded workouts and history are kept; unfinished work stays visible for review.',
+                    'تتوقف الخطة لـ ' +
+                      detail.member_name +
+                      '. تبقى التمارين المسجلة والسجل محفوظة، ويظل العمل غير المكتمل ظاهراً للمراجعة.',
+                  )
+                }}
+              </DialogDescription>
+              <CommandStatus :command="ending" />
+              <div class="ui-dialog-actions">
+                <DialogClose as-child
+                  ><button type="button" class="button secondary" :disabled="endLocked">
+                    {{ l('Keep plan', 'الإبقاء على الخطة') }}
+                  </button></DialogClose
+                ><button
+                  type="button"
+                  class="button danger-button"
+                  :disabled="endLocked"
+                  @click="confirmEnd"
+                >
+                  <PhStopCircle :size="18" aria-hidden="true" />{{ l('End plan', 'إنهاء الخطة') }}
+                </button>
+              </div>
+            </DialogContent>
+          </DialogPortal>
+        </DialogRoot>
         <CommandStatus :command="ending" />
         <PlanEditor v-if="adapting" :key="detail.id" :assigned-plan="detail" @adapted="adapted" />
-        <template v-else>
-          <p v-if="prescription()?.description" class="plan-description">
-            {{
-              locale === 'ar'
-                ? prescription()?.descriptionAr || prescription()?.description
-                : prescription()?.description
-            }}
-          </p>
-          <p class="small-print">
-            {{ detail.start_date }} — {{ detail.end_date || l('No end date', 'دون تاريخ انتهاء') }}
-          </p>
-          <WorkoutAgenda
-            :key="detail.id"
-            :assignment="detail.id"
-            :refresh-token="workoutRevision"
-          />
-          <WorkoutRuleSettings
-            :key="'rule:' + detail.id"
-            :assignment="detail.id"
-            :starts-on="detail.start_date.slice(0, 10)"
-            :ends-on="detail.end_date?.slice(0, 10) || null"
-            @changed="workoutRevision++"
-          />
-          <section :aria-label="l('Assigned prescription', 'الوصفة المعيّنة')">
-            <h2>{{ l('Program preview', 'معاينة البرنامج') }}</h2>
-            <details v-for="day in prescription()?.days || []" :key="day.id" class="plan-day">
-              <summary>
-                <bdi>{{ locale === 'ar' ? day.nameAr || day.name : day.name }}</bdi> ·
-                {{
-                  day.restDay ? l('Recovery', 'تعافٍ') : day.minutes + ' ' + l('minutes', 'دقيقة')
-                }}
-              </summary>
-              <p>
-                {{ l('Week', 'الأسبوع') }} {{ day.week || 1 }} · {{ l('Day', 'اليوم') }}
-                {{ (day.weekday || 0) + 1 }}
-              </p>
-              <ul>
-                <li v-for="exercise in day.exercises" :key="exercise.key">
-                  <strong>{{ exerciseName(exercise) }}</strong>
-                  <p>
-                    {{ exercise.group ? exercise.group + ' · ' : '' }}{{ exercise.sets }}
-                    {{ l('sets', 'مجموعات') }} · {{ targetLabel(exercise) }} · {{ exercise.rest }}
-                    {{ l('sec rest', 'ث راحة') }}
-                  </p>
-                  <p v-for="(target, index) in exercise.targets || []" :key="index">
-                    {{ index + 1 }}. {{ targetLabel(exercise, target) }}
-                  </p>
-                  <p v-if="exercise.note">{{ exercise.note }}</p>
-                </li>
-              </ul>
-            </details>
-          </section>
-        </template>
+        <div v-else class="assigned-layout">
+          <div class="assigned-main">
+            <p v-if="prescription()?.description" class="plan-description">
+              {{
+                locale === 'ar'
+                  ? prescription()?.descriptionAr || prescription()?.description
+                  : prescription()?.description
+              }}
+            </p>
+            <WorkoutAgenda
+              :key="detail.id"
+              :assignment="detail.id"
+              :refresh-token="workoutRevision"
+              :auto-schedule="scheduleOnOpen"
+            />
+            <WorkoutRuleSettings
+              :key="'rule:' + detail.id"
+              :assignment="detail.id"
+              :starts-on="detail.start_date.slice(0, 10)"
+              :ends-on="detail.end_date?.slice(0, 10) || null"
+              @changed="workoutRevision++"
+            />
+            <section
+              class="plan-preview"
+              :aria-label="l('Assigned prescription', 'الوصفة المعيّنة')"
+            >
+              <h2>{{ l('Program preview', 'معاينة البرنامج') }}</h2>
+              <details v-for="day in prescription()?.days || []" :key="day.id" class="plan-day">
+                <summary>
+                  <span class="plan-day-title"
+                    ><bdi>{{ locale === 'ar' ? day.nameAr || day.name : day.name }}</bdi></span
+                  >
+                  <small
+                    >{{ l('Week', 'الأسبوع') }} {{ day.week || 1 }} · {{ l('Day', 'اليوم') }}
+                    {{ (day.weekday || 0) + 1 }} ·
+                    {{
+                      day.restDay
+                        ? l('Recovery', 'تعافٍ')
+                        : day.minutes + ' ' + l('minutes', 'دقيقة')
+                    }}
+                    · {{ day.exercises.length }} {{ l('exercises', 'تمارين') }}</small
+                  >
+                </summary>
+                <ol class="plan-day-exercises">
+                  <li v-for="exercise in day.exercises" :key="exercise.key">
+                    <strong>{{ exerciseName(exercise) }}</strong>
+                    <p>
+                      {{ exercise.group ? exercise.group + ' · ' : '' }}{{ exercise.sets }}
+                      {{ l('sets', 'مجموعات') }} · {{ targetLabel(exercise) }} · {{ exercise.rest }}
+                      {{ l('sec rest', 'ث راحة') }}
+                    </p>
+                    <p v-for="(target, index) in exercise.targets || []" :key="index">
+                      {{ index + 1 }}. {{ targetLabel(exercise, target) }}
+                    </p>
+                    <p v-if="exercise.note">{{ exercise.note }}</p>
+                  </li>
+                </ol>
+              </details>
+            </section>
+          </div>
+          <aside class="assigned-summary panel" :aria-label="l('Plan summary', 'ملخص الخطة')">
+            <dl>
+              <div>
+                <dt>{{ l('Athlete', 'الرياضي') }}</dt>
+                <dd>
+                  <RouterLink :to="'/athletes/' + detail.member_id"
+                    ><bdi dir="auto">{{ detail.member_name }}</bdi></RouterLink
+                  >
+                </dd>
+              </div>
+              <div>
+                <dt>{{ l('Dates', 'التواريخ') }}</dt>
+                <dd>
+                  {{ formatDate(detail.start_date, locale) }} –
+                  {{
+                    detail.end_date
+                      ? formatDate(detail.end_date, locale)
+                      : l('No end date', 'دون تاريخ انتهاء')
+                  }}
+                </dd>
+              </div>
+              <div>
+                <dt>{{ l('Version', 'النسخة') }}</dt>
+                <dd>
+                  {{
+                    detail.adaptation_revision
+                      ? l('Personalized · revision ', 'مخصصة · مراجعة ') +
+                        detail.adaptation_revision
+                      : l('Library version ', 'نسخة المكتبة ') + detail.version.revision
+                  }}
+                </dd>
+              </div>
+              <div v-if="detail.goal || detail.sport">
+                <dt>{{ l('Goal and sport', 'الهدف والرياضة') }}</dt>
+                <dd>
+                  <bdi dir="auto">{{
+                    [detail.goal, detail.sport].filter(Boolean).join(' · ')
+                  }}</bdi>
+                </dd>
+              </div>
+              <div>
+                <dt>{{ l('Schedule type', 'نوع الجدولة') }}</dt>
+                <dd>
+                  {{
+                    detail.schedule_mode === 'cycle'
+                      ? l('Repeating cycle', 'دورة متكررة')
+                      : l('Flexible schedule', 'جدول مرن')
+                  }}
+                </dd>
+              </div>
+            </dl>
+          </aside>
+        </div>
       </template></PageState
     >
   </section>
@@ -244,6 +380,44 @@ onMounted(load)
   gap: var(--space-3);
   margin-block: var(--space-5);
 }
+.assigned-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: var(--space-8);
+  align-items: start;
+}
+.assigned-main {
+  min-width: 0;
+}
+.assigned-main > :first-child {
+  margin-block-start: 0;
+}
+.assigned-summary {
+  position: sticky;
+  top: var(--space-4);
+  margin: 0;
+}
+.assigned-summary dl {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+.assigned-summary dt {
+  color: var(--muted);
+  font-size: var(--text-caption);
+}
+.assigned-summary dd {
+  margin: 2px 0 0;
+}
+@media (max-width: 1100px) {
+  .assigned-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .assigned-summary {
+    position: static;
+    grid-row: 1;
+  }
+}
 .assigned-actions .button {
   display: inline-flex;
   align-items: center;
@@ -253,12 +427,103 @@ onMounted(load)
   max-width: 75ch;
   line-height: 1.7;
 }
+/* Each session is a collapsible card; exercises are compact numbered rows. */
+.plan-preview {
+  display: grid;
+  gap: var(--space-3);
+}
+.plan-preview > h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-panel);
+}
 .plan-day {
-  padding-block: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+.plan-day > summary {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  min-height: 0;
+  color: var(--ink);
+  font-size: inherit;
+}
+/* The grid layout drops the native marker, so a chevron shows the open/closed state. */
+.plan-day > summary {
+  position: relative;
+  padding-inline-end: var(--space-8);
+  list-style: none;
+}
+.plan-day > summary::-webkit-details-marker {
+  display: none;
+}
+.plan-day > summary::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-inline-end: 2px solid var(--muted);
+  border-block-end: 2px solid var(--muted);
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.plan-day[open] > summary::after {
+  transform: translateY(-30%) rotate(-135deg);
+}
+.plan-day > summary:hover {
+  background: var(--surface-soft);
+}
+.plan-day-title {
+  font-weight: 650;
+}
+.plan-day > summary small {
+  color: var(--muted);
+}
+.plan-day[open] > summary {
   border-block-end: 1px solid var(--line);
 }
-.plan-day li {
-  margin-block: var(--space-4);
+.plan-day-exercises {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: exercise;
+}
+.plan-day-exercises li {
+  counter-increment: exercise;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+.plan-day-exercises li + li {
+  border-top: 1px solid var(--line);
+}
+.plan-day-exercises li::before {
+  content: counter(exercise);
+  grid-row: 1 / span 4;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.plan-day-exercises strong,
+.plan-day-exercises p {
+  grid-column: 2;
+}
+.plan-day-exercises p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: var(--text-small);
 }
 .assigned-plan-page {
   overflow-wrap: anywhere;

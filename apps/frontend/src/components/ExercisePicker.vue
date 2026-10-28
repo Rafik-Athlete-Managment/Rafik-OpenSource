@@ -380,15 +380,17 @@ function select(value: unknown) {
   align-items: center;
   min-width: 0;
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--field);
+  box-shadow: var(--shadow-xs);
 }
 .exercise-picker-anchor:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 .exercise-picker-anchor input {
+  box-shadow: none;
   width: 100%;
   min-width: 0;
   margin: 0;
@@ -398,7 +400,9 @@ function select(value: unknown) {
   font-weight: 600;
   text-overflow: ellipsis;
 }
-.exercise-picker-anchor input:focus {
+.exercise-picker-anchor input:focus,
+.exercise-picker-anchor input:focus-visible {
+  box-shadow: none;
   outline: 0;
 }
 .exercise-picker-anchor button {
@@ -420,7 +424,7 @@ function select(value: unknown) {
   border-radius: 12px;
   background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 14px 36px #0002;
+  box-shadow: var(--shadow);
 }
 .exercise-picker-scroll {
   width: 100%;

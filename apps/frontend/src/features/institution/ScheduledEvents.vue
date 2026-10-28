@@ -4,6 +4,7 @@ import { institutionContext } from '../../app/institution'
 import { PhTray } from '@phosphor-icons/vue'
 import { useListPageSize } from '../../lib/list-page-size'
 import ScheduleViewSwitch from '../../components/ScheduleViewSwitch.vue'
+import { useLiveSearch } from '../../lib/live-search'
 import PageHeading from '../../components/PageHeading.vue'
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -102,8 +103,8 @@ async function load() {
     if (!disposed && stamp === generation) loading.value = false
   }
 }
-function navigate(page = 0) {
-  return router.push({
+function navigate(page = 0, replace = false) {
+  return router[replace ? 'replace' : 'push']({
     query: {
       from: route.query.from,
       day: route.query.day,
@@ -116,10 +117,11 @@ function navigate(page = 0) {
     },
   })
 }
+const live = useLiveSearch(search, () => navigate(0, true))
 watch(
   () => route.fullPath,
   () => {
-    search.value = String(route.query.search || '')
+    live.restore(String(route.query.search || ''))
     kind.value = String(route.query.kind || 'all')
     state.value = String(route.query.state || 'all')
     void load()
@@ -154,7 +156,7 @@ onUnmounted(() => {
       </div>
     </PageHeading>
     <div class="list-toolbar">
-      <form class="event-filters schedule-list-filters" @submit.prevent="navigate()">
+      <form class="event-filters schedule-list-filters" @submit.prevent="live.submit()">
         <label
           >{{ l('Search schedule', 'البحث في الجدول')
           }}<input
@@ -183,7 +185,6 @@ onUnmounted(() => {
             </option>
           </select></label
         >
-        <button class="button secondary" :disabled="loading">{{ l('Search', 'بحث') }}</button>
       </form>
       <div class="list-toolbar-pagination">
         <ListPagination

@@ -185,7 +185,7 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
     await expect(status).toContainText('Modified participation')
     await expect(status).toContainText('not a medical assessment')
     await primaryPage.getByRole('tab', { name: 'Overview', exact: true }).click()
-    await expect(primaryPage.getByRole('region', { name: 'Overview' })).toContainText(
+    await expect(primaryPage.getByRole('region', { name: 'Details' })).toContainText(
       'Supporting Coach · Football',
     )
     await inspect(primaryPage, 'primary', info)
@@ -228,8 +228,8 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
       'active',
     )
     await page.getByRole('tab', { name: 'Coaches', exact: true }).click()
-    await expect(page.getByRole('link', { name: 'Profile for R4 Athlete' })).toHaveCount(0)
-    await page.getByRole('link', { name: 'Profile for R4 Coach', exact: true }).click()
+    await expect(page.locator('.person-name-link').filter({ hasText: 'R4 Athlete' })).toHaveCount(0)
+    await page.locator('.person-name-link').filter({ hasText: 'R4 Coach' }).click()
     await page.getByRole('tab', { name: 'Activity', exact: true }).click()
     await expect(page.getByText('Primary athletes', { exact: true })).toBeVisible()
     await page.getByRole('tab', { name: 'Manage details', exact: true }).click()
@@ -256,7 +256,7 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
 
     // Entry point from People, then Arabic dark at phone width.
     await page.goto(`/people`)
-    await page.getByRole('link', { name: 'Profile for R4 Athlete' }).click()
+    await page.locator('.person-name-link').filter({ hasText: 'R4 Athlete' }).click()
     await expect(page).toHaveURL(new RegExp('/members/' + athlete.id))
     await page.evaluate(() => {
       localStorage.setItem('rafik.locale', 'ar')
@@ -400,16 +400,12 @@ test('invites apply role-specific sports and the directory keeps role boundaries
     await expect(page.locator('.organization-person')).toHaveCount(2)
     await page.reload()
     await expect(page.locator('.organization-person')).toHaveCount(2)
-    await expect(page.getByRole('link', { name: 'Profile for R4 Athlete' })).toHaveCount(0)
-    await page
-      .locator('.organization-person')
-      .first()
-      .getByRole('link', { name: /^Profile for / })
-      .click()
+    await expect(page.locator('.person-name-link').filter({ hasText: 'R4 Athlete' })).toHaveCount(0)
+    await page.locator('.organization-person').first().locator('.person-name-link').click()
     await page.getByRole('link', { name: 'Back to people', exact: true }).click()
     await expect(page.locator('.organization-person')).toHaveCount(2)
     await page.getByRole('button', { name: 'Previous page', exact: true }).click()
-    await expect(page.getByRole('link', { name: 'Profile for R4 Athlete' })).toBeVisible()
+    await expect(page.locator('.person-name-link').filter({ hasText: 'R4 Athlete' })).toBeVisible()
     await page.getByRole('button', { name: 'Invite people', exact: true }).click()
     const invitation = page.locator('.institution-invite')
     await invitation.getByRole('radio', { name: 'Coach', exact: true }).check()
@@ -429,14 +425,14 @@ test('invites apply role-specific sports and the directory keeps role boundaries
     await inspect(page, 'invite-athlete', info)
     await page.getByRole('button', { name: 'Invite people', exact: true }).click()
     await page.getByRole('tab', { name: 'Coaches', exact: true }).click()
-    await expect(page.getByRole('link', { name: 'Profile for R4 Athlete' })).toHaveCount(0)
+    await expect(page.locator('.person-name-link').filter({ hasText: 'R4 Athlete' })).toHaveCount(0)
     await expect(
       page.locator('.organization-person').getByText('Strength coaching', { exact: true }),
     ).toBeVisible()
     await expect(page.getByRole('link', { name: 'Message R4 Coach', exact: true })).toBeVisible()
     await page.getByRole('tab', { name: 'Administrators', exact: true }).click()
-    await expect(page.getByRole('link', { name: 'Profile for R4 Coach' })).toHaveCount(0)
-    await page.goto('/settings')
+    await expect(page.locator('.person-name-link').filter({ hasText: 'R4 Coach' })).toHaveCount(0)
+    await page.goto('/institution-settings')
     await page.getByRole('button', { name: 'Close institution', exact: true }).click()
     const closure = page.getByRole('dialog')
     await expect(closure).toBeVisible()

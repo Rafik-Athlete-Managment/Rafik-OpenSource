@@ -25,8 +25,15 @@ test('athlete consent, status correction, limited coach view and withdrawal', as
     await f.assign(athlete.id, coach.id)
 
     await f.login(page, f.admin, `/injuries`)
-    await page.getByRole('button', { name: 'Save consent setup', exact: true }).click()
-    await expect(page.getByText('adult · Athlete assent pending', { exact: true })).toBeVisible()
+    // Setup is per athlete; a saved athlete leaves the Needs setup queue.
+    await page.getByRole('button', { name: /^Save consent setup for / }).click()
+    await expect(
+      page.getByText('Every athlete has a consent setup.', { exact: true }),
+    ).toBeVisible()
+    await page.getByRole('radio', { name: /^All athletes/ }).check()
+    const setupRow = page.locator('.consent-row').first()
+    await expect(setupRow.getByText('Adult', { exact: true })).toBeVisible()
+    await expect(setupRow.getByText('Athlete assent pending', { exact: true })).toBeVisible()
 
     await f.login(page, f.athlete, `/injuries`)
     await page.getByRole('button', { name: 'Agree and enable sharing', exact: true }).click()

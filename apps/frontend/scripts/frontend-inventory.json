@@ -35,6 +35,9 @@
   "components/MultiChoice.vue": {
     "purpose": "Reusable searchable multi-select with selected items and clearing."
   },
+  "components/OverflowMenu.vue": {
+    "purpose": "Labelled menu for secondary or destructive record actions and the coach New menu; items navigate or emit a key while the caller owns the action."
+  },
   "components/PageHeading.vue": {
     "purpose": "Semantic page-heading layout and action slots."
   },
@@ -55,6 +58,9 @@
   },
   "components/SectionHeader.vue": {
     "purpose": "Shared section heading, description and action grouping."
+  },
+  "components/SidePanel.vue": {
+    "purpose": "Contextual side panel dialog for in-place tasks (scheduling, record history) with locked dismissal during writes and explicit focus return."
   },
   "components/TimezonePicker.vue": {
     "purpose": "Searchable IANA timezone selection."
@@ -329,6 +335,9 @@
   "features/institution/CoachDesk.vue": {
     "purpose": "Balanced coach dashboard: disjoint recording/due/planning queues, today events, limited primary-roster participation status and compact follow-up.",
     "access": "Coach dashboard only; all reads retain existing server primary/sport authority and limited injury-status visibility."
+  },
+  "features/institution/ActivityLog.vue": {
+    "purpose": "Administrator activity log: institution audit events in plain words, grouped by day, with acting and affected member names. Administrators only."
   },
   "features/institution/AdminOverview.vue": {
     "purpose": "Administrator overview: existing institution activity/attendance reporting, current roster coverage and operational navigation. No clinical data."

@@ -2,7 +2,7 @@
 import PageHeading from '../../components/PageHeading.vue'
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { PhArrowLeft, PhCheckCircle } from '@phosphor-icons/vue'
+import { PhArrowLeft, PhArrowRight, PhCheckCircle, PhCheck } from '@phosphor-icons/vue'
 import { user } from '../../app/auth'
 import { request } from '../../lib/backend'
 import type { Session } from '../../lib/domain'
@@ -17,10 +17,32 @@ const route = useRoute()
 const context = programContext(route)
 const draftKey = `review:${user.value!.id}:${context.key}:${route.params.id}`
 const id = String(route.params.id)
-const back = {
-  path: context.base + '/workouts',
-  query: { view: String(route.query.view || 'all'), search: route.query.search },
+// Return to the list or page that opened this review; otherwise Workout history.
+const previous = (window.history.state as { back?: unknown } | null)?.back
+const back =
+  typeof previous === 'string' &&
+  /^\/(dashboard|training|workouts|members|athletes|people|schedule)(\/|\?|$)/.test(previous)
+    ? previous
+    : { path: context.base + '/workouts', query: { search: route.query.search } }
+const next = ref<string | null>()
+async function findNext() {
+  try {
+    const result = await request<{ sessions: { id: string }[] }>(
+      `/v1/institution/delivery?view=${context.view}&history=true&status=awaiting_review&limit=2&offset=0`,
+      { feedback: 'none' },
+    )
+    next.value = result.sessions.find((s) => s.id !== id)?.id || null
+  } catch {
+    next.value = null
+  }
 }
+const state = computed(() =>
+  !session.value || session.value.status !== 'completed'
+    ? 'in_progress'
+    : session.value.reviewed_at
+      ? 'reviewed'
+      : 'awaiting_review',
+)
 const session = ref<Session>(),
   person = ref<{ display_name: string }>()
 const note = ref(''),
@@ -48,6 +70,7 @@ const command = useCommand<'review'>(
   async () => {
     await removeDraft(draftKey)
     await load()
+    await findNext()
     message.value = language(
       'Review saved. Your athlete can see this feedback in their session.',
       'حُفظت المراجعة. يمكن لرياضيك رؤية الملاحظات ضمن حصته.',
@@ -87,9 +110,7 @@ onMounted(async () => {
 <template>
   <div class="container page">
     <RouterLink :to="back" class="back-link"
-      ><PhArrowLeft :size="18" class="directional" />{{
-        language('Review list', 'قائمة المراجعة')
-      }}</RouterLink
+      ><PhArrowLeft :size="18" class="directional" />{{ language('Back', 'رجوع') }}</RouterLink
     ><PageState :loading="loading" :error="!session ? error : ''" @retry="load"
       ><template v-if="session"
         ><PageHeading class="page-heading"
@@ -100,7 +121,14 @@ onMounted(async () => {
               {{ session.prescription.name }} ·
               {{ dateLabel(session.completed_at || session.started_at) }}
             </p>
-          </div></PageHeading
+          </div>
+          <span class="tag review-state" :data-status="state">{{
+            state === 'reviewed'
+              ? language('Reviewed', 'تمت المراجعة')
+              : state === 'awaiting_review'
+                ? language('Awaiting review', 'بانتظار المراجعة')
+                : language('In progress', 'قيد التنفيذ')
+          }}</span></PageHeading
         >
         <CommandStatus :command="command" :show-notice="false" />
         <RouterLink
@@ -132,8 +160,8 @@ onMounted(async () => {
                 <thead>
                   <tr>
                     <th>{{ language('Set', 'المجموعة') }}</th>
-                    <th>{{ language('Actual', 'النتيجة') }}</th>
                     <th>{{ language('Target', 'الهدف') }}</th>
+                    <th>{{ language('Actual', 'النتيجة') }}</th>
                     <th>{{ language('Recorded', 'مسجلة') }}</th>
                   </tr>
                 </thead>
@@ -143,11 +171,20 @@ onMounted(async () => {
                     :key="entry.set_index"
                   >
                     <td>{{ entry.set_index + 1 }}</td>
-                    <td>
-                      {{ entry.completed ? actualLabel(entry, ex.kind) : '–' }}
+                    <td class="subtle">
+                      {{ targetLabel(ex, ex.targets?.[entry.set_index] || ex) }}
                     </td>
-                    <td>{{ targetLabel(ex, ex.targets?.[entry.set_index] || ex) }}</td>
-                    <td>{{ entry.completed ? language('Yes', 'نعم') : language('No', 'لا') }}</td>
+                    <td>
+                      <strong v-if="entry.completed">{{ actualLabel(entry, ex.kind) }}</strong
+                      ><span v-else class="subtle">–</span>
+                    </td>
+                    <td>
+                      <span v-if="entry.completed" class="recorded-yes"
+                        ><PhCheck :size="16" weight="bold" aria-hidden="true" />{{
+                          language('Yes', 'نعم')
+                        }}</span
+                      ><span v-else class="subtle">{{ language('No', 'لا') }}</span>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -170,15 +207,37 @@ onMounted(async () => {
               </p>
               <label for="review-note"
                 >{{ t('feedback') }} <span class="subtle">{{ t('optional') }}</span></label
-              ><textarea id="review-note" v-model="note" rows="6" maxlength="2000"></textarea
-              ><button class="button full" :disabled="busy || session.status !== 'completed'">
+              ><textarea id="review-note" v-model="note" rows="6" maxlength="2000"></textarea>
+              <p v-if="session.status !== 'completed'" class="small-print">
+                {{
+                  language(
+                    'You can save a review once the workout is finished.',
+                    'يمكنك حفظ المراجعة بعد إنهاء التمرين.',
+                  )
+                }}
+              </p>
+              <button class="button full" :disabled="busy || session.status !== 'completed'">
                 <PhCheckCircle :size="20" />{{
                   busy ? t('loading') : language('Save review', 'حفظ المراجعة')
                 }}
               </button>
-              <RouterLink v-if="message" class="button secondary full" :to="back"
-                >{{ language('Continue reviewing', 'متابعة المراجعات') }} →</RouterLink
-              >
+              <template v-if="message">
+                <RouterLink v-if="next" class="button secondary full" :to="'/review/' + next"
+                  >{{ language('Next to review', 'المراجعة التالية')
+                  }}<PhArrowRight :size="18" class="directional" aria-hidden="true"
+                /></RouterLink>
+                <p v-else-if="next === null" class="small-print">
+                  {{
+                    language(
+                      'No other workouts are awaiting review.',
+                      'لا توجد تمارين أخرى بانتظار المراجعة.',
+                    )
+                  }}
+                </p>
+                <RouterLink class="text-link" :to="back">{{
+                  language('Continue reviewing', 'متابعة المراجعات')
+                }}</RouterLink>
+              </template>
               <p v-if="error" class="notice error" role="alert">{{ error }}</p>
             </form>
           </aside>
@@ -202,6 +261,23 @@ onMounted(async () => {
 .feedback-form {
   display: grid;
   gap: var(--space-4);
+}
+.review-state {
+  align-self: flex-start;
+}
+.recorded-yes {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (min-width: 981px) {
+  .review-layout aside {
+    position: sticky;
+    top: var(--space-4);
+    align-self: start;
+  }
 }
 .feedback-form > h2,
 .feedback-form > p {

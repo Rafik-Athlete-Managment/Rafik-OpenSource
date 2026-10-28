@@ -245,14 +245,19 @@ onUnmounted(() => {
   gap: 8px;
   min-height: 44px;
   padding-inline: 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control, 8px);
-  background: var(--page);
+  background: var(--field);
+  box-shadow: var(--shadow-xs);
   color: var(--muted);
 }
 .member-search-field:focus-within {
   border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.member-search-field input,
+.member-search-field input:focus-visible {
+  box-shadow: none;
 }
 .member-search-field input {
   flex: 1;
@@ -282,7 +287,7 @@ onUnmounted(() => {
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control, 8px);
-  background: var(--page);
+  background: var(--field);
   cursor: pointer;
   overflow-wrap: anywhere;
 }

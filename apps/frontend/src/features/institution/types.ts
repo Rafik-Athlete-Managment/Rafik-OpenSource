@@ -38,7 +38,16 @@ export type Institution = {
   members: Member[]
   names: { id: string; name: string }[]
   invitations: { id: string; email: string; roles: Role[]; expires_at: string }[]
-  events: { id: string; kind: string; created_at: string; subject_id: string | null }[]
+  events: {
+    id: string
+    kind: string
+    created_at: string
+    subject_id: string | null
+    actor_id?: string | null
+    detail?: unknown
+    actor_name?: string | null
+    subject_name?: string | null
+  }[]
 }
 export type Sport = {
   id: string

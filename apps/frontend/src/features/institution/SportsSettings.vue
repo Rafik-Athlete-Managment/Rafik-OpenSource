@@ -86,9 +86,6 @@ onMounted(load)
     />
     <CommandStatus :command="command" />
     <form class="sports-add" @submit.prevent="add">
-      <label
-        >{{ l('Name', 'الاسم') }}<input v-model="name" maxlength="80" required :disabled="locked"
-      /></label>
       <fieldset class="role-choices">
         <legend>{{ l('Type', 'النوع') }}</legend>
         <label
@@ -101,8 +98,21 @@ onMounted(load)
           }}</label
         >
       </fieldset>
+      <label
+        >{{ l('Name', 'الاسم')
+        }}<input
+          v-model="name"
+          maxlength="80"
+          required
+          :disabled="locked"
+          :placeholder="
+            kind === 'sport'
+              ? l('For example: Football', 'مثال: كرة القدم')
+              : l('For example: Strength coaching', 'مثال: تدريب القوة')
+          "
+      /></label>
       <button class="button secondary" :disabled="locked || !name.trim()">
-        {{ l('Add', 'إضافة') }}
+        {{ kind === 'sport' ? l('Add sport', 'إضافة رياضة') : l('Add specialty', 'إضافة تخصص') }}
       </button>
     </form>
     <p v-if="loading" role="status" class="small-print">{{ l('Loading…', 'جارٍ التحميل…') }}</p>
@@ -175,10 +185,11 @@ onMounted(load)
 <style scoped>
 .sports-add {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) auto auto;
+  grid-template-columns: minmax(200px, 1fr) auto;
   align-items: end;
-  gap: 16px;
+  gap: 12px 16px;
   margin: 0;
+  max-width: 720px;
 }
 .sports-add > label {
   display: grid;
@@ -193,8 +204,8 @@ onMounted(load)
   margin: 0;
 }
 .sports-add .role-choices {
-  /* A shared form rule spans role choices across the row; keep this one inline. */
-  grid-column: auto;
+  /* Choose the type first; name and Add then share one row. */
+  grid-column: 1 / -1;
   margin: 0;
 }
 .sports-groups {

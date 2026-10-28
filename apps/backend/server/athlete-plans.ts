@@ -8,6 +8,8 @@ import {
   coachedBy,
   supportingLinks,
   assignmentScope,
+  workoutState,
+  localDay,
 } from "./programming.ts";
 import { pageOffset } from "./service-definitions.ts";
 
@@ -140,6 +142,28 @@ export async function athletePlans(
           institution_members_institution_assignments_institution_id_member_idToinstitution_members:
             { select: { id: true, name: true, active: true } },
           institution_sports: { select: { name: true } },
+          // Next-workout summary uses the agenda's unresolved position and unfinished session.
+          institution_workout_positions: {
+            where: { state: { in: ["pending", "paused"] } },
+            take: 1,
+            select: {
+              state: true,
+              institution_events: {
+                select: {
+                  starts_at: true,
+                  ends_at: true,
+                  training_date: true,
+                  timezone: true,
+                },
+              },
+              institution_sessions: { select: { id: true } },
+            },
+          },
+          institution_sessions: {
+            where: { completed_at: null, occurrence_id: null },
+            take: 1,
+            select: { id: true },
+          },
         },
       }),
       tx.institution_assignments.count({ where }),
@@ -162,6 +186,28 @@ export async function athletePlans(
               : row.start_date > day
                 ? "upcoming"
                 : "active";
+        const position = row.institution_workout_positions[0],
+          occurrence = position?.institution_events,
+          now = new Date();
+        const next_workout =
+          derived === "active"
+            ? {
+                state: workoutState(
+                  position?.state,
+                  occurrence,
+                  !!(
+                    position?.institution_sessions ||
+                    row.institution_sessions[0]
+                  ),
+                  now,
+                  occurrence ? localDay(occurrence.timezone, now) : day,
+                ),
+                starts_at: occurrence?.starts_at?.toISOString() || null,
+                training_date:
+                  occurrence?.training_date.toISOString().slice(0, 10) || null,
+                timezone: occurrence?.timezone || null,
+              }
+            : null;
         return {
           id: row.id,
           member_id: row.member_id,
@@ -177,6 +223,7 @@ export async function athletePlans(
           revision: row.revision,
           version: effectivePlan(row),
           adaptation_revision: adaptationRevision(row),
+          next_workout,
         };
       }),
     };

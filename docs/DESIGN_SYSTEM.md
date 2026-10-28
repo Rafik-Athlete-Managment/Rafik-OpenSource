@@ -69,20 +69,33 @@ Paths in this table are relative to `apps/frontend/` unless the full path is giv
 
 ## Color and surfaces
 
-### Existing tokens
+### Surface layers and tokens
 
-| Token                         | Meaning                         | Rule                                                      |
-| ----------------------------- | ------------------------------- | --------------------------------------------------------- |
-| `--page`                      | Application canvas              | Keep instance-configured light/dark background            |
-| `--surface`                   | Raised work surface             | Forms, dialogs and meaningful grouped panels              |
-| `--surface-soft`              | Subtle grouping/selection       | Restrained row emphasis, chips, secondary sections        |
-| `--ink`                       | Primary content                 | Headings, field values and essential text                 |
-| `--muted`                     | Secondary content               | Descriptions, timestamps and helper text; still readable  |
-| `--line`                      | Borders and dividers            | One-pixel separation; not a substitute for spacing        |
-| `--accent` / `--accent-hover` | Primary and selected actions    | Theme-derived Rafik green treatment                       |
-| `--on-accent`                 | Text/icons on accent            | Always pair with accent backgrounds; never hardcode white |
-| `--error` / `--error-bg`      | Error text/surface              | Validation and operational errors                         |
-| `--radius` / `--shadow`       | Current surface shape/elevation | Consolidate usage rather than copying values              |
+Revised 28 October 2026 at founder direction, after cards and their fields looked muddy in both themes. The model follows the semantic-token layering used by shadcn-vue (background → card → field, quiet borders, small elevation) while keeping Rafik's colours and institution branding. Each layer is derived from the institution canvas, ink and accent, so any configured palette keeps the same hierarchy.
+
+| Layer / token                                 | Meaning                                      | Light                                      | Dark                                    |
+| --------------------------------------------- | -------------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `--page`                                      | Application canvas                           | Institution light background (`#f8f8f3`)   | Institution dark background (`#171e1a`) |
+| `--surface`                                   | Card, popover, dialog                        | 30% canvas, 70% white (brighter than page) | 95% canvas, 5% white (one step up)      |
+| `--surface-soft`                              | Muted fill: chips, hover, header rows, wells | 95.5% canvas, 4.5% ink                     | 90% canvas, 10% white                   |
+| `--field`                                     | Text control background                      | Same as `--surface`                        | 92% canvas, 8% white (above the card)   |
+| `--line`                                      | Card edges and dividers                      | 87% canvas, 13% ink (quiet)                | 87% canvas, 13% white                   |
+| `--control-border`                            | Inputs, selects, outline buttons             | 68% canvas, 32% ink                        | 76% canvas, 24% white                   |
+| `--ink` / `--muted`                           | Primary / secondary text                     | Contrast-selected ink; muted 66% ink       | Contrast-selected ink; muted 68% ink    |
+| `--accent` / `--accent-hover` / `--on-accent` | Primary and selected actions                 | Contrast-adjusted institution accent       | Same derivation against the dark canvas |
+| `--tint`                                      | Selected tile/chip fill                      | 90% canvas, 10% accent                     | 90% canvas, 10% accent                  |
+| `--ring`                                      | Focus ring on text controls                  | Accent at 40% alpha, 3px                   | Accent at 45% alpha, 3px                |
+| `--shadow-xs` / `--shadow-sm` / `--shadow`    | Control / card / floating elevation          | Ink-tinted, 5–16% alpha                    | Black, 20–55% alpha                     |
+| `--error` / `--error-bg`                      | Error text/surface                           | Unchanged                                  | Unchanged                               |
+
+Rules:
+
+- Hierarchy comes from layer, not from heavier borders: page → card (`--surface`, `--line`, `--shadow-sm`) → floating overlay (`--shadow`). Never place a card background darker than the canvas.
+- Text controls use `--field`, `--control-border` and `--shadow-xs`; focus shows an accent border plus the `--ring` halo. Wrappers that embed an input (search fields, comboboxes) carry the control styling and remove it from the inner input.
+- Inside a card, group with spacing, dividers or a `--surface-soft` well; selectable tiles use `--field` with `--line`, and the selected tile uses an accent border with `--tint`.
+- Counts or items that need action may be raised (`--shadow-sm`, accent number); empty or inactive peers stay flat and muted.
+- Secondary buttons are outline controls on `--field`; primary buttons keep the accent fill. Danger and status colours keep their semantic tokens.
+- Contrast evidence (default palette): muted text 5.8:1 on cards and 5.0:1 on soft fills in light; 6.4:1 and 5.4:1 in dark. Control borders are 2.1:1 (light) and 1.75:1 (dark) against their fields, up from the previous 1.6:1. Text, focus ring and accent border carry meaning; dividers are decorative.
 
 The original default accent is `#285943`; default page colors are `#f8f8f3` and `#171e1a`. Runtime colors can differ because installation branding and accessible theme derivation are supported. Do not replace them with fixed brand swatches throughout components.
 
@@ -122,7 +135,7 @@ For **Primary coach**, keep the heading, short responsibility explanation and se
 
 Approved spacing scale: **4, 8, 12, 16, 20, 24, 32, 48, 64px**. Use 24px panel padding on desktop, 16px on phone; 16px nested section spacing; 24–32px between independent sections. Dense rows can use 12px vertical and 16px inline padding.
 
-Approved radii: 8px controls, 12px panels/dialogs, full pill only for compact tags/toggles where the shape helps recognition. Border thickness is normally 1px. Reserve stronger borders for selection, focus or an explicit warning. Use at most one restrained shadow on a floating/raised element; routine data panels do not each need a shadow.
+Approved radii: 8px controls, 12px panels/dialogs, full pill only for compact tags/toggles where the shape helps recognition. Border thickness is normally 1px. Reserve stronger borders for selection, focus or an explicit warning. Elevation is tokenized: `--shadow-xs` for controls, `--shadow-sm` for cards and panels, `--shadow` for menus, popovers, dialogs, side panels and toasts. Do not hand-write other shadow values.
 
 Implementation should introduce named spacing, typography, radius, control-size, motion and elevation tokens in the existing style foundation. The implemented token names are in `styles/design-system.css`; the scale includes only the values currently consumed. Do not publish a second parallel theme system.
 
@@ -173,7 +186,7 @@ Keep native text/date/time inputs unless a real interaction problem justifies an
 
 Person selections must search the entire authorized roster, resolve names across pages and retain selections through filtering/reload. Show sports/specialties and primary/supporting responsibility where relevant. Filtered out is not deselected. Clear unavailable selections explicitly; never silently submit hidden IDs.
 
-Search behavior must be explicit: a labelled Search action/Enter when results are server submitted; no mix of delayed and submit-only behavior without a reason. New search/filter resets list page; opening/returning from a record preserves the previous query and page. Preserve previous results during refresh with a clear busy state; accept only the latest response.
+Search behavior must be explicit: a labelled Search action/Enter when results are server submitted; no mix of delayed and submit-only behavior without a reason. New search/filter resets list page; opening/returning from a record preserves the previous query and page. Preserve previous results during refresh with a clear busy state; accept only the latest response. **Approved change, 27 October 2026 (not yet implemented):** list searches will run as the person types, after a short debounce, and Enter submits immediately; explicit Search buttons are removed as each list migrates to the shared filter toolbar. The page-reset, preserved-results and latest-response rules above still apply. See the [coach UX revamp plan](known-issues/ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026).
 
 ### Password visibility
 
@@ -248,7 +261,7 @@ Nutrition plans and athlete programs use the same AthleteSearch control and athl
 
 Schedule is one navigation destination, represented by the existing calendar SVG. Calendar and list are alternate views selected by one navigation-style button labelled with the destination view and its SVG icon; legacy event URLs remain valid and highlight Schedule. Both group sessions and assessments share the list. Calendar opens on today’s institution-timezone date and displays at most four booking cards, with the shared previous/next controls when needed. Selecting another date or changing the period resets card pagination. Read all pages of the displayed calendar period before reporting its counts; do not silently omit today’s bookings behind an API page. Existing date/view/filter query values survive view switching.
 
-The Schedule view button changes its label and icon to the destination view. Use a restrained 160ms opacity/3px transition for the label and standard hover transitions; reduced-motion preferences remove movement. Do not add a separate segmented navigation bar for these two views.
+The Schedule view button changes its label and icon to the destination view. Use a restrained 160ms opacity/3px transition for the label and standard hover transitions; reduced-motion preferences remove movement. Do not add a separate segmented navigation bar for these two views. **27 October 2026:** a Month/Week/List tab row was tried and reverted at founder request; the view select, period input and List view button remain.
 
 Calendar and list filter toolbars are unboxed wrapping flex layouts. Controls align at their lower edge; labels remain attached to inputs. Do not place a card background or border around ordinary filter/pagination controls. On narrow screens allow whole controls to wrap without shrinking touch targets.
 
@@ -292,8 +305,10 @@ Approved 26 October: athlete My day places actionable workouts first, then upcom
 
 Assessment event template selection uses one visible library search and a radio list with template names/test counts. Avoid a separate search accordion plus another selection dropdown. Preserve and identify the current selection even when it is outside search results; no-match results must not silently clear it. Fetch five results per request and offer More templates, with create-in-new-tab and refresh as secondary actions. Use bilingual task-specific examples for event names.
 
-Light-theme cards use `--surface` at 93% institution canvas and 7% institution ink, giving near-white backgrounds a visible tinted card surface. Primary ink follows institution contrast selection; `--muted` uses 78% ink and 22% canvas so supporting copy remains readable on the card and soft surfaces. Preserve dark-theme overrides. Validate text contrast on rendered surfaces when changing either token; a different background color alone is not acceptance.
+Administrator and athlete pages (28 October 2026): stat values use the shared stat-card treatment (label, value, caption) rather than accent side bars; a link is never styled as a metric. Shortcut lists to other sections use one compact panel of icon, title and description rows instead of several call-to-action cards. Logs and notification feeds are compact rows inside one card with a category icon, a plain-language title, muted metadata and a right-aligned time; unread state uses a dot plus bold text and an accessible Unread prefix. Per-record settings sit on the record's own row; never let a page-level control silently apply to whichever row is saved. Utilities such as Refresh are icon-only secondary buttons; reserve filled buttons for the page's primary action. Navigation icons are unique within a role's sidebar.
+
+Superseded 28 October 2026: light-theme cards are no longer tinted darker than the canvas; see [Surface layers and tokens](#surface-layers-and-tokens). Validate text contrast on rendered surfaces when changing any layer token; a different background color alone is not acceptance.
 
 Coach selectors keep checked primary/supporting coaches in the same result list rather than moving them to chips or a second list. Selected rows remain enabled for removal; retain selected identities outside a later search/page. Supporting sport/specialty scope remains explicit when several scopes are eligible.
 
-Messaging uses Conversations, Start conversation and Groups tabs, not a disclosure for the new-contact directory. An institution-inclusion switch interleaves discoverable channels with joined channels; joining remains explicit and previews stay private before membership. Preserve the inbox shell/scroll when selecting a thread. Athlete-plan adaptation has its own Apply action and personalized-revision label; library Save/Publish and explicit copy actions are distinct.
+Messaging uses two tabs, as in common chat apps: Chats (existing conversations) and Contacts (groups and people to start or reopen a chat with). Search filters the current tab as the user types; Enter is never required. Opening a contact reopens the existing private chat (pair creation is idempotent) and returns to Chats. The composer keeps attach, privacy note and Send on one row, and the message history fills the remaining thread height. On Chats, an administrator's institution-inclusion switch interleaves discoverable channels with joined channels; joining remains explicit and previews stay private before membership. Preserve the inbox shell/scroll when selecting a thread. Athlete-plan adaptation has its own Apply action and personalized-revision label; library Save/Publish and explicit copy actions are distinct.

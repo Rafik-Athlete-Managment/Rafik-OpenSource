@@ -13,7 +13,17 @@ import EmptyState from '../../components/EmptyState.vue'
 import ListPagination from '../../components/ListPagination.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'
 import CommandStatus from '../../components/CommandStatus.vue'
-import { PhBarbell, PhPlay, PhClockCounterClockwise, PhArrowClockwise } from '@phosphor-icons/vue'
+import {
+  PhBarbell,
+  PhPlay,
+  PhClockCounterClockwise,
+  PhArrowClockwise,
+  PhCalendarBlank,
+  PhCheckCircle,
+} from '@phosphor-icons/vue'
+import SidePanel from '../../components/SidePanel.vue'
+import OverflowMenu, { type OverflowItem } from '../../components/OverflowMenu.vue'
+import { useFocusRefresh } from '../../lib/focus-refresh'
 import ProgramCover from '../coaching/ProgramCover.vue'
 
 const props = withDefaults(
@@ -27,14 +37,20 @@ const props = withDefaults(
     refreshToken?: number
     hideEmpty?: boolean
     headingLevel?: number
+    /** Dense staff rows with one primary action and a menu for the rest. */
+    compact?: boolean
+    /** Open the scheduling panel for the first schedulable workout after the first load. */
+    autoSchedule?: boolean
   }>(),
   {
     due: false,
+    compact: false,
+    autoSchedule: false,
     limit: 10,
     pageHeading: false,
   },
 )
-const emit = defineEmits<{ changed: [] }>()
+const emit = defineEmits<{ changed: []; loaded: [total: number] }>()
 watch(
   () => props.refreshToken,
   () => {
@@ -55,7 +71,8 @@ const timezone = ref(profile.value?.timezone || 'UTC'),
   minutes = ref(60),
   reason = ref('')
 let disposed = false,
-  generation = 0
+  generation = 0,
+  autoScheduled = false
 onUnmounted(() => {
   disposed = true
   generation++
@@ -86,6 +103,12 @@ async function load() {
         return
       }
       data.value = result
+      emit('loaded', result.total)
+      if (props.autoSchedule && !autoScheduled) {
+        autoScheduled = true
+        const item = result.items.find((x) => x.can_schedule)
+        if (item) edit(item, 'schedule-workout')
+      }
     }
   } catch (e) {
     if (!disposed && generation === seq) {
@@ -144,7 +167,14 @@ const command = useCommand(
 const locked = computed(
   () => preparing.value || !command.state.ready || command.state.busy || !!command.state.pending,
 )
+let lastEdited = ''
+const returnFocus = () =>
+  document.querySelector<HTMLElement>(`[data-row-id="${lastEdited}"] .overflow-trigger`) ||
+  document.querySelector<HTMLElement>(
+    `[data-row-id="${lastEdited}"] :is(.agenda-actions, .record-actions) button`,
+  )
 function edit(item: WorkoutAgendaItem, next: typeof action.value) {
+  lastEdited = item.assignment_id
   selected.value = item
   action.value = next
   reason.value = ''
@@ -281,6 +311,39 @@ watch(
   },
 )
 onMounted(load)
+useFocusRefresh(() => {
+  if (!selected.value && !locked.value) return load()
+})
+const panelOpen = computed({
+  get: () => !!selected.value,
+  set: (open) => {
+    if (!open && !locked.value) selected.value = undefined
+  },
+})
+const dayName = (item: WorkoutAgendaItem) =>
+  (locale.value === 'ar' ? item.day?.nameAr || item.day?.name : item.day?.name) ||
+  l('Workout', 'تمرين')
+const canChange = (item: WorkoutAgendaItem) =>
+  context.view !== 'trainee' &&
+  !!item.occurrence &&
+  ['scheduled', 'ready', 'overdue', 'paused', 'in_progress'].includes(item.state)
+function rowMenu(item: WorkoutAgendaItem): OverflowItem[] {
+  return [
+    ...(context.view !== 'trainee' && !props.assignment
+      ? [{ key: 'plan', label: l('View plan', 'عرض الخطة'), to: '/training/' + item.assignment_id }]
+      : []),
+    ...(canChange(item) && !item.session && !item.blocked && item.state !== 'paused'
+      ? [{ key: 'reschedule', label: l('Reschedule', 'إعادة الجدولة'), disabled: locked.value }]
+      : []),
+    ...(canChange(item)
+      ? [{ key: 'skip', label: l('Skip with reason', 'تخطي مع ذكر السبب'), disabled: locked.value }]
+      : []),
+  ]
+}
+function menuSelect(item: WorkoutAgendaItem, key: string) {
+  if (key === 'reschedule') edit(item, 'reschedule-workout')
+  if (key === 'skip') edit(item, 'skip-workout')
+}
 const muscleNames: Record<string, [string, string]> = {
   quadriceps: ['Quadriceps', 'عضلات الفخذ الأمامية'],
   hamstrings: ['Hamstrings', 'عضلات الفخذ الخلفية'],
@@ -296,12 +359,21 @@ const muscleNames: Record<string, [string, string]> = {
   core: ['Core', 'عضلات الجذع'],
 }
 const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]!) : name)
+// Older snapshots without exercise details fall back to a library key such as "split-squat".
+const exerciseLabel = (name: string) =>
+  /^[a-z0-9]+(-[a-z0-9]+)+$/.test(name)
+    ? name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' ')
+    : name
 </script>
 <template>
   <section
     v-if="!hideEmpty || loading || error || (data?.total || 0) > 0"
     class="workout-agenda"
-    :class="{ 'athlete-workout-preview': pageHeading, 'staff-workout-cards': !pageHeading }"
+    :class="{
+      'athlete-workout-preview': pageHeading,
+      'staff-workout-cards': !pageHeading && !compact,
+      'is-compact': compact,
+    }"
     :aria-label="
       queue === 'actionable'
         ? l('Workouts to record', 'تمارين للتسجيل')
@@ -373,22 +445,31 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
             ? l('All my workouts', 'كل تماريني')
             : l('Athlete plans', 'خطط الرياضيين')
         }}</RouterLink>
+        <!-- Refresh is a utility: one quiet icon button in every context. -->
         <button
-          :class="pageHeading ? 'button' : 'button small secondary'"
+          class="button small secondary icon-only"
           :disabled="loading || locked"
+          :aria-label="l('Refresh workouts', 'تحديث التمارين')"
+          :title="l('Refresh workouts', 'تحديث التمارين')"
           @click="load"
         >
           <PhArrowClockwise :size="18" aria-hidden="true" />
-          {{ l('Refresh workouts', 'تحديث التمارين') }}
         </button>
       </div>
     </header>
     <CommandStatus :command="command" />
-    <p v-if="error && data" class="notice error" role="alert">{{ error }}</p>
+    <p v-if="error && data" class="notice error" role="alert">
+      {{ error }}
+      <button type="button" class="text-link" :disabled="loading" @click="load">
+        {{ l('Retry', 'إعادة المحاولة') }}
+      </button>
+    </p>
     <PageState :loading="loading && !data" :error="!data ? error : ''" @retry="load">
       <template v-if="data">
-        <p v-if="queue && !data.items.length" class="small-print">
-          {{ l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.') }}
+        <p v-if="queue && !data.items.length" class="agenda-empty">
+          <PhCheckCircle :size="20" aria-hidden="true" />{{
+            l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.')
+          }}
         </p>
         <EmptyState
           v-else-if="!data.items.length"
@@ -412,8 +493,94 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
             )
           "
         />
+        <ul v-else-if="compact" class="record-list agenda-compact">
+          <li
+            v-for="item in data.items"
+            :key="item.assignment_id"
+            class="record-row"
+            :data-row-id="item.assignment_id"
+          >
+            <div class="record-title">
+              <small class="agenda-when"
+                ><PhCalendarBlank :size="14" aria-hidden="true" />{{
+                  item.occurrence
+                    ? when(item) + ' · ' + item.occurrence.timezone
+                    : l('Not scheduled yet', 'لم يُجدول بعد')
+                }}</small
+              >
+              <component :is="headingLevel === 3 ? 'h4' : 'h3'" class="agenda-compact-name">
+                <bdi dir="auto">{{ item.member_name }}</bdi>
+              </component>
+              <small
+                ><bdi dir="auto">{{ dayName(item) }}</bdi> · <bdi dir="auto">{{ item.title }}</bdi
+                ><template v-if="item.goal">
+                  · <bdi dir="auto">{{ item.goal }}</bdi></template
+                ></small
+              >
+            </div>
+            <div class="record-meta">
+              <span class="tag" :data-status="item.state">{{ l(...states[item.state]) }}</span>
+              <small v-if="item.preview"
+                >{{
+                  item.preview.minutes
+                    ? item.preview.minutes + ' ' + l('min', 'دقيقة') + ' · '
+                    : ''
+                }}{{ item.preview.exercise_count }} {{ l('exercises', 'تمارين') }} ·
+                {{ item.preview.prescribed_sets }} {{ l('sets', 'مجموعات') }}</small
+              >
+              <small v-if="item.blocked">{{ blockedLabel(item) }}</small>
+              <small v-else-if="item.state === 'scheduled'">{{
+                l(
+                  'Recording opens at the scheduled start time.',
+                  'يفتح التسجيل عند موعد البدء المحدد.',
+                )
+              }}</small>
+            </div>
+            <div class="record-actions">
+              <RouterLink
+                v-if="item.session"
+                class="button small"
+                :class="{
+                  secondary: item.state === 'paused' || !item.session.can_record,
+                }"
+                :to="sessionLink(item)"
+                ><PhPlay :size="18" aria-hidden="true" />{{
+                  item.state === 'paused' || !item.session.can_record
+                    ? l('View workout', 'عرض التمرين')
+                    : l('Resume', 'متابعة')
+                }}</RouterLink
+              ><button
+                v-else-if="item.can_start"
+                class="button small"
+                :disabled="locked"
+                @click="start(item)"
+              >
+                <PhPlay :size="18" aria-hidden="true" />{{ l('Start', 'بدء') }}</button
+              ><button
+                v-else-if="item.can_schedule"
+                class="button small secondary"
+                :disabled="locked"
+                @click="edit(item, 'schedule-workout')"
+              >
+                {{ l('Schedule', 'جدولة') }}
+              </button>
+              <OverflowMenu
+                v-if="rowMenu(item).length"
+                compact
+                :label="l('More actions for ', 'إجراءات أخرى لـ ') + item.member_name"
+                :items="rowMenu(item)"
+                @select="menuSelect(item, $event)"
+              />
+            </div>
+          </li>
+        </ul>
         <ul v-else class="agenda-list">
-          <li v-for="item in data.items" :key="item.assignment_id" class="agenda-row">
+          <li
+            v-for="item in data.items"
+            :key="item.assignment_id"
+            class="agenda-row"
+            :data-row-id="item.assignment_id"
+          >
             <div v-if="pageHeading" class="workout-preview-art" aria-hidden="true">
               <PhBarbell :size="44" />
               <ProgramCover :id="item.preview?.cover" />
@@ -483,7 +650,9 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                     <li v-for="(exercise, index) in item.preview.exercises" :key="index">
                       <span
                         ><bdi>{{
-                          locale === 'ar' ? exercise.name_ar || exercise.name : exercise.name
+                          exerciseLabel(
+                            locale === 'ar' ? exercise.name_ar || exercise.name : exercise.name,
+                          )
                         }}</bdi></span
                       ><small>{{ exercise.sets }} {{ l('sets', 'مجموعات') }}</small>
                     </li>
@@ -570,62 +739,68 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                 </button></template
               >
             </div>
-            <form
-              v-if="selected?.assignment_id === item.assignment_id"
-              class="agenda-form"
-              @submit.prevent="submit"
-            >
-              <h3>
-                {{
-                  action === 'skip-workout'
-                    ? l('Skip this workout', 'تخطي هذا التمرين')
-                    : l('Schedule the next workout', 'جدولة التمرين التالي')
-                }}
-              </h3>
-              <template v-if="action !== 'skip-workout'"
-                ><label
-                  >{{ l('Date and time', 'التاريخ والوقت')
-                  }}<input
-                    v-model="local"
-                    type="datetime-local"
-                    required
-                    :disabled="locked" /></label
-                ><TimezonePicker
-                  v-model="timezone"
-                  :label="l('Timezone', 'المنطقة الزمنية')"
-                  :disabled="locked" /><label
-                  >{{ l('Duration (minutes)', 'المدة (دقائق)')
-                  }}<input
-                    v-model="minutes"
-                    type="number"
-                    min="1"
-                    max="480"
-                    required
-                    :disabled="locked" /></label
-              ></template>
-              <label v-else
-                >{{ l('Reason for skipping', 'سبب التخطي')
-                }}<textarea v-model="reason" required maxlength="2000" :disabled="locked" />
-              </label>
-              <div class="actions">
-                <button class="button small" :disabled="locked">
-                  {{
-                    action === 'skip-workout'
-                      ? l('Skip workout', 'تخطي التمرين')
-                      : l('Save schedule', 'حفظ الموعد')
-                  }}</button
-                ><button
-                  type="button"
-                  class="button small secondary danger-action"
-                  :disabled="locked"
-                  @click="selected = undefined"
-                >
-                  {{ l('Cancel', 'إلغاء') }}
-                </button>
-              </div>
-            </form>
           </li>
         </ul>
+        <SidePanel
+          v-model:open="panelOpen"
+          :locked="locked"
+          :return-focus="returnFocus"
+          :title="
+            action === 'skip-workout'
+              ? l('Skip this workout', 'تخطي هذا التمرين')
+              : l('Schedule the next workout', 'جدولة التمرين التالي')
+          "
+          :description="
+            selected
+              ? (context.view !== 'trainee' ? selected.member_name + ' · ' : '') +
+                dayName(selected) +
+                ' · ' +
+                selected.title
+              : ''
+          "
+        >
+          <form v-if="selected" class="agenda-form" @submit.prevent="submit">
+            <template v-if="action !== 'skip-workout'"
+              ><label
+                >{{ l('Date and time', 'التاريخ والوقت')
+                }}<input v-model="local" type="datetime-local" required :disabled="locked" /></label
+              ><TimezonePicker
+                v-model="timezone"
+                :label="l('Timezone', 'المنطقة الزمنية')"
+                :disabled="locked" /><label
+                >{{ l('Duration (minutes)', 'المدة (دقائق)')
+                }}<input
+                  v-model="minutes"
+                  type="number"
+                  min="1"
+                  max="480"
+                  required
+                  :disabled="locked" /></label
+            ></template>
+            <label v-else
+              >{{ l('Reason for skipping', 'سبب التخطي')
+              }}<textarea v-model="reason" required maxlength="2000" :disabled="locked" />
+            </label>
+            <div class="actions">
+              <button class="button small" :disabled="locked">
+                {{
+                  action === 'skip-workout'
+                    ? l('Skip workout', 'تخطي التمرين')
+                    : l('Save schedule', 'حفظ الموعد')
+                }}</button
+              ><button
+                type="button"
+                class="button small secondary danger-action"
+                :disabled="locked"
+                @click="selected = undefined"
+              >
+                {{ l('Cancel', 'إلغاء') }}
+              </button>
+            </div>
+          </form>
+          <CommandStatus :command="command" />
+          <p v-if="error" class="notice error" role="alert">{{ error }}</p>
+        </SidePanel>
         <ListPagination
           v-if="data.total > limit || offset > 0"
           :offset="offset"
@@ -641,6 +816,91 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
 <style scoped>
 .workout-agenda {
   margin-block: var(--space-6);
+}
+.is-compact .agenda-heading p {
+  max-width: 70ch;
+  font-size: var(--text-small);
+}
+/* Compact queues: one bordered list per queue, refresh pinned to the heading's end. */
+.is-compact .agenda-heading {
+  align-items: flex-start;
+}
+.is-compact .agenda-heading h2,
+.is-compact .agenda-heading h3 {
+  font-size: var(--text-panel);
+}
+.is-compact .agenda-heading p {
+  margin-block: var(--space-1) 0;
+}
+/* Actions keep their natural width at the heading's end; only the title block grows. */
+.agenda-heading > .agenda-toolbar-actions {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+.agenda-compact {
+  margin-block-start: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  overflow: hidden;
+}
+.agenda-compact .record-row:last-child {
+  border-block-end: 0;
+}
+.agenda-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-control);
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+.agenda-empty svg {
+  flex: none;
+  color: var(--accent);
+}
+.agenda-compact .record-row {
+  grid-template-columns: minmax(180px, 1.1fr) minmax(0, 1fr) 11rem;
+}
+.agenda-compact-name {
+  margin: 2px 0 0;
+  font-size: var(--text-body);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.agenda-when {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.agenda-compact .record-meta {
+  gap: var(--space-1) var(--space-3);
+}
+.agenda-compact .record-meta small {
+  flex-basis: 100%;
+}
+@media (max-width: 760px) {
+  .agenda-compact .record-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+/* Phones: details take the full row; actions follow underneath. */
+@media (max-width: 520px) {
+  .agenda-compact .record-row {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-3);
+  }
+  .agenda-compact .record-meta,
+  .agenda-compact .record-actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .agenda-compact .record-actions {
+    justify-content: flex-start;
+  }
 }
 .agenda-heading,
 .agenda-row {
@@ -901,10 +1161,6 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
 }
 .agenda-form {
   align-items: end;
-  padding: var(--space-4);
-  border-block-start: 1px solid var(--line);
-  background: var(--surface-soft);
-  border-radius: var(--radius-panel);
   min-width: 0;
 }
 .agenda-form > label,
