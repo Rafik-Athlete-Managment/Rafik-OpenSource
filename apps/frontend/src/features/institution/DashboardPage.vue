@@ -349,6 +349,10 @@ onMounted(async () => {
     <PageHeading class="work-heading">
       <div>
         <p class="overline">{{ roleName(view) }}</p>
+        <!-- Which institution this workspace belongs to; overlines are hidden in the dashboard shell. -->
+        <p v-if="section === 'overview' && data" class="dashboard-institution">
+          <bdi dir="auto">{{ data.institution.name }}</bdi>
+        </p>
         <h1>
           {{
             section === 'people'

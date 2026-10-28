@@ -45,7 +45,9 @@ test('first launch creates the super admin and an invited member can join withou
     await target.screenshot({ path: stem + '-full-page.png', fullPage: true })
   }
   const waitForDashboardData = async (target: Page, role: 'admin' | 'trainer' | 'athlete') => {
-    await expect(target.getByRole('heading', { name: 'Rafik Test University' })).toBeVisible()
+    await expect(
+      target.locator('.dashboard-institution').getByText('Rafik Test University', { exact: true }),
+    ).toBeVisible()
     await expect(target.getByText(/Loading upcoming events/)).toBeHidden()
     if (role !== 'athlete')
       await expect(
@@ -167,7 +169,9 @@ test('first launch creates the super admin and an invited member can join withou
   await invited.getByLabel('Confirm password').fill('Coach invite password 2026!')
   await invited.getByRole('button', { name: 'Create account and join' }).click()
   await expect(invited).toHaveURL(/\/dashboard$/)
-  await expect(invited.getByRole('heading', { name: 'Rafik Test University' })).toBeVisible()
+  await expect(
+    invited.locator('.dashboard-institution').getByText('Rafik Test University', { exact: true }),
+  ).toBeVisible()
   await waitForDashboardData(invited, 'trainer')
   await expect(invited.locator('.institution-nav')).toHaveCount(0)
   await expect(invited.locator('.institution-nav')).toBeHidden()
@@ -180,10 +184,13 @@ test('first launch creates the super admin and an invited member can join withou
   await screenshot(invited, 'trainer')
   await inviteContext.close()
 
+  // A successful invitation closes the form and keeps its link; reopen it for the next person.
+  await page.getByRole('button', { name: 'Invite people' }).click()
   await page.getByLabel('Email address').fill('athlete@rafik.test')
   await page.getByRole('radio', { name: 'Athlete' }).check()
   await page.getByRole('button', { name: 'Create invitation' }).click()
   await expect(link).toBeVisible()
+  await expect.poll(() => link.inputValue()).not.toBe(invitationUrl)
   const athleteInviteContext = await browser.newContext()
   const athlete = await athleteInviteContext.newPage()
   await athlete.goto(await link.inputValue())

@@ -53,10 +53,17 @@ try {
       `SELECT json_agg(c.relname ORDER BY c.relname) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND (left(c.relname,12)='institution_' OR c.relname IN('institutions','assessment_results','assessment_result_history','assessment_templates','program_media','profiles','instance_branding'));`,
     ),
   );
+  // Compare the columns that existed before retirement. Later additive migrations may
+  // add columns with defaults; those must not count as changes to existing records.
+  const columns = JSON.parse(
+    sql(
+      `SELECT json_object_agg(table_name,cols) FROM (SELECT table_name,json_agg(column_name ORDER BY ordinal_position) cols FROM information_schema.columns WHERE table_schema='public' AND table_name IN (${names.map((n) => `'${n}'`).join(",")}) GROUP BY table_name) c;`,
+    ),
+  );
   const snapshot = () =>
     JSON.parse(
       sql(
-        `SELECT jsonb_object_agg(name,rows) FROM (${names.map((name) => `SELECT '${name}' name,(SELECT coalesce(jsonb_agg(row ORDER BY row::text),'[]') FROM (SELECT to_jsonb(t) row FROM public."${name}" t) data) rows`).join(" UNION ALL ")}) snapshot;`,
+        `SELECT jsonb_object_agg(name,rows) FROM (${names.map((name) => `SELECT '${name}' name,(SELECT coalesce(jsonb_agg(row ORDER BY row::text),'[]') FROM (SELECT to_jsonb(t) row FROM (SELECT ${columns[name].map((c) => `"${c}"`).join(",")} FROM public."${name}") t) data) rows`).join(" UNION ALL ")}) snapshot;`,
       ),
     );
   const before = snapshot();

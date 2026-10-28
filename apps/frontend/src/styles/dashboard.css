@@ -30,6 +30,12 @@
 .dashboard-frame .page-heading .overline {
   display: none;
 }
+.dashboard-institution {
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
 .dashboard-frame .organization-summary {
   margin-block: 18px 24px;
 }
