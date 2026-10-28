@@ -161,6 +161,8 @@
   margin: 0;
   padding: 0;
   border: 0;
+  background: none;
+  box-shadow: none;
 }
 .institution-settings-grid h2,
 .institution-settings-grid h3 {

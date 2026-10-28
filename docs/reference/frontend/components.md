@@ -332,6 +332,14 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Direct rendered consumers:** Router.
 - **Views using it:** `/review/:id`
 
+## ActivityLog
+
+- **Source:** [features/institution/ActivityLog.vue](../../../apps/frontend/src/features/institution/ActivityLog.vue)
+- **Kind:** Reusable/domain component.
+- **Purpose:** Administrator activity log: institution audit events in plain words, grouped by day, with acting and affected member names. Administrators only.
+- **Direct rendered consumers:** [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`
+
 ## AdminOverview
 
 - **Source:** [features/institution/AdminOverview.vue](../../../apps/frontend/src/features/institution/AdminOverview.vue)

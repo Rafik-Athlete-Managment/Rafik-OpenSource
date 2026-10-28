@@ -35,10 +35,13 @@ Use an empty synthetic institution or your existing local demo; do not reset ano
 
 ### Institution overview
 
-1. Open Dashboard: expect Institution overview, a reporting-period control and activity before administrative detail. Switch 7/28/90 days; wait for the returned dates to match. No records should show honest chart empty states, not example data.
+1. Open Dashboard: expect Institution overview with the reporting-period control and Open full analytics beside the Participation and activity heading, then period metrics before administrative detail. Switch 7/28/90 days; wait for the returned dates to match. No records should show honest chart empty states, not example data.
 2. Compare completed workouts with recorded completions in the selected period. Participation counts distinct currently active athletes with a completion, over the active roster now; it is not attendance or compliance. Attendance counts athlete-event entries for started non-cancelled events, including unknown/unmarked entries.
-3. Follow coverage links to People and coaches; check Invite people, persistent invitation link, athlete plans and institution settings remain reachable. Admins must not gain coach recording or injury-detail access.
+3. Follow coverage links to People and coaches. The Administration panel lists People & access, Athlete plans, Institution settings and Activity; check each opens. Invite people and the persistent invitation link remain reachable. Admins must not gain coach recording or injury-detail access.
 4. Interrupt a report refresh: expect an error and retained results with their original dates. Retry and confirm recovery. Inspect phone/desktop, Arabic/English and both themes.
+5. In People & access, each person's name opens their profile; each row has a Message icon and a labelled Manage button that opens the Manage tab.
+6. Open Activity: changes are grouped by day with a time, a plain description (for example Attendance recorded or Workout scheduled), the affected member where there is one and "by" the member who acted. Show earlier activity loads older entries.
+7. In Institution settings, add a sport: choose Sport or Coaching specialty first, then type the name; the button reads Add sport or Add specialty.
 
 ### Prepare an assigned program
 
@@ -106,23 +109,24 @@ Have a synthetic athlete start a scheduled workout and leave it unfinished. As i
 
 ### Scheduled workout access
 
-The athlete training screen should have one Your workouts heading, adjacent filled Refresh workouts and outlined Workout history buttons, and distinct preview cards. Start/Resume stays visible without hover on phones and when using a keyboard. A copied staff `/training/:assignment` link must return the athlete to their dashboard before displaying staff detail.
+The athlete training screen should have one Your workouts heading, an outlined Workout history button with an icon-only Refresh workouts button beside it, and distinct preview cards with readable exercise names. Start/Resume stays visible without hover on phones and when using a keyboard. A copied staff `/training/:assignment` link must return the athlete to their dashboard before displaying staff detail.
 
 Open Your workouts with one future scheduled plan and one actionable plan. The future card explains that recording opens at the scheduled start time and has no Start button. Start the actionable workout, leave and resume the same record; unfinished work in another plan must not block it. An unscheduled plan explains that a coach must schedule it. Device records with pending edits remain linked under Work saved on this device even if the server read fails. Reload after acknowledged completion and confirm progression changed once. Weekly automatic scheduling, group exercise results and Android workout capture are outside this validation slice.
 
-1. Open Programs. Only assigned programs should appear. Copy an unassigned program URL from staff and open it as the athlete: it must be rejected. Assigned program details should say Program details, not Edit program.
+1. Open Programs. Only assigned programs should appear, without staff library/draft tags. Copy an unassigned program URL from staff and open it as the athlete: it must be rejected. Assigned program details should say Program details, not Edit program.
 2. Open `/people`, `/analytics`, `/groups` and `/plans/new` directly. These staff-only screens should return you to the dashboard before rendering. Server authorization must still reject staff requests.
 3. In Messages, select the Contacts tab and choose your assigned coach. Send a message. Ask the coach to open your contact too; both should reach the same private conversation. Unrelated athletes must not be available as contacts.
 4. Open an existing in-progress workout. Start a rest timer and switch exercises: the previous timer should clear. Try navigating away and cancel the warning; you should remain in the workout. Accept it, reopen the workout and confirm saved progress remains.
 5. Record food. A dialog should open with the reference library available first for a blank entry; manual entry remains available. Save breakfast and lunch entries: each meal should have one section heading. Correct an entry, close/reopen its draft and confirm its values remain.
-6. Open Injury status. Complete consent prerequisites where enabled, report participation status, correct it and close it. Staff roles retain their existing distinct permissions; this is not a clinical injury record.
+6. Open Injury status. Complete consent prerequisites where enabled, report participation status, correct it and close it. Download my records sits after the record list.
+7. Open My feedback: each session shows Rated or Not rated yet. Open Notifications: unread updates show a dot and bold title, the count appears above the list, Mark all read clears them, and selecting an update opens its linked page. Staff roles retain their existing distinct permissions; this is not a clinical injury record.
 
 ## Optional participation-status walkthrough
 
 Use a synthetic institution and athlete records. The first-run form creates the initial institution and super admin; subsequent users are added by an administrator through one-time invitation links.
 
 1. Sign in and confirm the institution and active role.
-2. As an administrator, open **Injury status** and configure consent prerequisites for a synthetic athlete. For a minor, use only the guardian-authorization attestation; do not enter guardian documents or real personal data. Confirm the administrator cannot see injury status.
+2. As an administrator, open **Injury status**. Needs setup lists athletes without a consent setup; All athletes shows everyone with Adult/Minor and assent tags. Choose the age group on the athlete's own row (Minor shows the guardian checkbox on that row only and keeps Save disabled until checked), then save: the athlete leaves Needs setup. For a minor, use only the guardian-authorization attestation; do not enter guardian documents or real personal data. Confirm the administrator cannot see injury status.
 3. Sign out. Sign in as that athlete, review the consent and assent prompt, and record a synthetic participation status. Then try reviewing, correcting, closing, withdrawing consent, and exporting the record. Note confusing wording, lost input, or unclear confirmation.
 4. Sign out and sign in as the athlete’s designated coach. Open **Injury status** and verify that only the current participation status and effective date are visible. Confirm that unassigned athletes, prior history, and health details are not exposed, and that the coach cannot create or change the record.
 5. Return to the athlete account, correct or withdraw the record, then refresh the coach view. Confirm the change is reflected and withdrawn status is hidden.

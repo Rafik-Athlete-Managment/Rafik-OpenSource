@@ -203,7 +203,9 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
     await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
     await expect(page).toHaveURL(/\/review\/[a-f0-9-]{36}$/)
     await page.goto(page.url().replace('/review/', '/record/'))
-    const history = page.getByRole('region', { name: 'Record history' })
+    // Record history opens in a side panel from the sticky record toolbar.
+    await page.getByRole('button', { name: 'Record history', exact: true }).click()
+    const history = page.getByRole('dialog', { name: 'Record history' })
     await expect(history.getByRole('listitem')).toHaveCount(2)
     await expect(history).toContainText('R4 Coach · started')
     await expect(history).toContainText('R4 Coach · saved as completed')
@@ -227,6 +229,7 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
     })
     await page.setViewportSize({ width: 320, height: 740 })
     await page.goto(recordUrl)
+    await page.getByRole('button', { name: 'سجل التعديلات', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'سجل التعديلات' })).toBeVisible()
     await inspect(page, 'record-ar-dark-320', info)
   } finally {
@@ -381,7 +384,8 @@ test('coach schedules from a plan; athlete sees the future-start explanation in 
     await expect.poll(() => adaptationRequests.length).toBe(2)
     expect(adaptationRequests[1]).toEqual(adaptationRequests[0])
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Athlete-specific adaptation')
-    await expect(page.getByText('Personalized plan · revision 1', { exact: true })).toBeVisible()
+    // The revision label is part of the plan subtitle line.
+    await expect(page.getByText(/Personalized plan · revision\s+1\b/)).toBeVisible()
     const agenda = page.getByRole('region', { name: 'Next workouts', exact: true })
     await agenda.getByRole('button', { name: 'Schedule workout', exact: true }).click()
     const scheduleForm = page.getByRole('dialog', { name: 'Schedule the next workout' })
@@ -1004,7 +1008,8 @@ test('event template uses one search and preserves selection through no matches'
         softMuted: ratio('--muted', '--surface-soft'),
       }
     })
-    expect(colors.card).toBeGreaterThan(1.1)
+    // Cards are raised by border and shadow (28 Oct theme); the surface stays brighter than the canvas.
+    expect(colors.card).toBeGreaterThan(1.02)
     expect(colors.text).toBeGreaterThanOrEqual(4.5)
     expect(colors.muted).toBeGreaterThanOrEqual(4.5)
     expect(colors.softMuted).toBeGreaterThanOrEqual(4.5)

@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { PhUsers, PhGear, PhChartLine } from '@phosphor-icons/vue'
+import {
+  PhUsers,
+  PhGear,
+  PhChartLine,
+  PhBarbell,
+  PhClockCounterClockwise,
+  PhCaretRight,
+} from '@phosphor-icons/vue'
 import { profile } from '../../app/auth'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage } from '../../lib/i18n'
@@ -95,9 +102,14 @@ const previousAgenda = useCommand(
     <CommandStatus :command="previousAgenda" />
     <header class="dashboard-period">
       <h2>{{ l('Participation and activity', 'المشاركة والنشاط') }}</h2>
-      <label
-        >{{ l('Reporting period', 'فترة التقرير')
-        }}<select v-model="period" @change="load">
+      <RouterLink class="text-link" to="/analytics"
+        ><PhChartLine :size="18" aria-hidden="true" />{{
+          l('Open full analytics', 'فتح التحليلات الكاملة')
+        }}</RouterLink
+      >
+      <label class="period-select"
+        ><span class="sr-only">{{ l('Reporting period', 'فترة التقرير') }}</span
+        ><select v-model="period" @change="load">
           <option value="7">{{ l('Last 7 days', 'آخر 7 أيام') }}</option>
           <option value="28">{{ l('Last 28 days', 'آخر 28 يوماً') }}</option>
           <option value="90">{{ l('Last 90 days', 'آخر 90 يوماً') }}</option>
@@ -119,7 +131,7 @@ const previousAgenda = useCommand(
             )
           }}
         </p>
-        <div class="dashboard-metrics">
+        <div class="dashboard-metrics two">
           <div>
             <span>{{ l('Completed workouts', 'التمارين المكتملة') }}</span
             ><strong>{{ data.summary.completed }}</strong
@@ -137,12 +149,6 @@ const previousAgenda = useCommand(
               )
             }}</small>
           </div>
-          <RouterLink to="/analytics"
-            ><span>{{ l('Explore the report', 'استكشاف التقرير') }}</span
-            ><PhChartLine :size="28" aria-hidden="true" /><small
-              >{{ l('Activity, delivery and experience', 'النشاط والتدريب والتجربة') }} ↗</small
-            ></RouterLink
-          >
         </div>
         <div class="dashboard-charts">
           <MetricChart
@@ -177,6 +183,9 @@ const previousAgenda = useCommand(
     <div class="role-dashboard-columns dashboard-operations">
       <div class="role-dashboard-main">
         <h2>{{ l('Institution coverage', 'تغطية المؤسسة') }}</h2>
+        <p class="small-print">
+          {{ l('Current roster, counted now.', 'القائمة الحالية، محسوبة الآن.') }}
+        </p>
         <div class="dashboard-metrics">
           <RouterLink to="/people"
             ><span>{{ l('Active athletes', 'الرياضيون النشطون') }}</span
@@ -189,7 +198,7 @@ const previousAgenda = useCommand(
           <RouterLink to="/people"
             ><span>{{ l('Without a primary coach', 'دون مدرب أساسي') }}</span
             ><strong>{{ institution.summary.unassigned }}</strong
-            ><small
+            ><small v-if="institution.summary.unassigned"
               >{{ l('Review coaching assignments', 'مراجعة تعيينات التدريب') }} ↗</small
             ></RouterLink
           >
@@ -197,35 +206,44 @@ const previousAgenda = useCommand(
         <UpcomingSessions />
       </div>
       <aside class="role-dashboard-context">
-        <section class="panel dashboard-action-panel">
-          <h2><PhUsers aria-hidden="true" />{{ l('Manage your people', 'إدارة الأشخاص') }}</h2>
-          <p>
-            {{
-              l(
-                'Review profiles, roles and coaching responsibility. Invite people using the action above.',
-                'راجع الملفات والأدوار ومسؤولية التدريب. ادعُ الأشخاص من الإجراء أعلاه.',
-              )
-            }}
-          </p>
-          <RouterLink class="button" to="/people">{{ l('Open people', 'فتح الأشخاص') }}</RouterLink>
-          <RouterLink class="text-link" to="/training">{{
-            l('Review athlete plans', 'مراجعة خطط الرياضيين')
-          }}</RouterLink>
-        </section>
-        <section class="panel dashboard-action-panel">
-          <h2><PhGear aria-hidden="true" />{{ l('Institution controls', 'ضبط المؤسسة') }}</h2>
-          <p>
-            {{
-              l(
-                'Manage sports, branding and institution details.',
-                'أدر الرياضات والهوية وتفاصيل المؤسسة.',
-              )
-            }}
-          </p>
-          <RouterLink class="button secondary" to="/institution-settings">{{
-            l('Institution settings', 'إعدادات المؤسسة')
-          }}</RouterLink>
-        </section>
+        <nav class="panel admin-shortcuts" :aria-label="l('Administration', 'الإدارة')">
+          <h2>{{ l('Administration', 'الإدارة') }}</h2>
+          <RouterLink to="/people"
+            ><PhUsers :size="20" aria-hidden="true" /><span
+              ><strong>{{ l('People & access', 'الأشخاص والصلاحيات') }}</strong
+              ><small>{{
+                l(
+                  'Profiles, roles and coaching responsibility',
+                  'الملفات والأدوار ومسؤولية التدريب',
+                )
+              }}</small></span
+            ><PhCaretRight class="shortcut-caret" :size="16" aria-hidden="true"
+          /></RouterLink>
+          <RouterLink to="/training"
+            ><PhBarbell :size="20" aria-hidden="true" /><span
+              ><strong>{{ l('Athlete plans', 'خطط الرياضيين') }}</strong
+              ><small>{{
+                l('Current and upcoming assignments', 'التعيينات الحالية والقادمة')
+              }}</small></span
+            ><PhCaretRight class="shortcut-caret" :size="16" aria-hidden="true"
+          /></RouterLink>
+          <RouterLink to="/institution-settings"
+            ><PhGear :size="20" aria-hidden="true" /><span
+              ><strong>{{ l('Institution settings', 'إعدادات المؤسسة') }}</strong
+              ><small>{{
+                l('Name, sports, branding and closure', 'الاسم والرياضات والهوية والإغلاق')
+              }}</small></span
+            ><PhCaretRight class="shortcut-caret" :size="16" aria-hidden="true"
+          /></RouterLink>
+          <RouterLink to="/activity"
+            ><PhClockCounterClockwise :size="20" aria-hidden="true" /><span
+              ><strong>{{ l('Activity', 'النشاط') }}</strong
+              ><small>{{
+                l('Recent membership and configuration changes', 'أحدث تغييرات العضوية والإعدادات')
+              }}</small></span
+            ><PhCaretRight class="shortcut-caret" :size="16" aria-hidden="true"
+          /></RouterLink>
+        </nav>
       </aside>
     </div>
   </div>

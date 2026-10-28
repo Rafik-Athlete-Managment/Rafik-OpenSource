@@ -358,6 +358,11 @@ const muscleNames: Record<string, [string, string]> = {
   core: ['Core', 'عضلات الجذع'],
 }
 const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]!) : name)
+// Older snapshots without exercise details fall back to a library key such as "split-squat".
+const exerciseLabel = (name: string) =>
+  /^[a-z0-9]+(-[a-z0-9]+)+$/.test(name)
+    ? name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' ')
+    : name
 </script>
 <template>
   <section
@@ -439,17 +444,8 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
             ? l('All my workouts', 'كل تماريني')
             : l('Athlete plans', 'خطط الرياضيين')
         }}</RouterLink>
+        <!-- Refresh is a utility: one quiet icon button in every context. -->
         <button
-          v-if="pageHeading || (due && context.view === 'trainee')"
-          :class="pageHeading ? 'button' : 'button small secondary'"
-          :disabled="loading || locked"
-          @click="load"
-        >
-          <PhArrowClockwise :size="18" aria-hidden="true" />
-          {{ l('Refresh workouts', 'تحديث التمارين') }}
-        </button>
-        <button
-          v-else
           class="button small secondary icon-only"
           :disabled="loading || locked"
           :aria-label="l('Refresh workouts', 'تحديث التمارين')"
@@ -651,7 +647,9 @@ const muscleName = (name: string) => (muscleNames[name] ? l(...muscleNames[name]
                     <li v-for="(exercise, index) in item.preview.exercises" :key="index">
                       <span
                         ><bdi>{{
-                          locale === 'ar' ? exercise.name_ar || exercise.name : exercise.name
+                          exerciseLabel(
+                            locale === 'ar' ? exercise.name_ar || exercise.name : exercise.name,
+                          )
                         }}</bdi></span
                       ><small>{{ exercise.sets }} {{ l('sets', 'مجموعات') }}</small>
                     </li>

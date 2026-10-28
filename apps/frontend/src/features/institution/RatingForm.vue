@@ -116,8 +116,16 @@ const labels = computed(() => [
 </script>
 <template>
   <section class="panel rating-form">
-    <h2 dir="auto">{{ title }}</h2>
-    <p v-if="subtitle" class="small-print">{{ subtitle }}</p>
+    <header class="rating-heading">
+      <div>
+        <h2 dir="auto">{{ title }}</h2>
+        <p v-if="subtitle" class="small-print">{{ subtitle }}</p>
+      </div>
+      <!-- Lets a long list be scanned for what still needs a response. -->
+      <span class="tag" :data-status="props.score ? 'completed' : 'pending'">{{
+        props.score ? l('Rated', 'تم التقييم') : l('Not rated yet', 'لم يُقيَّم بعد')
+      }}</span>
+    </header>
     <p v-if="!editing">
       {{ l('Your rating', 'تقييمك') }}: {{ score }} / 5 · {{ labels[(score || 1) - 1] }}
       <button class="text-link" :disabled="locked" @click="editing = true">
@@ -176,6 +184,16 @@ const labels = computed(() => [
 .rating-form h2 {
   font-size: 1.1rem;
   margin: 0;
+}
+.rating-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.rating-heading .small-print {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
 }
 .rating-form fieldset {
   border: 0;

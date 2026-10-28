@@ -381,6 +381,7 @@ onMounted(load)
               <label v-for="field in setFields(exercise.kind)" :key="field"
                 ><span class="set-field-label">{{ fieldLabel(field, entry.unit) }}</span
                 ><input
+                  :aria-label="fieldLabel(field, entry.unit)"
                   type="number"
                   :inputmode="field === 'reps' ? 'numeric' : 'decimal'"
                   :min="measureLimits[field].min"
@@ -548,15 +549,10 @@ onMounted(load)
 .back-arrow:dir(rtl) {
   transform: scaleX(-1);
 }
-/* Desktop: name each measure once per exercise; inputs keep their accessible labels. */
+/* Desktop: name each measure once per exercise; every input keeps its aria-label. */
 @media (min-width: 521px) {
   .delegated-set:not(:first-of-type) .set-field-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    display: none;
   }
   .delegated-set:not(:first-of-type) {
     align-items: center;

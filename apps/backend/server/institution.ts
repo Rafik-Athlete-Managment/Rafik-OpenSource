@@ -324,11 +324,51 @@ export async function institutionView(
         invitations.length > 25
           ? pageOffset(query.get("invitationOffset")) + 25
           : null,
-      events: events.slice(0, 30),
+      events: await namedEvents(tx, id, events.slice(0, 30)),
       eventsNext:
         events.length > 30 ? pageOffset(query.get("eventOffset")) + 30 : null,
     };
   });
+}
+/** Activity rows name the acting member and the member they concern, when one is identifiable. */
+async function namedEvents<
+  T extends {
+    actor_id: string | null;
+    subject_id: string | null;
+    detail: unknown;
+  },
+>(tx: Tx, institution: string, events: T[]) {
+  const memberOf = (event: T) => {
+    const member = (event.detail as { member?: unknown } | null)?.member;
+    return typeof member === "string" ? member : null;
+  };
+  const ids = [
+    ...new Set(
+      events.flatMap((event) =>
+        [event.actor_id, event.subject_id, memberOf(event)].filter(
+          (value): value is string => !!value,
+        ),
+      ),
+    ),
+  ];
+  const people = ids.length
+    ? await tx.institution_members.findMany({
+        where: {
+          institution_id: institution,
+          OR: [{ id: { in: ids } }, { user_id: { in: ids } }],
+        },
+        select: { id: true, user_id: true, name: true },
+      })
+    : [];
+  const nameOf = (value: string | null) =>
+    value
+      ? people.find((m) => m.id === value || m.user_id === value)?.name || null
+      : null;
+  return events.map((event) => ({
+    ...event,
+    actor_name: nameOf(event.actor_id),
+    subject_name: nameOf(event.subject_id) || nameOf(memberOf(event)),
+  }));
 }
 async function invitationSports(
   tx: Tx,

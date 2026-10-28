@@ -27,6 +27,7 @@ import CoachDesk from './CoachDesk.vue'
 import AdminOverview from './AdminOverview.vue'
 import AthleteDay from './AthleteDay.vue'
 import './role-dashboard.css'
+import ActivityLog from './ActivityLog.vue'
 import BrandingSettings from './BrandingSettings.vue'
 import SportsSettings from './SportsSettings.vue'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
@@ -690,19 +691,6 @@ onMounted(async () => {
                     </div>
                     <div class="person-actions">
                       <RouterLink
-                        class="person-action"
-                        :to="
-                          base +
-                          '/members/' +
-                          member.id +
-                          '?returnTo=' +
-                          encodeURIComponent(route.fullPath)
-                        "
-                        :aria-label="l('Profile for ', 'ملف ') + member.name"
-                        :title="l('Open profile', 'فتح الملف')"
-                        ><PersonActionIcon kind="profile"
-                      /></RouterLink>
-                      <RouterLink
                         v-if="member.active && member.user_id && member.id !== data.self.id"
                         class="person-action"
                         :to="
@@ -718,7 +706,7 @@ onMounted(async () => {
                       /></RouterLink>
                       <RouterLink
                         v-if="view === 'admin'"
-                        class="person-action"
+                        class="button secondary small"
                         :to="
                           base +
                           '/members/' +
@@ -727,9 +715,8 @@ onMounted(async () => {
                           encodeURIComponent(route.fullPath)
                         "
                         :aria-label="l('Manage ', 'إدارة ') + member.name"
-                        :title="l('Manage details', 'إدارة البيانات')"
-                        ><PersonActionIcon kind="manage"
-                      /></RouterLink>
+                        ><PersonActionIcon kind="manage" />{{ l('Manage', 'إدارة') }}</RouterLink
+                      >
                       <OverflowMenu
                         v-if="
                           view === 'trainer' && member.active && member.roles.includes('trainee')
@@ -792,59 +779,12 @@ onMounted(async () => {
             </button>
           </section>
         </template>
-        <section v-else-if="section === 'activity' && view === 'admin'" class="panel">
-          <h2>{{ l('Recent institution changes', 'تغييرات المؤسسة الأخيرة') }}</h2>
-          <p v-if="!data.events.length">
-            {{ l('No changes recorded yet.', 'لا تغييرات مسجلة بعد.') }}
-          </p>
-          <ol class="organization-events">
-            <li v-for="event in data.events" :key="event.id">
-              <strong>{{
-                l(
-                  {
-                    member_invited: 'Invitation created',
-                    invitation_revoked: 'Invitation revoked',
-                    member_joined: 'Member joined',
-                    trainer_assigned: 'Coach responsibility updated',
-                    member_roles_changed: 'Member roles updated',
-                    member_removed: 'Membership deactivated',
-                    organization_created: 'Institution created',
-                    organization_renamed: 'Institution renamed',
-                    nutrition_plan_published: 'Nutrition plan published',
-                    nutrition_sharing_changed: 'Nutrition sharing changed',
-                  }[event.kind] || 'Institution updated',
-                  {
-                    member_invited: 'إنشاء دعوة',
-                    invitation_revoked: 'إلغاء دعوة',
-                    member_joined: 'انضمام عضو',
-                    trainer_assigned: 'تحديث مسؤولية المدرب',
-                    member_roles_changed: 'تحديث الأدوار',
-                    member_removed: 'إلغاء تنشيط عضوية',
-                    organization_created: 'إنشاء المؤسسة',
-                    organization_renamed: 'تغيير اسم المؤسسة',
-                    nutrition_plan_published: 'نشر خطة التغذية',
-                    nutrition_sharing_changed: 'تغيير مشاركة التغذية',
-                  }[event.kind] || 'تحديث المؤسسة',
-                )
-              }}</strong
-              ><span>{{
-                data.members.find(
-                  (m) => m.id === event.subject_id || m.user_id === event.subject_id,
-                )?.name
-              }}</span
-              ><time>{{ dateLabel(event.created_at) }}</time>
-            </li>
-          </ol>
-          <button
-            v-if="data.eventsNext !== null"
-            type="button"
-            class="text-link"
-            :disabled="extraLoading"
-            @click="loadExtra('events')"
-          >
-            {{ l('Earlier activity', 'نشاط أقدم') }}
-          </button>
-        </section>
+        <ActivityLog
+          v-else-if="section === 'activity' && view === 'admin'"
+          :data="data"
+          :loading="extraLoading"
+          @more="loadExtra('events')"
+        />
         <section
           v-else-if="section === 'settings' && view === 'admin'"
           class="institution-settings"

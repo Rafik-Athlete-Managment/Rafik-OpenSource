@@ -90,10 +90,15 @@ onUnmounted(() => {
         <h1>{{ language('Programs', 'البرامج') }}</h1>
         <p>
           {{
-            language(
-              'Build once. Adapt thoughtfully. Keep completed training intact.',
-              'ابنِ الخطة. عدّلها بعناية. واحتفظ بالتدريب المكتمل.',
-            )
+            context.view === 'trainee'
+              ? language(
+                  'Programs your institution has published. Open one to see its sessions and exercises.',
+                  'البرامج التي نشرتها مؤسستك. افتح برنامجاً لرؤية حصصه وتمارينه.',
+                )
+              : language(
+                  'Build once. Adapt thoughtfully. Keep completed training intact.',
+                  'ابنِ الخطة. عدّلها بعناية. واحتفظ بالتدريب المكتمل.',
+                )
           }}
         </p>
       </div>
@@ -146,7 +151,9 @@ onUnmounted(() => {
           class="plan-card panel"
           ><ProgramCover :id="p.draft.presentation?.cover" />
           <div class="plan-card-top">
-            <PhBarbell :size="28" aria-hidden="true" /><span class="plan-card-tags"
+            <PhBarbell :size="28" aria-hidden="true" /><span
+              v-if="context.view !== 'trainee'"
+              class="plan-card-tags"
               ><span v-if="p.listed" class="tag" data-status="published">{{
                 language('In library', 'في المكتبة')
               }}</span

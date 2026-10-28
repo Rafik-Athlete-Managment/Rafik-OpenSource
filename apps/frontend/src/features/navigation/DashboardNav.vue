@@ -4,6 +4,8 @@ import { useRoute } from 'vue-router'
 import { sectionPath } from './section-path'
 import {
   PhHouse,
+  PhStar,
+  PhPulse,
   PhUsers,
   PhBarbell,
   PhCalendarBlank,
@@ -39,8 +41,8 @@ const groups = computed(() =>
           name: l('My support', 'الدعم الخاص بي'),
           items: [
             ['/nutrition', l('Nutrition', 'التغذية'), PhBowlFood],
-            ['/injuries', l('Injury status', 'حالة الإصابة'), PhListChecks],
-            ['/feedback', l('My feedback', 'تقييماتي'), PhClipboardText],
+            ['/injuries', l('Injury status', 'حالة الإصابة'), PhHeartbeat],
+            ['/feedback', l('My feedback', 'تقييماتي'), PhStar],
             ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
           ],
         },
@@ -53,8 +55,7 @@ const groups = computed(() =>
               ['/dashboard', l('Overview', 'نظرة عامة'), PhHouse],
               ['/people', l('People & access', 'الأشخاص والصلاحيات'), PhUsers],
               ['/analytics', l('Analytics', 'التحليلات'), PhChartLine],
-              ['/plans', l('Programs', 'البرامج'), PhClipboardText],
-              ['/activity', l('Activity', 'النشاط'), PhClockCounterClockwise],
+              ['/activity', l('Activity', 'النشاط'), PhPulse],
               ['/institution-settings', l('Institution settings', 'إعدادات المؤسسة'), PhGear],
             ],
           },
@@ -64,7 +65,7 @@ const groups = computed(() =>
               ['/training', l('Athlete plans', 'خطط الرياضيين'), PhBarbell],
               ['/workouts', l('Workout history', 'سجل التمارين'), PhClockCounterClockwise],
               ['/nutrition', l('Nutrition plans', 'خطط التغذية'), PhBowlFood],
-              ['/injuries', l('Injury status', 'حالة الإصابة'), PhListChecks],
+              ['/injuries', l('Injury status', 'حالة الإصابة'), PhHeartbeat],
               ['/schedule', l('Schedule', 'الجدول'), PhCalendarBlank],
               ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
             ],
@@ -72,9 +73,10 @@ const groups = computed(() =>
           {
             name: l('Library', 'المكتبة'),
             items: [
-              ['/exercises', l('Exercises', 'التمارين'), PhBarbell],
+              ['/plans', l('Programs', 'البرامج'), PhClipboardText],
+              ['/exercises', l('Exercises', 'التمارين'), PhPersonSimpleRun],
               ['/resources', l('Resources', 'الموارد'), PhFolder],
-              ['/groups', l('Groups', 'المجموعات'), PhUsers],
+              ['/groups', l('Groups', 'المجموعات'), PhUsersThree],
               ['/assessment-templates', l('Assessment templates', 'قوالب التقييم'), PhListChecks],
             ],
           },
