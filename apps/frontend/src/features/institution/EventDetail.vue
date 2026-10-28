@@ -812,7 +812,7 @@ onMounted(load)
   border-inline-start: 4px solid var(--accent);
   border-radius: var(--radius-panel);
   background: var(--surface);
-  box-shadow: 0 8px 24px #00000008;
+  box-shadow: var(--shadow-sm);
   overflow-wrap: anywhere;
 }
 .event-when {

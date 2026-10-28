@@ -788,7 +788,7 @@ onMounted(async () => {
   padding: var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  background: var(--page);
+  background: var(--field);
   cursor: pointer;
 }
 .kind-card input {
@@ -812,7 +812,7 @@ onMounted(async () => {
 }
 .event-composer .kind-card.selected {
   border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--tint);
 }
 .kind-card:has(input:focus-visible) {
   outline: 3px solid var(--accent);

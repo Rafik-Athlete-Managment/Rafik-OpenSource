@@ -69,20 +69,33 @@ Paths in this table are relative to `apps/frontend/` unless the full path is giv
 
 ## Color and surfaces
 
-### Existing tokens
+### Surface layers and tokens
 
-| Token                         | Meaning                         | Rule                                                      |
-| ----------------------------- | ------------------------------- | --------------------------------------------------------- |
-| `--page`                      | Application canvas              | Keep instance-configured light/dark background            |
-| `--surface`                   | Raised work surface             | Forms, dialogs and meaningful grouped panels              |
-| `--surface-soft`              | Subtle grouping/selection       | Restrained row emphasis, chips, secondary sections        |
-| `--ink`                       | Primary content                 | Headings, field values and essential text                 |
-| `--muted`                     | Secondary content               | Descriptions, timestamps and helper text; still readable  |
-| `--line`                      | Borders and dividers            | One-pixel separation; not a substitute for spacing        |
-| `--accent` / `--accent-hover` | Primary and selected actions    | Theme-derived Rafik green treatment                       |
-| `--on-accent`                 | Text/icons on accent            | Always pair with accent backgrounds; never hardcode white |
-| `--error` / `--error-bg`      | Error text/surface              | Validation and operational errors                         |
-| `--radius` / `--shadow`       | Current surface shape/elevation | Consolidate usage rather than copying values              |
+Revised 28 October 2026 at founder direction, after cards and their fields looked muddy in both themes. The model follows the semantic-token layering used by shadcn-vue (background → card → field, quiet borders, small elevation) while keeping Rafik's colours and institution branding. Each layer is derived from the institution canvas, ink and accent, so any configured palette keeps the same hierarchy.
+
+| Layer / token                                 | Meaning                                      | Light                                      | Dark                                    |
+| --------------------------------------------- | -------------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `--page`                                      | Application canvas                           | Institution light background (`#f8f8f3`)   | Institution dark background (`#171e1a`) |
+| `--surface`                                   | Card, popover, dialog                        | 30% canvas, 70% white (brighter than page) | 95% canvas, 5% white (one step up)      |
+| `--surface-soft`                              | Muted fill: chips, hover, header rows, wells | 95.5% canvas, 4.5% ink                     | 90% canvas, 10% white                   |
+| `--field`                                     | Text control background                      | Same as `--surface`                        | 92% canvas, 8% white (above the card)   |
+| `--line`                                      | Card edges and dividers                      | 87% canvas, 13% ink (quiet)                | 87% canvas, 13% white                   |
+| `--control-border`                            | Inputs, selects, outline buttons             | 68% canvas, 32% ink                        | 76% canvas, 24% white                   |
+| `--ink` / `--muted`                           | Primary / secondary text                     | Contrast-selected ink; muted 66% ink       | Contrast-selected ink; muted 68% ink    |
+| `--accent` / `--accent-hover` / `--on-accent` | Primary and selected actions                 | Contrast-adjusted institution accent       | Same derivation against the dark canvas |
+| `--tint`                                      | Selected tile/chip fill                      | 90% canvas, 10% accent                     | 90% canvas, 10% accent                  |
+| `--ring`                                      | Focus ring on text controls                  | Accent at 40% alpha, 3px                   | Accent at 45% alpha, 3px                |
+| `--shadow-xs` / `--shadow-sm` / `--shadow`    | Control / card / floating elevation          | Ink-tinted, 5–16% alpha                    | Black, 20–55% alpha                     |
+| `--error` / `--error-bg`                      | Error text/surface                           | Unchanged                                  | Unchanged                               |
+
+Rules:
+
+- Hierarchy comes from layer, not from heavier borders: page → card (`--surface`, `--line`, `--shadow-sm`) → floating overlay (`--shadow`). Never place a card background darker than the canvas.
+- Text controls use `--field`, `--control-border` and `--shadow-xs`; focus shows an accent border plus the `--ring` halo. Wrappers that embed an input (search fields, comboboxes) carry the control styling and remove it from the inner input.
+- Inside a card, group with spacing, dividers or a `--surface-soft` well; selectable tiles use `--field` with `--line`, and the selected tile uses an accent border with `--tint`.
+- Counts or items that need action may be raised (`--shadow-sm`, accent number); empty or inactive peers stay flat and muted.
+- Secondary buttons are outline controls on `--field`; primary buttons keep the accent fill. Danger and status colours keep their semantic tokens.
+- Contrast evidence (default palette): muted text 5.8:1 on cards and 5.0:1 on soft fills in light; 6.4:1 and 5.4:1 in dark. Control borders are 2.1:1 (light) and 1.75:1 (dark) against their fields, up from the previous 1.6:1. Text, focus ring and accent border carry meaning; dividers are decorative.
 
 The original default accent is `#285943`; default page colors are `#f8f8f3` and `#171e1a`. Runtime colors can differ because installation branding and accessible theme derivation are supported. Do not replace them with fixed brand swatches throughout components.
 
@@ -122,7 +135,7 @@ For **Primary coach**, keep the heading, short responsibility explanation and se
 
 Approved spacing scale: **4, 8, 12, 16, 20, 24, 32, 48, 64px**. Use 24px panel padding on desktop, 16px on phone; 16px nested section spacing; 24–32px between independent sections. Dense rows can use 12px vertical and 16px inline padding.
 
-Approved radii: 8px controls, 12px panels/dialogs, full pill only for compact tags/toggles where the shape helps recognition. Border thickness is normally 1px. Reserve stronger borders for selection, focus or an explicit warning. Use at most one restrained shadow on a floating/raised element; routine data panels do not each need a shadow.
+Approved radii: 8px controls, 12px panels/dialogs, full pill only for compact tags/toggles where the shape helps recognition. Border thickness is normally 1px. Reserve stronger borders for selection, focus or an explicit warning. Elevation is tokenized: `--shadow-xs` for controls, `--shadow-sm` for cards and panels, `--shadow` for menus, popovers, dialogs, side panels and toasts. Do not hand-write other shadow values.
 
 Implementation should introduce named spacing, typography, radius, control-size, motion and elevation tokens in the existing style foundation. The implemented token names are in `styles/design-system.css`; the scale includes only the values currently consumed. Do not publish a second parallel theme system.
 
@@ -292,7 +305,7 @@ Approved 26 October: athlete My day places actionable workouts first, then upcom
 
 Assessment event template selection uses one visible library search and a radio list with template names/test counts. Avoid a separate search accordion plus another selection dropdown. Preserve and identify the current selection even when it is outside search results; no-match results must not silently clear it. Fetch five results per request and offer More templates, with create-in-new-tab and refresh as secondary actions. Use bilingual task-specific examples for event names.
 
-Light-theme cards use `--surface` at 93% institution canvas and 7% institution ink, giving near-white backgrounds a visible tinted card surface. Primary ink follows institution contrast selection; `--muted` uses 78% ink and 22% canvas so supporting copy remains readable on the card and soft surfaces. Preserve dark-theme overrides. Validate text contrast on rendered surfaces when changing either token; a different background color alone is not acceptance.
+Superseded 28 October 2026: light-theme cards are no longer tinted darker than the canvas; see [Surface layers and tokens](#surface-layers-and-tokens). Validate text contrast on rendered surfaces when changing any layer token; a different background color alone is not acceptance.
 
 Coach selectors keep checked primary/supporting coaches in the same result list rather than moving them to chips or a second list. Selected rows remain enabled for removal; retain selected identities outside a later search/page. Supporting sport/specialty scope remains explicit when several scopes are eligible.
 

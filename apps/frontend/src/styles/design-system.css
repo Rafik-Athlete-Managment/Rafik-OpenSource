@@ -289,8 +289,9 @@ input[type='radio'] {
 }
 .ui-tabs button[data-state='active'] {
   color: var(--accent);
-  background: var(--surface-soft);
+  background: var(--surface);
   border-color: var(--line);
+  box-shadow: var(--shadow-xs);
 }
 .ui-tabs button:disabled {
   opacity: 0.55;
@@ -607,7 +608,7 @@ input[type='radio'] {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: #0009;
+  background: rgb(10 16 12 / 55%);
 }
 .ui-dialog {
   position: fixed;
@@ -623,6 +624,7 @@ input[type='radio'] {
   border-radius: var(--radius-panel);
   background: var(--surface);
   color: var(--ink);
+  box-shadow: var(--shadow);
 }
 .ui-dialog > h2 {
   margin: 0 0 var(--space-2);
@@ -754,6 +756,7 @@ input[type='radio'] {
   border-inline-start: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink);
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 .side-panel-header {
@@ -909,7 +912,7 @@ input[type='radio'] {
   transition: border-color var(--motion-fast) var(--motion-ease);
 }
 .attention-strip a:hover {
-  border-color: var(--accent);
+  border-color: var(--control-border);
 }
 .attention-strip strong {
   font-size: 1.5rem;
@@ -921,11 +924,19 @@ input[type='radio'] {
   font-size: var(--text-caption);
   line-height: 1.4;
 }
+/* Counts that need action are raised cards; empty queues stay flat and quiet. */
+.attention-strip a[data-zero='false'] {
+  box-shadow: var(--shadow-sm);
+}
+.attention-strip a[data-zero='false'] strong {
+  color: var(--accent);
+}
+.attention-strip a[data-zero='true'] {
+  background: transparent;
+  border-style: dashed;
+}
 .attention-strip a[data-zero='true'] strong {
   color: var(--muted);
-}
-.attention-strip a[data-zero='false'] {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
 }
 
 /* Quick filter chips beside a list search. */
@@ -967,7 +978,7 @@ input[type='radio'] {
 }
 .filter-chips label:has(input:checked) {
   border-color: var(--accent);
-  background: var(--surface-soft);
+  background: var(--tint);
   color: var(--accent);
 }
 .filter-chips label:has(input:focus-visible) {

@@ -1,5 +1,14 @@
 # Verification record
 
+## Coach UX revamp and web theme revamp — 27–28 October 2026
+
+Unreleased branch evidence (`codex/single-institution-continuation`), local only: PostgreSQL 16 in the build container (not the Compose 17.6 image, which was rate-limited) with synthetic demo data.
+
+- Messages Chats/Contacts tabs and compact composer: isolated Chromium browser specs `communication`, `delegated-sessions` (message directory) and `operations` (coach private conversation) passed; composer geometry measured at 1600×1100, 1440×900, 1280×640 and 390×844 in English light and Arabic dark.
+- Theme tokens: rendered Chromium screenshots of coach, athlete and administrator pages in light and dark, Arabic RTL at 390×844, and three alternative institution palettes. axe `color-contrast` found no violations on 11 page/role combinations in each theme. Contrast of the token values themselves is listed in the design system.
+- Frontend unit tests (48), `vue-tsc`, production build, frontend inventory and documentation link checks passed.
+- Not covered: WebKit and physical devices for these changes, the full browser suite, and every secondary page state. One onboarding browser assertion (institution name on the dashboard) failed in an earlier run and is still being investigated.
+
 ## Coach selection, athlete-plan adaptation and messaging tabs — 26 October 2026
 
 Focused backend adaptation acceptance passed in a disposable migrated database: current coach/athlete authority, one existing assignment without new library programs/versions, stale requests, exact receipt replay, frozen booked prescription after removing old day IDs, completion and next adapted workout, unchanged cursor/policy, audit history and ordinary library-edit identity. The existing communication privacy case passed. Three scheduler regressions and two bundled Swagger cases passed. A fresh migrated catalog generated the client/shared types and records 57 tables, 472 columns, 67 route records and 31 SQL functions. No preview database was migrated/reset.
