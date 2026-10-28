@@ -1,5 +1,7 @@
 # Operations
 
+After deploying, use the [full instance walkthrough](../testing/instance-validation.md) to validate setup and the administrator, coach and athlete journeys on your instance. It is the single maintained role checklist; use the copy from the same release tag or source commit as your deployment. Hosted operators skip its local startup commands.
+
 ## Recurring workout preparation rollout
 
 Unreleased beta.3: apply the forward migration with the matching services stopped and a complete database/private-files backup, then deploy the matching backend and web. Close/update old web tabs before enabling policies so cached clients cannot misinterpret day-only bounds. The new event timing shape does not rewrite existing timestamps, workouts or receipts. The unique active-rule constraint refuses inconsistent duplicate active policies rather than deleting them. Existing native workout capture is still a later slice; follow the coordinated beta.3 upgrade policy.

@@ -43,6 +43,8 @@ To test the first-run screen and invitation journey without touching local previ
 
 ## Common workflows
 
+After setup, follow the [full instance walkthrough](../testing/instance-validation.md) to validate administrator, coach and athlete accounts, workflows, permissions and recovery. This is the single maintained manual checklist; use its copy from your installed release tag or source commit.
+
 | Change                             | Workflow                                                                                                                                                                                |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frontend or API behavior           | Keep the vertical workflow in its owning feature/module; derive visible actions from server capabilities and enforce authority in the API.                                              |

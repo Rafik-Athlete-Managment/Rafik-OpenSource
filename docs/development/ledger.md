@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Walkthrough discovery — 28 October 2026
+
+The complete administrator/coach/athlete walkthrough remains `docs/testing/instance-validation.md`, with setup, expected results, permission/recovery boundaries and reporting. The docs index already linked it; added direct links in the root/setup/deployment entry points for developers and instance owners. Do not create another checklist. Published installations use their matching tag/commit; current beta.3 guidance remains labelled unreleased.
+
 ## Preferred display timezone and navigation clock — 28 October 2026
 
 Use the existing persisted account timezone as the web display preference, with device/UTC fallback for absent or invalid values. Shared display-time helpers cover timestamp dates as well as clock times; event/workout summaries previously used booking zones and activity/device diagnostics used browser defaults. Calendar grouping/read bounds and labels follow the viewer preference; date-only workouts, nutrition/plan dates and chart date buckets retain their calendar meaning. Authoring/rescheduling/recurrence controls keep explicit booking zones and no stored instant, rule or receipt is rewritten. The clock links to Settings, shows seconds and the zone, sits in the desktop header and phone drawer, and clears its interval on unmount without live announcements. Footer links remain vertical with tighter desktop rows and gaps; phone links retain 44px targets. Focused date tests and typecheck passed; real clock/nav components were inspected in a synthetic shell at 1280×720 and 390×844, English/light and Arabic/dark, with reactive Dubai/Los Angeles preference changes and preserved date-only labels. This is component evidence, not authenticated preference persistence or full-platform visual acceptance. Temporary fixtures were removed; native scope is unchanged.

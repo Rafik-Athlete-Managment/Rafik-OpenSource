@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Link the canonical full-role instance walkthrough directly from setup and deployment guidance so developers and institution owners can validate their installation.
+
 - Web timestamps now follow the account timezone across workout/event summaries, history, activity, messages and notifications. Add a timezone-labelled digital clock linking to account settings in the desktop header and phone menu. Keep date-only values and explicit booking/recurrence zones unchanged. Tighten the vertical utility footer spacing.
 
 - Fix timezone options opening behind scheduling side panels. The shared picker now uses the overlay-popup layer above modal backdrops and panels.
