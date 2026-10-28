@@ -1,5 +1,13 @@
 # Verification record
 
+## Calendar plan-workout entry — 28 October 2026
+
+Frontend `vue-tsc --noEmit`, inventory generation/coverage checks and documentation link checks passed. The production build passed outside the sandbox after its initial Windows native-dependency/process-access failure. Added, but not yet executed, a focused isolated browser regression for authorized assignment/day preservation, server search, no independent calendar write and returning to custom creation. Assessment tests select their explicit entry choice. End-to-end and rendered responsive/RTL/theme acceptance remain blocked by the current Windows reservation of local PostgreSQL port 55332. No schema/API write implementation changed; no Android build or full browser suite was run.
+
+## Sidebar reachability — 28 October 2026
+
+Source changes restore single-open navigation sections and separate desktop navigation scrolling from utility links. Frontend `vue-tsc --noEmit` passed. The local browser reached sign-in, so no authenticated screenshot or responsive/RTL/keyboard acceptance is claimed for this correction. Verify administrator/coach/athlete sections, one-open behavior, route-driven expansion and footer reachability at desktop and short-window sizes, plus the phone drawer in English/Arabic and both themes.
+
 ## Coach UX revamp and web theme revamp — 27–28 October 2026
 
 Unreleased branch evidence (`codex/single-institution-continuation`), local only: PostgreSQL 16 in the build container (not the Compose 17.6 image, which was rate-limited) with synthetic demo data.

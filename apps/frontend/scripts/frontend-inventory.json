@@ -190,7 +190,7 @@
     "access": "Administrators or training-authorized coaches; selected assignment/session permission is checked by API."
   },
   "features/institution/EventComposer.vue": {
-    "purpose": "Multi-step training/assessment scheduling with group/athlete/staff selection, timezone and template handoff.",
+    "purpose": "Plan-workout scheduling through the shared agenda, plus separate custom-event and assessment creation with people, timezone and template handoff.",
     "access": "Staff with schedule authority; server validates people, template and event scope."
   },
   "features/institution/EventDetail.vue": {

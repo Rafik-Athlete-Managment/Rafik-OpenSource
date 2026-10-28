@@ -4,6 +4,10 @@
 
 ## Purpose and boundaries
 
+Scheduling creation presents explicit plan-workout, custom-event and assessment choices. Plan workouts use the shared paginated agenda and athlete-name search, with no duplicate event-name field. Existing scheduled/unfinished work links back to Athlete plans. Custom events and assessments keep their established details/people/review flow. Keep durable recovery visible and prevent switching choices while a write is active or uncertain.
+
+Sidebar navigation uses one expanded section at a time; opening another closes the previous section. Route changes reveal the current section. Disclosure headings are keyboard-operable buttons with expanded state and restrained, reduced-motion-aware transitions. On desktop, utility links and appearance controls sit outside the navigation scroll area in a compact footer. Keep overflow reachable in short windows rather than hiding scrollbars or clipping commands.
+
 The coach desk has one Workouts to record collection for due and unfinished work, with status-specific Start/Resume actions, and a separate Needs scheduling collection. Do not render recording and due as duplicate panels. State changes refresh related collections in place after acknowledgment; preserve open command/recovery state. Require matching server queue identity instead of treating an older unfiltered response as valid scoped results.
 
 Workout cards lead with the localized workout/day name; the program title belongs beneath it as context. Keep athlete identity as a separate overline in staff directories. Do not repeat a program title as every workout heading.

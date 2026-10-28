@@ -921,6 +921,68 @@ test('program preparation default is visible and confirmed at assignment', async
   }
 })
 
+test('calendar entry schedules the existing plan workout without a separate named event', async ({
+  page,
+}, info) => {
+  test.setTimeout(120000)
+  const f = await institutionFixture()
+  try {
+    const { athlete } = await institution(f, 'Scheduling entry validation', undefined, false)
+    const before = await f.call(
+      f.coach,
+      '/v1/institution/workout-scheduling?view=trainer&queue=planning',
+    )
+    const next = before.items.find((item: any) => item.member_id === athlete.id)
+    expect(next).toBeTruthy()
+    let calendarWrites = 0
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/v1/institution/calendar'))
+        calendarWrites++
+    })
+    await f.login(page, f.coach, '/schedule/new')
+    await expect(page.getByRole('radio', { name: /^Workout from a plan/ })).toBeChecked()
+    await expect(page.getByLabel('Event name', { exact: true })).not.toBeVisible()
+    const finder = page.getByRole('searchbox', { name: 'Search athletes', exact: true })
+    await finder.fill('No such validation athlete')
+    await finder.press('Enter')
+    await expect(
+      page.getByText('No workouts match this athlete search.', { exact: true }),
+    ).toBeVisible()
+    await finder.fill(athlete.name)
+    await finder.press('Enter')
+    await page.getByRole('button', { name: 'Schedule workout', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'Schedule the next workout', exact: true })
+    await dialog
+      .getByLabel('Date and time', { exact: true })
+      .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 16))
+    await inspect(page, 'calendar-plan-workout-entry', info)
+    const saved = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url().endsWith('/v1/institution/workout-scheduling'),
+    )
+    await dialog.getByRole('button', { name: 'Save schedule', exact: true }).click()
+    expect((await saved).status()).toBe(200)
+    await expect(page).toHaveURL(/\/schedule$/)
+    const after = await f.call(
+      f.coach,
+      '/v1/institution/workout-scheduling?view=trainer&assignment=' + next.assignment_id,
+    )
+    expect(after.items).toHaveLength(1)
+    expect(after.items[0].assignment_id).toBe(next.assignment_id)
+    expect(after.items[0].cursor).toBe(next.cursor)
+    expect(after.items[0].day.id).toBe(next.day.id)
+    expect(after.items[0].occurrence.id).toBeTruthy()
+    expect(calendarWrites).toBe(0)
+    await page.goto('/schedule/new')
+    await expect(page.getByRole('button', { name: 'Schedule workout', exact: true })).toHaveCount(0)
+    await page.getByRole('radio', { name: /^Custom event/ }).check()
+    await expect(page.getByLabel('Event name', { exact: true })).toBeVisible()
+  } finally {
+    await f.cleanup()
+  }
+})
+
 test('event template uses one search and preserves selection through no matches', async ({
   page,
 }, info) => {
@@ -940,8 +1002,8 @@ test('event template uses one search and preserves selection through no matches'
         definition: [{ key: randomUUID(), name: 'Standing jump', unit: 'cm', kind: 'number' }],
       })
     await f.login(page, f.coach, '/schedule/new')
-    await page.getByLabel('Event name', { exact: true }).fill('Pre-season assessment')
     await page.getByRole('radio', { name: /^Assessor-led assessment/ }).check()
+    await page.getByLabel('Event name', { exact: true }).fill('Pre-season assessment')
     await expect(page.getByLabel('Event name', { exact: true })).toHaveAttribute(
       'placeholder',
       'For example: Pre-season fitness assessment',

@@ -42,7 +42,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Shared icon-led empty/no-match state with optional action slot.
 - **Direct rendered consumers:** [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue), [features/resources/ResourcesPage.vue](../../../apps/frontend/src/features/resources/ResourcesPage.vue)
-- **Views using it:** `/activity`, `/assessment-templates`, `/assessment-templates/:editor`, `/dashboard`, `/groups`, `/groups/:editor`, `/institution-settings`, `/people`, `/resources`, `/training`, `/training/:assignment`
+- **Views using it:** `/activity`, `/assessment-templates`, `/assessment-templates/:editor`, `/dashboard`, `/groups`, `/groups/:editor`, `/institution-settings`, `/people`, `/resources`, `/schedule/new`, `/training`, `/training/:assignment`
 
 ## ExerciseDemo
 
@@ -82,7 +82,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Record totals, page actions and bounded records-per-page selection.
 - **Direct rendered consumers:** [features/coaching/ExercisesPage.vue](../../../apps/frontend/src/features/coaching/ExercisesPage.vue), [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue), [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/ScheduleCalendar.vue](../../../apps/frontend/src/features/institution/ScheduleCalendar.vue), [features/institution/ScheduledEvents.vue](../../../apps/frontend/src/features/institution/ScheduledEvents.vue), [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue), [features/institution/SessionHistory.vue](../../../apps/frontend/src/features/institution/SessionHistory.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue), [features/nutrition/NutritionPlans.vue](../../../apps/frontend/src/features/nutrition/NutritionPlans.vue)
-- **Views using it:** `/activity`, `/assessment-templates`, `/assessment-templates/:editor`, `/dashboard`, `/events`, `/exercises`, `/exercises/:editor`, `/groups`, `/groups/:editor`, `/institution-settings`, `/nutrition`, `/people`, `/plans`, `/schedule`, `/training`, `/training/:assignment`, `/workouts`
+- **Views using it:** `/activity`, `/assessment-templates`, `/assessment-templates/:editor`, `/dashboard`, `/events`, `/exercises`, `/exercises/:editor`, `/groups`, `/groups/:editor`, `/institution-settings`, `/nutrition`, `/people`, `/plans`, `/schedule`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
 
 ## MonthCalendar
 
@@ -106,7 +106,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Labelled menu for secondary or destructive record actions and the coach New menu; items navigate or emit a key while the caller owns the action.
 - **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthletePlans.vue](../../../apps/frontend/src/features/institution/AthletePlans.vue), [features/institution/AthleteProfile.vue](../../../apps/frontend/src/features/institution/AthleteProfile.vue), [features/institution/DashboardPage.vue](../../../apps/frontend/src/features/institution/DashboardPage.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/members/:member`, `/people`, `/schedule/:id`, `/training`, `/training/:assignment`
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/members/:member`, `/people`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 
 ## PageHeading
 
@@ -170,7 +170,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Contextual side panel dialog for in-place tasks (scheduling, record history) with locked dismissal during writes and explicit focus return.
 - **Direct rendered consumers:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue), [features/institution/EventDetail.vue](../../../apps/frontend/src/features/institution/EventDetail.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/record/:session`, `/schedule/:id`, `/training`, `/training/:assignment`
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/record/:session`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 
 ## TimezonePicker
 
@@ -322,7 +322,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Published program-cover image with unavailable-image fallback, lazy loading and reset when the ID changes.
 - **Direct rendered consumers:** [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/coaching/PlansPage.vue](../../../apps/frontend/src/features/coaching/PlansPage.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/plans`, `/plans/:id`, `/training`, `/training/:assignment`
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/plans`, `/plans/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 
 ## ReviewPage
 
@@ -464,7 +464,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 
 - **Source:** [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue)
 - **Kind:** Screen or route dispatcher.
-- **Purpose:** Multi-step training/assessment scheduling with group/athlete/staff selection, timezone and template handoff.
+- **Purpose:** Plan-workout scheduling through the shared agenda, plus separate custom-event and assessment creation with people, timezone and template handoff.
 - **Direct rendered consumers:** Router.
 - **Views using it:** `/schedule/new`
 
@@ -617,8 +617,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Shared read-only next-workout projection, fixed-time scheduling/reschedule/skip and occurrence-bound start/resume with durable command recovery.
-- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue), [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue), [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue)
-- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/training`, `/training/:assignment`
+- **Direct rendered consumers:** [features/institution/AssignedPlanPage.vue](../../../apps/frontend/src/features/institution/AssignedPlanPage.vue), [features/institution/AthleteDay.vue](../../../apps/frontend/src/features/institution/AthleteDay.vue), [features/institution/AthleteTraining.vue](../../../apps/frontend/src/features/institution/AthleteTraining.vue), [features/institution/CoachDesk.vue](../../../apps/frontend/src/features/institution/CoachDesk.vue), [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue)
+- **Views using it:** `/activity`, `/dashboard`, `/institution-settings`, `/people`, `/schedule/new`, `/training`, `/training/:assignment`
 
 ## WorkoutRuleSettings
 

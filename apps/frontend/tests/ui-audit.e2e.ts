@@ -506,6 +506,7 @@ test('web design audit inventory', async ({ page }, info) => {
       page.getByRole('button', { name: 'Close institution', exact: true }).click(),
     )
     await interactive('en-light-timezone-open', base + '/schedule/new', async () => {
+      await page.getByRole('radio', { name: /^Custom event/ }).check()
       await page.getByRole('button', { name: 'Choose timezone', exact: true }).click()
       await expect(page.locator('.timezone-options')).toBeVisible()
     })

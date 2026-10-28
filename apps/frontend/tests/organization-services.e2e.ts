@@ -77,8 +77,8 @@ test('organization staff schedule a group assessment, recover a result, correct 
     await page.getByRole('button', { name: 'Save group', exact: true }).click()
     await expect(page.locator('.rafik-toast').filter({ hasText: /saved/i }).last()).toBeVisible()
     await page.goto(base + '/schedule/new')
-    await page.getByLabel('Event name', { exact: true }).fill('Morning assessment')
     await page.getByRole('radio', { name: /^Assessor-led assessment/ }).check()
+    await page.getByLabel('Event name', { exact: true }).fill('Morning assessment')
     await page.getByRole('radio', { name: 'Movement baseline 1 test', exact: true }).check()
     await page
       .getByRole('searchbox', { name: 'Find an assessment template', exact: true })

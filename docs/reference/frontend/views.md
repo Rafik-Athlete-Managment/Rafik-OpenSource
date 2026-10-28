@@ -147,7 +147,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Program draft editor and immutable-version preview, prescription structure, cover, publication and assignment links.
 - **Access:** Administrators/coaches edit within program ownership rules; athletes read only their own assigned immutable versions, not staff drafts or unassigned versions.
 - **Opens:** `/deliver/:id`, `/exercises`, `/plans`, `/plans/:id`
-- **Opened from views:** `/members/:member`, `/plans`, `/schedule/:id`, `/training`, `/training/:assignment`
+- **Opened from views:** `/members/:member`, `/plans`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 - **Embedded by:** `features/institution/AssignedPlanPage.vue`
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -171,7 +171,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Recorded-workout review, actual results, correction/version information and coach feedback.
 - **Access:** Administrators and authorized coaches for the referenced institutional workout; API decides subject scope.
 - **Opens:** `/record/:session`, `/review/:id`, `/training`
-- **Opened from views:** `/dashboard`, `/members/:member`, `/record/:session`, `/training`, `/training/:assignment`, `/workouts`
+- **Opened from views:** `/dashboard`, `/members/:member`, `/record/:session`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -195,7 +195,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Dedicated assigned-plan review, scoped workout scheduling and adaptation from the assigned immutable snapshot using the shared editor.
 - **Access:** Administrators and authorized primary/sport-supporting coaches; athletes redirected before rendering.
 - **Opens:** `/assessments/:member`, `/deliver/:id`, `/exercises`, `/members/:member`, `/plans`, `/plans/:id`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
-- **Opened from views:** `/members/:member`, `/schedule/:id`, `/training`
+- **Opened from views:** `/members/:member`, `/schedule/:id`, `/schedule/new`, `/training`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -207,7 +207,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Paginated staff assignment directory with dedicated detail routes; no embedded editor/detail below filters.
 - **Access:** Administrators and training-authorized coaches; supporting links follow the training-scope contract.
 - **Opens:** `/plans`, `/training/:assignment`, `/workouts`
-- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/review/:id`, `/schedule/:id`, `/settings`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
+- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/review/:id`, `/schedule/:id`, `/schedule/new`, `/settings`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
 - **Embedded by:** `features/institution/TrainingRoute.vue`
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -231,7 +231,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Athlete next-workout agenda and access to unsynced device records; no arbitrary plan-day chooser.
 - **Access:** Athlete self through TrainingRoute; authorization for any subject remains server-owned.
 - **Opens:** `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
-- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/review/:id`, `/schedule/:id`, `/settings`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
+- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/review/:id`, `/schedule/:id`, `/schedule/new`, `/settings`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
 - **Embedded by:** `features/institution/TrainingRoute.vue`
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -303,7 +303,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Coach recording of an assigned athlete workout with actual measurement-aware results.
 - **Access:** Administrators or training-authorized coaches; selected assignment/session permission is checked by API.
 - **Opens:** `/record/:session`, `/review/:id`
-- **Opened from views:** `/members/:member`, `/review/:id`, `/training`, `/training/:assignment`
+- **Opened from views:** `/members/:member`, `/review/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -312,9 +312,9 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Source:** [features/institution/EventComposer.vue](../../../apps/frontend/src/features/institution/EventComposer.vue)
 - **Folder:** `features/institution`
 - **URL(s):** `/schedule/new`
-- **Purpose:** Multi-step training/assessment scheduling with group/athlete/staff selection, timezone and template handoff.
+- **Purpose:** Plan-workout scheduling through the shared agenda, plus separate custom-event and assessment creation with people, timezone and template handoff.
 - **Access:** Staff with schedule authority; server validates people, template and event scope.
-- **Opens:** `/assessment-templates/:editor`, `/schedule`, `/schedule/:id`
+- **Opens:** `/assessment-templates/:editor`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/:id`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
 - **Opened from views:** `/dashboard`, `/events`, `/schedule`, `/schedule/:id`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
@@ -424,7 +424,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Searchable paginated recorded solo-workout history; separate from scheduled group events.
 - **Access:** Administrators institution-wide, coaches training-authorized subjects, athletes own results where delivery permits.
 - **Opens:** `/review/:id`, `/training`, `/workout/:id`
-- **Opened from views:** `/dashboard`, `/events`, `/members/:member`, `/training`, `/training/:assignment`
+- **Opened from views:** `/dashboard`, `/events`, `/members/:member`, `/schedule/new`, `/training`, `/training/:assignment`
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -448,7 +448,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Role dispatcher to athlete training or staff athlete-plan index.
 - **Access:** Institution members; athlete self screen versus authorized staff browse screen.
 - **Opens:** `/plans`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
-- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/review/:id`, `/schedule/:id`, `/settings`, `/training/:assignment`, `/workout/:id`, `/workouts`
+- **Opened from views:** `/analytics`, `/assessments/:member`, `/dashboard`, `/deliver/:id`, `/members/:member`, `/plans`, `/review/:id`, `/schedule/:id`, `/schedule/new`, `/settings`, `/training/:assignment`, `/workout/:id`, `/workouts`
 - **Embedded by:** Router.
 - **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
@@ -569,6 +569,6 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Athlete's institutional workout recorder with measured actuals, local persistence, exact sync, conflict recovery and completion summary.
 - **Access:** Signed-in institutional athlete owning the workout; server and local owner/workspace checks remain authoritative.
 - **Opens:** `/feedback`, `/training`
-- **Opened from views:** `/notifications`, `/training`, `/training/:assignment`, `/workouts`
+- **Opened from views:** `/notifications`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.

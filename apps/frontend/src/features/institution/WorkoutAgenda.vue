@@ -41,6 +41,8 @@ const props = withDefaults(
     compact?: boolean
     /** Open the scheduling panel for the first schedulable workout after the first load. */
     autoSchedule?: boolean
+    /** Optional server-side athlete search for the scheduling entry point. */
+    search?: string
   }>(),
   {
     due: false,
@@ -50,7 +52,14 @@ const props = withDefaults(
     pageHeading: false,
   },
 )
-const emit = defineEmits<{ changed: []; loaded: [total: number] }>()
+const emit = defineEmits<{ changed: []; loaded: [total: number]; locked: [value: boolean] }>()
+watch(
+  () => props.search,
+  () => {
+    offset.value = 0
+    void load()
+  },
+)
 watch(
   () => props.refreshToken,
   () => {
@@ -90,6 +99,7 @@ async function load() {
     if (props.assignment) query.set('assignment', props.assignment)
     if (props.due) query.set('due', 'true')
     if (props.queue) query.set('queue', props.queue)
+    if (props.search) query.set('search', props.search)
     const result = await request<WorkoutAgenda>(`/v1/institution/workout-scheduling?${query}`, {
       feedback: 'none',
     })
@@ -167,6 +177,7 @@ const command = useCommand(
 const locked = computed(
   () => preparing.value || !command.state.ready || command.state.busy || !!command.state.pending,
 )
+watch(locked, (value) => emit('locked', value), { immediate: true })
 let lastEdited = ''
 const returnFocus = () =>
   document.querySelector<HTMLElement>(`[data-row-id="${lastEdited}"] .overflow-trigger`) ||
@@ -468,7 +479,12 @@ const exerciseLabel = (name: string) =>
       <template v-if="data">
         <p v-if="queue && !data.items.length" class="agenda-empty">
           <PhCheckCircle :size="20" aria-hidden="true" />{{
-            l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.')
+            search
+              ? l(
+                  'No workouts match this athlete search.',
+                  'لا توجد تمارين تطابق البحث عن الرياضي.',
+                )
+              : l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.')
           }}
         </p>
         <EmptyState

@@ -1,5 +1,7 @@
 # Maintainer guide
 
+Calendar creation choices live in EventComposer. Plan workouts reuse WorkoutAgenda's planning queue and scheduling commands; keep eligibility, cursor/revision checks and allocation on the existing backend. Custom events and assessments retain their own durable calendar command/draft scope. Avoid adding a second workout form or creating a named attendance event when scheduling an assigned workout. The canonical instance walkthrough covers founder validation; group prescriptions/results and native recording remain separate slices.
+
 ## Assigned-plan details and adaptation
 
 `AssignedPlanPage.vue` owns `/training/:assignment`; AthletePlans owns only the directory. Keep directory query state on its detail/back links. PlanEditor accepts an assigned snapshot for embedded adaptation, with a separate assignment/version draft key. Do not fork a second prescription editor or load the current mutable program draft as the assigned baseline. Publishing and assigning/replacing remain separate operations. Use `danger-action` for red cancellation/removal controls and `danger-button` for destructive primary buttons; do not infer danger styling from visible text at runtime.

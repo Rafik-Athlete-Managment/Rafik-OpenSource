@@ -9,7 +9,7 @@
 - [Routes and navigation](navigation.md): actual route registry, aliases, gates, adjacency tables, Mermaid maps and source expressions behind navigation.
 - [Reusable audit prompt](../../development/frontend-audit-prompt.md): the audit instructions and completion standard.
 
-The inventory contains **92 Vue files**, including **47 screen/dispatcher files**, and **45 route records**. A single record may have an alias or several view states. Several records intentionally reuse the same file; these counts are not the number of distinct product features. The route count includes redirects, DEV-only local preview and the not-found handler.
+The inventory contains **95 Vue files**, including **47 screen/dispatcher files**, and **45 route records**. A single record may have an alias or several view states. Several records intentionally reuse the same file; these counts are not the number of distinct product features. The route count includes redirects, DEV-only local preview and the not-found handler.
 
 ## Product and navigation overview
 

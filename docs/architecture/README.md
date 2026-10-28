@@ -1,5 +1,9 @@
 # Rafik architecture
 
+## Calendar scheduling entry point
+
+EventComposer separates plan-workout scheduling from custom attendance events and assessments. The plan path embeds the existing WorkoutAgenda planning projection and posts to the same `/v1/institution/workout-scheduling` command service; it never creates a parallel `/calendar` event or calculates eligibility locally. Search is server-side athlete-name matching, with server totals and bounded pagination. The new entry point has a distinct durable command scope, keeps command recovery mounted across mode changes and guards post-acknowledgment navigation against leaving the original route. Existing custom-event drafts/receipts and makeup links retain their original identities. There is no schema or native contract change in this slice.
+
 ## Individual preparation policy and worker
 
 The existing recurrence model stores one active per-assignment weekly or automatic policy. workout-scheduler.ts rechecks its creator’s current authority under the institution → assignment lock order, then calls the same scheduleIndividualWorkout service as manual writes. Rule saves/stops use existing exact receipts; initial preparation and periodic retry are separate. Worker checkpoints, unresolved-position uniqueness and same-day history prevent duplicate automatic work; generation does not consume sequence positions. See [ADR 0032](../decisions/ADR-0032-opt-in-workout-preparation.md).

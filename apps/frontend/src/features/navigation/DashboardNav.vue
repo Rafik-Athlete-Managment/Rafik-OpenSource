@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { sectionPath } from './section-path'
 import {
@@ -20,11 +20,14 @@ import {
   PhPersonSimpleRun,
   PhUsersThree,
   PhHeartbeat,
+  PhCaretDown,
 } from '@phosphor-icons/vue'
 import { language as l } from '../../lib/i18n'
 const props = defineProps<{ base: string; role: string }>()
 const emit = defineEmits<{ navigate: [] }>()
 const route = useRoute()
+const navigationId = useId()
+const expanded = ref(0)
 const groups = computed(() =>
   props.role === 'trainee'
     ? [
@@ -129,43 +132,110 @@ function selected(path: string) {
     ? current === props.base + path || current.startsWith(props.base + path + '/')
     : current === props.base
 }
+watch(
+  () => [route.path, props.role, props.base],
+  () => {
+    const active = groups.value.findIndex((group) =>
+      group.items.some((item) => selected(String(item[0]))),
+    )
+    if (active >= 0) expanded.value = active
+  },
+  { immediate: true },
+)
 </script>
 <template>
   <nav class="dashboard-navigation" :aria-label="l('Institution navigation', 'تنقل المؤسسة')">
     <section v-for="(group, index) in groups" :key="group.name" class="navigation-group">
-      <h2 :id="'navigation-group-' + index">{{ group.name }}</h2>
-      <ul class="dashboard-navigation-links" :aria-labelledby="'navigation-group-' + index">
-        <li v-for="item in group.items" :key="String(item[0])">
-          <RouterLink
-            :to="base + String(item[0])"
-            :class="{ selected: selected(String(item[0])) }"
-            :aria-current="selected(String(item[0])) ? 'page' : undefined"
-            @click="emit('navigate')"
-            ><component :is="item[2]" :size="18" aria-hidden="true" /><span>{{
-              item[1]
-            }}</span></RouterLink
-          >
-        </li>
-      </ul>
+      <h2>
+        <button
+          :id="navigationId + '-heading-' + index"
+          type="button"
+          :aria-expanded="expanded === index"
+          :aria-controls="navigationId + '-links-' + index"
+          @click="expanded = expanded === index ? -1 : index"
+        >
+          <span>{{ group.name }}</span>
+          <PhCaretDown :size="16" aria-hidden="true" :class="{ expanded: expanded === index }" />
+        </button>
+      </h2>
+      <Transition name="navigation-disclosure">
+        <ul
+          v-show="expanded === index"
+          :id="navigationId + '-links-' + index"
+          class="dashboard-navigation-links"
+          :aria-labelledby="navigationId + '-heading-' + index"
+        >
+          <li v-for="item in group.items" :key="String(item[0])">
+            <RouterLink
+              :to="base + String(item[0])"
+              :class="{ selected: selected(String(item[0])) }"
+              :aria-current="selected(String(item[0])) ? 'page' : undefined"
+              @click="emit('navigate')"
+              ><component :is="item[2]" :size="18" aria-hidden="true" /><span>{{
+                item[1]
+              }}</span></RouterLink
+            >
+          </li>
+        </ul>
+      </Transition>
     </section>
   </nav>
 </template>
 <style scoped>
 .dashboard-navigation {
   display: grid;
-  gap: 12px;
-  padding: 16px 12px;
+  align-content: start;
+  gap: 4px;
+  padding: 12px;
 }
 .navigation-group {
   min-width: 0;
 }
 .navigation-group h2 {
   margin: 0;
-  padding: 8px 12px 4px;
+}
+.navigation-group h2 button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: start;
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 700;
   line-height: 1.4;
+}
+.navigation-group h2 button:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+.navigation-group h2 svg {
+  flex-shrink: 0;
+  transition: transform 140ms ease;
+}
+.navigation-group h2 svg.expanded {
+  transform: rotate(180deg);
+}
+.navigation-disclosure-enter-active,
+.navigation-disclosure-leave-active {
+  transition: opacity 120ms ease;
+}
+.navigation-disclosure-enter-from,
+.navigation-disclosure-leave-to {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .navigation-group h2 svg,
+  .navigation-disclosure-enter-active,
+  .navigation-disclosure-leave-active {
+    transition: none;
+  }
 }
 .dashboard-navigation-links {
   display: grid;
@@ -179,7 +249,7 @@ a {
   gap: 10px;
   align-items: center;
   padding: 9px 12px;
-  min-height: 36px;
+  min-height: 44px;
   font-size: 0.8rem;
   border-radius: 7px;
   color: var(--muted);

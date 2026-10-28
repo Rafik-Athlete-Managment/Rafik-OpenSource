@@ -1,5 +1,13 @@
 # Current delivery ledger
 
+## Plan-workout scheduling entry point — 28 October 2026
+
+The approved next slice adds three explicit choices to EventComposer: Workout from a plan, Custom event and Assessor-led assessment. The plan choice reuses WorkoutAgenda's server-paginated planning queue (10 per page), bounded athlete-name search and exact scheduling command; acknowledgment returns to the calendar. No separate event name, allocator, backend endpoint, migration or Android change. Already scheduled/unfinished plans remain reachable through Athlete plans. Existing custom drafts, makeup links and command recovery retain their original scope. Mode switches are blocked during active/uncertain writes, and acknowledgment navigation checks the original route and mounted state. Added a focused browser regression for assignment/day identity, search and absence of independent calendar writes; existing assessment fixtures now select their entry choice before filling fields. Frontend typecheck passed; real API/browser acceptance is blocked by the Windows database-port reservation, so this is implementation awaiting validation rather than release acceptance. Group prescriptions/results remain the next slice.
+
+## Sidebar reachability correction — 28 October 2026
+
+Founder correction to the flat navigation revamp: DashboardNav uses single-open section disclosures with native buttons and expanded/control relationships, opening the active section on route changes. Desktop navigation owns its bounded scroll area; the utility footer stays separate with links and appearance controls in one vertical column. Extremely short windows retain a bounded footer scroll rather than clipping commands. Routes, permissions and link destinations are unchanged. Authenticated visual acceptance remains pending; the available browser session opens sign-in.
+
 ## CI repair — 28 October 2026
 
 PR checks `backend` and `web` were red, matching the base branch. `verify-retired-domains.mjs` snapshotted whole rows, so later additive migrations (new defaulted columns) looked like changed records; it now projects the pre-retirement column set per table, keeping the "existing records unchanged" guarantee. That step had been masking every later backend step; all were run locally afterwards (institution names/API, backend test rehearsal, content checks, catalog, typecheck and every isolated API suite) and passed, with `test:operations` run in parts on Node 22. Web: `onboarding.e2e.ts` (empty database) expected an institution-name heading the dashboard no longer rendered; Overview now shows the institution name as a small label (dashboard overlines stay hidden) and the spec reopens Invite people for the second invite.
