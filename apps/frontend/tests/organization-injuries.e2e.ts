@@ -113,7 +113,7 @@ test('athlete consent, status correction, limited coach view and withdrawal', as
         { language, theme },
       )
       await page.reload()
-      await expect(page.getByRole('heading', { name: /injury status|حالة الإصابة/i })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /athlete health|صحة الرياضي/i })).toBeVisible()
       expect(await layoutIssues(page)).toEqual([])
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
       await page.screenshot({

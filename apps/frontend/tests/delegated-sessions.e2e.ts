@@ -528,7 +528,7 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
         .getByRole('button', { name: 'Schedule', exact: true }),
     ).toBeVisible()
     await expect(page.locator('.tag[data-status="unscheduled"]')).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Athlete status', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Athlete health', exact: true })).toBeVisible()
     await expect(
       page.getByText('No shared status means unknown, not cleared to train.', { exact: false }),
     ).toBeVisible()
@@ -570,20 +570,20 @@ test('coach desk shows disjoint planning, status recovery and Arabic layout', as
         },
       }),
     )
-    await page.getByRole('button', { name: 'Refresh athlete status' }).click()
+    await page.getByRole('button', { name: 'Refresh athlete health' }).click()
     await expect(
       page.getByText('Synthetic athlete with a deliberately long roster display name'),
     ).toBeVisible()
     await inspect(page, 'coach-desk-status', info)
     await page.unroute(statusUrl)
     await page.route(statusUrl, (route) => route.abort('failed'))
-    await page.getByRole('button', { name: 'Refresh athlete status' }).click()
+    await page.getByRole('button', { name: 'Refresh athlete health' }).click()
     await expect(page.locator('.desk-status').getByRole('alert')).toBeVisible()
     await expect(
       page.getByText('Synthetic athlete with a deliberately long roster display name'),
     ).toBeVisible()
     await page.unroute(statusUrl)
-    await page.getByRole('button', { name: 'Refresh athlete status' }).click()
+    await page.getByRole('button', { name: 'Refresh athlete health' }).click()
     await expect(page.locator('.desk-status').getByRole('alert')).toHaveCount(0)
 
     await page.evaluate(() => {

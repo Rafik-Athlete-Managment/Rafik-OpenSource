@@ -26,12 +26,12 @@ import { language, t } from '../../lib/i18n'
       </p>
     </section>
     <section>
-      <h2>{{ language('Injury status and privacy', 'حالة الإصابة والخصوصية') }}</h2>
+      <h2>{{ language('Athlete health and privacy', 'صحة الرياضي والخصوصية') }}</h2>
       <p>
         {{
           language(
-            'Athletes can share a limited participation status with their assigned coach after the institution records the required consent setup and the athlete agrees. Coaches see only the current status and effective date. Administrators manage consent prerequisites but cannot view injury records. Athletes can download a copy of their status and correction history. Do not enter diagnoses or medical details. Withdrawing stops coach access; closed records are automatically deleted after 12 months.',
-            'يمكن للرياضي مشاركة حالة مشاركة محدودة مع مدربه المعيّن بعد تسجيل إعداد الموافقة المطلوب وموافقة الرياضي. يرى المدربون الحالة الحالية وتاريخ سريانها فقط. يدير المسؤولون متطلبات الموافقة ولا يمكنهم رؤية سجلات الإصابة. يمكن للرياضي تنزيل نسخة من الحالة وسجل التصحيحات. لا تُدخل تشخيصات أو تفاصيل طبية. يؤدي سحب الموافقة إلى إيقاف وصول المدرب، وتُحذف السجلات المغلقة تلقائيًا بعد 12 شهرًا.',
+            'Athletes can share a limited participation status with their assigned coach after the institution records the required consent setup and the athlete agrees. Coaches see only the current status and effective date. Administrators manage consent prerequisites but cannot view athlete health records. Athletes can download a copy of their status and correction history. Do not enter diagnoses or medical details. Withdrawing stops coach access; closed records are automatically deleted after 12 months.',
+            'يمكن للرياضي مشاركة حالة مشاركة محدودة مع مدربه المعيّن بعد تسجيل إعداد الموافقة المطلوب وموافقة الرياضي. يرى المدربون الحالة الحالية وتاريخ سريانها فقط. يدير المسؤولون متطلبات الموافقة ولا يمكنهم رؤية سجلات صحة الرياضي. يمكن للرياضي تنزيل نسخة من الحالة وسجل التصحيحات. لا تُدخل تشخيصات أو تفاصيل طبية. يؤدي سحب الموافقة إلى إيقاف وصول المدرب، وتُحذف السجلات المغلقة تلقائيًا بعد 12 شهرًا.',
           )
         }}
       </p>

@@ -180,8 +180,8 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
     await primaryPage.getByRole('tab', { name: 'Nutrition', exact: true }).click()
     await expect(primaryPage.getByText('Current plan: version 1')).toBeVisible()
     await expect(primaryPage.getByText('has not shared their meal diary')).toBeVisible()
-    await primaryPage.getByRole('tab', { name: 'Participation', exact: true }).click()
-    const status = primaryPage.getByRole('region', { name: 'Participation status' })
+    await primaryPage.getByRole('tab', { name: 'Athlete health', exact: true }).click()
+    const status = primaryPage.getByRole('region', { name: 'Athlete health' })
     await expect(status).toContainText('Modified participation')
     await expect(status).toContainText('not a medical assessment')
     await primaryPage.getByRole('tab', { name: 'Overview', exact: true }).click()
@@ -197,7 +197,7 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
     await expect(supportPlans.getByText('Speed block')).toBeVisible()
     await expect(supportPlans.getByText('Strength block')).toHaveCount(0)
     await expect(supportPage.getByRole('region', { name: 'Nutrition' })).toHaveCount(0)
-    await expect(supportPage.getByRole('region', { name: 'Participation status' })).toHaveCount(0)
+    await expect(supportPage.getByRole('region', { name: 'Athlete health' })).toHaveCount(0)
     await expect(supportPage.getByText('You support this athlete.')).toBeVisible()
 
     // Unlinked coach: nothing beyond a clear refusal.
@@ -209,8 +209,8 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
 
     // Administrator: consent setup only, never the status itself.
     await f.login(page, f.owner, profile('admin'))
-    await page.getByRole('tab', { name: 'Participation', exact: true }).click()
-    const consent = page.getByRole('region', { name: 'Participation status' })
+    await page.getByRole('tab', { name: 'Athlete health', exact: true }).click()
+    const consent = page.getByRole('region', { name: 'Athlete health' })
     await expect(consent).toContainText('Consent setup is complete.')
     await expect(consent).toContainText('The athlete has assented.')
     await expect(consent).not.toContainText('Modified participation')

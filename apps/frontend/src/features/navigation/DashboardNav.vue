@@ -44,7 +44,7 @@ const groups = computed(() =>
           name: l('My support', 'الدعم الخاص بي'),
           items: [
             ['/nutrition', l('Nutrition', 'التغذية'), PhBowlFood],
-            ['/injuries', l('Injury status', 'حالة الإصابة'), PhHeartbeat],
+            ['/injuries', l('Athlete health', 'صحة الرياضي'), PhHeartbeat],
             ['/feedback', l('My feedback', 'تقييماتي'), PhStar],
             ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
           ],
@@ -68,7 +68,7 @@ const groups = computed(() =>
               ['/training', l('Athlete plans', 'خطط الرياضيين'), PhBarbell],
               ['/workouts', l('Workout history', 'سجل التمارين'), PhClockCounterClockwise],
               ['/nutrition', l('Nutrition plans', 'خطط التغذية'), PhBowlFood],
-              ['/injuries', l('Injury status', 'حالة الإصابة'), PhHeartbeat],
+              ['/injuries', l('Athlete health', 'صحة الرياضي'), PhHeartbeat],
               ['/schedule', l('Schedule', 'الجدول'), PhCalendarBlank],
               ['/messages', l('Messages', 'الرسائل'), PhChatCircle],
             ],
@@ -108,7 +108,7 @@ const groups = computed(() =>
             items: [
               ['/nutrition', l('Nutrition plans', 'خطط التغذية'), PhBowlFood],
               ...(props.role === 'trainer'
-                ? [['/injuries', l('Injury status', 'حالة الإصابة'), PhHeartbeat]]
+                ? [['/injuries', l('Athlete health', 'صحة الرياضي'), PhHeartbeat]]
                 : []),
             ],
           },

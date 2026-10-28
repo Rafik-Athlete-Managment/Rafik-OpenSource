@@ -164,8 +164,8 @@ function resetPassword() {
           :title="l('Primary coach', 'المدرب الأساسي')"
           :description="
             l(
-              'Responsible for ongoing follow-up, nutrition and participation status. Search the full coaching directory below.',
-              'مسؤول عن المتابعة والتغذية وحالة المشاركة. ابحث في دليل المدربين الكامل أدناه.',
+              'Responsible for ongoing follow-up, nutrition and athlete health. Search the full coaching directory below.',
+              'مسؤول عن المتابعة والتغذية وصحة الرياضي. ابحث في دليل المدربين الكامل أدناه.',
             )
           "
         />

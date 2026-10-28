@@ -231,7 +231,7 @@ const live = useLiveSearch(search, () => load())
     </div>
     <PageState :loading="loading && !data" :error="!data ? error : ''" @retry="load()">
       <template v-if="data">
-        <div v-if="section !== 'experience'" class="analytics-numbers">
+        <div class="analytics-numbers">
           <RouterLink :to="base + '/people'"
             ><span>{{ l('Active athletes now', 'الرياضيون النشطون الآن') }}</span
             ><strong>{{ data.summary.active }}</strong
@@ -390,6 +390,14 @@ const live = useLiveSearch(search, () => load())
               l(
                 'Coach reports use current responsibility. Admins see their institution, including history preserved after reassignment. Workload always covers the whole institution, regardless of athlete filter. These counts are not adherence, health, retention or revenue scores.',
                 'تقارير المدرب بحسب مسؤوليته الحالية والمسؤول يرى مؤسسته وسجلها المحفوظ بعد إعادة التعيين. حجم عمل المدربين يشمل المؤسسة كاملة بغض النظر عن مرشح الرياضي. هذه ليست درجات التزام أو صحة أو احتفاظ أو إيرادات.',
+              )
+            }}
+          </p>
+          <p>
+            {{
+              l(
+                'Experience ratings are optional and shown separately by source; they are not an overall coach score. Coach workplace ratings are separate from athlete feedback and ignore the date and athlete filters.',
+                'تقييمات التجربة اختيارية وتُعرض حسب المصدر؛ ليست تقييماً عاماً للمدرب. تقييمات بيئة عمل المدربين منفصلة عن تقييمات الرياضيين ولا تتأثر بمرشحات الفترة والرياضي.',
               )
             }}
           </p>

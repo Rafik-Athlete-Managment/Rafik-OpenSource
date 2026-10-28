@@ -153,7 +153,7 @@ onMounted(load)
     <PageHeading class="page-heading"
       ><div>
         <p class="eyebrow">{{ l('Health and participation', 'الصحة والمشاركة') }}</p>
-        <h1 id="injury-title">{{ l('Injury status', 'حالة الإصابة') }}</h1>
+        <h1 id="injury-title">{{ l('Athlete health', 'صحة الرياضي') }}</h1>
       </div></PageHeading
     >
     <p class="notice" role="note">
@@ -318,8 +318,8 @@ onMounted(load)
       <p>
         {{
           l(
-            'This screen records consent prerequisites only; administrators cannot view injury status. For a minor, confirm that guardian authorization is documented under university policy before enabling athlete assent.',
-            'تسجل هذه الصفحة متطلبات الموافقة فقط؛ لا يمكن للمسؤولين رؤية حالة الإصابة. للقاصر، أكّد توثيق موافقة ولي الأمر وفق سياسة الجامعة قبل إتاحة موافقة الرياضي.',
+            'This screen records consent prerequisites only; administrators cannot view athlete health records. For a minor, confirm that guardian authorization is documented under university policy before enabling athlete assent.',
+            'تسجل هذه الصفحة متطلبات الموافقة فقط؛ لا يمكن للمسؤولين رؤية سجلات صحة الرياضي. للقاصر، أكّد توثيق موافقة ولي الأمر وفق سياسة الجامعة قبل إتاحة موافقة الرياضي.',
           )
         }}
       </p>

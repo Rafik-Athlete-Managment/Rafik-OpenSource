@@ -125,8 +125,8 @@ const remove = (link: { id: string; revision: number }) =>
       :title="l('Supporting coaches', 'المدربون المساندون')"
       :description="
         l(
-          'Choose a coach to add them immediately. If they cover several eligible specialties, choose their access scope. Nutrition and participation status remain with the primary coach.',
-          'اختر مدرباً لإضافته مباشرة. إذا كان يغطي عدة تخصصات مؤهلة، اختر نطاق صلاحياته. تبقى التغذية وحالة المشاركة لدى المدرب الأساسي.',
+          'Choose a coach to add them immediately. If they cover several eligible specialties, choose their access scope. Nutrition and athlete health remain with the primary coach.',
+          'اختر مدرباً لإضافته مباشرة. إذا كان يغطي عدة تخصصات مؤهلة، اختر نطاق صلاحياته. تبقى التغذية وصحة الرياضي لدى المدرب الأساسي.',
         )
       "
     />

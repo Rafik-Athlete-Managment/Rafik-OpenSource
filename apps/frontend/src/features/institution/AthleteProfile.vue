@@ -323,7 +323,7 @@ onMounted(load)
               l('Nutrition', 'التغذية')
             }}</TabsTrigger
             ><TabsTrigger v-if="showParticipation" value="participation">{{
-              l('Participation', 'المشاركة')
+              l('Athlete health', 'صحة الرياضي')
             }}</TabsTrigger></template
           >
           <TabsTrigger v-if="analytics" value="analytics">{{
@@ -443,7 +443,7 @@ onMounted(load)
               </button>
             </section>
             <section v-if="showParticipation" class="panel" aria-labelledby="summary-participation">
-              <h2 id="summary-participation">{{ l('Participation', 'المشاركة') }}</h2>
+              <h2 id="summary-participation">{{ l('Athlete health', 'صحة الرياضي') }}</h2>
               <p v-if="participation.loading" class="small-print" role="status">
                 {{ l('Loading…', 'جارٍ التحميل…') }}
               </p>
@@ -706,7 +706,7 @@ onMounted(load)
             class="panel"
             aria-labelledby="participation-heading"
           >
-            <h2 id="participation-heading">{{ l('Participation status', 'حالة المشاركة') }}</h2>
+            <h2 id="participation-heading">{{ l('Athlete health', 'صحة الرياضي') }}</h2>
             <p v-if="participation.loading" role="status">{{ l('Loading…', 'جارٍ التحميل…') }}</p>
             <p v-else-if="participation.denied" class="small-print">
               {{ l('Not available for your role.', 'غير متاح لدورك.') }}

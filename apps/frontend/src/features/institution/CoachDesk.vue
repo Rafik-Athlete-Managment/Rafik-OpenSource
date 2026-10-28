@@ -196,13 +196,13 @@ onUnmounted(() => {
       >
         <header class="desk-section-heading">
           <h2 id="desk-status-title">
-            <PhHeartbeat :size="22" aria-hidden="true" />{{ l('Athlete status', 'حالة الرياضيين') }}
+            <PhHeartbeat :size="22" aria-hidden="true" />{{ l('Athlete health', 'صحة الرياضي') }}
           </h2>
           <button
             class="button small secondary icon-only"
             :disabled="loading"
-            :aria-label="l('Refresh athlete status', 'تحديث حالة الرياضيين')"
-            :title="l('Refresh athlete status', 'تحديث حالة الرياضيين')"
+            :aria-label="l('Refresh athlete health', 'تحديث صحة الرياضي')"
+            :title="l('Refresh athlete health', 'تحديث صحة الرياضي')"
             @click="loadStatus"
           >
             <PhArrowClockwise :size="18" aria-hidden="true" />
@@ -250,7 +250,7 @@ onUnmounted(() => {
           }}
         </p>
         <RouterLink to="/injuries" class="text-link">{{
-          l('View participation status', 'عرض حالة المشاركة')
+          l('View athlete health', 'عرض صحة الرياضي')
         }}</RouterLink>
       </aside>
     </div>

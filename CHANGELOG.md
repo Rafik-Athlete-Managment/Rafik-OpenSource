@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Coach analytics: the Experience tab keeps the summary cards and shows its ratings as chart cards like Training activity and Delivery & capacity, instead of replacing the page layout. Each card leads with its average and response count; the "not an overall coach score" note moves to How to read these numbers.
+
+- Rename the consent-gated participation-status feature to "Athlete health" everywhere in the web app: navigation, page title, the coach overview panel and its link, the athlete profile tab, Help, activity-log entries and coach-scope descriptions. Routes, APIs and stored data are unchanged.
+
 - Link the canonical full-role instance walkthrough directly from setup and deployment guidance so developers and institution owners can validate their installation.
 
 - Web timestamps now follow the account timezone across workout/event summaries, history, activity, messages and notifications. Add a timezone-labelled digital clock linking to account settings in the desktop header and phone menu. Keep date-only values and explicit booking/recurrence zones unchanged. Tighten the vertical utility footer spacing.

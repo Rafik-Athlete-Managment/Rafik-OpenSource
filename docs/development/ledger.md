@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Analytics Experience tab and Athlete health naming — 28 October 2026
+
+Founder follow-up on PR 142. The Experience tab hid the summary cards and switched to a nested tab/prose layout; it now renders inside the same card grid as the other tabs (scheduled-session and workout satisfaction, plus coach workplace for administrators), with average/response coverage in each card description and source/workplace caveats in the method notes. The founder decided the participation-status feature is "Athlete health" (Arabic "صحة الرياضي"); labels in navigation, InjuryStatus, CoachDesk, AthleteProfile, Help, ActivityLog, CoachingTeam and MemberManagement, plus matching e2e locators and the validation guide, were updated. Text that describes what is recorded ("participation status", no diagnoses) stays. Route `/injuries`, component/file names, APIs and data are unchanged. The Workout history/Session history terminology question remains open.
+
 ## Walkthrough discovery — 28 October 2026
 
 The complete administrator/coach/athlete walkthrough remains `docs/testing/instance-validation.md`, with setup, expected results, permission/recovery boundaries and reporting. The docs index already linked it; added direct links in the root/setup/deployment entry points for developers and instance owners. Do not create another checklist. Published installations use their matching tag/commit; current beta.3 guidance remains labelled unreleased.

@@ -4,7 +4,7 @@
 
 The [coach dashboard UX revamp plan](ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026) is approved for phased implementation; nothing is implemented yet. Open items:
 
-- **Terminology (deferred by founder):** one record type is labelled "Workout history" in navigation, "Session history" on Athlete plans and "recorded sessions" in its empty state. Participation status is labelled "Injury status", "Athlete status" and "Participation" on different screens. The founder has not chosen names; do not rename these labels until a decision is recorded.
+- **Terminology (deferred by founder):** one record type is labelled "Workout history" in navigation, "Session history" on Athlete plans and "recorded sessions" in its empty state. The founder has not chosen names for these; do not rename them until a decision is recorded. Resolved 28 October 2026: the consent-gated participation-status feature, formerly "Injury status", "Athlete status" and "Participation", is now "Athlete health" everywhere in the web app.
 - **Groups observation (resolved, intended scoping):** coaches see groups they created or belong to; the seeded group was created by an administrator without the coach as a member. The coach empty state now says so.
 - **Exercises layout (fixed in phase 4):** the sort control keeps its caret padding and the list pagination has its own padded footer.
 - **Event time display (rendered, cause unconfirmed):** a seeded event showed "GMT+0" in an Asia/Dubai institution. Check whether this is the stored event timezone or a display defect.
