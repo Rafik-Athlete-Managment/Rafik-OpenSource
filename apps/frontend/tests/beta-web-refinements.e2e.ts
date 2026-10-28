@@ -246,6 +246,7 @@ test('multiple message attachments survive reload, exact retry and recipient rev
     const { institution, endpoint, join } = await prepareInstitution(f, 'Madar attachments')
     await join(f.client, ['trainee'])
     await f.login(page, f.owner, `/messages`)
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
     await page.getByRole('button', { name: /R4 Athlete/ }).click()
     await expect(page).toHaveURL(/\/messages\/[a-f0-9-]{36}$/)
     const channel = page.url().split('/').at(-1)!

@@ -659,7 +659,16 @@ onMounted(async () => {
               "
               v-model="search"
               type="search" /></label
-          ><label
+          ><label class="catalog-sort-field"
+            ><span class="sr-only">{{ language('Sort exercises', 'ترتيب التمارين') }}</span
+            ><select v-model="sort" class="catalog-sort">
+              <option value="preview">{{ language('Videos first', 'الفيديوهات أولاً') }}</option>
+              <option value="name">{{ language('Name: A–Z', 'الاسم: أبجدي') }}</option>
+            </select></label
+          >
+        </div>
+        <div class="catalog-quick-filters">
+          <label
             >{{ language('Library', 'المكتبة')
             }}<select v-model="scope">
               <option value="active">{{ language('All active', 'كل النشطة') }}</option>
@@ -683,8 +692,6 @@ onMounted(async () => {
               </option>
             </select></label
           >
-        </div>
-        <div class="catalog-quick-filters">
           <label
             >{{ language('Recording type', 'نوع التسجيل')
             }}<select v-model="recording">
@@ -704,14 +711,6 @@ onMounted(async () => {
           >
         </div>
         <div class="catalog-summary">
-          <select
-            v-model="sort"
-            class="catalog-sort"
-            :aria-label="language('Sort exercises', 'ترتيب التمارين')"
-          >
-            <option value="preview">{{ language('Videos first', 'الفيديوهات أولاً') }}</option>
-            <option value="name">{{ language('Name: A–Z', 'الاسم: أبجدي') }}</option>
-          </select>
           <p role="status">
             {{ visible.length.toLocaleString(locale) }} {{ language('exercises', 'تمرين') }}
           </p>
@@ -883,23 +882,48 @@ onMounted(async () => {
 .catalog-filter-toggle {
   display: none;
 }
-.catalog-quick-filters {
+/*
+ * Two rows: search and sort, then the five filters with the result count at the end.
+ * Phones keep the collapsible Filters layout below.
+ */
+.catalog-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3) var(--space-5);
+  margin-block-end: var(--space-4);
+}
+.catalog-controls > .library-tools {
+  grid-column: 1 / -1;
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+  margin: 0;
+}
+.library-tools .catalog-sort-field {
+  flex: 0 0 auto;
+}
+.catalog-quick-filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
 }
 .catalog-quick-filters label {
-  flex: 1;
-  min-width: 140px;
-  max-width: 280px;
+  min-width: 0;
+}
+.catalog-quick-filters select {
+  min-height: 44px;
+  padding-block: 0.55rem;
+}
+@media (max-width: 1100px) and (min-width: 761px) {
+  .catalog-quick-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 .catalog-sort {
   /* Keep the inherited end padding so the caret never covers the label. */
   width: auto;
   min-width: 10rem;
-  min-height: 40px;
-  font-size: var(--text-small);
-  padding-block: 0.4rem;
   margin: 0;
 }
 .catalog-list-pane > .list-pagination {
@@ -909,10 +933,11 @@ onMounted(async () => {
 .catalog-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-1) var(--space-4);
   align-items: center;
-  justify-content: space-between;
-  margin-block: 0.75rem;
+  justify-content: flex-end;
+  min-height: 44px;
+  margin: 0;
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -1051,27 +1076,49 @@ onMounted(async () => {
   transform: rotate(180deg);
 }
 @media (max-width: 760px) {
+  /* Phones: search on its own row, then Filters and Sort side by side. */
   .catalog-controls {
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-3);
   }
-  .library-tools {
+  .catalog-controls > .library-tools {
+    display: contents;
+  }
+  .library-tools .grow {
+    grid-column: 1 / -1;
     order: 0;
-    margin-bottom: 0.65rem;
   }
   .catalog-filter-toggle {
     display: inline-flex;
-    align-self: flex-start;
+    justify-content: center;
+    align-self: end;
     order: 1;
+    min-height: 44px;
+    margin: 0;
+  }
+  .library-tools .catalog-sort-field {
+    order: 2;
+  }
+  .library-tools .catalog-sort {
+    width: 100%;
+    min-width: 0;
   }
   .catalog-quick-filters {
-    order: 2;
-    margin-top: 0.75rem;
+    order: 3;
+    grid-column: 1 / -1;
   }
   .catalog-summary {
-    order: 3;
+    order: 4;
+    grid-column: 1 / -1;
   }
-  .exercise-page:not(.filters-open) .library-tools > label:not(.grow),
+  .catalog-quick-filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .catalog-summary {
+    justify-content: space-between;
+    min-height: 0;
+  }
+  .exercise-page:not(.filters-open) .library-tools > label:not(.grow, .catalog-sort-field),
   .exercise-page:not(.filters-open) .catalog-quick-filters {
     display: none;
   }

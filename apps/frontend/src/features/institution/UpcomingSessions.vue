@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
+import { PhCalendarBlank, PhCaretRight } from '@phosphor-icons/vue'
 
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -66,7 +67,7 @@ onMounted(async () => {
       {{ l('Loading upcoming events…', 'تحميل المواعيد القادمة…') }}
     </p>
     <p v-else-if="error" class="notice error" role="alert">{{ error }}</p>
-    <p v-else-if="!events.length" class="small-print">
+    <p v-else-if="!events.length" class="upcoming-empty">
       {{
         todayOnly
           ? l(
@@ -76,16 +77,17 @@ onMounted(async () => {
           : l('No scheduled events in the next week.', 'لا توجد مواعيد مجدولة في الأسبوع القادم.')
       }}
     </p>
-    <RouterLink
-      v-for="e in events"
-      :key="e.id"
-      class="upcoming-event"
-      :to="base + '/schedule/' + e.id"
-      ><span
-        ><strong>{{ e.title }}</strong
-        ><small>{{ label(e.starts_at || '') }} · {{ zone }}</small></span
-      ><span aria-hidden="true">↗</span></RouterLink
-    >
+    <ul v-else class="upcoming-list">
+      <li v-for="e in events" :key="e.id">
+        <RouterLink class="upcoming-event" :to="base + '/schedule/' + e.id"
+          ><span class="upcoming-icon" aria-hidden="true"><PhCalendarBlank :size="18" /></span
+          ><span class="upcoming-text"
+            ><strong dir="auto">{{ e.title }}</strong
+            ><small>{{ label(e.starts_at || '') }} · {{ zone }}</small></span
+          ><PhCaretRight class="upcoming-caret" :size="16" aria-hidden="true"
+        /></RouterLink>
+      </li>
+    </ul>
   </section>
 </template>
 <style scoped>
@@ -96,21 +98,69 @@ onMounted(async () => {
 .organization-upcoming h3 {
   font-size: 1.15rem;
 }
-.upcoming-event {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--line);
+.organization-upcoming .heading-actions {
+  margin-block-end: var(--space-3);
 }
-.upcoming-event > span:first-child {
+.organization-upcoming .heading-actions > * {
+  margin: 0;
+}
+/* One bordered list; each row leads with its time and opens the event. */
+.upcoming-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  overflow: hidden;
+}
+.upcoming-list li + li {
+  border-top: 1px solid var(--line);
+}
+.upcoming-event {
   display: grid;
-  gap: 6px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink);
+}
+.upcoming-event:hover {
+  background: var(--surface-soft);
+}
+.upcoming-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  background: var(--tint);
+  color: var(--accent);
+}
+.upcoming-text {
+  display: grid;
+  gap: 2px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.upcoming-text strong {
+  font-weight: 650;
+}
 .upcoming-event small {
   color: var(--muted);
+}
+.upcoming-caret {
+  color: var(--muted);
+}
+.upcoming-caret:dir(rtl) {
+  transform: scaleX(-1);
+}
+.upcoming-empty {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-control);
+  color: var(--muted);
+  font-size: var(--text-small);
 }
 </style>

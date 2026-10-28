@@ -263,6 +263,20 @@ onMounted(async () => {
       : []
   ready.value = true
   await load(false, true)
+  await nextTick()
+  // Opening a chat puts the cursor in the message box, unless focus already moved elsewhere
+  // (route changes focus <main> for screen readers; that still counts as "not moved").
+  // Touch devices are skipped so the on-screen keyboard does not cover the history.
+  const active = document.activeElement
+  if (
+    !disposed &&
+    !window.matchMedia?.('(pointer: coarse)').matches &&
+    (!active ||
+      active === document.body ||
+      active.matches('main') ||
+      !!active.closest('.conversation-inbox'))
+  )
+    composer.value?.focus({ preventScroll: true })
   poll = setInterval(() => {
     if (!document.hidden && !editing.value) void load()
   }, 20000)

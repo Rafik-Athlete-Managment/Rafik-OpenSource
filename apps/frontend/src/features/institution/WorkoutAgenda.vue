@@ -19,6 +19,7 @@ import {
   PhClockCounterClockwise,
   PhArrowClockwise,
   PhCalendarBlank,
+  PhCheckCircle,
 } from '@phosphor-icons/vue'
 import SidePanel from '../../components/SidePanel.vue'
 import OverflowMenu, { type OverflowItem } from '../../components/OverflowMenu.vue'
@@ -465,8 +466,10 @@ const exerciseLabel = (name: string) =>
     </p>
     <PageState :loading="loading && !data" :error="!data ? error : ''" @retry="load">
       <template v-if="data">
-        <p v-if="queue && !data.items.length" class="small-print">
-          {{ l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.') }}
+        <p v-if="queue && !data.items.length" class="agenda-empty">
+          <PhCheckCircle :size="20" aria-hidden="true" />{{
+            l('Nothing in this queue right now.', 'لا يوجد شيء في هذه القائمة حالياً.')
+          }}
         </p>
         <EmptyState
           v-else-if="!data.items.length"
@@ -818,8 +821,46 @@ const exerciseLabel = (name: string) =>
   max-width: 70ch;
   font-size: var(--text-small);
 }
+/* Compact queues: one bordered list per queue, refresh pinned to the heading's end. */
+.is-compact .agenda-heading {
+  align-items: flex-start;
+}
+.is-compact .agenda-heading h2,
+.is-compact .agenda-heading h3 {
+  font-size: var(--text-panel);
+}
+.is-compact .agenda-heading p {
+  margin-block: var(--space-1) 0;
+}
+/* Actions keep their natural width at the heading's end; only the title block grows. */
+.agenda-heading > .agenda-toolbar-actions {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
 .agenda-compact {
   margin-block-start: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  overflow: hidden;
+}
+.agenda-compact .record-row:last-child {
+  border-block-end: 0;
+}
+.agenda-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-control);
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+.agenda-empty svg {
+  flex: none;
+  color: var(--accent);
 }
 .agenda-compact .record-row {
   grid-template-columns: minmax(180px, 1.1fr) minmax(0, 1fr) 11rem;
@@ -844,6 +885,21 @@ const exerciseLabel = (name: string) =>
 @media (max-width: 760px) {
   .agenda-compact .record-row {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+/* Phones: details take the full row; actions follow underneath. */
+@media (max-width: 520px) {
+  .agenda-compact .record-row {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-3);
+  }
+  .agenda-compact .record-meta,
+  .agenda-compact .record-actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .agenda-compact .record-actions {
+    justify-content: flex-start;
   }
 }
 .agenda-heading,

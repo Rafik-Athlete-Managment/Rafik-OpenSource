@@ -79,7 +79,12 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <section id="follow-up" class="daily-followup" aria-labelledby="follow-up-title" tabindex="-1">
+  <section
+    id="follow-up"
+    class="daily-followup panel"
+    aria-labelledby="follow-up-title"
+    tabindex="-1"
+  >
     <header class="followup-heading">
       <h2 id="follow-up-title">{{ l('Follow-up', 'المتابعة') }}</h2>
       <p class="small-print">
@@ -109,7 +114,7 @@ onUnmounted(() => {
     <TabsRoot
       v-else-if="data"
       v-model="active"
-      class="panel followup-tabs"
+      class="followup-tabs"
       :dir="locale === 'ar' ? 'rtl' : 'ltr'"
     >
       <TabsList class="ui-tabs" :aria-label="l('Follow-up queues', 'قوائم المتابعة')">
@@ -263,12 +268,19 @@ onUnmounted(() => {
 .followup-heading p {
   margin: var(--space-2) 0 0;
 }
+.followup-heading p {
+  color: var(--muted);
+}
 .followup-clear {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   margin: 0;
-  color: var(--muted);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--tint);
+  color: var(--ink);
+  font-size: var(--text-small);
 }
 .followup-clear svg {
   flex: 0 0 auto;
@@ -294,5 +306,31 @@ onUnmounted(() => {
 }
 .followup-tabs .record-row {
   grid-template-columns: minmax(0, 1fr) 0 auto;
+}
+@media (max-width: 520px) {
+  .daily-followup {
+    padding: var(--space-4);
+  }
+  .followup-tabs .record-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .followup-tabs .record-meta,
+  .followup-tabs .record-actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .followup-tabs .record-actions {
+    justify-content: flex-start;
+  }
+}
+/* Same bordered list as the workout queues; the tab rule already separates it from the tabs. */
+.followup-tabs .record-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  overflow: hidden;
+}
+.followup-tabs .record-row:last-child {
+  border-block-end: 0;
 }
 </style>

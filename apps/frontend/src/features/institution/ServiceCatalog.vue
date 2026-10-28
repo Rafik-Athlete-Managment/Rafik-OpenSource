@@ -17,6 +17,7 @@ import MemberPicker from './MemberPicker.vue'
 import ListPagination from '../../components/ListPagination.vue'
 import { useLiveSearch } from '../../lib/live-search'
 import PageState from '../../components/PageState.vue'
+import { PhChatCircle, PhUsersThree } from '@phosphor-icons/vue'
 import type { Institution } from './types'
 import type { Drill, TrainingGroup, AssessmentTemplate } from './service-types'
 const route = useRoute(),
@@ -465,37 +466,14 @@ onMounted(initialize)
                     )
           "
         />
-        <div :class="{ 'assessment-template-grid': templates }">
+        <div v-if="templates" class="assessment-template-grid">
           <article v-for="item in items" :key="item.id" class="service-library-row">
             <div>
-              <h2>{{ templates ? item.title : item.name }}</h2>
+              <h2>{{ item.title }}</h2>
               <p>
-                {{ templates ? item.definition.length : item.members.length }}
-                {{
-                  templates
-                    ? item.definition.length === 1
-                      ? l('drill', 'اختبار')
-                      : l('drills', 'اختبارات')
-                    : item.members.length === 1
-                      ? l('person', 'شخص')
-                      : l('people', 'أشخاص')
-                }}
+                {{ item.definition.length }}
+                {{ item.definition.length === 1 ? l('drill', 'اختبار') : l('drills', 'اختبارات') }}
               </p>
-              <p v-if="!templates" class="small-print">
-                {{
-                  item.members
-                    .slice(0, 4)
-                    .map((m) => m.name)
-                    .join(' · ')
-                }}
-              </p>
-              <RouterLink
-                v-if="!templates && !item.archived && item.members.some((m) => m.active)"
-                class="text-link"
-                :to="base + '/messages?group=' + encodeURIComponent(item.id)"
-              >
-                {{ l('Open group conversation', 'فتح محادثة المجموعة') }}
-              </RouterLink>
             </div>
             <button
               v-if="item.canEdit !== false"
@@ -505,6 +483,57 @@ onMounted(initialize)
             >
               {{ l('Edit', 'تعديل') }}
             </button>
+          </article>
+        </div>
+        <!-- Groups: one compact row each — icon, name with member summary, then actions. -->
+        <div v-else-if="items.length" class="group-list">
+          <article v-for="item in items" :key="item.id" class="service-library-row group-row">
+            <span class="group-icon" aria-hidden="true"><PhUsersThree :size="20" /></span>
+            <div class="group-text">
+              <h2>
+                <bdi dir="auto">{{ item.name }}</bdi
+                ><span v-if="item.archived" class="tag" data-status="archived">{{
+                  l('Archived', 'مؤرشفة')
+                }}</span>
+              </h2>
+              <p>
+                <strong
+                  >{{ item.members.length }}
+                  {{
+                    item.members.length === 1 ? l('person', 'شخص') : l('people', 'أشخاص')
+                  }}</strong
+                ><template v-if="item.members.length">
+                  ·
+                  <bdi dir="auto">{{
+                    item.members
+                      .slice(0, 4)
+                      .map((m) => m.name)
+                      .join(' · ')
+                  }}</bdi
+                  ><template v-if="item.members.length > 4">
+                    · +{{ item.members.length - 4 }}</template
+                  ></template
+                >
+              </p>
+            </div>
+            <div class="group-actions">
+              <RouterLink
+                v-if="!item.archived && item.members.some((m) => m.active)"
+                class="button secondary small icon-only"
+                :to="base + '/messages?group=' + encodeURIComponent(item.id)"
+                :aria-label="l('Open group conversation', 'فتح محادثة المجموعة')"
+                :title="l('Open group conversation', 'فتح محادثة المجموعة')"
+                ><PhChatCircle :size="18" aria-hidden="true"
+              /></RouterLink>
+              <button
+                v-if="item.canEdit !== false"
+                class="button secondary small"
+                @click="edit(item)"
+                :disabled="locked"
+              >
+                {{ l('Edit', 'تعديل') }}
+              </button>
+            </div>
           </article>
         </div>
         <RouterLink :to="base + '/schedule/new'" class="text-link"
@@ -558,6 +587,77 @@ onMounted(initialize)
 }
 .service-library-row button {
   flex-shrink: 0;
+}
+.group-list {
+  margin-block: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.group-list .group-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.group-list .group-row:last-child {
+  border-bottom: 0;
+}
+.group-list .group-row:hover {
+  background: var(--surface-soft);
+}
+.group-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-control);
+  background: var(--tint);
+  color: var(--accent);
+}
+.group-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.group-text h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 650;
+}
+.group-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-small);
+  overflow-wrap: anywhere;
+}
+.group-text p strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.group-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.group-actions .button {
+  margin: 0;
+}
+@media (max-width: 520px) {
+  .group-list .group-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .group-actions {
+    grid-column: 2;
+  }
 }
 @media (max-width: 550px) {
   .service-field-row {

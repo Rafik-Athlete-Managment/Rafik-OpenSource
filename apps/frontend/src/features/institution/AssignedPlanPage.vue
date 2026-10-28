@@ -277,20 +277,28 @@ onMounted(load)
               :ends-on="detail.end_date?.slice(0, 10) || null"
               @changed="workoutRevision++"
             />
-            <section :aria-label="l('Assigned prescription', 'الوصفة المعيّنة')">
+            <section
+              class="plan-preview"
+              :aria-label="l('Assigned prescription', 'الوصفة المعيّنة')"
+            >
               <h2>{{ l('Program preview', 'معاينة البرنامج') }}</h2>
               <details v-for="day in prescription()?.days || []" :key="day.id" class="plan-day">
                 <summary>
-                  <bdi>{{ locale === 'ar' ? day.nameAr || day.name : day.name }}</bdi> ·
-                  {{
-                    day.restDay ? l('Recovery', 'تعافٍ') : day.minutes + ' ' + l('minutes', 'دقيقة')
-                  }}
+                  <span class="plan-day-title"
+                    ><bdi>{{ locale === 'ar' ? day.nameAr || day.name : day.name }}</bdi></span
+                  >
+                  <small
+                    >{{ l('Week', 'الأسبوع') }} {{ day.week || 1 }} · {{ l('Day', 'اليوم') }}
+                    {{ (day.weekday || 0) + 1 }} ·
+                    {{
+                      day.restDay
+                        ? l('Recovery', 'تعافٍ')
+                        : day.minutes + ' ' + l('minutes', 'دقيقة')
+                    }}
+                    · {{ day.exercises.length }} {{ l('exercises', 'تمارين') }}</small
+                  >
                 </summary>
-                <p>
-                  {{ l('Week', 'الأسبوع') }} {{ day.week || 1 }} · {{ l('Day', 'اليوم') }}
-                  {{ (day.weekday || 0) + 1 }}
-                </p>
-                <ul>
+                <ol class="plan-day-exercises">
                   <li v-for="exercise in day.exercises" :key="exercise.key">
                     <strong>{{ exerciseName(exercise) }}</strong>
                     <p>
@@ -303,7 +311,7 @@ onMounted(load)
                     </p>
                     <p v-if="exercise.note">{{ exercise.note }}</p>
                   </li>
-                </ul>
+                </ol>
               </details>
             </section>
           </div>
@@ -419,12 +427,103 @@ onMounted(load)
   max-width: 75ch;
   line-height: 1.7;
 }
+/* Each session is a collapsible card; exercises are compact numbered rows. */
+.plan-preview {
+  display: grid;
+  gap: var(--space-3);
+}
+.plan-preview > h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-panel);
+}
 .plan-day {
-  padding-block: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+.plan-day > summary {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  min-height: 0;
+  color: var(--ink);
+  font-size: inherit;
+}
+/* The grid layout drops the native marker, so a chevron shows the open/closed state. */
+.plan-day > summary {
+  position: relative;
+  padding-inline-end: var(--space-8);
+  list-style: none;
+}
+.plan-day > summary::-webkit-details-marker {
+  display: none;
+}
+.plan-day > summary::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-inline-end: 2px solid var(--muted);
+  border-block-end: 2px solid var(--muted);
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.plan-day[open] > summary::after {
+  transform: translateY(-30%) rotate(-135deg);
+}
+.plan-day > summary:hover {
+  background: var(--surface-soft);
+}
+.plan-day-title {
+  font-weight: 650;
+}
+.plan-day > summary small {
+  color: var(--muted);
+}
+.plan-day[open] > summary {
   border-block-end: 1px solid var(--line);
 }
-.plan-day li {
-  margin-block: var(--space-4);
+.plan-day-exercises {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: exercise;
+}
+.plan-day-exercises li {
+  counter-increment: exercise;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+.plan-day-exercises li + li {
+  border-top: 1px solid var(--line);
+}
+.plan-day-exercises li::before {
+  content: counter(exercise);
+  grid-row: 1 / span 4;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.plan-day-exercises strong,
+.plan-day-exercises p {
+  grid-column: 2;
+}
+.plan-day-exercises p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: var(--text-small);
 }
 .assigned-plan-page {
   overflow-wrap: anywhere;

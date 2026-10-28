@@ -153,7 +153,7 @@ onUnmounted(() => {
       </ul>
     </nav>
     <div class="desk-columns">
-      <section class="desk-today" aria-labelledby="desk-today-title">
+      <section class="desk-today panel" aria-labelledby="desk-today-title">
         <header class="desk-section-heading">
           <div>
             <p class="overline">
@@ -310,6 +310,33 @@ onUnmounted(() => {
 .desk-section-heading .overline {
   margin-block: 0 var(--space-2);
 }
+/* Today's work is one card: a header, then each queue as its own bordered list. */
+.desk-today {
+  display: grid;
+  gap: var(--space-6);
+  margin: 0;
+}
+.desk-today > .desk-section-heading {
+  align-items: flex-end;
+  padding-block-end: var(--space-4);
+  border-block-end: 1px solid var(--line);
+}
+.desk-today :deep(.workout-agenda),
+.desk-today :deep(.organization-upcoming) {
+  margin: 0;
+}
+.desk-today :deep(.organization-upcoming h3) {
+  font-size: var(--text-panel);
+  margin: 0;
+}
+.desk-planning :deep(.workout-agenda) {
+  margin: 0;
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
 .desk-status h2 {
   font-size: var(--text-panel);
 }
@@ -362,8 +389,11 @@ onUnmounted(() => {
 .attention-strip {
   margin: 0;
 }
-.desk-planning :deep(.workout-agenda) {
-  margin-block: 0;
+@media (max-width: 520px) {
+  .desk-today,
+  .desk-planning :deep(.workout-agenda) {
+    padding: var(--space-4);
+  }
 }
 @media (max-width: 1050px) {
   .desk-columns {

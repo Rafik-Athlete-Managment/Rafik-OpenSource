@@ -19,8 +19,8 @@ import { language, t } from '../../lib/i18n'
       <p>
         {{
           language(
-            'Open Messages and choose a person from the People list; the conversation opens or resumes automatically. Open group conversation on a training group starts its shared conversation; using it again returns to the same conversation. Two-person conversations are reused instead of duplicated. To assign training, open Programs, publish the program, then choose Assign this program. Publishing shares it in the institution library so coaches can see it; coaches can assign it only to athletes they are responsible for.',
-            'افتح الرسائل واختر محادثة جديدة، أو استخدم مراسلة بجانب الرياضي في الأشخاص والصلاحيات. يفتح خيار محادثة المجموعة محادثة المجموعة التدريبية نفسها، ويعيدك إليها عند استخدامه مرة أخرى. يعاد استخدام المحادثات الثنائية لتجنب تكرارها. لتعيين التدريب، افتح البرامج وانشر البرنامج ثم اختر تعيين هذا البرنامج. يشارك النشر البرنامج في مكتبة المؤسسة ليتمكن المدربون من رؤيته؛ ويمكن للمدرب تعيينه فقط للرياضيين المسؤول عنهم.',
+            'Open Messages: Chats lists your conversations and Contacts lists people and groups. Choose a contact to open or resume their conversation; search narrows the list as you type. Open group conversation on a training group starts its shared conversation; using it again returns to the same conversation. Two-person conversations are reused instead of duplicated. To assign training, open Programs, publish the program, then choose Assign this program. Publishing shares it in the institution library so coaches can see it; coaches can assign it only to athletes they are responsible for.',
+            'افتح الرسائل: تعرض المحادثات محادثاتك وتعرض جهات الاتصال الأشخاص والمجموعات. اختر جهة اتصال لفتح محادثتها أو متابعتها؛ يضيّق البحث القائمة أثناء الكتابة. يفتح خيار محادثة المجموعة محادثة المجموعة التدريبية نفسها، ويعيدك إليها عند استخدامه مرة أخرى. يعاد استخدام المحادثات الثنائية لتجنب تكرارها. لتعيين التدريب، افتح البرامج وانشر البرنامج ثم اختر تعيين هذا البرنامج. يشارك النشر البرنامج في مكتبة المؤسسة ليتمكن المدربون من رؤيته؛ ويمكن للمدرب تعيينه فقط للرياضيين المسؤول عنهم.',
           )
         }}
       </p>
