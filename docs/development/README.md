@@ -1,5 +1,7 @@
 # Development
 
+Root installation applies guarded Expo tooling security patches automatically. If you use `npm ci --ignore-scripts`, run `npm run security:patch`, then `npm run security:check` before starting Expo. Unexpected dependency versions/content require review, not bypassing the guard. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md).
+
 The Android workspace lives at `apps/mobile/`. Install dependencies once from the repository root, then use `npm run mobile:start` to start Metro or `npm run mobile:android` to build/run the native Android development client. The app uses SQLCipher and therefore needs a native build rather than Expo Go. Follow the [Android attendance guide](android.md) for setup, capture/retry and recovery limits. Its Swagger-compatible OpenAPI subset is linked from the [API reference](../reference/api.md).
 
 This page is the local development entry point. It covers setup, common changes and troubleshooting. For deployment, secrets, backups and recovery, use [operations](../operations/README.md). For check commands and their limits, use [testing](../testing/README.md).

@@ -18,6 +18,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci --include=optional
+      - run: npm run security:check
+      - run: npm run test:tooling-security
       - run: npm run frontend:inventory:check
       - run: npm test --workspace @rafik/frontend
       - run: npm run build --workspace @rafik/frontend

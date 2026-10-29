@@ -1,5 +1,9 @@
 # Operations
 
+## Dependency installation
+
+The maintained Dockerfiles include the guarded dependency installer before `npm ci`. Web/API-only installs skip Expo patches when Expo is absent. Custom full-workspace images must copy `scripts/tooling-security.mjs` and `scripts/tooling-security-patches.json` before installation; after `--ignore-scripts`, explicitly apply/check them. Keep Expo/Metro off public networks. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md).
+
 ## Group-workout upgrade — unreleased beta.3
 
 Back up the matching application, PostgreSQL database and private files before applying `202610290900_group_workouts`. Local development: run `npm run backend:start` from the root, then restart the API and web app. The forward migration adds the template library and participant skip reasons, defaults prior sessions to assignment sources and permits assignment-free records only with a valid additional group source. It does not manufacture historical sessions, change individual cursors or delete results/receipts. Deploy the matching API/web together; rollback restores the complete matching backup/application rather than dropping columns. Current Android queues retain their identities and attendance/assessment payloads. Until the native workout slice, finish unresolved group results on the web; an Android finish rejection must retain recovery state. Use the [canonical walkthrough](../testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3) for acceptance.

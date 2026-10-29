@@ -1,5 +1,11 @@
 # Verification record
 
+## Expo tooling backports — 29 October 2026
+
+The six focused security tests passed on Windows Node 24.21.0 and a clean disposable Linux Node 22.16 installation. Linux root npm ci ran lifecycle scripts, installed 930 packages and automatically applied all eight patched files; the subsequent hash check and tests passed. Coverage includes source/target prototype keys, null-prototype targets, arrays/symbols/custom merges, CommonJS/ESM sync/async early bounds, actual Expo plugin/MCP schemas, byte/line/chunk budgets, idempotence and unknown-content/version failure before writes. Temporary fixtures and the container were removed.
+
+Expo public config still resolves Rafik Field, org.rafik.field, the SQLCipher plugin and current icon. A synthetic real Expo config modification preserved permission-array concatenation and nested plugin properties; an installation without Expo safely skipped the patcher. Android entry scripts passed syntax checks. All non-root lock entries, including platform-native metadata, match the previous commit. The live root audit still exits 1 with 8 published-version alerts (3 high, 5 low); local patches do not alter registry versions. No Android build, device or browser acceptance is claimed for this tooling scope. See [the decision/limits](../decisions/ADR-0035-expo-tooling-security-backports.md), [check receipt](receipts/2026-10-29-tooling-backports.json) and [live audit](receipts/2026-10-29-tooling-backports-audit.json).
+
 ## Dependency patches — 29 October 2026
 
 Live registry audit returned 10 affected-package entries (4 high, 1 moderate, 5 low). Compatible patch updates to node-forge 1.4.2 and fast-uri 3.1.9 leave 8 entries (3 high, 5 low), from unpatched Zod/deepmerge paths through Expo CLI/config. Both scoped production audits (backend/frontend with omit=dev) exit 0 with zero findings. The [full after-report](receipts/2026-10-29-dependency-audit-after.json) and [scope summary](receipts/2026-10-29-dependency-review.json) retain commands, counts, baseline and lock digest. No zero-advisory claim is made for the root/tooling graph.

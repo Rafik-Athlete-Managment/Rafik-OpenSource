@@ -1,5 +1,7 @@
 # Rafik
 
+Dependency installation includes guarded Expo tooling security backports. If disabling install scripts, follow the [development instructions](docs/development/README.md) before using mobile tooling.
+
 **Validate your installation:** follow the [full administrator, coach and athlete walkthroughs](docs/testing/instance-validation.md), including setup, expected results, permissions and recovery. This is the single maintained manual guide; use the copy from your installed release tag or source commit.
 
 **Breaking beta.3 cleanup:** retired personal/team/business tables and API aliases are removed. Deploy matching backend/web/Android versions together after a complete backup; see [ADR 0030](docs/decisions/ADR-0030-retire-standalone-storage-and-apis.md). This branch remains unreleased.

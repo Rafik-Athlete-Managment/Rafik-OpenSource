@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Remaining Expo tooling security paths — 29 October 2026
+
+Founder requested remaining fixes. Added exact-version/hash backports for deepmerge and Zod3, plus bounds on the actual Expo plugin schemas/output collector; root installation applies them and maintained mobile entry points verify them. No framework change or audit suppression. ADR 0035 records provenance, maintenance and unused-entry-point limitations. Tests and Linux installation evidence are recorded in verification; this is tooling remediation, not native/device acceptance. Continue on the same beta.3 PR, unmerged.
+
 ## Compatible dependency security patches — 29 October 2026
 
 Founder asked to address dependency findings before the next slice. Live advisory/registry review led to two compatible lockfile-only updates: node-forge 1.4.2 and fast-uri 3.1.9. No framework upgrade, override, new dependency, Android build or native version change. Zod 3 and deepmerge remain open Expo tooling findings without compatible published patches; production web/API audits are clear. Current risks/mitigations are in known issues and actual checks/limits in verification. A running repository esbuild worker locked the Windows clean install; stopped only that verified worker and restored the root install in place. Local dev processes should be restarted. Keep the release branch unmerged.

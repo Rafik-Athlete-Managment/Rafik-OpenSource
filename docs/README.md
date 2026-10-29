@@ -23,6 +23,8 @@ This page is the index for maintained Rafik documentation. The root [README](../
 
 - [Additive workout storage decision](decisions/ADR-0027-additive-workout-storage.md): compatibility boundaries, historical backfill and the staged API cutover.
 
+- [Expo tooling security backports](decisions/ADR-0035-expo-tooling-security-backports.md): exact-version installation guards, plugin limits, tests and upstream-removal policy.
+
 ## Frontend development reference
 
 - [Frontend audit, scope and findings](reference/frontend/README.md): source coverage, architectural ownership, cleanup decisions, deliberate exceptions and refresh commands.

@@ -85,7 +85,11 @@
     "test:workout-scheduler": "node apps/backend/scripts/prisma/isolated-api.mjs tests/workout-scheduler.test.ts",
     "workouts:prepare": "npm run workouts:prepare --workspace @rafik/backend",
     "test:plan-adaptation": "node apps/backend/scripts/prisma/isolated-api.mjs tests/plan-adaptation.test.ts",
-    "test:group-workouts": "node apps/backend/scripts/prisma/isolated-api.mjs tests/group-workouts.test.ts"
+    "test:group-workouts": "node apps/backend/scripts/prisma/isolated-api.mjs tests/group-workouts.test.ts",
+    "postinstall": "node scripts/tooling-security.mjs",
+    "security:patch": "node scripts/tooling-security.mjs",
+    "security:check": "node scripts/tooling-security.mjs --check",
+    "test:tooling-security": "node --test scripts/tooling-security.test.mjs"
   },
   "overrides": {
     "tar": "7.5.22",
