@@ -166,6 +166,8 @@ const arabic: Record<string, string> = {
     'سجّل الدخول مجدداً إلى الحساب والمؤسسة نفسيهما لإرسال العمل المحفوظ.',
   'The event has not started or was cancelled. Review the server event.':
     'لم يبدأ الموعد أو أُلغي. راجع موعد الخادم.',
+  'Complete or explicitly skip participant workouts in the web app before finishing this group event.':
+    'أكمل تمارين المشاركين أو تخطّها صراحة في تطبيق الويب قبل إنهاء هذا الموعد الجماعي.',
   'Assessment results are required. Complete this correction in the web app.':
     'نتائج التقييم مطلوبة. أكمل التصحيح في تطبيق الويب.',
   'Confirm attendance before saving scores or completing this event.':

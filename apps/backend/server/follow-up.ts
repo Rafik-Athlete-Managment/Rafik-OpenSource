@@ -14,7 +14,7 @@ export async function followUp(actor: Actor, id: string, q: URLSearchParams) {
         title: string;
         total: bigint;
       }[]
-    >`SELECT s.id,m.name,s.completed_at,s.document->>'title' title,count(*) OVER() total FROM public.institution_sessions s JOIN public.institution_members m ON m.id=s.member_id WHERE s.institution_id=${id}::uuid AND m.active AND (${view === "admin"} OR m.trainer_id=${self.id}::uuid) AND s.completed_at IS NOT NULL AND nullif(s.document->>'reviewed_at','') IS NULL ORDER BY s.completed_at,s.id LIMIT 8`;
+    >`SELECT s.id,m.name,s.completed_at,s.document->>'title' title,count(*) OVER() total FROM public.institution_sessions s JOIN public.institution_members m ON m.id=s.member_id WHERE s.source_kind='assignment' AND s.institution_id=${id}::uuid AND m.active AND (${view === "admin"} OR m.trainer_id=${self.id}::uuid) AND s.completed_at IS NOT NULL AND nullif(s.document->>'reviewed_at','') IS NULL ORDER BY s.completed_at,s.id LIMIT 8`;
     const outcomes = await tx.$queryRaw<
       { id: string; title: string; ends_at: Date; total: bigint }[]
     >`SELECT e.id,e.title,e.ends_at,count(*) OVER() total FROM public.institution_events e WHERE e.institution_id=${id}::uuid AND e.state='scheduled' AND e.ends_at<now() AND (${view === "admin"} OR EXISTS(SELECT 1 FROM public.institution_event_people p WHERE p.event_id=e.id AND p.member_id=${self.id}::uuid AND p.duty='staff')) ORDER BY e.ends_at,e.id LIMIT 8`;

@@ -1,5 +1,9 @@
 import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
 import {
+  groupSessionAuthority,
+  assertGroupWritable,
+} from "./group-workouts.ts";
+import {
   scheduleIndividualWorkout,
   skipIndividualWorkout,
   rescheduleIndividualWorkout,
@@ -61,13 +65,22 @@ const date = (v: unknown) => {
     throw new ApiError(400, "invalid_date");
   return new Date(v + "T00:00:00Z");
 };
-export async function catalog(tx: Tx, id: string, self: Member) {
+export async function catalog(
+  tx: Tx,
+  id: string,
+  self: Member,
+  keys?: string[],
+) {
   const [shared, own] = await Promise.all([
     tx.reference_exercises.findMany({
+      ...(keys ? { where: { id: { in: keys } } } : {}),
       orderBy: { name: "asc" },
     }),
     tx.institution_exercises.findMany({
-      where: { institution_id: id },
+      where: {
+        institution_id: id,
+        ...(keys ? { id: { in: keys } } : {}),
+      },
       orderBy: { id: "asc" },
     }),
   ]);
@@ -264,8 +277,16 @@ export async function planAuthority(
     throw new ApiError(403, "trainee_unavailable");
   return m;
 }
-async function snapshot(tx: Tx, id: string, self: Member, draft: unknown) {
-  const items = JSON.stringify(await catalog(tx, id, self)),
+export async function snapshot(
+  tx: Tx,
+  id: string,
+  self: Member,
+  draft: unknown,
+  selectedCatalog?: Awaited<ReturnType<typeof catalog>>,
+) {
+  const items = JSON.stringify(
+      selectedCatalog ?? (await catalog(tx, id, self)),
+    ),
     p = JSON.stringify(draft);
   await tx.$queryRaw`SELECT public.validate_program_presentation(${p}::jsonb,${id}::uuid)::text`;
   await tx.$queryRaw`SELECT public.validate_prescription_catalog(${p}::jsonb,${items}::jsonb)::text`;
@@ -691,7 +712,10 @@ export async function delivery(
     const links =
         view === "trainer" ? await supportingLinks(tx, id, self.id) : null,
       plans = links ? assignmentScope(self.id, links) : {},
-      workouts = links ? sessionScope(self.id, links) : {};
+      workouts = {
+        source_kind: "assignment",
+        ...(links ? sessionScope(self.id, links) : {}),
+      };
     if (query.get("history") === "true") {
       const search = (query.get("search") || "").trim().slice(0, 100);
       const scope = {
@@ -1190,10 +1214,26 @@ async function endAssignment(
 /** Session reads: the athlete, admins, the primary coach, or a supporting coach for the plan's sport. */
 async function readableSession(
   tx: Tx,
-  s: { institution_id: string; member_id: string; assignment_id: string },
+  s: {
+    institution_id: string;
+    member_id: string;
+    assignment_id: string | null;
+    source_kind?: string;
+    occurrence_id?: string | null;
+  },
   self: Member,
   view: Role,
 ) {
+  if (s.source_kind === "additional") {
+    await groupSessionAuthority(tx, s.institution_id, self, view, {
+      member_id: s.member_id,
+      occurrence_id: s.occurrence_id || null,
+    });
+    return tx.institution_members.findUniqueOrThrow({
+      where: { id: s.member_id },
+    });
+  }
+  if (!s.assignment_id) throw new ApiError(403, "session_missing");
   const m = await recipient(
     tx,
     s.institution_id,
@@ -1265,6 +1305,10 @@ export async function institutionSession(
   if (!s) throw new ApiError(404, "session_missing");
   return scoped(actor, s.institution_id, [view], async (tx, self) => {
     const m = await readableSession(tx, s, self, view);
+    const group =
+      s.source_kind === "additional"
+        ? await groupSessionAuthority(tx, s.institution_id, self, view, s)
+        : null;
     return {
       ...(s.document as object),
       client_id: m.user_id,
@@ -1274,6 +1318,10 @@ export async function institutionSession(
       can_record:
         view === "trainer" &&
         m.active &&
+        (!group ||
+          (group.occurrence.state !== "cancelled" &&
+            group.person.attendance === "present" &&
+            !group.person.workout_skip_reason)) &&
         (s.recorded_mode === "delegated" || !s.completed_at) &&
         !(await tx.institution_workout_positions.findFirst({
           where: {
@@ -1327,6 +1375,14 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
     });
     if (!s || s.institution_id !== id)
       throw new ApiError(403, "session_missing");
+    if (s.source_kind === "additional") {
+      await groupSessionAuthority(tx, id, self, view, s);
+      if (action === "save") await assertGroupWritable(tx, id, self, view, s);
+      else if (action !== "review" || view === "trainee")
+        throw new ApiError(403, "forbidden");
+      return;
+    }
+    if (!s.assignment_id) throw new ApiError(403, "session_missing");
     if (action === "save" && view === "trainer") {
       await delegate(tx, self, s.assignment_id);
       // Coaches may finish an athlete-started record; completed self-logged actuals remain protected.

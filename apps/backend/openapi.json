@@ -32,9 +32,7 @@
   "paths": {
     "/v1/mobile/auth/login": {
       "post": {
-        "tags": [
-          "Mobile authentication"
-        ],
+        "tags": ["Mobile authentication"],
         "security": [],
         "summary": "Sign in to one institution on this device",
         "parameters": [
@@ -74,9 +72,7 @@
     },
     "/v1/mobile/auth/session": {
       "get": {
-        "tags": [
-          "Mobile authentication"
-        ],
+        "tags": ["Mobile authentication"],
         "summary": "Validate the current device session",
         "parameters": [
           {
@@ -90,9 +86,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "user"
-                  ],
+                  "required": ["user"],
                   "properties": {
                     "user": {
                       "$ref": "#/components/schemas/User"
@@ -110,9 +104,7 @@
     },
     "/v1/mobile/auth/refresh": {
       "post": {
-        "tags": [
-          "Mobile authentication"
-        ],
+        "tags": ["Mobile authentication"],
         "security": [],
         "summary": "Rotate the current refresh token",
         "parameters": [
@@ -126,9 +118,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "refresh_token"
-                ],
+                "required": ["refresh_token"],
                 "properties": {
                   "refresh_token": {
                     "$ref": "#/components/schemas/Token"
@@ -157,9 +147,7 @@
     },
     "/v1/mobile/auth/logout": {
       "post": {
-        "tags": [
-          "Mobile authentication"
-        ],
+        "tags": ["Mobile authentication"],
         "summary": "Revoke the presented device session",
         "parameters": [
           {
@@ -192,9 +180,7 @@
     },
     "/v1/institution/context": {
       "get": {
-        "tags": [
-          "Coach field work"
-        ],
+        "tags": ["Coach field work"],
         "summary": "List the current account's institution membership",
         "parameters": [
           {
@@ -208,9 +194,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "contexts"
-                  ],
+                  "required": ["contexts"],
                   "properties": {
                     "contexts": {
                       "type": "array",
@@ -242,9 +226,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Coach field work"
-        ],
+        "tags": ["Coach field work"],
         "summary": "Read a bounded schedule or one authorized event",
         "description": "Send view=trainer and a bounded from/to calendar-date window, or supply id to read one event detail before field work. The server checks current assignment and membership. For online-only correction history, send id, historyOnly=true, historyMember, historyKind (attendance or results) and historyOffset. Each read rechecks event authority; the selected athlete must be an event participant. History returns up to 25 items and next offset; it includes the original entry and later corrections, with recorded actor, timestamp and submitted values. Unreleased beta.3 adds explicit includeDayOnly opt-in. Existing Android attendance clients keep timed-only reads; a matching new native workout slice is still required.",
         "parameters": [
@@ -254,9 +236,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "enum": [
-                "trainer"
-              ]
+              "enum": ["trainer"]
             }
           },
           {
@@ -321,10 +301,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "attendance",
-                "results"
-              ],
+              "enum": ["attendance", "results"],
               "default": "results"
             }
           },
@@ -381,17 +358,22 @@
         }
       },
       "post": {
-        "tags": [
-          "Coach field work"
-        ],
-        "summary": "Record attendance, assessment results, or finish an event",
-        "description": "Every write uses an operation UUID and the current event/participant revision. Queue dependent commands in order. Retry an uncertain result with the exact same operation and payload. Authorization and revisions are rechecked by the server.",
+        "tags": ["Coach field work"],
+        "summary": "Create a group workout or record calendar attendance/results/completion",
+        "description": "Every write uses an operation UUID and the current event/participant revision. Queue dependent commands in order. Retry an uncertain result with the exact same operation and payload. Authorization and revisions are rechecked by the server. Group-workout creation copies an active workout template revision and roster. Attendance stays separate from actuals. Finishing a group event requires completed or explicitly skipped workouts for every present athlete and any started recording (group_workout_results_required otherwise). Existing field attendance/score operation payloads are unchanged; current Android workout recording is a later slice. Cancelled group records remain readable but cannot be edited.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FieldCommand"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/FieldCommand"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GroupWorkoutCreate"
+                  }
+                ]
               }
             }
           }
@@ -419,16 +401,7 @@
           "409": {
             "$ref": "#/components/responses/ApiError"
           }
-        }
-      }
-    },
-    "/v1/institution/workout-scheduling": {
-      "post": {
-        "tags": [
-          "Coach field work"
-        ],
-        "summary": "Schedule, reschedule or explicitly skip an individual plan workout",
-        "description": "Unreleased beta.3 server slice. Explicit staff scheduling uses fixed times; a day-only worker occurrence can be converted to a timed occurrence through reschedule. Binds the next non-rest day from the immutable plan cycle without advancing its cursor. One unresolved workout blocks that assignment only. Skip requires a staff reason; completion advances through the existing session save command. Uses exact operation receipts and rechecks current plan authority before replay. Recurring/automatic preparation is configured through workout-rules. Group workout capture and new Android workout UI remain pending.",
+        },
         "security": [
           {
             "mobileBearer": []
@@ -443,10 +416,32 @@
             "in": "header",
             "required": true,
             "schema": {
-              "enum": [
-                "web",
-                "android"
-              ]
+              "enum": ["web", "android"]
+            }
+          }
+        ]
+      }
+    },
+    "/v1/institution/workout-scheduling": {
+      "post": {
+        "tags": ["Coach field work"],
+        "summary": "Schedule, reschedule or explicitly skip an individual plan workout",
+        "description": "Unreleased beta.3 server slice. Explicit staff scheduling uses fixed times; a day-only worker occurrence can be converted to a timed occurrence through reschedule. Binds the next non-rest day from the immutable plan cycle without advancing its cursor. One unresolved workout blocks that assignment only. Skip requires a staff reason; completion advances through the existing session save command. Uses exact operation receipts and rechecks current plan authority before replay. Recurring/automatic preparation is configured through workout-rules. Additional group workouts use group-workouts; new Android offline workout UI remains pending.",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Rafik-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "enum": ["web", "android"]
             }
           }
         ],
@@ -479,9 +474,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Coach field work"
-        ],
+        "tags": ["Coach field work"],
         "summary": "Read authorized next-workout state without choosing an athlete first",
         "description": "Unreleased beta.3 web integration. Read-only projection; never allocates a sequence position. Returns next immutable plan day, pending occurrence, resumable record, general participation restriction and action flags. Coach scope is primary athletes plus supporting sport-specific plans. Athlete scope is own assignments. due=true includes workouts awaiting scheduling, today/overdue unresolved occurrences and unfinished older records, in the signed-in account timezone. Day-only occurrences have null starts_at/ends_at and an explicit training_date/timezone. Day-only eligibility uses that timezone; clients must not invent a clock time.",
         "security": [
@@ -498,11 +491,7 @@
             "in": "query",
             "required": true,
             "schema": {
-              "enum": [
-                "admin",
-                "trainer",
-                "trainee"
-              ]
+              "enum": ["admin", "trainer", "trainee"]
             }
           },
           {
@@ -551,12 +540,7 @@
             "description": "Optional dashboard queue, filtered before pagination. actionable combines due positions and unfinished recordings once per assignment; planning contains neither. recording/today remain narrower read filters. The response echoes the queue to detect mismatched backend versions.",
             "schema": {
               "type": "string",
-              "enum": [
-                "recording",
-                "today",
-                "planning",
-                "actionable"
-              ]
+              "enum": ["recording", "today", "planning", "actionable"]
             }
           }
         ],
@@ -582,11 +566,9 @@
     },
     "/v1/institution/sessions": {
       "post": {
-        "tags": [
-          "Coach field work"
-        ],
-        "summary": "Start or save individual workout results",
-        "description": "Current athlete self-recording and authorized delegated coach recording. A sequence-bound start supplies its occurrence ID and must wait until the booked time. Save actual reps/load/time/distance/effort with the current workout version as revision. Completed bound work resolves its assignment position atomically once; subsequent corrections preserve progression. Generic attendance does not complete a workout. Administrators do not record results. New Android offline workout capture is not implemented by this contract.",
+        "tags": ["Coach field work"],
+        "summary": "Start an individual workout, or save/review authorized workout actuals",
+        "description": "Current athlete self-recording and authorized delegated coach recording. A sequence-bound start supplies its occurrence ID and must wait until the booked time. Save actual reps/load/time/distance/effort with the current workout version as revision. Completed bound work resolves its assignment position atomically once; subsequent corrections preserve progression. Generic attendance does not complete a workout. Administrators do not record results. New Android offline workout capture is not implemented by this contract. Group workouts start through group-workouts, then reuse this save command with revision, entries, note and complete. Only designated event coaches save group actuals; athletes view their own records and administrators review. Corrections keep attributed history and never advance individual plans.",
         "security": [
           {
             "mobileBearer": []
@@ -601,10 +583,7 @@
             "in": "header",
             "required": true,
             "schema": {
-              "enum": [
-                "web",
-                "android"
-              ]
+              "enum": ["web", "android"]
             }
           }
         ],
@@ -639,9 +618,7 @@
     },
     "/v1/institution/workout-rules": {
       "get": {
-        "tags": [
-          "Coach field work"
-        ],
+        "tags": ["Coach field work"],
         "summary": "Read one authorized plan’s scheduling policy and worker diagnostics",
         "security": [
           {
@@ -657,10 +634,7 @@
             "in": "query",
             "required": true,
             "schema": {
-              "enum": [
-                "admin",
-                "trainer"
-              ]
+              "enum": ["admin", "trainer"]
             }
           },
           {
@@ -683,9 +657,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Coach field work"
-        ],
+        "tags": ["Coach field work"],
         "summary": "Set or stop future weekly/automatic workout preparation",
         "security": [
           {
@@ -701,10 +673,7 @@
             "in": "header",
             "required": true,
             "schema": {
-              "enum": [
-                "web",
-                "android"
-              ]
+              "enum": ["web", "android"]
             }
           }
         ],
@@ -737,9 +706,7 @@
     },
     "/v1/institution/delivery": {
       "post": {
-        "tags": [
-          "Coach field work"
-        ],
+        "tags": ["Coach field work"],
         "summary": "Adapt an existing athlete plan without publishing a library copy",
         "security": [
           {
@@ -755,10 +722,7 @@
             "in": "header",
             "required": true,
             "schema": {
-              "enum": [
-                "web",
-                "android"
-              ]
+              "enum": ["web", "android"]
             }
           }
         ],
@@ -788,6 +752,349 @@
           }
         }
       }
+    },
+    "/v1/institution/workout-templates": {
+      "get": {
+        "tags": ["Coach field work"],
+        "summary": "Browse shared workout templates",
+        "description": "Staff only. Active templates by default; archived=true lists archived templates. id resolves a selected template even when archived. Stable updated_at descending/id ascending order; page count is server scoped. Creator or administrator can edit. No athlete library access.",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": ["admin", "trainer"]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 24
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{items:[{id,institution_id,created_by,title,workout,revision,archived,created_at,updated_at,can_edit}],total,next}. workout is a frozen WorkoutDay."
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Coach field work"],
+        "summary": "Save or archive a shared workout template",
+        "description": "Creator or administrator only, current authority before exact receipt replay. Save uses revision=0 for a new UUID; edits/archive require current revision. Existing program and event copies remain unchanged. Archive retains history; no destructive delete endpoint.",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Rafik-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "enum": ["web", "android"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkoutTemplateCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorized snapshot or exact acknowledged command result."
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        }
+      }
+    },
+    "/v1/institution/group-workouts": {
+      "get": {
+        "tags": ["Coach field work"],
+        "summary": "Read a group workout baseline and separate participant outcomes",
+        "description": "Current designated event coaches and administrators read the bounded roster (maximum 100). Athletes see only their own participant and actuals; shared prescription is visible. Returns server can_start/can_skip flags and general blocked reasons; writes recheck. No clinical record detail. No individual assignment or cursor allocation.",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["admin", "trainer", "trainee"]
+            }
+          },
+          {
+            "name": "event",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{workout:null|{source:\"group\",template_id,template_revision,title,day},participants:[{member_id,name,revision,attendance,skip_reason,session:null|{id,member_id,completed_at,version},can_start,can_skip,blocked}]}. Non-group events return null workout and empty participants."
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Coach field work"],
+        "summary": "Start/adapt or explicitly skip one group participant workout",
+        "description": "Designated active event coaches only; administrators do not record, athletes are read-only. Start requires present attendance, arrived event time, active athlete and no cannot-train restriction at training date or now. Supply current participant revision. Optional workout overrides only that athlete; shared baseline remains fixed. One occurrence/athlete result, frozen after start. Competing new starts fail with group_workout_already_started; exact retry returns original response after current authority. Skip retains prior partial data/history. No group-plan or individual progression.",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Rafik-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "enum": ["web", "android"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupWorkoutCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorized snapshot or exact acknowledged command result."
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        }
+      }
+    },
+    "/v1/workouts/{id}": {
+      "get": {
+        "tags": ["Coach field work"],
+        "summary": "Read an authorized workout record",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["admin", "trainer", "trainee"]
+            }
+          }
+        ],
+        "description": "Assignment records retain existing primary/sport-coach authority. Additional group results require current event staffing, administrator membership or the owning athlete. Athletes cannot read another participant. can_record describes current coach permission; writes independently reauthorize. Group records use source_kind=additional, nullable assignment_id and frozen participant prescription.",
+        "responses": {
+          "200": {
+            "description": "Frozen prescription and actual entries, source_kind, occurrence_id, version, member_name, completed_at and can_record."
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        }
+      }
+    },
+    "/v1/workouts/{id}/history": {
+      "get": {
+        "tags": ["Coach field work"],
+        "summary": "Read attributed workout correction history",
+        "security": [
+          {
+            "mobileBearer": []
+          },
+          {
+            "webSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["admin", "trainer", "trainee"]
+            }
+          }
+        ],
+        "description": "Assignment records retain existing primary/sport-coach authority. Additional group results require current event staffing, administrator membership or the owning athlete. Athletes cannot read another participant. can_record describes current coach permission; writes independently reauthorize. Group records use source_kind=additional, nullable assignment_id and frozen participant prescription.",
+        "responses": {
+          "200": {
+            "description": "At most 100 oldest-first attributed session versions; includes start/save actuals and notes."
+          },
+          "400": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "401": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ApiError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ApiError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -811,9 +1118,7 @@
         "required": true,
         "schema": {
           "type": "string",
-          "enum": [
-            "android"
-          ]
+          "enum": ["android"]
         }
       }
     },
@@ -834,17 +1139,11 @@
             "format": "email"
           }
         },
-        "required": [
-          "id",
-          "email"
-        ]
+        "required": ["id", "email"]
       },
       "LoginRequest": {
         "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "properties": {
           "email": {
             "type": "string",
@@ -891,12 +1190,7 @@
       },
       "Context": {
         "type": "object",
-        "required": [
-          "id",
-          "kind",
-          "name",
-          "role"
-        ],
+        "required": ["id", "kind", "name", "role"],
         "properties": {
           "id": {
             "type": "string",
@@ -912,20 +1206,14 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "institution"
-            ]
+            "enum": ["institution"]
           },
           "name": {
             "type": "string"
           },
           "role": {
             "type": "string",
-            "enum": [
-              "admin",
-              "trainer",
-              "trainee"
-            ],
+            "enum": ["admin", "trainer", "trainee"],
             "description": "Stable wire roles: administrator, coach and athlete respectively."
           },
           "path": {
@@ -943,11 +1231,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "member",
-                  "revision",
-                  "attendance"
-                ],
+                "required": ["member", "revision", "attendance"],
                 "properties": {
                   "action": {
                     "const": "attendance"
@@ -962,12 +1246,7 @@
                   },
                   "attendance": {
                     "type": "string",
-                    "enum": [
-                      "unmarked",
-                      "present",
-                      "absent",
-                      "excused"
-                    ]
+                    "enum": ["unmarked", "present", "absent", "excused"]
                   }
                 }
               }
@@ -980,11 +1259,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "member",
-                  "revision",
-                  "values"
-                ],
+                "required": ["member", "revision", "values"],
                 "properties": {
                   "action": {
                     "const": "result"
@@ -1016,9 +1291,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "revision"
-                ],
+                "required": ["revision"],
                 "properties": {
                   "action": {
                     "const": "finish"
@@ -1035,12 +1308,7 @@
       },
       "FieldCommandBase": {
         "type": "object",
-        "required": [
-          "operation",
-          "action",
-          "view",
-          "id"
-        ],
+        "required": ["operation", "action", "view", "id"],
         "properties": {
           "operation": {
             "type": "string",
@@ -1049,17 +1317,11 @@
           },
           "action": {
             "type": "string",
-            "enum": [
-              "attendance",
-              "result",
-              "finish"
-            ]
+            "enum": ["attendance", "result", "finish"]
           },
           "view": {
             "type": "string",
-            "enum": [
-              "trainer"
-            ]
+            "enum": ["trainer"]
           },
           "id": {
             "type": "string",
@@ -1070,9 +1332,7 @@
       },
       "ApiError": {
         "type": "object",
-        "required": [
-          "message"
-        ],
+        "required": ["message"],
         "properties": {
           "message": {
             "type": "string"
@@ -1107,37 +1367,21 @@
                 "format": "date-time"
               },
               "recorded_by": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": ["string", "null"]
               },
               "recorded_name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": ["string", "null"]
               },
               "kind": {
                 "const": "attendance"
               },
               "previous_attendance": {
                 "type": "string",
-                "enum": [
-                  "unmarked",
-                  "present",
-                  "absent",
-                  "excused"
-                ]
+                "enum": ["unmarked", "present", "absent", "excused"]
               },
               "attendance": {
                 "type": "string",
-                "enum": [
-                  "unmarked",
-                  "present",
-                  "absent",
-                  "excused"
-                ]
+                "enum": ["unmarked", "present", "absent", "excused"]
               }
             }
           },
@@ -1168,16 +1412,10 @@
                 "format": "date-time"
               },
               "recorded_by": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": ["string", "null"]
               },
               "recorded_name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": ["string", "null"]
               },
               "kind": {
                 "const": "results"
@@ -1189,10 +1427,7 @@
               "values": {
                 "type": "object",
                 "additionalProperties": {
-                  "type": [
-                    "string",
-                    "number"
-                  ]
+                  "type": ["string", "number"]
                 }
               },
               "note": {
@@ -1204,10 +1439,7 @@
       },
       "FieldHistoryPage": {
         "type": "object",
-        "required": [
-          "items",
-          "next"
-        ],
+        "required": ["items", "next"],
         "properties": {
           "items": {
             "type": "array",
@@ -1217,10 +1449,7 @@
             }
           },
           "next": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "minimum": 0
           }
         },
@@ -1249,10 +1478,7 @@
                 "const": "schedule-workout"
               },
               "view": {
-                "enum": [
-                  "admin",
-                  "trainer"
-                ]
+                "enum": ["admin", "trainer"]
               },
               "assignment_id": {
                 "type": "string",
@@ -1304,10 +1530,7 @@
                 "const": "reschedule-workout"
               },
               "view": {
-                "enum": [
-                  "admin",
-                  "trainer"
-                ]
+                "enum": ["admin", "trainer"]
               },
               "assignment_id": {
                 "type": "string",
@@ -1357,10 +1580,7 @@
                 "const": "skip-workout"
               },
               "view": {
-                "enum": [
-                  "admin",
-                  "trainer"
-                ]
+                "enum": ["admin", "trainer"]
               },
               "assignment_id": {
                 "type": "string",
@@ -1406,10 +1626,7 @@
                 "format": "uuid"
               },
               "view": {
-                "enum": [
-                  "trainer",
-                  "trainee"
-                ]
+                "enum": ["trainer", "trainee"]
               },
               "action": {
                 "const": "start"
@@ -1450,10 +1667,7 @@
                 "format": "uuid"
               },
               "view": {
-                "enum": [
-                  "trainer",
-                  "trainee"
-                ]
+                "enum": ["trainer", "trainee"]
               },
               "action": {
                 "const": "save"
@@ -1500,40 +1714,60 @@
                       "maximum": 1000
                     },
                     "unit": {
-                      "enum": [
-                        "kg",
-                        "lb"
-                      ]
+                      "enum": ["kg", "lb"]
                     },
                     "completed": {
                       "type": "boolean"
                     },
                     "exercise_id": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": ["string", "null"]
                     },
                     "seconds": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
+                      "type": ["integer", "null"]
                     },
                     "metres": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
+                      "type": ["number", "null"]
                     },
                     "effort": {
-                      "type": [
-                        "number",
-                        "null"
-                      ]
+                      "type": ["number", "null"]
                     }
                   }
                 }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "operation",
+              "action",
+              "view",
+              "id",
+              "revision",
+              "note"
+            ],
+            "properties": {
+              "operation": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "action": {
+                "const": "review"
+              },
+              "view": {
+                "enum": ["admin", "trainer"]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 2000
               }
             }
           }
@@ -1585,10 +1819,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "id",
-                  "name"
-                ]
+                "required": ["id", "name"]
               },
               {
                 "type": "null"
@@ -1632,17 +1863,11 @@
                     "type": "integer"
                   },
                   "starts_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
+                    "type": ["string", "null"],
                     "format": "date-time"
                   },
                   "ends_at": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
+                    "type": ["string", "null"],
                     "format": "date-time"
                   },
                   "timezone": {
@@ -1684,10 +1909,7 @@
                     "description": "Current plan-scoped coach can continue this workout; writes reauthorize."
                   }
                 },
-                "required": [
-                  "id",
-                  "recorded_mode"
-                ]
+                "required": ["id", "recorded_mode"]
               },
               {
                 "type": "null"
@@ -1705,10 +1927,7 @@
             "description": "Bounded preview from the immutable assigned workout. Muscle focus ranks declared metadata by exercise frequency, not physiological load.",
             "properties": {
               "minutes": {
-                "type": [
-                  "number",
-                  "null"
-                ]
+                "type": ["number", "null"]
               },
               "exercise_count": {
                 "type": "integer"
@@ -1791,12 +2010,7 @@
           "queue": {
             "anyOf": [
               {
-                "enum": [
-                  "recording",
-                  "today",
-                  "planning",
-                  "actionable"
-                ]
+                "enum": ["recording", "today", "planning", "actionable"]
               },
               {
                 "type": "null"
@@ -1805,12 +2019,7 @@
             "description": "Echo of requested queue; null when no queue was requested."
           }
         },
-        "required": [
-          "items",
-          "total",
-          "offset",
-          "limit"
-        ]
+        "required": ["items", "total", "offset", "limit"]
       },
       "WorkoutRuleCommand": {
         "type": "object",
@@ -1828,40 +2037,25 @@
             "format": "uuid"
           },
           "action": {
-            "enum": [
-              "set-workout-rule",
-              "stop-workout-rule"
-            ]
+            "enum": ["set-workout-rule", "stop-workout-rule"]
           },
           "view": {
-            "enum": [
-              "admin",
-              "trainer"
-            ]
+            "enum": ["admin", "trainer"]
           },
           "assignment_id": {
             "type": "string",
             "format": "uuid"
           },
           "rule_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "revision": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "minimum": 1
           },
           "mode": {
-            "enum": [
-              "weekly",
-              "automatic"
-            ]
+            "enum": ["weekly", "automatic"]
           },
           "starts_on": {
             "type": "string",
@@ -1916,16 +2110,11 @@
           },
           "action": {
             "type": "string",
-            "enum": [
-              "adapt"
-            ]
+            "enum": ["adapt"]
           },
           "view": {
             "type": "string",
-            "enum": [
-              "admin",
-              "trainer"
-            ]
+            "enum": ["admin", "trainer"]
           },
           "assignment": {
             "type": "string",
@@ -1949,6 +2138,363 @@
             "description": "Full valid schema-2 prescription; catalog/media authority is revalidated."
           }
         }
+      },
+      "WorkoutDay": {
+        "type": "object",
+        "required": ["id", "name", "minutes", "exercises"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "nameAr": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 480
+          },
+          "exercises": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "exerciseId",
+                "sets",
+                "reps",
+                "load",
+                "unit",
+                "rest",
+                "note"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "exerciseId": {
+                  "type": "string"
+                },
+                "kind": {
+                  "enum": ["strength", "timed", "distance"]
+                },
+                "sets": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "reps": {
+                  "type": "number"
+                },
+                "load": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "unit": {
+                  "enum": ["kg", "lb"]
+                },
+                "rest": {
+                  "type": "number"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "seconds": {
+                  "type": "number"
+                },
+                "metres": {
+                  "type": "number"
+                },
+                "effort": {
+                  "type": ["number", "null"]
+                },
+                "targets": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "alternatives": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["exerciseId"],
+                    "properties": {
+                      "exerciseId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "One non-rest workout. Validated with the canonical program prescription/catalog rules. Template publication and participant adaptation accept only reference or institution-shared exercise IDs; private exercises are not made shared. Server freezes authorized catalog/media metadata."
+      },
+      "WorkoutTemplateCommand": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "operation",
+              "action",
+              "view",
+              "id",
+              "revision",
+              "title",
+              "workout"
+            ],
+            "properties": {
+              "operation": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "action": {
+                "const": "save"
+              },
+              "view": {
+                "enum": ["admin", "trainer"]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "workout": {
+                "$ref": "#/components/schemas/WorkoutDay"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "operation",
+              "action",
+              "view",
+              "id",
+              "revision",
+              "archived"
+            ],
+            "properties": {
+              "operation": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "action": {
+                "const": "archive"
+              },
+              "view": {
+                "enum": ["admin", "trainer"]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "archived": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "GroupWorkoutCommand": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "operation",
+              "action",
+              "view",
+              "event",
+              "member_id",
+              "revision",
+              "id"
+            ],
+            "properties": {
+              "operation": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "action": {
+                "const": "start"
+              },
+              "view": {
+                "const": "trainer"
+              },
+              "event": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "member_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "workout": {
+                "$ref": "#/components/schemas/WorkoutDay"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "operation",
+              "action",
+              "view",
+              "event",
+              "member_id",
+              "revision",
+              "reason"
+            ],
+            "properties": {
+              "operation": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "action": {
+                "const": "skip"
+              },
+              "view": {
+                "const": "trainer"
+              },
+              "event": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "member_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            }
+          }
+        ]
+      },
+      "GroupWorkoutCreate": {
+        "type": "object",
+        "required": [
+          "operation",
+          "action",
+          "view",
+          "id",
+          "kind",
+          "title",
+          "local",
+          "zone",
+          "minutes",
+          "count",
+          "every",
+          "staff",
+          "participants",
+          "workout_template_id",
+          "workout_template_revision"
+        ],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "const": "create"
+          },
+          "view": {
+            "enum": ["admin", "trainer"]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "const": "training"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "local": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$"
+          },
+          "zone": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "integer"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "every": {
+            "type": "integer"
+          },
+          "staff": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "participants": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "workout_template_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workout_template_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "location": {
+            "type": "string"
+          }
+        },
+        "description": "Uses the existing calendar preview/collision and bounded recurrence validation. Coaches must designate themselves as sole staff and choose authorized athletes; administrators may designate multiple coaches. The roster and exact template revision are copied into each occurrence."
       }
     },
     "responses": {

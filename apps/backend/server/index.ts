@@ -31,6 +31,11 @@ import {
 import { communication, communicationCommand } from "./communication.ts";
 import { serviceCatalog, serviceCatalogCommand } from "./service-catalog.ts";
 import {
+  workoutTemplates,
+  workoutTemplateCommand,
+} from "./workout-templates.ts";
+import { groupWorkouts, groupWorkoutCommand } from "./group-workouts.ts";
+import {
   calendar,
   scheduledEvents,
   calendarPreview,
@@ -667,6 +672,36 @@ const server = createServer(async (req, res) => {
         send(res, 200, await nutrition(who, id, url.searchParams));
       else if (req.method === "POST")
         send(res, 200, await nutritionCommand(who, id, input));
+      else throw new ApiError(405, "method_not_allowed");
+      return;
+    }
+    const groupWorkoutMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/group-workouts$/,
+    );
+    if (groupWorkoutMatch) {
+      const who = requireActor(actor),
+        institution = groupWorkoutMatch[1];
+      if (req.method === "GET")
+        send(res, 200, await groupWorkouts(who, institution, url.searchParams));
+      else if (req.method === "POST")
+        send(res, 200, await groupWorkoutCommand(who, institution, input));
+      else throw new ApiError(405, "method_not_allowed");
+      return;
+    }
+    const templateMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/workout-templates$/,
+    );
+    if (templateMatch) {
+      const who = requireActor(actor),
+        institution = templateMatch[1];
+      if (req.method === "GET")
+        send(
+          res,
+          200,
+          await workoutTemplates(who, institution, url.searchParams),
+        );
+      else if (req.method === "POST")
+        send(res, 200, await workoutTemplateCommand(who, institution, input));
       else throw new ApiError(405, "method_not_allowed");
       return;
     }

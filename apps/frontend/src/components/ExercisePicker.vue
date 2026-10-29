@@ -415,7 +415,7 @@ function select(value: unknown) {
   color: var(--muted);
 }
 .exercise-picker-options {
-  z-index: 65;
+  z-index: 120;
   width: var(--reka-combobox-trigger-width);
   min-width: min(340px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);

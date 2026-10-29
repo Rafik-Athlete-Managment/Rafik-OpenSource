@@ -40,6 +40,30 @@ Use an empty synthetic institution or your existing local demo; do not reset ano
 
 ## Administrator
 
+### Workout templates and group workouts — unreleased beta.3
+
+Prerequisites: one administrator, one coach assigned to two synthetic athletes, and a second coach who is not staffed on the test event. Use names such as **Validation — Field strength**. Apply the matching forward migrations using the startup procedure above; do not reset existing records.
+
+1. As administrator, open **Workout templates**, create a template with one strength and one timed/distance exercise, and save. Expect a dedicated editor, explicit prescribed targets and a preview. Reload: the saved template remains. Edit/archive/restore it; confirm existing program copies are unchanged. Staff can browse shared templates, but another coach cannot edit the creator's template.
+2. Choose **Use in a new program**, or import from the program/athlete-plan editor. Expect an independent workout copy with its own identity. Change the copy and save/publish through the existing flow; reopen the template and verify it is unchanged. Import into a later cycle slot as well as an empty program. Existing plan policies and already scheduled prescriptions must remain unchanged.
+3. Open **Schedule an event → Group workout**, select the template, choose the two athletes (or an authorized group's members) and designate a coach. Review the dates/roster and create. Expect the event in the calendar/list. Later group membership changes must not change its roster. Edit/archive the original template: the event retains the original baseline.
+4. Open the event before its start. Expect a time explanation, no recording action and no ability to finish without attendance/results. Administrators can review and manage the event but cannot record athlete actuals.
+
+As the designated coach, once the scheduled start time arrives:
+
+1. Mark attendance, then open **Record workout** for the first athlete. Adapt its targets before **Start recording**. Expect those changes only on that athlete; the shared baseline and second athlete remain unchanged. The exercise popup must be visible and pointer/keyboard usable above the participant panel on desktop/phone.
+2. Record actual reps/load/seconds/metres as applicable and use the explicit set-completion checks. Zero load is valid. Save progress, reload and resume; finish and expect the workout review. Reopen history and verify coach attribution and saved versions. An athlete's individual plan cursor must not advance from this group workout.
+3. Try finishing the event while the other present athlete has no result. Expect a clear completion requirement. Complete their workout or **Skip with reason**; do not put health details in the reason. If a workout was already started, skipping must retain its partial history. Finish the event once all required outcomes are resolved.
+4. Check an applicable cannot-train status prevents starting, an absent athlete cannot start, and an inactive athlete's existing history remains available. A newly staffed coach can continue authorized work; removing the original coach must block their reads/writes and old-command replay. Keep current role/staff boundaries when reviewing completed work.
+5. In a disposable test account, interrupt a start/save response after server acknowledgment. Reload and retry the saved exact command. Expect one participant record/history version, the acknowledged revision and a working subsequent save; do not discard pending work. A separate competing start should require refreshing the existing record rather than silently replacing its prescription.
+
+As each athlete:
+
+1. Open the event and **View workout**. Expect the shared prescription and only your own result/skip status. No participant editor, coach feedback form or recording action should appear. Opening another athlete's result URL must be refused.
+2. Verify own individual workout start/history still works independently, and the group record cannot be edited through the athlete workout route. An unrelated coach must not gain access merely by knowing the event/result URL.
+
+Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Native offline workout entry, group plans and workout sections are deferred; the current phone app can keep attendance/assessment work, but unresolved group workout completion must be resolved on the web.
+
 ### Institution overview
 
 1. Open Dashboard: expect Institution overview with the reporting-period control and Open full analytics beside the Participation and activity heading, then period metrics before administrative detail. Switch 7/28/90 days; wait for the returned dates to match. No records should show honest chart empty states, not example data.

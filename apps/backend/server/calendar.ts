@@ -11,6 +11,7 @@ import {
   access,
 } from "./institution.ts";
 import { role, recipient } from "./programming.ts";
+import { selectedWorkoutTemplate } from "./workout-templates.ts";
 import {
   definition,
   assessmentValues,
@@ -496,6 +497,16 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         )
           throw new ApiError(400, "invalid_recipients");
         const list = [];
+        const workoutTemplate = input.workout_template_id
+          ? await selectedWorkoutTemplate(
+              tx,
+              id,
+              input.workout_template_id,
+              input.workout_template_revision,
+            )
+          : null;
+        if (workoutTemplate && input.kind !== "training")
+          throw new ApiError(400, "invalid_request");
         for (let i = 0; i < times.length; i++) {
           const start = new Date(times[i].starts_at),
             end = new Date(times[i].ends_at);
@@ -517,6 +528,17 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
               ends_at: end,
               timezone: String(input.zone),
               kind: String(input.kind),
+              ...(workoutTemplate
+                ? {
+                    workout_snapshot: json({
+                      source: "group",
+                      template_id: workoutTemplate.id,
+                      template_revision: workoutTemplate.revision,
+                      title: workoutTemplate.title,
+                      day: workoutTemplate.workout,
+                    }),
+                  }
+                : {}),
               ...(template
                 ? {
                     template_id: template.id,
@@ -732,6 +754,24 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
           throw new ApiError(409, "conflict");
         if (
           item.state === "completed" &&
+          input.attendance === "present" &&
+          (item.workout_snapshot as any)?.source === "group" &&
+          !person.workout_skip_reason
+        ) {
+          const recorded = await tx.institution_sessions.findFirst({
+            where: {
+              institution_id: id,
+              occurrence_id: key,
+              member_id: member,
+              completed_at: { not: null },
+            },
+          });
+          if (!recorded)
+            throw new ApiError(400, "group_workout_results_required");
+        }
+
+        if (
+          item.state === "completed" &&
           (input.attendance === "unmarked" ||
             (item.kind === "assessment" &&
               input.attendance === "present" &&
@@ -819,6 +859,23 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         );
         if (participants.some((p) => p.attendance === "unmarked"))
           throw new ApiError(400, "attendance_required");
+        if ((item.workout_snapshot as any)?.source === "group") {
+          const workouts = await tx.institution_sessions.findMany({
+            where: { institution_id: id, occurrence_id: key },
+            select: { member_id: true, completed_at: true },
+          });
+          if (
+            participants.some((p) => {
+              const workout = workouts.find((w) => w.member_id === p.member_id);
+              return (
+                (p.attendance === "present" || !!workout) &&
+                !p.workout_skip_reason &&
+                !workout?.completed_at
+              );
+            })
+          )
+            throw new ApiError(400, "group_workout_results_required");
+        }
         if (item.kind === "assessment")
           for (const p of participants.filter(
             (p) => p.attendance === "present",

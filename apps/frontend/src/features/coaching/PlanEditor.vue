@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
+import WorkoutTemplatePicker from './WorkoutTemplatePicker.vue'
+import SidePanel from '../../components/SidePanel.vue'
+import { copyWorkout, type WorkoutTemplate } from '../../lib/workout-templates'
 import ExerciseDemo from '../../components/ExerciseDemo.vue'
 import ExercisePicker from '../../components/ExercisePicker.vue'
 import ProgramCover from './ProgramCover.vue'
@@ -76,7 +79,33 @@ const key =
     props.assignedPlan
       ? `assignment:${props.assignedPlan.id}:${props.assignedPlan.version.id}`
       : String(route.params.id),
-  ) + (route.query.source ? `:source:${route.query.source}:member:${route.query.member || ''}` : '')
+  ) +
+  (route.query.source ? `:source:${route.query.source}:member:${route.query.member || ''}` : '') +
+  (!props.assignedPlan && isNew && route.query.workoutTemplate
+    ? `:workout-template:${route.query.workoutTemplate}`
+    : '')
+const importingWorkout = ref(false)
+function importWorkout(template: WorkoutTemplate) {
+  const replace =
+    draft.value.days.length === 1 &&
+    !draft.value.days[0]!.exercises.length &&
+    !draft.value.days[0]!.restDay
+  const slot = replace
+    ? { week: draft.value.days[0]!.week || 1, weekday: draft.value.days[0]!.weekday || 0 }
+    : freeSlot()
+  if (!slot) {
+    error.value = language(
+      'Add a cycle week before importing another workout.',
+      'أضف أسبوعاً للدورة قبل استيراد تمرين آخر.',
+    )
+    return
+  }
+  const copied = copyWorkout(template.workout, slot)
+  if (replace) draft.value.days.splice(0, 1, copied)
+  else draft.value.days.push(copied)
+  selected.value = draft.value.days.length - 1
+  importingWorkout.value = false
+}
 const day = computed(() => draft.value.days[selected.value]!)
 const catalog = ref<Exercise[]>([])
 const activeCatalog = computed(() => catalog.value.filter((exercise) => exercise.active !== false))
@@ -181,6 +210,15 @@ async function load(recover = true) {
         loadedSuccessfully.value = true
         return
       }
+    }
+    if (isNew && !props.assignedPlan && route.query.workoutTemplate) {
+      const page = await request<{ items: WorkoutTemplate[] }>(
+        `/v1/institution/workout-templates?view=${context.view}&id=${encodeURIComponent(String(route.query.workoutTemplate))}`,
+        { feedback: 'none' },
+      )
+      const template = page.items[0]
+      if (!template || template.archived) throw Error('workout_template_unavailable')
+      importWorkout(template)
     }
     initialized = true
     loadedSuccessfully.value = true
@@ -799,6 +837,22 @@ function removeDay() {
               >
             </p>
           </details>
+          <div v-if="!preview" class="actions">
+            <button type="button" class="button secondary" @click="importingWorkout = true">
+              {{ language('Import workout template', 'استيراد قالب تمرين') }}
+            </button>
+          </div>
+          <SidePanel
+            v-model:open="importingWorkout"
+            :title="language('Import workout template', 'استيراد قالب تمرين')"
+            :description="
+              language(
+                'Adds an independent copy to this program. Later template edits do not change it.',
+                'يضيف نسخة مستقلة إلى البرنامج. لا تغيرها تعديلات القالب اللاحقة.',
+              )
+            "
+            ><WorkoutTemplatePicker @choose="importWorkout"
+          /></SidePanel>
           <div class="day-tabs">
             <button
               v-for="(d, i) in draft.days"

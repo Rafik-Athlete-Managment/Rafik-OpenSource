@@ -9,7 +9,8 @@
     "/members/:member": "People row/profile action; staff authority.",
     "/record/:session": "Staff assignment/recording workflow.",
     "/deliver/:id": "Published-program action; id is immutable version ID.",
-    "/invitation/:token": "Canonical external invitation token; intentionally absent from nav."
+    "/invitation/:token": "Canonical external invitation token; intentionally absent from nav.",
+    "/workout-templates/:id": "Library create/preview/edit; new is a dedicated creation route, staff only."
   },
   "nonRoutes": [],
   "links": [
@@ -32,51 +33,34 @@
         "/exercises",
         "/resources",
         "/groups",
-        "/assessment-templates"
+        "/assessment-templates",
+        "/workout-templates"
       ],
       "reason": "Role-specific item arrays drive base + item[0]. Athlete, coach and administrator arrays differ; hidden items are not permissions."
     },
     {
       "file": "features/account/EntryPage.vue",
-      "to": [
-        "/dashboard",
-        "/access",
-        "/login",
-        "/setup"
-      ],
+      "to": ["/dashboard", "/access", "/login", "/setup"],
       "reason": "Current context path comes from auth normalization; empty public instance opens setup, initialized instance sign-in."
     },
     {
       "file": "features/account/LoginPage.vue",
-      "to": [
-        "/dashboard",
-        "/access"
-      ],
+      "to": ["/dashboard", "/access"],
       "reason": "safeNext accepts internal next paths; otherwise normalized context opens dashboard/access. This does not grant arbitrary target authority."
     },
     {
       "file": "features/account/SetupPage.vue",
-      "to": [
-        "/dashboard",
-        "/access",
-        "/login"
-      ],
+      "to": ["/dashboard", "/access", "/login"],
       "reason": "Successful setup opens normalized administrator context; initialized setup redirects to sign-in."
     },
     {
       "file": "features/account/PasswordSetupPage.vue",
-      "to": [
-        "/dashboard",
-        "/access"
-      ],
+      "to": ["/dashboard", "/access"],
       "reason": "After token acknowledgement the normalized context path decides the destination."
     },
     {
       "file": "features/coaching/ExercisesPage.vue",
-      "to": [
-        "/exercises",
-        "/exercises/:editor"
-      ],
+      "to": ["/exercises", "/exercises/:editor"],
       "reason": "listPath plus new, exercise ID or recovered draft ID drives dedicated editor navigation."
     },
     {
@@ -91,9 +75,7 @@
     },
     {
       "file": "features/institution/AssessmentHistory.vue",
-      "to": [
-        "/training"
-      ],
+      "to": ["/training"],
       "reason": "Back link preserves athlete member query. Result rows and chart points display values without opening event details."
     },
     {
@@ -112,19 +94,12 @@
     },
     {
       "file": "features/institution/SessionHistory.vue",
-      "to": [
-        "/workout/:id",
-        "/review/:id"
-      ],
+      "to": ["/workout/:id", "/review/:id"],
       "reason": "Athlete rows open own recorder; staff rows open coach review. Query-only search/page changes stay on this route."
     },
     {
       "file": "features/notifications/NotificationsPage.vue",
-      "to": [
-        "/messages/:channel?",
-        "/schedule/:id",
-        "/workout/:id"
-      ],
+      "to": ["/messages/:channel?", "/schedule/:id", "/workout/:id"],
       "reason": "item.href comes from notificationTarget after recipient/source authorization in server/notifications.ts. Retired independent sources are suppressed."
     },
     {
@@ -150,52 +125,48 @@
     },
     {
       "file": "features/coaching/ReviewPage.vue",
-      "to": [
-        "/training"
-      ],
+      "to": ["/training"],
       "reason": "back object carries Training path and the current view/search query."
     },
     {
       "file": "features/institution/ChannelsPage.vue",
-      "to": [
-        "/messages/:channel?"
-      ],
+      "to": ["/messages/:channel?"],
       "reason": "base is the canonical Messages route. Directory clicks and acknowledged conversation creation append the authorized channel ID."
     },
     {
       "file": "features/institution/ChannelThread.vue",
-      "to": [
-        "/messages/:channel?"
-      ],
+      "to": ["/messages/:channel?"],
       "reason": "base returns to the conversation list; no standalone message-thread route exists."
     },
     {
       "file": "features/institution/DelegatedWorkout.vue",
-      "to": [
-        "/record/:session"
-      ],
+      "to": ["/record/:session"],
       "reason": "Acknowledged start replaces new with the durable session ID using the current empty institution URL base."
     },
     {
       "file": "features/training/WorkoutPage.vue",
-      "to": [
-        "/training"
-      ],
+      "to": ["/training"],
       "reason": "returnPath is the own Training view after completion or back navigation."
     },
     {
       "file": "features/analytics/TrainerDelivery.vue",
-      "to": [
-        "/schedule"
-      ],
+      "to": ["/schedule"],
       "reason": "Chart items receive the current institution Schedule path as href."
     },
     {
       "file": "features/institution/MemberManagement.vue",
-      "to": [
-        "/password-setup/:token"
-      ],
+      "to": ["/password-setup/:token"],
       "reason": "An acknowledged admin reset issues an out-of-band password setup URL, not an automatic navigation. Account fields and token validation remain server-owned."
+    },
+    {
+      "file": "features/institution/GroupWorkoutPanel.vue",
+      "to": ["/review/:id", "/record/:session"],
+      "reason": "Server-authorized per-participant result IDs; recording is coach-only."
+    },
+    {
+      "file": "features/coaching/WorkoutTemplatesPage.vue",
+      "to": ["/workout-templates/:id", "/plans/:id"],
+      "reason": "Template identity links and explicit independent program copy."
     }
   ],
   "routeTargets": {
@@ -210,32 +181,12 @@
       "/review/:id",
       "/workouts"
     ],
-    "/people": [
-      "/access",
-      "/members/:member",
-      "/messages/:channel?"
-    ],
-    "/activity": [
-      "/access"
-    ],
-    "/institution-settings": [
-      "/access"
-    ],
-    "/groups": [
-      "/groups",
-      "/groups/:editor"
-    ],
-    "/groups/:editor": [
-      "/groups",
-      "/groups/:editor"
-    ],
-    "/assessment-templates": [
-      "/assessment-templates",
-      "/assessment-templates/:editor"
-    ],
-    "/assessment-templates/:editor": [
-      "/assessment-templates",
-      "/assessment-templates/:editor"
-    ]
+    "/people": ["/access", "/members/:member", "/messages/:channel?"],
+    "/activity": ["/access"],
+    "/institution-settings": ["/access"],
+    "/groups": ["/groups", "/groups/:editor"],
+    "/groups/:editor": ["/groups", "/groups/:editor"],
+    "/assessment-templates": ["/assessment-templates", "/assessment-templates/:editor"],
+    "/assessment-templates/:editor": ["/assessment-templates", "/assessment-templates/:editor"]
   }
 }

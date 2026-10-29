@@ -1,5 +1,5 @@
 {
-  "migrationDigest": "e699f4fb1e50249bcfb95009a01f70a378cfde918f43792d087f1d64bbdddd43",
+  "migrationDigest": "0447d572bd1176f83139e000755caf1bb84de04cafac28411663ffb130fa8607",
   "tables": [
     {
       "rls": false,
@@ -1861,6 +1861,13 @@
           "comment": null,
           "default": null,
           "nullable": true
+        },
+        {
+          "name": "workout_skip_reason",
+          "type": "text",
+          "comment": null,
+          "default": "''::text",
+          "nullable": false
         }
       ],
       "indexes": [
@@ -1926,6 +1933,12 @@
           "name": "institution_event_people_session_note_check",
           "target": null,
           "definition": "CHECK ((length(session_note) <= 2000))"
+        },
+        {
+          "kind": "c",
+          "name": "institution_event_people_workout_skip_reason_check",
+          "target": null,
+          "definition": "CHECK ((length(workout_skip_reason) <= 2000))"
         },
         {
           "kind": "u",
@@ -2089,6 +2102,7 @@
       "policies": [],
       "triggers": [
         "CREATE TRIGGER institution_event_training_date BEFORE INSERT OR UPDATE ON public.institution_events FOR EACH ROW EXECUTE FUNCTION set_event_training_date()",
+        "CREATE TRIGGER institution_group_workout_snapshot BEFORE UPDATE ON public.institution_events FOR EACH ROW EXECUTE FUNCTION guard_group_workout_snapshot()",
         "CREATE TRIGGER notification_org_event AFTER UPDATE ON public.institution_events FOR EACH ROW EXECUTE FUNCTION capture_domain_notification()"
       ],
       "constraints": [
@@ -4521,7 +4535,7 @@
           "type": "uuid",
           "comment": null,
           "default": null,
-          "nullable": false
+          "nullable": true
         },
         {
           "name": "day_id",
@@ -4592,6 +4606,13 @@
           "comment": null,
           "default": null,
           "nullable": true
+        },
+        {
+          "name": "source_kind",
+          "type": "text",
+          "comment": null,
+          "default": "'assignment'::text",
+          "nullable": false
         }
       ],
       "indexes": [
@@ -4609,6 +4630,12 @@
         "CREATE TRIGGER notification_org_workout AFTER UPDATE ON public.institution_sessions FOR EACH ROW EXECUTE FUNCTION capture_domain_notification()"
       ],
       "constraints": [
+        {
+          "kind": "c",
+          "name": "institution_session_source",
+          "target": null,
+          "definition": "CHECK ((((source_kind = 'assignment'::text) AND (assignment_id IS NOT NULL)) OR ((source_kind = 'additional'::text) AND (assignment_id IS NULL) AND (occurrence_id IS NOT NULL) AND (source_snapshot IS NOT NULL) AND (recorded_mode = 'delegated'::text) AND (recorded_by IS NOT NULL))))"
+        },
         {
           "kind": "u",
           "name": "institution_session_subject",
@@ -5289,6 +5316,132 @@
           "name": "institution_workout_recurrences_weekdays_check",
           "target": null,
           "definition": "CHECK ((((cardinality(weekdays) >= 1) AND (cardinality(weekdays) <= 7)) AND (weekdays <@ ARRAY[(1)::smallint, (2)::smallint, (3)::smallint, (4)::smallint, (5)::smallint, (6)::smallint, (7)::smallint]) AND (array_position(weekdays, NULL::smallint) IS NULL)))"
+        }
+      ]
+    },
+    {
+      "rls": false,
+      "name": "institution_workout_templates",
+      "grants": {
+        "api_select": true,
+        "user_select": false,
+        "guest_select": false
+      },
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "comment": null,
+          "default": null,
+          "nullable": false
+        },
+        {
+          "name": "institution_id",
+          "type": "uuid",
+          "comment": null,
+          "default": null,
+          "nullable": false
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "comment": null,
+          "default": null,
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "comment": null,
+          "default": null,
+          "nullable": false
+        },
+        {
+          "name": "workout",
+          "type": "jsonb",
+          "comment": null,
+          "default": null,
+          "nullable": false
+        },
+        {
+          "name": "revision",
+          "type": "integer",
+          "comment": null,
+          "default": "1",
+          "nullable": false
+        },
+        {
+          "name": "archived",
+          "type": "boolean",
+          "comment": null,
+          "default": "false",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "comment": null,
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "comment": null,
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX institution_workout_template_library ON public.institution_workout_templates USING btree (institution_id, archived, updated_at DESC, id)",
+        "CREATE UNIQUE INDEX institution_workout_templates_institution_id_id_key ON public.institution_workout_templates USING btree (institution_id, id)",
+        "CREATE UNIQUE INDEX institution_workout_templates_pkey ON public.institution_workout_templates USING btree (id)"
+      ],
+      "policies": [],
+      "triggers": [],
+      "constraints": [
+        {
+          "kind": "f",
+          "name": "institution_workout_templates_institution_id_created_by_fkey",
+          "target": "institution_members",
+          "definition": "FOREIGN KEY (institution_id, created_by) REFERENCES institution_members(institution_id, id)"
+        },
+        {
+          "kind": "f",
+          "name": "institution_workout_templates_institution_id_fkey",
+          "target": "institutions",
+          "definition": "FOREIGN KEY (institution_id) REFERENCES institutions(id) ON DELETE CASCADE"
+        },
+        {
+          "kind": "u",
+          "name": "institution_workout_templates_institution_id_id_key",
+          "target": null,
+          "definition": "UNIQUE (institution_id, id)"
+        },
+        {
+          "kind": "p",
+          "name": "institution_workout_templates_pkey",
+          "target": null,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "kind": "c",
+          "name": "institution_workout_templates_revision_check",
+          "target": null,
+          "definition": "CHECK ((revision > 0))"
+        },
+        {
+          "kind": "c",
+          "name": "institution_workout_templates_title_check",
+          "target": null,
+          "definition": "CHECK (((length(TRIM(BOTH FROM title)) >= 1) AND (length(TRIM(BOTH FROM title)) <= 100)))"
+        },
+        {
+          "kind": "c",
+          "name": "institution_workout_templates_workout_check",
+          "target": null,
+          "definition": "CHECK ((jsonb_typeof(workout) = 'object'::text))"
         }
       ]
     },
@@ -6537,6 +6690,13 @@
       "result": "profiles",
       "arguments": "p_name text, p_locale text, p_timezone text",
       "user_execute": true,
+      "guest_execute": false
+    },
+    {
+      "name": "guard_group_workout_snapshot",
+      "result": "trigger",
+      "arguments": "",
+      "user_execute": false,
       "guest_execute": false
     },
     {

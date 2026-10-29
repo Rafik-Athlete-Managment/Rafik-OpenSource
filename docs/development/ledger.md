@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Workout templates and group results — 29 October 2026
+
+Founder clarified templates are the reusable source for group sessions; use Workout templates, distinct from assessment templates. Optional workout sections deferred to avoid partially integrating authoring/logging/history/native. Implemented shared library/edit/preview/import, frozen event baseline/roster and independent coach-recorded participant actuals with explicit skips, exact receipts, current authority and history. Added forward migration, shared generated types, API contract/reference, source inventories, activity labels and current Android web-resolution error copy. No APK or public release/tag is produced. Canonical manual acceptance is updated in place; verification records actual checks and gaps. Continue on the existing beta.3 release branch/PR; main remains unmerged.
+
 ## Analytics Experience tab and Athlete health naming — 28 October 2026
 
 Founder follow-up on PR 142. The Experience tab hid the summary cards and switched to a nested tab/prose layout; it now renders inside the same card grid as the other tabs (scheduled-session and workout satisfaction, plus coach workplace for administrators), with average/response coverage in each card description and source/workplace caveats in the method notes. The founder decided the participation-status feature is "Athlete health" (Arabic "صحة الرياضي"); labels in navigation, InjuryStatus, CoachDesk, AthleteProfile, Help, ActivityLog, CoachingTeam and MemberManagement, plus matching e2e locators and the validation guide, were updated. Text that describes what is recorded ("participation status", no diagnoses) stays. Route `/injuries`, component/file names, APIs and data are unchanged. The Workout history/Session history terminology question remains open.

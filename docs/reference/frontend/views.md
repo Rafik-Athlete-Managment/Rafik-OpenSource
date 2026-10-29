@@ -146,8 +146,8 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/plans/:id`, `/training/:assignment`
 - **Purpose:** Program draft editor and immutable-version preview, prescription structure, cover, publication and assignment links.
 - **Access:** Administrators/coaches edit within program ownership rules; athletes read only their own assigned immutable versions, not staff drafts or unassigned versions.
-- **Opens:** `/deliver/:id`, `/exercises`, `/plans`, `/plans/:id`
-- **Opened from views:** `/members/:member`, `/plans`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
+- **Opens:** `/deliver/:id`, `/exercises`, `/plans`, `/plans/:id`, `/workout-templates/:id`
+- **Opened from views:** `/members/:member`, `/plans`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workout-templates`, `/workout-templates/:id`
 - **Embedded by:** `features/institution/AssignedPlanPage.vue`
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -171,9 +171,33 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Recorded-workout review, actual results, correction/version information and coach feedback.
 - **Access:** Administrators and authorized coaches for the referenced institutional workout; API decides subject scope.
 - **Opens:** `/record/:session`, `/review/:id`, `/training`
-- **Opened from views:** `/dashboard`, `/members/:member`, `/record/:session`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
+- **Opened from views:** `/dashboard`, `/members/:member`, `/record/:session`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
+
+## WorkoutTemplateEditor
+
+- **Source:** [features/coaching/WorkoutTemplateEditor.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue)
+- **Folder:** `features/coaching`
+- **URL(s):** `/workout-templates/:id`
+- **Purpose:** Scoped recoverable single-workout editor and readonly preview, exact save/archive and independent imports.
+- **Access:** Active staff read; creator/administrator edits.
+- **Opens:** `/plans/:id`, `/workout-templates`, `/workout-templates/:id`
+- **Opened from views:** `/plans/:id`, `/schedule/new`, `/training/:assignment`, `/workout-templates`
+- **Embedded by:** Router.
+- **Shell entry:** No direct shell item; use the workflow or entry described above.
+
+## WorkoutTemplatesPage
+
+- **Source:** [features/coaching/WorkoutTemplatesPage.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplatesPage.vue)
+- **Folder:** `features/coaching`
+- **URL(s):** `/workout-templates`
+- **Purpose:** Institution-shared workout library, archive filter and dedicated create/preview/edit entry.
+- **Access:** Active institution staff; calling API preserves current authority.
+- **Opens:** `/plans/:id`, `/workout-templates/:id`
+- **Opened from views:** `/workout-templates/:id`
+- **Embedded by:** Router.
+- **Shell entry:** [App.vue](../../../apps/frontend/src/App.vue), [features/navigation/DashboardNav.vue](../../../apps/frontend/src/features/navigation/DashboardNav.vue)
 
 ## AssessmentHistory
 
@@ -194,7 +218,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/training/:assignment`
 - **Purpose:** Dedicated assigned-plan review, scoped workout scheduling and adaptation from the assigned immutable snapshot using the shared editor.
 - **Access:** Administrators and authorized primary/sport-supporting coaches; athletes redirected before rendering.
-- **Opens:** `/assessments/:member`, `/deliver/:id`, `/exercises`, `/members/:member`, `/plans`, `/plans/:id`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
+- **Opens:** `/assessments/:member`, `/deliver/:id`, `/exercises`, `/members/:member`, `/plans`, `/plans/:id`, `/record/:session`, `/review/:id`, `/training`, `/training/:assignment`, `/workout-templates/:id`, `/workout/:id`, `/workouts`
 - **Opened from views:** `/members/:member`, `/schedule/:id`, `/schedule/new`, `/training`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
@@ -303,7 +327,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **Purpose:** Coach recording of an assigned athlete workout with actual measurement-aware results.
 - **Access:** Administrators or training-authorized coaches; selected assignment/session permission is checked by API.
 - **Opens:** `/record/:session`, `/review/:id`
-- **Opened from views:** `/members/:member`, `/review/:id`, `/schedule/new`, `/training`, `/training/:assignment`
+- **Opened from views:** `/members/:member`, `/review/:id`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
@@ -314,7 +338,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/schedule/new`
 - **Purpose:** Plan-workout scheduling through the shared agenda, plus separate custom-event and assessment creation with people, timezone and template handoff.
 - **Access:** Staff with schedule authority; server validates people, template and event scope.
-- **Opens:** `/assessment-templates/:editor`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/:id`, `/training`, `/training/:assignment`, `/workout/:id`, `/workouts`
+- **Opens:** `/assessment-templates/:editor`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/:id`, `/training`, `/training/:assignment`, `/workout-templates/:id`, `/workout/:id`, `/workouts`
 - **Opened from views:** `/dashboard`, `/events`, `/schedule`, `/schedule/:id`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
@@ -326,7 +350,7 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 - **URL(s):** `/schedule/:id`
 - **Purpose:** Scheduled event detail, roster attendance, assessment scores, completion, correction history and makeup links.
 - **Access:** Administrators, designated coach staff and participating athletes receive different authorized projections/actions.
-- **Opens:** `/feedback`, `/schedule`, `/schedule/new`, `/training`, `/training/:assignment`
+- **Opens:** `/feedback`, `/record/:session`, `/review/:id`, `/schedule`, `/schedule/new`, `/training`, `/training/:assignment`
 - **Opened from views:** `/dashboard`, `/events`, `/notifications`, `/schedule`, `/schedule/new`
 - **Embedded by:** Router.
 - **Shell entry:** No direct shell item; use the workflow or entry described above.

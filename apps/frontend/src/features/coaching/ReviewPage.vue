@@ -27,6 +27,10 @@ const back =
     : { path: context.base + '/workouts', query: { search: route.query.search } }
 const next = ref<string | null>()
 async function findNext() {
+  if (session.value?.source_kind === 'additional') {
+    next.value = undefined
+    return
+  }
   try {
     const result = await request<{ sessions: { id: string }[] }>(
       `/v1/institution/delivery?view=${context.view}&history=true&status=awaiting_review&limit=2&offset=0`,
@@ -196,7 +200,11 @@ onMounted(async () => {
               <h2>{{ language('Athlete note', 'ملاحظة الرياضي') }}</h2>
               <p class="preserve-lines">{{ session.note }}</p>
             </section>
-            <form class="panel feedback-form" @submit.prevent="save">
+            <form
+              v-if="context.view !== 'trainee'"
+              class="panel feedback-form"
+              @submit.prevent="save"
+            >
               <h2>{{ language('Make your feedback useful.', 'قدّم ملاحظات مفيدة.') }}</h2>
               <p>
                 {{
@@ -241,6 +249,10 @@ onMounted(async () => {
               </template>
               <p v-if="error" class="notice error" role="alert">{{ error }}</p>
             </form>
+            <section v-if="context.view === 'trainee' && session.coach_note" class="panel">
+              <h2>{{ language('Coach feedback', 'ملاحظات المدرب') }}</h2>
+              <p class="preserve-lines">{{ session.coach_note }}</p>
+            </section>
           </aside>
         </div></template
       ></PageState

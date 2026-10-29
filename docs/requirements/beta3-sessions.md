@@ -1,5 +1,9 @@
 # Beta.3 — sessions, workouts and backend consolidation
 
+## Group workout web slice — implemented 29 October 2026, acceptance in progress
+
+Workout templates now have a staff library and dedicated create/preview/edit pages, independent program/athlete-plan imports and explicit archive. Group calendar creation freezes a template revision and roster. Designated coaches record separate participant actuals through the shared logger, may adapt before starting, and explicitly skip with a reason. Athletes view only their own results; administrators schedule/review. Event completion requires attendance plus resolved present/started workouts. This additional training does not advance individual plans. Sections, group plans and native offline workout capture remain deferred. See [ADR 0034](../decisions/ADR-0034-workout-templates-and-group-results.md), [canonical walkthrough](../testing/instance-validation.md) and [verification](../verification/README.md) for current evidence and limits.
+
 Date: 22 October 2026. **Status: additive storage, individual progression, opt-in weekly/automatic preparation and web scheduling/calendar integration implemented on the release branch; group/native beta.3 work and release acceptance pending.** Target release: Squire `1.0.0-beta.3`. Detailed verification records establish only the checks actually run, not whole-release or Android acceptance. Beta.2 remains the published version.
 
 The earlier [institution cleanup](../decisions/ADR-0026-single-institution-routing-and-task-retirement.md) and [frontend audit](../reference/frontend/README.md) form the first part of this release. The founder has now included session/workout consolidation, its Android impact and a review of legacy backend routes. Keep release work and its paired landing PR unmerged until the release is complete.

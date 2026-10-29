@@ -350,5 +350,29 @@
   },
   "features/institution/WorkoutRuleSettings.vue": {
     "purpose": "Staff plan scheduling policy: bounded weekly appointments or opt-in day-only preparation, diagnostics, exact-command recovery and future-rule stop/edit."
+  },
+  "features/coaching/WorkoutFields.vue": {
+    "purpose": "Shared single-workout prescription authoring: exercise picker, measured targets, notes and ordering.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutPreview.vue": {
+    "purpose": "Read-only prescribed workout preview; no inferred readiness/load claims.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutTemplatePicker.vue": {
+    "purpose": "Searchable paginated shared workout selection with retained identity and stale-revision warning.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutTemplatesPage.vue": {
+    "purpose": "Institution-shared workout library, archive filter and dedicated create/preview/edit entry.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutTemplateEditor.vue": {
+    "purpose": "Scoped recoverable single-workout editor and readonly preview, exact save/archive and independent imports.",
+    "access": "Active staff read; creator/administrator edits."
+  },
+  "features/institution/GroupWorkoutPanel.vue": {
+    "purpose": "Shared event prescription, paginated participant outcomes, individual adaptation/start and explicit skip with durable command recovery.",
+    "access": "Event staff record; administrators review; athletes see only their own results."
   }
 }

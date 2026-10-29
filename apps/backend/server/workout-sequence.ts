@@ -442,7 +442,8 @@ export async function resolveCompletedWorkout(
   const result = await tx.institution_sessions.findUniqueOrThrow({
     where: { id: session },
   });
-  if (!result.occurrence_id || !result.completed_at) return;
+  if (!result.assignment_id || !result.occurrence_id || !result.completed_at)
+    return;
   const assignment = await lockedAssignment(
     tx,
     institution,

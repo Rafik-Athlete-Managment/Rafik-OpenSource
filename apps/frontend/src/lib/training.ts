@@ -62,6 +62,7 @@ export async function startWorkout(
 export async function loadWorkout(id: string, owner: string, institution?: string) {
   const local = await getLocalSession(id)
   if (local && local.owner === owner) {
+    if (local.session.source_kind === 'additional') throw Error('group_workout_read_only')
     if (local.pending || local.localRevision > local.syncedRevision || !navigator.onLine)
       return local
     try {
@@ -84,6 +85,7 @@ export async function loadWorkout(id: string, owner: string, institution?: strin
   if (owner === 'guest') throw new Error('unauthenticated')
   const session = await readSession(id, institution)
   if (!session) throw new Error('forbidden')
+  if (session.source_kind === 'additional') throw Error('group_workout_read_only')
   // Coach review reads server data separately; this is the client's editing store.
   if (session.client_id !== owner) throw new Error('forbidden')
   return putLocalSession({

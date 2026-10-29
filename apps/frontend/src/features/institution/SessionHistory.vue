@@ -117,8 +117,8 @@ const name = (id: string) =>
         <p>
           {{
             l(
-              'Latest workouts first. Open a session to review its recorded work.',
-              'أحدث الحصص أولاً. افتح حصة لمراجعة التمارين المسجّلة.',
+              'Latest plan workouts first. Group workout results are available inside their scheduled event.',
+              'أحدث تمارين الخطط أولاً. تظهر نتائج التمرين الجماعي داخل موعده المجدول.',
             )
           }}
         </p>

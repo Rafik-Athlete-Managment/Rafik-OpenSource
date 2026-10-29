@@ -4,6 +4,7 @@ import { localDate } from '../../lib/dates'
 import { institutionContext } from '../../app/institution'
 
 import PageHeading from '../../components/PageHeading.vue'
+import GroupWorkoutPanel from './GroupWorkoutPanel.vue'
 import SessionNote from './SessionNote.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'
 import { computed, onMounted, ref, watch, nextTick, onUnmounted } from 'vue'
@@ -236,7 +237,13 @@ const changeable = computed(
     data.value.event.state === 'scheduled' &&
     !data.value.event.workout_snapshot?.assignment_id,
 )
-const finishable = computed(() => writable.value && changeable.value)
+const groupReady = ref(false)
+const finishable = computed(
+  () =>
+    writable.value &&
+    changeable.value &&
+    (data.value?.event.workout_snapshot?.source !== 'group' || groupReady.value),
+)
 const eventMenu = computed(() => [
   ...(view === 'admin'
     ? [{ key: 'staff', label: l('Reassign staff', 'إعادة تعيين الموظفين'), disabled: locked.value }]
@@ -419,6 +426,12 @@ onMounted(load)
     <CommandStatus :command="command" />
     <PageState :loading="loading" :error="error" @retry="load"
       ><template v-if="data">
+        <GroupWorkoutPanel
+          v-if="data.event.workout_snapshot?.source === 'group'"
+          :event="eid"
+          :refresh-token="data.event.revision + ':' + data.people.map((p) => p.revision).join(':')"
+          @ready="groupReady = $event"
+        />
         <section class="event-overview">
           <p class="event-when">
             {{
@@ -707,7 +720,7 @@ onMounted(load)
             </div>
             <div v-if="writable" class="participant-actions">
               <fieldset class="filter-chips attendance-choice" :disabled="locked">
-                <legend>{{ l('Attendance for', 'حضور') }} {{ p.name }}</legend>
+                <legend class="sr-only">{{ l('Attendance for', 'حضور') }} {{ p.name }}</legend>
                 <label v-for="option in ['present', 'absent', 'excused', 'unmarked']" :key="option"
                   ><input
                     v-model="attendance[p.member_id]"

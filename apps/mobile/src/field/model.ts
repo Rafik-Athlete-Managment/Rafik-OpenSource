@@ -66,6 +66,8 @@ export function failureText(error: unknown): string {
       invalid_mobile_session:
         'Sign in again to the same account and institution to send saved work.',
       event_not_started: 'The event has not started or was cancelled. Review the server event.',
+      group_workout_results_required:
+        'Complete or explicitly skip participant workouts in the web app before finishing this group event.',
       results_required: 'Assessment results are required. Complete this correction in the web app.',
       attendance_required: 'Confirm attendance before saving scores or completing this event.',
       invalid_results: 'Check every assessment value and its limits before correcting this record.',

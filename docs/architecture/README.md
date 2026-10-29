@@ -1,5 +1,9 @@
 # Rafik architecture
 
+## Workout templates and group results — unreleased beta.3
+
+`institution_workout_templates` stores staff-shared single-workout prescriptions. Calendar creation freezes one template revision and roster; each designated coach starts a separate participant record, optionally adapted before start. The existing measured actuals, revision receipts and attributed history are reused. Additional records have no assignment and never advance an individual cursor; existing assignment-backed rows remain unchanged. Athletes read only their own result, administrators review, designated coaches record. Attendance is separate; each present/started participant must complete or be explicitly skipped before event finish. Cancellation retains readable records. See [ADR 0034](../decisions/ADR-0034-workout-templates-and-group-results.md). Native offline capture, group plans and workout sections remain deferred.
+
 ## Viewer timezone
 
 The existing account profile owns the preferred timezone; no new storage or API is required. `lib/display-time.ts` derives a reactive display zone from the profile with validated device/UTC fallback. Timestamp dates and times use that zone, including activity grouping, event/workout summaries, messages, diagnostics and calendar views. `lib/dates.ts` keeps date-only values fixed to their calendar day; default calendar-date formatting uses UTC even when transported as midnight timestamps. Explicit authoring/recurrence timezones and date-only eligibility rules remain authoritative. Display preference changes never rewrite event timestamps, recurrence clocks, historical documents or exact commands. The navigation clock consumes the same preference and links to the existing account settings flow.
@@ -26,7 +30,7 @@ The staff assignment directory is `/training`; `/training/:assignment` owns one 
 
 `GET /v1/institution/workout-scheduling` projects the next non-rest day and unresolved occurrence for each authorized assignment. It does not allocate work or advance progression. Pagination and athlete-name filtering happen after institution/role/plan-sport scope is applied in SQL. The dashboard requests due work; plan details request one assignment; athletes receive only their own assignments. General participation restrictions expose no injury-record identifiers or sensitive details.
 
-The shared web WorkoutAgenda uses existing exact-receipt schedule/reschedule/skip and session-start commands. Recording receives the occurrence identity; server start time and sequence checks remain authoritative. Existing unfinished unlinked records are surfaced for recovery and block scheduling in that assignment. Older unlinked start compatibility remains until historical occurrence reconciliation; it is not the new UI's creation path. Recurring/day-only preparation is now described above; group prescription/results and native workout recording remain later beta.3 slices.
+The shared web WorkoutAgenda uses existing exact-receipt schedule/reschedule/skip and session-start commands. Recording receives the occurrence identity; server start time and sequence checks remain authoritative. Existing unfinished unlinked records are surfaced for recovery and block scheduling in that assignment. Older unlinked start compatibility remains until historical occurrence reconciliation; it is not the new UI's creation path. Recurring/day-only preparation is now described above; group prescriptions/results are described above; native offline workout recording remains a later beta.3 slice.
 
 ## Program and conversation visibility
 

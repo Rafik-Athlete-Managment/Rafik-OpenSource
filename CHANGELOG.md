@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Unreleased beta.3: Workout templates library with dedicated authoring/preview and independent imports into programs or athlete plans. Group events freeze a template/roster; designated coaches adapt and record separate participant results, with explicit skips, attributed history and athlete-own read-only review. Attendance and individual plan progression stay separate. Native offline workout capture and workout sections remain later scope.
+
 - Coach analytics: the Experience tab keeps the summary cards and shows its ratings as chart cards like Training activity and Delivery & capacity, instead of replacing the page layout. Each card leads with its average and response count; the "not an overall coach score" note moves to How to read these numbers.
 
 - Rename the consent-gated participation-status feature to "Athlete health" everywhere in the web app: navigation, page title, the coach overview panel and its link, the athlete profile tab, Help, activity-log entries and coach-scope descriptions. Routes, APIs and stored data are unchanged.

@@ -508,6 +508,36 @@ export function errorMessage(error: unknown): string {
       'Check the values and try again. Use the supported ranges for sets, results and schedule dates.',
       'تحقق من القيم وحاول مجدداً. استخدم النطاقات المسموحة للمجموعات والنتائج والتواريخ.',
     )
+  if (raw.includes('workout_template_unavailable'))
+    return language(
+      'This workout template is unavailable. Choose an active template.',
+      'قالب التمرين غير متاح. اختر قالباً نشطاً.',
+    )
+  if (raw.includes('template_requires_shared_exercises'))
+    return language(
+      'Shared workout templates require reference or institution exercises. Private exercises remain private.',
+      'تتطلب القوالب المشتركة تمارين مرجعية أو تابعة للمؤسسة. تبقى التمارين الخاصة خاصة.',
+    )
+  if (raw.includes('group_workout_already_started'))
+    return language(
+      'Another coach has already started this athlete’s workout. Your draft is preserved; refresh and open the existing record.',
+      'بدأ مدرب آخر تمرين هذا الرياضي. مسودتك محفوظة؛ حدّث وافتح السجل القائم.',
+    )
+  if (raw.includes('group_workout_results_required'))
+    return language(
+      'Complete or explicitly skip all required participant workouts before finishing this event.',
+      'أكمل أو تخطّ صراحة تمارين المشاركين المطلوبة قبل إنهاء الموعد.',
+    )
+  if (raw.includes('group_workout_read_only'))
+    return language(
+      'Your coach records group workouts. Open the scheduled event to view your results.',
+      'يسجل مدربك التمارين الجماعية. افتح الموعد المجدول لعرض نتائجك.',
+    )
+  if (raw.includes('group_workout_not_actionable'))
+    return language(
+      'Check the event start time, attendance and participation status before recording.',
+      'تحقق من موعد البدء والحضور وحالة المشاركة قبل التسجيل.',
+    )
   if (raw.includes('rate') || raw.includes('too many'))
     return language(
       'Please wait a moment before trying again.',

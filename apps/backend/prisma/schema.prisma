@@ -220,6 +220,7 @@ model institution_invitations {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model institution_members {
+  workout_templates institution_workout_templates[]
   id                                                                                                  String                             @id @db.Uuid
   institution_id                                                                                        String                             @db.Uuid
   user_id                                                                                             String?                            @db.Uuid
@@ -289,6 +290,7 @@ model institution_operations {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model institutions {
+  workout_templates institution_workout_templates[]
   id                             String                           @id @db.Uuid
   kind                           String
   name                           String
@@ -393,11 +395,29 @@ model institution_programs {
   @@schema("public")
 }
 
+model institution_workout_templates {
+  id String @id @db.Uuid
+  institution_id String @db.Uuid
+  created_by String @db.Uuid
+  title String
+  workout Json
+  revision Int @default(1)
+  archived Boolean @default(false)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  institution institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  creator institution_members @relation(fields: [institution_id, created_by], references: [institution_id, id], onDelete: NoAction, onUpdate: NoAction)
+  @@unique([institution_id, id])
+  @@index([institution_id, archived, updated_at(sort: Desc), id], map: "institution_workout_template_library")
+  @@schema("public")
+}
+
 model institution_sessions {
+  source_kind String @default("assignment")
   id                            String                         @id @db.Uuid
   institution_id                  String                         @db.Uuid
   member_id                     String                         @db.Uuid
-  assignment_id                 String                         @db.Uuid
+  assignment_id                 String?                         @db.Uuid
   day_id                        String
   local_date                    DateTime                       @db.Date
   document                      Json
@@ -405,7 +425,7 @@ model institution_sessions {
   started_at                    DateTime                       @default(now()) @db.Timestamptz(6)
   completed_at                  DateTime?                      @db.Timestamptz(6)
   institution_session_feedback institution_session_feedback?
-  institution_assignments      institution_assignments       @relation(fields: [institution_id, assignment_id], references: [institution_id, id], onDelete: NoAction, onUpdate: NoAction)
+  institution_assignments      institution_assignments?       @relation(fields: [institution_id, assignment_id], references: [institution_id, id], onDelete: NoAction, onUpdate: NoAction)
   institutions                    institutions                     @relation(fields: [institution_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   institution_members             institution_members              @relation(fields: [institution_id, member_id], references: [institution_id, id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -519,6 +539,7 @@ model assessment_templates {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model institution_event_people {
+  workout_skip_reason String @default("")
   institution_id                    String                         @db.Uuid
   event_id                        String                         @db.Uuid
   member_id                       String                         @db.Uuid

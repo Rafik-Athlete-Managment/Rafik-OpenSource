@@ -77,6 +77,7 @@ const groups = computed(() =>
             name: l('Library', 'المكتبة'),
             items: [
               ['/plans', l('Programs', 'البرامج'), PhClipboardText],
+              ['/workout-templates', l('Workout templates', 'قوالب التمارين'), PhBarbell],
               ['/exercises', l('Exercises', 'التمارين'), PhPersonSimpleRun],
               ['/resources', l('Resources', 'الموارد'), PhFolder],
               ['/groups', l('Groups', 'المجموعات'), PhUsersThree],
@@ -100,6 +101,7 @@ const groups = computed(() =>
               ['/training', l('Athlete plans', 'خطط الرياضيين'), PhBarbell],
               ['/workouts', l('Workout history', 'سجل التمارين'), PhClockCounterClockwise],
               ['/plans', l('Programs', 'البرامج'), PhClipboardText],
+              ['/workout-templates', l('Workout templates', 'قوالب التمارين'), PhBarbell],
               ['/exercises', l('Exercises', 'التمارين'), PhPersonSimpleRun],
             ],
           },

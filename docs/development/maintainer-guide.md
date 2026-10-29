@@ -1,5 +1,9 @@
 # Maintainer guide
 
+## Workout templates and group results
+
+Use `WorkoutFields`, `WorkoutPreview` and `WorkoutTemplatePicker` for single-workout authoring/reuse. `server/workout-templates.ts` reuses program snapshot validation; `server/group-workouts.ts` reuses calendar authority and the existing session recorder/history. Preserve baseline and participant prescription immutability, authority-before-receipt checks and assignment-independent progression. Focused checks from the root: `npm run test:group-workouts`; populated upgrade: `node apps/backend/scripts/prisma/verify-group-workouts.mjs`; browser: `npm run test:e2e --workspace @rafik/frontend -- group-workouts.e2e.ts`. These Docker-backed commands create/remove disposable data; never reseed preview. The single [instance walkthrough](../testing/instance-validation.md) owns manual steps. Native offline workout capture remains the next slice.
+
 Use `lib/display-time.ts` for viewer-facing timestamp labels and the reactive account timezone. Keep `lib/dates.ts` pure for date/instant conversion tests. A date-only value is a calendar date, not an instant: do not convert it to the viewer's zone. Keep booking inputs and recurrence previews in their explicitly selected zone, and retain source event zones for eligibility. Clock and display-preference changes must not alter command payloads or scheduling authority.
 
 Calendar creation choices live in EventComposer. Plan workouts reuse WorkoutAgenda's planning queue and scheduling commands; keep eligibility, cursor/revision checks and allocation on the existing backend. Custom events and assessments retain their own durable calendar command/draft scope. Avoid adding a second workout form or creating a named attendance event when scheduling an assigned workout. The canonical instance walkthrough covers founder validation; group prescriptions/results and native recording remain separate slices.

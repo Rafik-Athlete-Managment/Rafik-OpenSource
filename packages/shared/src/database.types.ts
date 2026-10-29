@@ -128,6 +128,7 @@ export type Database = { public: { Tables: {
         makeup_for: string | null
         session_note: string
         checked_in_at: string | null
+        workout_skip_reason: string
     } }
     institution_events: { Row: {
         id: string
@@ -366,7 +367,7 @@ export type Database = { public: { Tables: {
         id: string
         institution_id: string
         member_id: string
-        assignment_id: string
+        assignment_id: string | null
         day_id: string
         local_date: string
         document: Json
@@ -377,6 +378,7 @@ export type Database = { public: { Tables: {
         recorded_by: string | null
         occurrence_id: string | null
         source_snapshot: Json | null
+        source_kind: string
     } }
     institution_sports: { Row: {
         id: string
@@ -428,6 +430,17 @@ export type Database = { public: { Tables: {
         last_generated_on: string | null
         last_checked_at: string | null
         issue: string | null
+    } }
+    institution_workout_templates: { Row: {
+        id: string
+        institution_id: string
+        created_by: string
+        title: string
+        workout: Json
+        revision: number
+        archived: boolean
+        created_at: string
+        updated_at: string
     } }
     institution_workplace_feedback: { Row: {
         institution_id: string

@@ -140,6 +140,8 @@ export interface Entry {
   effort?: number | null
 }
 export interface Session {
+  source_kind?: 'assignment' | 'additional'
+  occurrence_id?: string
   institution_id?: string
   member_id?: string
   id: string

@@ -77,6 +77,16 @@ const router = createRouter({
       meta: { private: true, institution: true },
     },
     {
+      path: '/workout-templates',
+      component: () => import('../features/coaching/WorkoutTemplatesPage.vue'),
+      meta: { private: true, institution: true, staff: true },
+    },
+    {
+      path: '/workout-templates/:id',
+      component: () => import('../features/coaching/WorkoutTemplateEditor.vue'),
+      meta: { private: true, institution: true, staff: true },
+    },
+    {
       path: '/plans/:id',
       component: () => import('../features/coaching/PlanEditor.vue'),
       meta: { private: true, institution: true },

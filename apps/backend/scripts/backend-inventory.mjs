@@ -562,6 +562,12 @@ const purposes = {
 };
 function fieldPurpose(table, column) {
   const k = column.name;
+  if (table === "public.institution_sessions" && k === "source_kind")
+    return "Assignment-backed progression or additional group training; additional results never advance a plan.";
+  if (k === "workout_skip_reason")
+    return "Explicit coach disposition for this participant workout; retains any prior partial results and history.";
+  if (table === "public.institution_workout_templates" && k === "workout")
+    return "Validated frozen single-workout prescription; copies have independent identities and lifecycle.";
   if (purposes[k]) return purposes[k];
   if (k.endsWith("_id"))
     return (

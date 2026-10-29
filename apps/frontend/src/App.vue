@@ -224,7 +224,7 @@ onUnmounted(() => window.removeEventListener('online', online))
           ':' +
           (messaging ? route.path.replace(/(\/messages)(\/[^/]+)?$/, '$1') : route.path) +
           (route.path.endsWith('/plans/new')
-            ? JSON.stringify([route.query.source, route.query.member])
+            ? JSON.stringify([route.query.source, route.query.member, route.query.workoutTemplate])
             : '')
         "
       />

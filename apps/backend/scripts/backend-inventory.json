@@ -284,6 +284,11 @@
       "purpose": "Canonical shared exercise reference metadata; institution-authored exercises are separate.",
       "domain": "Reference library",
       "disposition": "retain-reference"
+    },
+    "institution_workout_templates": {
+      "purpose": "Versioned institution-shared single-workout prescriptions. Scheduled group and program imports own frozen copies; archive does not delete history.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
     }
   },
   "routes": [
@@ -889,6 +894,24 @@
       "purpose": "Authorized per-plan weekly/automatic policy, exact save/stop receipts and worker diagnostics",
       "access": "Administrator or primary/sport-scoped supporting coach; current authority rechecked before replay and preparation",
       "clients": "Web assigned-plan scheduling; new native workout UI remains a later slice"
+    },
+    {
+      "anchor": "templateMatch",
+      "path": "/v1/institution/workout-templates",
+      "methods": ["GET", "POST"],
+      "handlers": ["workoutTemplates", "workoutTemplateCommand"],
+      "purpose": "Paginated shared workout library and revision-checked save/archive commands",
+      "access": "Active staff read; creator or administrator edits; current authority before receipt replay",
+      "clients": "Web workout library, program import and group event composer"
+    },
+    {
+      "anchor": "groupWorkoutMatch",
+      "path": "/v1/institution/group-workouts",
+      "methods": ["GET", "POST"],
+      "handlers": ["groupWorkouts", "groupWorkoutCommand"],
+      "purpose": "Frozen group prescription and separate participant results; exact start/adapt/skip commands",
+      "access": "Designated event coaches record; administrators review; athletes read only their own participant/results",
+      "clients": "Web event detail and shared coach recorder; native offline capture remains a later slice"
     }
   ]
 }

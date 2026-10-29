@@ -14,6 +14,7 @@ This page is the index for maintained Rafik documentation. The root [README](../
 - [Post-beta.1 release plan](requirements/release-plan-post-beta1.md): founder-ordered releases, with the sports/coaching foundation merged for beta.2 preparation and the later field-dashboard and sport-specific releases still planned.
 - [Rafik Field app workspace](../apps/mobile/README.md): current Android prototype status, local build steps and limits.
 - [Architecture](architecture/README.md): system context, components, data flow, security boundaries and integrations.
+- [Workout templates and separate group results](decisions/ADR-0034-workout-templates-and-group-results.md): reusable shared prescriptions, frozen copies, participant recording and progression boundaries.
 - [Architecture decisions](decisions/README.md): active ADR index; superseded ADRs are archived.
 - [API reference](reference/api.md): transport, errors, retries and pagination.
 - [Coach field OpenAPI contract](../apps/backend/openapi.json): OpenAPI 3.1 subset exported at `/v1/openapi.json`; bundled Swagger UI at `/v1/docs`. The [API guide](reference/api.md) explains authentication and self-hosted URLs.

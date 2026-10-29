@@ -139,3 +139,5 @@ For the transactional scheduling and recording journey, run `npm run test:workou
 ## Backend reference
 
 The [backend inventory](docs/reference/backend/README.md) documents every table, field and route. Run `npm run backend:inventory:check` for drift; migration changes require `npm run backend:inventory:database` with Docker.
+
+Workout template and group-result development checks: `npm run test:group-workouts`. The [canonical instance walkthrough](docs/testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3) covers the unreleased web flow; native offline workout capture remains a later slice.

@@ -6,6 +6,17 @@ export type ApiUser = {
 
 export type ApiErrorBody = { message: string }
 
+export type WorkoutTemplate = {
+  id: string
+  institution_id: string
+  title: string
+  revision: number
+  archived: boolean
+  can_edit: boolean
+  workout: import('./database.types.ts').Json
+  updated_at: string
+}
+
 /** Minimal calendar projection retained by the Android attendance client. */
 export type FieldAttendance = 'unmarked' | 'present' | 'absent' | 'excused'
 export type FieldEvent = {

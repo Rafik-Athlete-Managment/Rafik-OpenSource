@@ -1,5 +1,9 @@
 # Operations
 
+## Group-workout upgrade — unreleased beta.3
+
+Back up the matching application, PostgreSQL database and private files before applying `202610290900_group_workouts`. Local development: run `npm run backend:start` from the root, then restart the API and web app. The forward migration adds the template library and participant skip reasons, defaults prior sessions to assignment sources and permits assignment-free records only with a valid additional group source. It does not manufacture historical sessions, change individual cursors or delete results/receipts. Deploy the matching API/web together; rollback restores the complete matching backup/application rather than dropping columns. Current Android queues retain their identities and attendance/assessment payloads. Until the native workout slice, finish unresolved group results on the web; an Android finish rejection must retain recovery state. Use the [canonical walkthrough](../testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3) for acceptance.
+
 After deploying, use the [full instance walkthrough](../testing/instance-validation.md) to validate setup and the administrator, coach and athlete journeys on your instance. It is the single maintained role checklist; use the copy from the same release tag or source commit as your deployment. Hosted operators skip its local startup commands.
 
 ## Recurring workout preparation rollout
@@ -18,7 +22,7 @@ Unreleased beta.3: deploy the additive migration before the backend containing t
 
 ## Additive workout foundation upgrade
 
-Unreleased beta.3: apply normal forward migrations after a matching database/files/application backup. This migration freezes historical workout sources and derives existing event dates from their timezones. It does not infer sequence progress from old completion counts or attach same-day workouts to group attendance. Existing IDs, documents and receipts remain. Required timed-event and assignment-backed write shapes stay compatible with beta.2. The fixed-time individual API is described above; recurring/day-only/group and native workout features remain pending. Restore the matching backup/application for rollback; do not drop the new columns as a recovery procedure.
+Unreleased beta.3: apply normal forward migrations after a matching database/files/application backup. This migration freezes historical workout sources and derives existing event dates from their timezones. It does not infer sequence progress from old completion counts or attach same-day workouts to group attendance. Existing IDs, documents and receipts remain. Current institutional record IDs and exact queued receipts remain; beta.2 clients are unsupported at the breaking beta.3 boundary and require the matching upgraded client. The fixed-time individual API is described above; subsequent recurring/day-only and group web slices are described above; native workout capture remains pending. Restore the matching backup/application for rollback; do not drop the new columns as a recovery procedure.
 
 From the repository root, with the local Docker database running, `npm run test:workout-foundation` verifies a populated upgrade in its own temporary database and deletes that database afterward. It does not migrate or seed your preview database.
 

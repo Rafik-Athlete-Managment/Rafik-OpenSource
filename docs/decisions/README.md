@@ -41,3 +41,5 @@ ADR 0004 (gym-first timing), ADR 0014 (session packages) and ADR 0016 (former Su
 - [ADR 0032 — Opt-in workout preparation](ADR-0032-opt-in-workout-preparation.md): weekly rules, day-only work, DST resolution and worker boundaries.
 
 - [ADR 0033 — Assignment-local adaptations](ADR-0033-assignment-local-adaptations.md): update one athlete plan without library copies or rewriting current work.
+
+- [ADR 0034 — Workout templates and separate group results](ADR-0034-workout-templates-and-group-results.md): reusable copied prescriptions, coach-only participant recording and independent plan progression.

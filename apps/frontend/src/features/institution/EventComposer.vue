@@ -14,6 +14,8 @@ import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import MemberPicker from './MemberPicker.vue'
 import WorkoutAgenda from './WorkoutAgenda.vue'
+import WorkoutTemplatePicker from '../coaching/WorkoutTemplatePicker.vue'
+import type { WorkoutTemplate } from '../../lib/workout-templates'
 import { useLiveSearch } from '../../lib/live-search'
 import { PhBarbell, PhListChecks } from '@phosphor-icons/vue'
 import PageState from '../../components/PageState.vue'
@@ -27,19 +29,26 @@ const route = useRoute(),
   key = `event-composer:${user.value!.id}:${id}:${view}:${route.query.makeup || 'general'}`
 const stepPanel = ref<HTMLElement>()
 const entryRoute = route.fullPath
-const entry = ref<'workout' | 'event'>('workout')
+const entry = ref<'workout' | 'event' | 'group'>('workout')
 const workoutLocked = ref(false)
 const workoutSearch = ref('')
 const appliedWorkoutSearch = ref('')
 const workoutSearchControl = useLiveSearch(workoutSearch, () => {
   appliedWorkoutSearch.value = workoutSearch.value.trim()
 })
-function chooseEntry(kind: 'workout' | 'training' | 'assessment') {
-  entry.value = kind === 'workout' ? 'workout' : 'event'
+function chooseEntry(kind: 'workout' | 'training' | 'assessment' | 'group') {
+  entry.value = kind === 'workout' ? 'workout' : kind === 'group' ? 'group' : 'event'
   if (kind !== 'workout') {
-    if (draft.value.kind !== kind) step.value = 1
-    draft.value.kind = kind
+    const eventKind = kind === 'group' ? 'training' : kind
+    if (draft.value.kind !== eventKind) step.value = 1
+    draft.value.kind = eventKind
+    draft.value.purpose = kind === 'group' ? 'group' : 'custom'
   }
+}
+function chooseWorkoutTemplate(template: WorkoutTemplate) {
+  draft.value.workout_template_id = template.id
+  draft.value.workout_template_revision = template.revision
+  if (!draft.value.title) draft.value.title = template.title
 }
 async function workoutScheduled() {
   if (!disposed && entry.value === 'workout' && route.fullPath === entryRoute)
@@ -60,6 +69,9 @@ const draft = ref({
   id: crypto.randomUUID() as string,
   title: '',
   kind: 'training',
+  purpose: 'custom',
+  workout_template_id: '',
+  workout_template_revision: 0,
   template: '',
   staff: [] as string[],
   participants: [] as string[],
@@ -212,7 +224,7 @@ const locked = computed(() => command.state.busy || !!command.state.pending || !
 watch(
   () => command.state.pending,
   (pending) => {
-    if (pending) entry.value = 'event'
+    if (pending) entry.value = draft.value.purpose === 'group' ? 'group' : 'event'
   },
   { immediate: true },
 )
@@ -237,6 +249,10 @@ function groupMembers() {
 async function advance() {
   error.value = ''
   if (step.value === 1) {
+    if (entry.value === 'group' && !draft.value.workout_template_id) {
+      error.value = l('Choose a workout template first.', 'اختر قالب تمرين أولاً.')
+      return
+    }
     if (draft.value.kind === 'assessment' && !selectedTemplate.value) {
       error.value = l('Choose an assessment template first.', 'اختر قالب تقييم أولاً.')
       return
@@ -259,6 +275,9 @@ function submit() {
     ...draft.value,
     view,
     action: 'create',
+    workout_template_id: entry.value === 'group' ? draft.value.workout_template_id : undefined,
+    workout_template_revision:
+      entry.value === 'group' ? draft.value.workout_template_revision : undefined,
     operation: crypto.randomUUID(),
     template_revision: selectedTemplate.value?.revision,
     makeups: draft.value.participants
@@ -299,7 +318,8 @@ onMounted(async () => {
   await load()
   const stored = await getDraft<typeof draft.value>(key).catch(() => undefined)
   if (stored) {
-    if (stored.title || stored.template || stored.participants?.length) entry.value = 'event'
+    if (stored.title || stored.template || stored.participants?.length)
+      entry.value = stored.purpose === 'group' ? 'group' : 'event'
     draft.value = { ...draft.value, ...stored }
     try {
       if (stored.template && !templates.value.some((t) => t.id === stored.template)) {
@@ -334,8 +354,8 @@ onMounted(async () => {
         <p>
           {{
             l(
-              'Schedule a plan workout, a custom event or an assessment.',
-              'جدول تمريناً من خطة أو موعداً مخصصاً أو تقييماً.',
+              'Schedule a plan workout, a group workout, a custom event or an assessment.',
+              'جدول تمريناً من خطة أو تمريناً جماعياً أو موعداً مخصصاً أو تقييماً.',
             )
           }}
         </p>
@@ -361,6 +381,24 @@ onMounted(async () => {
             l(
               'Choose an athlete’s next workout and set its time.',
               'اختر التمرين التالي للرياضي وحدد موعده.',
+            )
+          }}</small></span
+        >
+      </label>
+      <label class="kind-card" :class="{ selected: entry === 'group' }">
+        <input
+          type="radio"
+          name="scheduling-entry"
+          :checked="entry === 'group'"
+          @change="chooseEntry('group')"
+        />
+        <PhBarbell :size="24" aria-hidden="true" />
+        <span
+          ><strong>{{ l('Group workout', 'تمرين جماعي') }}</strong
+          ><small>{{
+            l(
+              'Shared prescription, separate attendance and results.',
+              'وصفة مشتركة مع حضور ونتائج مستقلة لكل رياضي.',
             )
           }}</small></span
         >
@@ -440,7 +478,7 @@ onMounted(async () => {
         <RouterLink to="/training">{{ l('Athlete plans', 'خطط الرياضيين') }}</RouterLink>
       </p>
     </section>
-    <div v-show="entry === 'event'">
+    <div v-show="entry !== 'workout'">
       <ol class="composer-steps" :aria-label="l('Scheduling steps', 'خطوات الجدولة')">
         <li
           v-for="(label, index) in [
@@ -468,6 +506,21 @@ onMounted(async () => {
                 :aria-label="l('Event details', 'تفاصيل الموعد')"
                 class="panel"
               >
+                <WorkoutTemplatePicker
+                  v-if="entry === 'group'"
+                  :selected="draft.workout_template_id"
+                  :revision="draft.workout_template_revision || undefined"
+                  :disabled="locked"
+                  @choose="chooseWorkoutTemplate"
+                />
+                <p v-if="entry === 'group'" class="small-print group-workout-explainer">
+                  {{
+                    l(
+                      'Additional training: group work does not advance individual plans. Coaches record results; athletes view their own.',
+                      'تدريب إضافي: لا يقدّم خطط الأفراد. يسجل المدربون النتائج ويعرض الرياضيون نتائجهم فقط.',
+                    )
+                  }}
+                </p>
                 <label
                   >{{ l('Event name', 'اسم الموعد')
                   }}<input
@@ -702,6 +755,14 @@ onMounted(async () => {
               >
                 <h2>{{ draft.title }}</h2>
                 <p>{{ draft.location }} · {{ draft.zone }}</p>
+                <p v-if="entry === 'group'">
+                  {{
+                    l(
+                      'Group workout · shared template, separate athlete results',
+                      'تمرين جماعي · قالب مشترك ونتائج مستقلة لكل رياضي',
+                    )
+                  }}
+                </p>
                 <p v-if="selectedTemplate">
                   {{ selectedTemplate.title }} · {{ selectedTemplate.definition.length }}
                   {{ l('drills', 'اختبارات') }}
@@ -799,7 +860,9 @@ onMounted(async () => {
                   {{
                     draft.kind === 'assessment'
                       ? l('Assessor-led assessment', 'تقييم بإشراف مقيم')
-                      : l('Training session', 'حصة تدريب')
+                      : entry === 'group'
+                        ? l('Group workout', 'تمرين جماعي')
+                        : l('Training session', 'حصة تدريب')
                   }}
                 </dd>
               </div>
@@ -845,6 +908,9 @@ onMounted(async () => {
   </div>
 </template>
 <style scoped>
+.group-workout-explainer {
+  margin-block: var(--space-4);
+}
 .scheduling-entry {
   margin-block-end: var(--space-6);
 }
