@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Compatible dependency security patches — 29 October 2026
+
+Founder asked to address dependency findings before the next slice. Live advisory/registry review led to two compatible lockfile-only updates: node-forge 1.4.2 and fast-uri 3.1.9. No framework upgrade, override, new dependency, Android build or native version change. Zod 3 and deepmerge remain open Expo tooling findings without compatible published patches; production web/API audits are clear. Current risks/mitigations are in known issues and actual checks/limits in verification. A running repository esbuild worker locked the Windows clean install; stopped only that verified worker and restored the root install in place. Local dev processes should be restarted. Keep the release branch unmerged.
+
 ## Workout templates and group results — 29 October 2026
 
 Founder clarified templates are the reusable source for group sessions; use Workout templates, distinct from assessment templates. Optional workout sections deferred to avoid partially integrating authoring/logging/history/native. Implemented shared library/edit/preview/import, frozen event baseline/roster and independent coach-recorded participant actuals with explicit skips, exact receipts, current authority and history. Added forward migration, shared generated types, API contract/reference, source inventories, activity labels and current Android web-resolution error copy. No APK or public release/tag is produced. Canonical manual acceptance is updated in place; verification records actual checks and gaps. Continue on the existing beta.3 release branch/PR; main remains unmerged.

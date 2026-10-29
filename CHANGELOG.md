@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update transitive node-forge to 1.4.2 and fast-uri to 3.1.9 for published security fixes. Keep the existing Expo SDK and platform lock metadata; document remaining upstream Zod/deepmerge tooling advisories separately from clean web/API production audits.
+
 - Unreleased beta.3: Workout templates library with dedicated authoring/preview and independent imports into programs or athlete plans. Group events freeze a template/roster; designated coaches adapt and record separate participant results, with explicit skips, attributed history and athlete-own read-only review. Attendance and individual plan progression stay separate. Native offline workout capture and workout sections remain later scope.
 
 - Coach analytics: the Experience tab keeps the summary cards and shows its ratings as chart cards like Training activity and Delivery & capacity, instead of replacing the page layout. Each card leads with its average and response count; the "not an overall coach score" note moves to How to read these numbers.

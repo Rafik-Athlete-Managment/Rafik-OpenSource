@@ -1,5 +1,13 @@
 # Known issues and release gaps
 
+## Dependency review — 29 October 2026
+
+Updated compatible lockfile resolutions from node-forge 1.4.0 to 1.4.2 and fast-uri 3.1.8 to 3.1.9. The [Forge release notes](https://github.com/digitalbazaar/forge/blob/v1.4.2/CHANGELOG.md) confirm the RSA verification fix; the [fast-uri advisory](https://github.com/advisories/GHSA-w74x-v6f9-j3xg) identifies 3.1.9 as patched. Earlier dated counts below are historical checkpoints.
+
+**Open, not fixed:** Zod 3.25.76 ([collection memory exhaustion](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), high) and deepmerge 4.3.1 ([prototype poisoning](https://github.com/advisories/GHSA-gcqx-w48m-w2h4), low), through Expo CLI/config tooling. The live after-audit reports 8 affected-package entries: 3 high and 5 low, propagated from these two underlying advisories. The registry has no patched Zod 3 or deepmerge release at review time. Latest Expo CLI 58.1.17 still requires Zod ^3.25.76. Forcing Zod 4 or npm's proposed Expo SDK 51 downgrade is not a compatible fix.
+
+Both production workspace audits (backend/frontend, omit development dependencies) report zero findings. Source inspection places the remaining calls in development plugin/MCP-schema validation and local Expo configuration merging, not Rafik HTTP handlers. This narrows exposure without proving the tooling safe. Keep project/plugins trusted and Metro/dev tools private; reassess compatible upstream fixes before native release. Npm prod/dev flags alone do not identify tooling pulled in by Expo. Main/GitHub alerts remain unchanged until release approval and merge. See [verification](../verification/README.md#dependency-patches--29-october-2026) and the [live report](../verification/receipts/2026-10-29-dependency-audit-after.json).
+
 ## Coach UX revamp follow-up — 27 October 2026
 
 The [coach dashboard UX revamp plan](ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026) is approved for phased implementation; nothing is implemented yet. Open items:
