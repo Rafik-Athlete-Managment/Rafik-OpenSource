@@ -167,12 +167,12 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 
 - **Source:** [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue)
 - **Folder:** `features/coaching`
-- **URL(s):** `/review/:id`
+- **URL(s):** `/review/:id`, `/schedule/:id`
 - **Purpose:** Recorded-workout review, actual results, correction/version information and coach feedback.
 - **Access:** Administrators and authorized coaches for the referenced institutional workout; API decides subject scope.
 - **Opens:** `/record/:session`, `/review/:id`, `/training`
-- **Opened from views:** `/dashboard`, `/members/:member`, `/record/:session`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
-- **Embedded by:** Router.
+- **Opened from views:** `/dashboard`, `/events`, `/members/:member`, `/notifications`, `/record/:session`, `/schedule`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workouts`
+- **Embedded by:** `features/institution/GroupWorkoutPanel.vue`
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
 ## WorkoutTemplateEditor
@@ -323,12 +323,12 @@ Generated from maintained source and reviewed descriptions by `npm run frontend:
 
 - **Source:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue)
 - **Folder:** `features/institution`
-- **URL(s):** `/record/:session`
+- **URL(s):** `/record/:session`, `/schedule/:id`
 - **Purpose:** Coach recording of an assigned athlete workout with actual measurement-aware results.
 - **Access:** Administrators or training-authorized coaches; selected assignment/session permission is checked by API.
 - **Opens:** `/record/:session`, `/review/:id`
-- **Opened from views:** `/members/:member`, `/review/:id`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
-- **Embedded by:** Router.
+- **Opened from views:** `/dashboard`, `/events`, `/members/:member`, `/notifications`, `/review/:id`, `/schedule`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`
+- **Embedded by:** `features/institution/GroupWorkoutPanel.vue`
 - **Shell entry:** No direct shell item; use the workflow or entry described above.
 
 ## EventComposer

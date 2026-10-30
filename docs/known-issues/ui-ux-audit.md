@@ -4,6 +4,10 @@
 
 The [design system proposal](../DESIGN_SYSTEM.md) is the one proposed visual specification. This report records problems and sequencing, not a competing style guide. Business rules, API contracts, routing, permission boundaries and persistence behavior must remain intact.
 
+## Group recording workspace — 30 October 2026
+
+Founder-approved correction implemented: attendance-first event tabs, one shared prescription preview, searchable paginated desktop athlete roster/phone selector, and recording/review within the event. This supersedes the earlier participant-action/side-panel recording flow; Skip remains a confirmation panel. The recorder and review are reused, not duplicated. Local drafts are revision-scoped and distinct from acknowledgment. Final selector review corrected first-query clearing, keyboard selection and the native-looking trigger; adaptation collapses the preview to preserve working space. See the [design specification](../DESIGN_SYSTEM.md#group-recording-workspace), [verification limits](../verification/README.md#group-recording-workspace--30-october-2026) and [canonical walkthrough](../testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3).
+
 ## New workout screen review — 30 October 2026
 
 Scope: WorkoutTemplatesPage, WorkoutTemplateEditor, WorkoutFields, WorkoutPreview, WorkoutTemplatePicker and GroupWorkoutPanel, including their program/event insertion points. Founder screenshots establish the People tabs/search/pagination arrangement and Programs full-width Add exercise as the references. This correction preserves commands, routes, copies and participant permissions.

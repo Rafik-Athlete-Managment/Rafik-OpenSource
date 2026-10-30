@@ -8,7 +8,7 @@ import GroupWorkoutPanel from './GroupWorkoutPanel.vue'
 import SessionNote from './SessionNote.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'
 import { computed, onMounted, ref, watch, nextTick, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { user } from '../../app/auth'
 import { request } from '../../lib/backend'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
@@ -20,6 +20,10 @@ import SidePanel from '../../components/SidePanel.vue'
 import OverflowMenu from '../../components/OverflowMenu.vue'
 import { notifySuccess } from '../../lib/feedback'
 import {
+  TabsContent,
+  TabsRoot,
+  TabsList,
+  TabsTrigger,
   DialogRoot,
   DialogPortal,
   DialogOverlay,
@@ -38,6 +42,13 @@ const route = useRoute(),
   base = '',
   endpoint = `/v1/institution/calendar`,
   scope = `event:${id}:${eid}:${view}`
+const groupTab = ref(String(route.query.groupTab || 'attendance'))
+const groupRecordingLocked = ref(false)
+const isGroupWorkout = computed(() => data.value?.event.workout_snapshot?.source === 'group')
+const eventRouter = useRouter()
+watch(groupTab, (value) => {
+  if (isGroupWorkout.value) void eventRouter.replace({ query: { ...route.query, groupTab: value } })
+})
 const data = ref<EventDetail>(),
   organization = ref<Institution>(),
   loading = ref(true),
@@ -424,12 +435,54 @@ onMounted(load)
       </div>
     </PageHeading>
     <CommandStatus :command="command" />
-    <PageState :loading="loading" :error="error" @retry="load"
+    <p v-if="error && data" class="notice error" role="alert">{{ error }}</p>
+    <PageState :loading="loading && !data" :error="!data ? error : ''" @retry="load"
       ><template v-if="data">
+        <TabsRoot
+          v-if="isGroupWorkout && view !== 'trainee'"
+          v-model="groupTab"
+          :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+          class="group-workflow-tabs"
+        >
+          <TabsList
+            class="ui-tabs"
+            :aria-label="l('Group session workflow', 'خطوات الجلسة الجماعية')"
+          >
+            <TabsTrigger value="attendance" :disabled="groupRecordingLocked"
+              >{{ l('Attendance', 'الحضور') }} ·
+              {{ trainees.filter((p) => p.attendance !== 'unmarked').length }} /
+              {{ trainees.length }}</TabsTrigger
+            >
+            <TabsTrigger
+              value="recording"
+              :disabled="!!attendanceChanges || locked || groupRecordingLocked"
+              >{{ l('Workout recording', 'تسجيل التمرين') }}</TabsTrigger
+            >
+          </TabsList>
+          <p v-if="attendanceChanges" class="small-print">
+            {{
+              l(
+                'Save attendance changes before opening workout recording.',
+                'احفظ تغييرات الحضور قبل فتح تسجيل التمرين.',
+              )
+            }}
+          </p>
+          <TabsContent value="attendance" force-mount><div id="group-attendance" /></TabsContent>
+          <TabsContent value="recording" force-mount>
+            <GroupWorkoutPanel
+              :event="eid"
+              :refresh-token="
+                data.event.revision + ':' + data.people.map((p) => p.revision).join(':')
+              "
+              @ready="groupReady = $event"
+              @locked="groupRecordingLocked = $event"
+            />
+          </TabsContent>
+        </TabsRoot>
         <GroupWorkoutPanel
-          v-if="data.event.workout_snapshot?.source === 'group'"
+          v-else-if="isGroupWorkout"
           :event="eid"
-          :refresh-token="data.event.revision + ':' + data.people.map((p) => p.revision).join(':')"
+          :refresh-token="data.event.revision"
           @ready="groupReady = $event"
         />
         <section class="event-overview">
@@ -669,104 +722,112 @@ onMounted(load)
             </fieldset>
           </form>
         </section>
-        <section v-if="!selected" class="event-participants">
-          <h2>{{ l('Participants', 'المشاركون') }}</h2>
-          <p v-if="!started && view !== 'trainee'" class="small-print">
-            {{
-              l(
-                'Attendance and results open when this event starts.',
-                'يفتح تسجيل الحضور والنتائج عند بدء الموعد.',
-              )
-            }}
-          </p>
-          <div v-if="writable && trainees.length" class="attendance-bar">
-            <button
-              type="button"
-              class="button secondary small"
-              :disabled="locked"
-              @click="markAll('present')"
-            >
-              {{ l('Mark everyone present', 'تحديد الجميع حاضرين') }}
-            </button>
-            <button
-              type="button"
-              class="button small"
-              :disabled="locked || !attendanceChanges"
-              @click="saveAttendance"
-            >
-              {{ l('Save attendance', 'حفظ الحضور')
-              }}<template v-if="attendanceChanges"> · {{ attendanceChanges }}</template>
-            </button>
-            <button
-              v-if="attendanceChanges"
-              type="button"
-              class="text-link"
-              :disabled="locked"
-              @click="load"
-            >
-              {{ l('Discard changes', 'تجاهل التغييرات') }}
-            </button>
-          </div>
-          <article v-for="p in trainees" :key="p.member_id" class="event-participant">
-            <div>
-              <h3>{{ p.name }}</h3>
-              <p v-if="p.checked_in_at" class="small-print">
-                {{ l('Checked in', 'تم تسجيل الحضور') }} · {{ label(p.checked_in_at) }}
-              </p>
-              <span v-if="!writable">{{ attendanceName(p.attendance) }}</span>
-              <p v-if="data.results.some((r) => r.member_id === p.member_id)" class="small-print">
-                {{ l('Result recorded', 'النتيجة مسجلة') }}
-              </p>
-            </div>
-            <div v-if="writable" class="participant-actions">
-              <fieldset class="filter-chips attendance-choice" :disabled="locked">
-                <legend class="sr-only">{{ l('Attendance for', 'حضور') }} {{ p.name }}</legend>
-                <label v-for="option in ['present', 'absent', 'excused', 'unmarked']" :key="option"
-                  ><input
-                    v-model="attendance[p.member_id]"
-                    type="radio"
-                    :name="'attendance-' + p.member_id"
-                    :value="option"
-                  />{{ attendanceName(option) }}</label
-                >
-              </fieldset>
+        <Teleport to="#group-attendance" :disabled="!isGroupWorkout || view === 'trainee'" defer>
+          <section v-if="!selected" class="event-participants">
+            <h2>
+              {{ isGroupWorkout ? l('Attendance', 'الحضور') : l('Participants', 'المشاركون') }}
+            </h2>
+            <p v-if="!started && view !== 'trainee'" class="small-print">
+              {{
+                l(
+                  'Attendance and results open when this event starts.',
+                  'يفتح تسجيل الحضور والنتائج عند بدء الموعد.',
+                )
+              }}
+            </p>
+            <div v-if="writable && trainees.length" class="attendance-bar">
               <button
-                v-if="data.event.kind === 'assessment' && p.attendance === 'present'"
-                class="button small"
+                type="button"
+                class="button secondary small"
                 :disabled="locked"
-                @click="openResult(p)"
+                @click="markAll('present')"
               >
-                {{
-                  data.results.some((r) => r.member_id === p.member_id)
-                    ? l('Review / correct result', 'مراجعة / تصحيح النتيجة')
-                    : l('Record result', 'تسجيل النتيجة')
-                }}
+                {{ l('Mark everyone present', 'تحديد الجميع حاضرين') }}
+              </button>
+              <button
+                type="button"
+                class="button small"
+                :disabled="locked || !attendanceChanges"
+                @click="saveAttendance"
+              >
+                {{ l('Save attendance', 'حفظ الحضور')
+                }}<template v-if="attendanceChanges"> · {{ attendanceChanges }}</template>
+              </button>
+              <button
+                v-if="attendanceChanges"
+                type="button"
+                class="text-link"
+                :disabled="locked"
+                @click="load"
+              >
+                {{ l('Discard changes', 'تجاهل التغييرات') }}
               </button>
             </div>
-            <SessionNote
-              :key="p.member_id + ':' + p.revision"
-              :institution="id"
-              :view="view"
-              :event="eid"
-              :member="p.member_id"
-              :name="p.name"
-              :note="p.session_note"
-              :revision="p.revision"
-              :writable="writable"
-              @saved="load"
-            />
-            <RouterLink
-              v-if="
-                view !== 'trainee' &&
-                data.event.state === 'completed' &&
-                ['absent', 'excused'].includes(p.attendance)
-              "
-              class="text-link"
-              :to="base + '/schedule/new?makeup=' + eid + '&member=' + p.member_id"
-              >{{ l('Book an independent makeup session', 'حجز جلسة تعويضية مستقلة') }}</RouterLink
-            >
-          </article>
-        </section>
+            <article v-for="p in trainees" :key="p.member_id" class="event-participant">
+              <div>
+                <h3>{{ p.name }}</h3>
+                <p v-if="p.checked_in_at" class="small-print">
+                  {{ l('Checked in', 'تم تسجيل الحضور') }} · {{ label(p.checked_in_at) }}
+                </p>
+                <span v-if="!writable">{{ attendanceName(p.attendance) }}</span>
+                <p v-if="data.results.some((r) => r.member_id === p.member_id)" class="small-print">
+                  {{ l('Result recorded', 'النتيجة مسجلة') }}
+                </p>
+              </div>
+              <div v-if="writable" class="participant-actions">
+                <fieldset class="filter-chips attendance-choice" :disabled="locked">
+                  <legend class="sr-only">{{ l('Attendance for', 'حضور') }} {{ p.name }}</legend>
+                  <label
+                    v-for="option in ['present', 'absent', 'excused', 'unmarked']"
+                    :key="option"
+                    ><input
+                      v-model="attendance[p.member_id]"
+                      type="radio"
+                      :name="'attendance-' + p.member_id"
+                      :value="option"
+                    />{{ attendanceName(option) }}</label
+                  >
+                </fieldset>
+                <button
+                  v-if="data.event.kind === 'assessment' && p.attendance === 'present'"
+                  class="button small"
+                  :disabled="locked"
+                  @click="openResult(p)"
+                >
+                  {{
+                    data.results.some((r) => r.member_id === p.member_id)
+                      ? l('Review / correct result', 'مراجعة / تصحيح النتيجة')
+                      : l('Record result', 'تسجيل النتيجة')
+                  }}
+                </button>
+              </div>
+              <SessionNote
+                :key="p.member_id + ':' + p.revision"
+                :institution="id"
+                :view="view"
+                :event="eid"
+                :member="p.member_id"
+                :name="p.name"
+                :note="p.session_note"
+                :revision="p.revision"
+                :writable="writable"
+                @saved="load"
+              />
+              <RouterLink
+                v-if="
+                  view !== 'trainee' &&
+                  data.event.state === 'completed' &&
+                  ['absent', 'excused'].includes(p.attendance)
+                "
+                class="text-link"
+                :to="base + '/schedule/new?makeup=' + eid + '&member=' + p.member_id"
+                >{{
+                  l('Book an independent makeup session', 'حجز جلسة تعويضية مستقلة')
+                }}</RouterLink
+              >
+            </article>
+          </section>
+        </Teleport>
         <section v-if="data.results.length && !selected" class="event-results">
           <h2>{{ l('Recorded results', 'النتائج المسجلة') }}</h2>
           <article v-for="r in data.results" :key="r.member_id" class="panel">
@@ -820,7 +881,11 @@ onMounted(load)
   </div>
 </template>
 <style scoped>
-.event-detail {
+.group-workflow-tabs > [data-state='inactive'] {
+  display: none;
+}
+.group-workflow-tabs :deep(.event-participants) {
+  margin-block: var(--space-5);
 }
 .event-overview {
   padding: 24px 28px;

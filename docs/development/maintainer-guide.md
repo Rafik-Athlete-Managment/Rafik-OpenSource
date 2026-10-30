@@ -1,5 +1,9 @@
 # Maintainer guide
 
+## Group recording UI
+
+Keep GroupWorkoutPanel as the group selection/preview coordinator. DelegatedWorkout and ReviewPage own actuals and review in both embedded and routed modes; pass explicit IDs and key instances by session. Do not navigate the group to standalone record/review routes after acknowledgment. EventDetail owns attendance and event completion. Preserve pending command scopes, guard delayed acknowledgments and flush local drafts before selection changes. A stale revision must never overwrite a newer server record.
+
 ## Dependency security backports
 
 Root `scripts/tooling-security.mjs` applies/checks exact-version patches from its adjacent manifest. Root postinstall, Metro/build entry checks and CI keep the currently used Expo call paths patched. Run `npm run test:tooling-security` after a patch/dependency change; preserve original/patched hashes and review both module formats. Dockerfiles copy the installer before scoped installation. Revisit/remove patches when compatible upstream fixes are available; do not suppress version-based audit alerts. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md) for limits and provenance.

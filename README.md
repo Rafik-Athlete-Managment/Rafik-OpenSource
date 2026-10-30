@@ -1,6 +1,6 @@
 # Rafik
 
-The unreleased beta.3 branch shares exercise cards across Programs and Workout templates, with same-type alternatives and on-demand credited media. Use the [canonical instance walkthrough](docs/testing/instance-validation.md) to validate these workflows.
+The unreleased beta.3 branch shares exercise cards across Programs and Workout templates, with same-type alternatives and on-demand credited media. Group events provide attendance-first tabs and recording/review without leaving the athlete roster. Use the [canonical instance walkthrough](docs/testing/instance-validation.md) to validate these workflows.
 
 Dependency installation includes guarded Expo tooling security backports. If disabling install scripts, follow the [development instructions](docs/development/README.md) before using mobile tooling.
 

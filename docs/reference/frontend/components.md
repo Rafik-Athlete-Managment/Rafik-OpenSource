@@ -345,8 +345,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/coaching/ReviewPage.vue](../../../apps/frontend/src/features/coaching/ReviewPage.vue)
 - **Kind:** Screen or route dispatcher.
 - **Purpose:** Recorded-workout review, actual results, correction/version information and coach feedback.
-- **Direct rendered consumers:** Router.
-- **Views using it:** `/review/:id`
+- **Direct rendered consumers:** [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue)
+- **Views using it:** `/review/:id`, `/schedule/:id`
 
 ## WorkoutExerciseCard
 
@@ -521,8 +521,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/institution/DelegatedWorkout.vue](../../../apps/frontend/src/features/institution/DelegatedWorkout.vue)
 - **Kind:** Screen or route dispatcher.
 - **Purpose:** Coach recording of an assigned athlete workout with actual measurement-aware results.
-- **Direct rendered consumers:** Router.
-- **Views using it:** `/record/:session`
+- **Direct rendered consumers:** [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue)
+- **Views using it:** `/record/:session`, `/schedule/:id`
 
 ## EventComposer
 

@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Group recording workspace — 30 October 2026
+
+Founder approved attendance-first tabs, a shared preview, searchable desktop roster/phone selector and review without leaving the group. Reused DelegatedWorkout and ReviewPage with explicit embedded IDs/events; standalone routes remain available. The shared event attendance section is relocated into its group tab without duplicating submission logic. Recording selection/search/page/review use event query state; local drafts are scoped to account/institution/session and revision-checked, with switching held for local persistence and active/uncertain commands. No allocator, schema, API authority or native behavior changes. Focused acceptance and limits are recorded in verification.
+
 ## Shared exercise cards, alternatives and media — 30 October 2026
 
 Founder approved the template exercise layout and requested it in Programs, with intuitive alternatives and on-demand media. Extracted WorkoutExerciseCard for both editors and participant adaptation; retained owner add/reorder/group and save/receipt behavior. Existing three-alternative/same-recording-type limits remain server-owned, with picker guards in exercise-authoring.ts. WorkoutPreview now serves template, group and program read-only views, including targets/rest/group/alternatives and optional written instructions. Media uses ExerciseDemo/ResourceAsset in a Reka dialog, preserves source credits/private access and only loads full media after opening. Researched Trainerize, TrainHeroic and WorkoutLabs screenshots at founder request; adopted compact name-row thumbnails for every shared host instead of an extra column beside form fields. Bilingual landing guidance is updated on its existing separate docs PR. Verification distinguishes the authenticated persistence flow, isolated component matrix and untested native scope.

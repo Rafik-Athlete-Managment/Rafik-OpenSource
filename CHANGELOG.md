@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Group events open with attendance at the top. Recording uses a searchable desktop athlete roster or phone selector, one shared workout preview and the existing recorder/review in place. Athlete selection, roster search and review mode survive reload; account-scoped local recording drafts retain unsent values without claiming server acknowledgment. Participant adaptations, explicit completion and skip requirements remain unchanged.
+
 - Share the exercise-authoring card between Workout templates and Programs, with searchable/removable same-type alternatives, grouping/ordering, per-set targets and coaching notes. Show available media in a credited dialog; compact desktop thumbnails align with exercise identity in editors and shared template/program previews. Phones retain the preview action.
 
 - Align the new workout-template editor, preview, picker and group-results screens with existing type/spacing tokens. Use People’s tabs-then-search layout, keep Programs-style full-width Add exercise, place its first-use action inside the empty card, and separate save actions in the existing editor footer. Improve phone form layout and exercise-picker label spacing.

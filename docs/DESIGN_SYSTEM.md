@@ -2,6 +2,12 @@
 
 **Status: founder approved, implementation underway, 21 October 2026.** This is the single visual and interaction specification for the web dashboard. It distinguishes the existing foundation, implemented shared controls and remaining migrations. A guideline does not establish acceptance of every consumer. Android is a follow-up audit; this document does not establish native acceptance. The [audit and rollout plan](known-issues/ui-ux-audit.md) records findings, evidence and priorities.
 
+## Group recording workspace
+
+Group events lead with Attendance / Workout recording tabs. Attendance opens first on a fresh visit, remains revisitable and shows marked/total counts. Keep one shared workout preview with its explanatory description and exercise/media details; do not repeat that baseline in every recording sheet. Individual adaptations are labelled as exceptions; collapse the shared preview while adapting to keep the editor and selection popup reachable.
+
+On desktop place a searchable, ten-row paginated athlete roster beside the wider recording sheet, using names plus semantic status tags and a clear current selection. At tablet/phone widths replace that roster with a searchable selector above the sheet. Selection opens the sheet directly; Start recording remains an explicit command. Finish opens review within the group, retaining selection and a deliberate Record next athlete action. Never auto-advance or discard local work when selecting another athlete. Pending/uncertain commands block switching; local persistence is not a server save. Preserve keyboard/RTL controls and existing shared spacing, media and measurement components.
+
 ## Purpose and boundaries
 
 Exercise identity and media belong together. Use a compact 72px reference thumbnail beside the selected exercise name/control on large screens, with an image/video glyph identifying the preview action. Do not reserve a separate media column beside sets/reps fields. Shared read-only previews use the same name-aligned media treatment. On phones retain the labelled action without fetching desktop poster images. Full demonstrations open in the existing dialog system, with source credits, Escape/focus return and reduced-motion-aware playback; private uploads keep their authorized viewer. White-line reference illustrations retain their dedicated dark media-backdrop token in both themes.

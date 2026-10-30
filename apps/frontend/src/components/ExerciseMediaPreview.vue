@@ -161,14 +161,7 @@ watch(
     background: var(--surface);
   }
   .has-thumbnail .exercise-media-label {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    padding: 0;
-    margin: -1px;
-    clip-path: inset(50%);
-    overflow: hidden;
-    white-space: nowrap;
+    display: none;
   }
   .exercise-media-thumbnail {
     display: block;

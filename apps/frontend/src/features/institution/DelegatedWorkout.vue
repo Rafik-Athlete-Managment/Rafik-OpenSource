@@ -6,6 +6,8 @@ import SidePanel from '../../components/SidePanel.vue'
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { user } from '../../app/auth'
+import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
 import type { AthletePlanPage, WorkoutAgenda } from '@rafik/shared/contracts'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
@@ -41,13 +43,21 @@ type Version = {
   by: 'athlete' | 'coach'
   completed: boolean
 }
+const props = defineProps<{ embedded?: boolean; workoutId?: string }>()
+const emit = defineEmits<{ completed: [string]; locked: [boolean] }>()
 const route = useRoute(),
   router = useRouter(),
   institution = institutionContext().institution,
   view = institutionContext().view,
   base = '',
   ws = `/v1/institution`
-const sessionId = computed(() => String(route.params.session))
+const sessionId = computed(() => props.workoutId || String(route.params.session))
+const entered = ref(new Set<string>())
+const localKey = 'group-recording:' + user.value!.id + ':' + institution + ':' + sessionId.value
+let draftReady = false
+let draftWrites: Promise<void> = Promise.resolve()
+const draftError = ref(''),
+  staleDraft = ref(false)
 const loading = ref(true),
   error = ref(''),
   plan = ref<AthletePlanPage['items'][number] & { version: { prescription?: Prescription } }>(),
@@ -76,9 +86,27 @@ async function load() {
       session.value = await get<Delegated>(`/v1/workouts/${sessionId.value}?view=${view}`)
       entries.value = session.value.entries.map((e) => ({ ...e }))
       note.value = session.value.note
+      if (disposed) return
       history.value = (
         await get<{ items: Version[] }>(`/v1/workouts/${sessionId.value}/history?view=${view}`)
       ).items
+      if (props.embedded && !draftReady) {
+        const stored = await getDraft<{
+          revision: number
+          entries: Entry[]
+          note: string
+          entered: string[]
+        }>(localKey)
+        if (disposed) return
+        if (stored && session.value.can_record) {
+          if (stored.revision === session.value.version) {
+            entries.value = stored.entries
+            note.value = stored.note
+            entered.value = new Set(stored.entered)
+          } else staleDraft.value = true
+        }
+        draftReady = true
+      }
     }
   } catch (e) {
     error.value = errorMessage(e)
@@ -102,13 +130,20 @@ const starting = useCommand<'start'>(
   },
   (_, args) => request(`${ws}/sessions`, { method: 'POST', body: JSON.stringify(args) }),
 )
-let commandOrigin = route.fullPath
+const navigationIdentity = () => (props.embedded ? route.path : route.fullPath)
+let commandOrigin = navigationIdentity()
 const completedDestination = ref('')
 const saving = useCommand<'save'>(
   `delegated-save:${institution}:${sessionId.value}`,
   async (_, _result, args) => {
+    if (props.embedded) {
+      await draftWrites
+      await removeDraft(localKey).catch((e) => {
+        draftError.value = errorMessage(e)
+      })
+    }
     await load()
-    if (args.complete && !disposed && route.fullPath === commandOrigin)
+    if (args.complete && !disposed && navigationIdentity() === commandOrigin)
       completedDestination.value = String(args.id)
   },
   (_, args) => request(`${ws}/sessions`, { method: 'POST', body: JSON.stringify(args) }),
@@ -116,6 +151,7 @@ const saving = useCommand<'save'>(
 )
 const locked = computed(
   () =>
+    loading.value ||
     saving.state.busy ||
     !!saving.state.pending ||
     !saving.state.ready ||
@@ -153,15 +189,17 @@ watch(
       !saving.state.pending &&
       !saving.state.error &&
       !disposed &&
-      route.fullPath === commandOrigin
+      navigationIdentity() === commandOrigin
     ) {
       const id = completedDestination.value
       completedDestination.value = ''
-      await router.replace('/review/' + id)
+      if (props.embedded) emit('completed', id)
+      else await router.replace('/review/' + id)
     }
   },
 )
 const save = (complete: boolean) => {
+  if (staleDraft.value || locked.value) return
   if (
     entries.value.some(
       (e) =>
@@ -175,7 +213,7 @@ const save = (complete: boolean) => {
     )
     return
   }
-  commandOrigin = route.fullPath
+  commandOrigin = navigationIdentity()
   return saving.run('save', {
     operation: crypto.randomUUID(),
     action: 'save',
@@ -187,11 +225,56 @@ const save = (complete: boolean) => {
     complete,
   })
 }
+watch(locked, (value) => emit('locked', value), { immediate: true })
+watch(
+  [entries, note, entered],
+  () => {
+    if (
+      !props.embedded ||
+      !draftReady ||
+      loading.value ||
+      !session.value?.can_record ||
+      staleDraft.value
+    )
+      return
+    const snapshot = JSON.parse(
+      JSON.stringify({
+        revision: session.value.version,
+        entries: entries.value,
+        note: note.value,
+        entered: [...entered.value],
+      }),
+    )
+    draftWrites = draftWrites
+      .then(() => storeDraft(localKey, snapshot))
+      .then(() => {
+        draftError.value = ''
+      })
+      .catch((e) => {
+        draftError.value = errorMessage(e)
+      })
+  },
+  { deep: true, flush: 'sync' },
+)
+async function flushDraft() {
+  await draftWrites
+  return !draftError.value && !locked.value
+}
+async function discardStaleDraft() {
+  try {
+    await removeDraft(localKey)
+    staleDraft.value = false
+    draftError.value = ''
+  } catch (e) {
+    draftError.value = errorMessage(e)
+  }
+}
+defineExpose({ flushDraft })
 const exercises = computed(() => session.value?.prescription.exercises || [])
 const setError = ref('')
 // Timed and distance sets start from the prescription; the coach must enter the actual
 // duration or distance (or the set was already completed in a saved version).
-const entered = ref(new Set<string>())
+
 const entryKey = (entry: Entry, field: MeasureField) =>
   `${entry.exercise_key}:${entry.set_index}:${field}`
 const measured = (entry: Entry, field: MeasureField) =>
@@ -252,8 +335,8 @@ const dayName = (d: PlanDay) => (locale.value === 'ar' ? d.nameAr || d.name : d.
 onMounted(load)
 </script>
 <template>
-  <div class="container page delegated-workout">
-    <RouterLink class="back-link" :to="backTarget"
+  <div class="delegated-workout" :class="{ 'container page': !embedded }">
+    <RouterLink v-if="!embedded" class="back-link" :to="backTarget"
       ><PhArrowLeft :size="18" class="back-arrow" aria-hidden="true" />{{
         l('Back', 'رجوع')
       }}</RouterLink
@@ -311,8 +394,8 @@ onMounted(load)
                 : l('Athlete-recorded session', 'حصة سجّلها الرياضي')
             }}
           </p>
-          <h1 dir="auto">{{ session.member_name }}</h1>
-          <p dir="auto">{{ session.title }} · {{ session.prescription.name }}</p>
+          <component :is="embedded ? 'h3' : 'h1'" dir="auto">{{ session.member_name }}</component>
+          <p v-if="!embedded" dir="auto">{{ session.title }} · {{ session.prescription.name }}</p>
         </div>
       </PageHeading>
       <p v-if="session.recorded_mode !== 'delegated'" class="notice">
@@ -324,6 +407,20 @@ onMounted(load)
         }}
       </p>
       <CommandStatus :command="saving" />
+      <p v-if="draftError" role="alert" class="notice error">{{ draftError }}</p>
+      <div v-if="staleDraft" class="notice error" role="alert">
+        <p>
+          {{
+            l(
+              'A local draft belongs to an older record revision. It has been retained; the current record is shown below.',
+              'المسودة المحلية تخص نسخة أقدم من السجل. تم الاحتفاظ بها ويظهر السجل الحالي أدناه.',
+            )
+          }}
+        </p>
+        <button type="button" class="button secondary danger-action" @click="discardStaleDraft">
+          {{ l('Discard older local draft', 'حذف المسودة المحلية الأقدم') }}
+        </button>
+      </div>
       <RouterLink
         v-if="!session.can_record"
         class="button secondary"
@@ -366,7 +463,7 @@ onMounted(load)
             )
           }}
         </p>
-        <fieldset class="command-fields delegated-fields" :disabled="locked">
+        <fieldset class="command-fields delegated-fields" :disabled="locked || staleDraft">
           <section v-for="exercise in exercises" :key="exercise.key" class="panel">
             <h2 dir="auto">{{ exerciseName(exercise) }}</h2>
             <div
@@ -465,6 +562,10 @@ onMounted(load)
   </div>
 </template>
 <style scoped>
+.delegated-workout :deep(.work-heading h3) {
+  margin: 0;
+  font-size: var(--text-section);
+}
 .delegated-workout {
   display: grid;
   gap: var(--space-5);

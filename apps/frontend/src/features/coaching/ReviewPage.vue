@@ -14,10 +14,12 @@ import { programContext } from './program-context'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
+const props = defineProps<{ embedded?: boolean; workoutId?: string }>()
+const emit = defineEmits<{ record: []; locked: [boolean] }>()
 const route = useRoute()
 const context = programContext(route)
-const draftKey = `review:${user.value!.id}:${context.key}:${route.params.id}`
-const id = String(route.params.id)
+const draftKey = `review:${user.value!.id}:${context.key}:${props.workoutId || route.params.id}`
+const id = props.workoutId || String(route.params.id)
 // Return to the list or page that opened this review; otherwise Workout history.
 const previous = (window.history.state as { back?: unknown } | null)?.back
 const back =
@@ -88,7 +90,10 @@ const command = useCommand<'review'>(
     }),
   { successMessage: language('Workout review saved.', 'حُفظت مراجعة التمرين.') },
 )
-const busy = computed(() => command.state.busy || !!command.state.pending || !command.state.ready)
+const busy = computed(
+  () => loading.value || command.state.busy || !!command.state.pending || !command.state.ready,
+)
+watch(busy, (value) => emit('locked', value), { immediate: true })
 async function save() {
   message.value = ''
   await command.run('review', {
@@ -100,10 +105,22 @@ async function save() {
     note: note.value,
   })
 }
+let draftWrites: Promise<void> = Promise.resolve()
+async function flushDraft() {
+  await draftWrites
+  return !error.value && !busy.value
+}
+defineExpose({ flushDraft })
 let draftReady = false
 watch(note, () => {
-  if (draftReady)
-    void storeDraft(draftKey, note.value).catch((e) => (error.value = errorMessage(e)))
+  if (draftReady) {
+    const snapshot = note.value
+    draftWrites = draftWrites
+      .then(() => storeDraft(draftKey, snapshot))
+      .catch((e) => {
+        error.value = errorMessage(e)
+      })
+  }
 })
 onMounted(async () => {
   await load()
@@ -113,15 +130,15 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div class="container page">
-    <RouterLink :to="back" class="back-link"
+  <div :class="{ 'container page': !embedded, 'embedded-review': embedded }">
+    <RouterLink v-if="!embedded" :to="back" class="back-link"
       ><PhArrowLeft :size="18" class="directional" />{{ language('Back', 'رجوع') }}</RouterLink
     ><PageState :loading="loading" :error="!session ? error : ''" @retry="load"
       ><template v-if="session"
         ><PageHeading class="page-heading"
           ><div>
             <p class="overline">{{ language('Session review', 'مراجعة الحصة') }}</p>
-            <h1>{{ person?.display_name }}</h1>
+            <component :is="embedded ? 'h3' : 'h1'">{{ person?.display_name }}</component>
             <p>
               {{ session.prescription.name }} ·
               {{ dateLabel(session.completed_at || session.started_at) }}
@@ -137,11 +154,20 @@ onMounted(async () => {
         >
         <CommandStatus :command="command" :show-notice="false" />
         <RouterLink
-          v-if="session.can_record"
+          v-if="session.can_record && !embedded"
           class="button review-continuation"
           :to="'/record/' + session.id"
           >{{ language('Continue workout for athlete', 'متابعة تمرين الرياضي') }}</RouterLink
         >
+        <button
+          v-if="embedded && session.can_record"
+          type="button"
+          class="button review-continuation"
+          :disabled="busy"
+          @click="emit('record')"
+        >
+          {{ language('Back to recording', 'العودة إلى التسجيل') }}
+        </button>
         <div class="review-layout">
           <section>
             <article
@@ -230,7 +256,7 @@ onMounted(async () => {
                   busy ? t('loading') : language('Save review', 'حفظ المراجعة')
                 }}
               </button>
-              <template v-if="message">
+              <template v-if="message && !embedded">
                 <RouterLink v-if="next" class="button secondary full" :to="'/review/' + next"
                   >{{ language('Next to review', 'المراجعة التالية')
                   }}<PhArrowRight :size="18" class="directional" aria-hidden="true"
@@ -261,6 +287,22 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+:deep(.page-heading h3) {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.embedded-review .review-layout {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+}
+.embedded-review .review-layout > aside {
+  position: static;
+  grid-row: auto;
+}
+.embedded-review .review-exercise {
+  min-width: 0;
+  overflow-x: auto;
+}
 .review-continuation {
   display: inline-flex;
   margin-block: var(--space-2) var(--space-6);
