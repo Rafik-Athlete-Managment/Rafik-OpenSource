@@ -82,6 +82,8 @@ The Compose profile is an implemented deployment foundation, not a production-re
 
 ## Checks
 
+For inventory-analyzer changes, run `npm run test:frontend-inventory` to compare CRLF/LF generation, then `npm run frontend:inventory:check` for the maintained reference.
+
 From the repository root:
 
 ```sh

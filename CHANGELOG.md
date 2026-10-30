@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make generated frontend navigation references identical across CRLF and LF source checkouts, with a cross-platform generator regression in web CI.
+
 - Group events open with attendance at the top. Recording uses a searchable desktop athlete roster or phone selector, one shared workout preview and the existing recorder/review in place. Athlete selection, roster search and review mode survive reload; account-scoped local recording drafts retain unsent values without claiming server acknowledgment. Participant adaptations, explicit completion and skip requirements remain unchanged.
 
 - Share the exercise-authoring card between Workout templates and Programs, with searchable/removable same-type alternatives, grouping/ordering, per-set targets and coaching notes. Show available media in a credited dialog; compact desktop thumbnails align with exercise identity in editors and shared template/program previews. Phones retain the preview action.

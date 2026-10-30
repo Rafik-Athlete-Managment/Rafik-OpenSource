@@ -232,7 +232,9 @@ The supported web entrypoint must reach every checked-in Vue component. `tests/v
 
 ## Frontend inventory and route audit
 
-The [frontend reference](../reference/frontend/README.md) inventories every local Vue file and route. Run `npm run frontend:inventory` after a route/component change, review the diff, and run `npm run frontend:inventory:check`. Update the script-side purpose/access metadata and reviewed dynamic navigation in the same PR. `DashboardNav.vue` is the single institutional navigation component for both sidebar and phone drawer; `section-path.ts` associates detail/edit routes with their parent sections. Do not restore per-page hidden navigation or guest acquisition/recording screens. Token, recovery, compatibility and DEV-only entries have explicit classifications in the reference.
+The [frontend reference](../reference/frontend/README.md) inventories every local Vue file and route. Normalize source line endings before AST analysis; multiline expressions must produce identical Markdown from Windows and Unix checkouts. Use `npm run test:frontend-inventory` to verify both formats without rewriting source files.
+
+Run `npm run frontend:inventory` after a route/component change, review the diff, and run `npm run frontend:inventory:check`. Update the script-side purpose/access metadata and reviewed dynamic navigation in the same PR. `DashboardNav.vue` is the single institutional navigation component for both sidebar and phone drawer; `section-path.ts` associates detail/edit routes with their parent sections. Do not restore per-page hidden navigation or guest acquisition/recording screens. Token, recovery, compatibility and DEV-only entries have explicit classifications in the reference.
 
 ## Backend inventory maintenance
 

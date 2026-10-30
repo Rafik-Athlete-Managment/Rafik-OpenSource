@@ -29,7 +29,8 @@ const metadata = JSON.parse(
 const issues = []
 const unique = (values) => [...new Set(values)].sort()
 const link = (p) => `[${short(p)}](../../../apps/frontend/src/${short(p)})`
-const text = (value) => String(value).replaceAll('|', '\\|').replaceAll('\n', ' ')
+const text = (value) =>
+  String(value).replaceAll('|', '\\|').replace(/\r\n?/g, '\n').replaceAll('\n', ' ')
 const sourceLink = (p, line) => `${link(p)}:${line}`
 const resolveLocal = (p, name) => {
   const base = resolve(dirname(p), name)
@@ -39,7 +40,8 @@ const resolveLocal = (p, name) => {
 }
 const records = new Map()
 for (const file of files) {
-  const raw = readFileSync(file, 'utf8')
+  // AST expression text must be identical for Windows CRLF and Unix LF checkouts.
+  const raw = readFileSync(file, 'utf8').replace(/\r\n?/g, '\n')
   const descriptor = file.endsWith('.vue') ? parseSfc(raw).descriptor : undefined
   const script = descriptor
     ? [descriptor.script?.content, descriptor.scriptSetup?.content].filter(Boolean).join('\n')

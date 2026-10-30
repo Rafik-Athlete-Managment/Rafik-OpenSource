@@ -95,6 +95,8 @@ Backend `test:*` integration commands now use `apps/backend/scripts/prisma/isola
 
 ## Frontend inventory coverage
 
+Run `npm run test:frontend-inventory` after changing the analyzer. It generates the actual inventories in isolated CRLF and LF source fixtures, compares every generated document, checks freshness in both and removes its fixtures. This is also a web CI step; it does not start browsers, the API or a database.
+
 Run `npm run frontend:inventory:check` for the maintained [view/component/route reference](../reference/frontend/README.md). The analyzer detects missing descriptions, orphan Vue files, missing rendered consumers, unknown navigation targets and generated-document drift. Review dynamic destinations and role/state-specific branches, not just the command result. It does not execute route guards or prove server authorization.
 
 The obsolete `core.e2e.ts` guest/standalone journeys were retired with those screens. Current institutional recording coverage lives in `programming.e2e.ts`; `consolidated-views.e2e.ts` covers the guest-route rejection and supported Resources/Nutrition entry. This audit does not claim fresh offline/concurrent-device acceptance from the removed historical spec.

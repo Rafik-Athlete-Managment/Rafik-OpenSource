@@ -1,5 +1,11 @@
 # Verification record
 
+## Frontend inventory CI portability — 30 October 2026
+
+GitHub Checks run 41049559168 passed backend and change-notes but failed web at frontend inventory freshness, before frontend tests/build/onboarding. Reproduced the failure in an LF-only copy while the Windows CRLF checkout passed. Normalizing source before AST parsing and expression text removes carriage-return-dependent Markdown table rows; generated navigation is regenerated without changing route counts or app behavior.
+
+The new real-generator regression passed: LF and CRLF fixtures produce identical inventories, both pass freshness checks and source bytes remain unchanged. CI runs it before the existing inventory gate. Local inventory and documentation checks pass. These checks do not replace the subsequent GitHub web/backend/change-notes jobs; verify the corrected PR head's conclusions before handoff. See [the receipt](receipts/2026-10-30-inventory-portability.json). Temporary source fixtures are removed; no database/browser/native testing is required for this generator correction.
+
 ## Group recording workspace — 30 October 2026
 
 The focused isolated group journey passed in Chromium and WebKit phone emulation, using disposable institutions and two athletes. It covers top-level attendance, participant adaptation, cancelling Skip before Start, explicit completion checks and zero load, switching athletes with an unsent note, reload recovery, a held save blocking selection/tab switching, in-event review/feedback, Record next athlete, phone selection, returning to Attendance, administrator review and athlete-only results. Loaded group/athlete review states passed Axe scans after transient toasts disappeared; layout checks found no document overflow. The final WebKit run built the production frontend successfully. Chromium's full journey predates only the final phone selector styling/search handling and collapsing the shared preview during adaptation; final-source WebKit and component checks cover those corrections. Frontend typecheck and two shared control/token tests passed.

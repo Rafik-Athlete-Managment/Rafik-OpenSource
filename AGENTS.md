@@ -1,5 +1,7 @@
 # Rafik web revamp working context
 
+- **Inventory portability, 30 October 2026:** normalize source line endings before AST parsing and textual expression output. Keep CRLF/LF generation/freshness regression coverage in web CI; a passing Windows inventory check alone does not establish Linux freshness.
+
 - **Shared exercise authoring/media, 30 October 2026:** use WorkoutExerciseCard in Programs, Templates and participant adaptation; keep one authoring implementation. Alternatives retain the existing maximum of three distinct active same-type movements and server snapshot authority. ExerciseMediaPreview opens reviewed media/credits on demand through existing authorized viewers; compact desktop thumbnails belong by exercise identity in every editable/read-only host, including template previews, never in a separate prescription-form column. Phones keep the preview action without downloading desktop posters. Preserve rest/group/per-set targets, source credits, durable owner drafts and receipt flows.
 
 - **Founder UI references, 30 October 2026:** use People’s separate tabs row above the search/filter/pagination toolbar as the directory spacing reference. Keep Programs-style full-width Add exercise. In an empty workout, put its icon, explanation and Add exercise together in one shared empty card; keep save/cancel in the separated editor footer. Use one spacing owner so grid gaps and legacy form margins do not compound. Inspect populated and empty new workout screens, picker labels and phone identity-field stacking against these references.

@@ -89,7 +89,8 @@
     "postinstall": "node scripts/tooling-security.mjs",
     "security:patch": "node scripts/tooling-security.mjs",
     "security:check": "node scripts/tooling-security.mjs --check",
-    "test:tooling-security": "node --test scripts/tooling-security.test.mjs"
+    "test:tooling-security": "node --test scripts/tooling-security.test.mjs",
+    "test:frontend-inventory": "node --test apps/frontend/scripts/frontend-inventory.test.mjs"
   },
   "overrides": {
     "tar": "7.5.22",

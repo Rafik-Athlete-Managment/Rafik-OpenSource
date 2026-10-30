@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-30",
+  "failed_run": 41049559168,
+  "failed_head": "fb6ace52310ba9d73181937b7aeb5cbf358a9c2c",
+  "original_jobs": {
+    "web": "failure at frontend:inventory:check; navigation.md stale",
+    "backend": "success",
+    "change-notes": "success"
+  },
+  "reproduction": "LF-only fixture check failed while original CRLF source check passed",
+  "cause": "Source carriage returns leaked from multiline AST expressions into Markdown tables",
+  "fix": "Normalize source before AST parsing and normalize display text; regenerate navigation; add regression step to web CI",
+  "regression": {
+    "command": "npm run test:frontend-inventory",
+    "passed": 1,
+    "coverage": [
+      "generate inventories from actual LF and CRLF source fixtures",
+      "compare every generated document",
+      "freshness checks on both fixtures",
+      "representative multiline source file remains byte-identical"
+    ],
+    "duration_ms": 34409.9134
+  },
+  "limits": "No application/API/native changes; final remote conclusions must be checked on the corrected PR head."
+}

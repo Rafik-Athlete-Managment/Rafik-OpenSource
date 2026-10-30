@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Frontend inventory CI portability — 30 October 2026
+
+The release PR's Linux web job stopped at generated navigation freshness while the Windows check passed. Reproduced with an LF-only source fixture: CR characters from multiline AST expressions produced different Markdown table rows. Normalize source line endings before parsing and normalize display text defensively, regenerate the reference, and add a real generator regression for CRLF/LF output equality and freshness. The web workflow runs that focused regression before its existing inventory gate. Application logic/API and native behavior are unchanged; final GitHub job conclusions are recorded in verification.
+
 ## Group recording workspace — 30 October 2026
 
 Founder approved attendance-first tabs, a shared preview, searchable desktop roster/phone selector and review without leaving the group. Reused DelegatedWorkout and ReviewPage with explicit embedded IDs/events; standalone routes remain available. The shared event attendance section is relocated into its group tab without duplicating submission logic. Recording selection/search/page/review use event query state; local drafts are scoped to account/institution/session and revision-checked, with switching held for local persistence and active/uncertain commands. No allocator, schema, API authority or native behavior changes. Focused acceptance and limits are recorded in verification.
