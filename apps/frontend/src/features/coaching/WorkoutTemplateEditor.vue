@@ -189,7 +189,7 @@ async function reloadSaved() {
 onMounted(load)
 </script>
 <template>
-  <div class="container page">
+  <div class="container page workout-template-editor">
     <RouterLink class="back-link" to="/workout-templates">{{
       l('Workout templates', 'قوالب التمارين')
     }}</RouterLink
@@ -199,8 +199,8 @@ onMounted(load)
         <p>
           {{
             l(
-              'One reusable workout. Saved templates are shared with institution staff; copies and recorded results stay independent.',
-              'تمرين واحد قابل لإعادة الاستخدام. القوالب المحفوظة مشتركة مع موظفي المؤسسة، وتبقى النسخ والنتائج مستقلة.',
+              'Build a reusable workout for programs and group sessions. Existing copies stay unchanged.',
+              'أنشئ تمريناً قابلاً لإعادة الاستخدام في البرامج والحصص الجماعية. تبقى النسخ السابقة دون تغيير.',
             )
           }}
         </p>
@@ -228,7 +228,7 @@ onMounted(load)
         ><button
           v-if="editable && !isNew"
           type="button"
-          class="button secondary danger-action"
+          :class="archived ? 'button secondary' : 'button secondary danger-action'"
           :disabled="locked"
           @click="archive"
         >
@@ -250,32 +250,40 @@ onMounted(load)
       :loading="loading"
       :error="error"
       @retry="load"
-      ><WorkoutPreview v-if="preview || !editable" :workout="workout" />
+      ><WorkoutPreview v-if="preview || !editable" class="panel" :workout="workout" />
       <form v-else @submit.prevent="save">
-        <fieldset :disabled="locked" class="form-fields">
-          <label
-            >{{ l('Workout name', 'اسم التمرين')
-            }}<input
-              v-model="title"
-              maxlength="80"
-              required
-              :placeholder="
-                l('For example: Full-body strength', 'مثال: قوة الجسم بالكامل')
-              " /></label
-          ><label
-            >{{ l('Arabic workout name (optional)', 'اسم التمرين بالعربية (اختياري)')
-            }}<input v-model="workout.nameAr" maxlength="80" dir="auto"
-          /></label>
-          <p class="small-print">
-            {{
-              l(
-                'Shared templates use reference or institution exercises. Private exercises remain private.',
-                'تستخدم القوالب المشتركة تمارين مرجعية أو تابعة للمؤسسة. تبقى التمارين الخاصة خاصة.',
-              )
-            }}
-          </p>
+        <fieldset :disabled="locked" class="form-fields template-editor-fields">
+          <section
+            class="panel form-stack template-identity"
+            aria-labelledby="workout-details-heading"
+          >
+            <h2 id="workout-details-heading">{{ l('Workout details', 'تفاصيل التمرين') }}</h2>
+            <div class="field-pair">
+              <label
+                >{{ l('Workout name', 'اسم التمرين')
+                }}<input
+                  v-model="title"
+                  maxlength="80"
+                  required
+                  :placeholder="
+                    l('For example: Full-body strength', 'مثال: قوة الجسم بالكامل')
+                  " /></label
+              ><label
+                >{{ l('Arabic workout name (optional)', 'اسم التمرين بالعربية (اختياري)')
+                }}<input v-model="workout.nameAr" maxlength="80" dir="auto"
+              /></label>
+              <p class="small-print">
+                {{
+                  l(
+                    'Shared templates use reference or institution exercises. Private exercises remain private.',
+                    'تستخدم القوالب المشتركة تمارين مرجعية أو تابعة للمؤسسة. تبقى التمارين الخاصة خاصة.',
+                  )
+                }}
+              </p>
+            </div>
+          </section>
           <WorkoutFields v-model="workout" :catalog="catalog" :disabled="locked" />
-          <div class="actions">
+          <div class="editor-footer actions">
             <button class="button" :disabled="locked || !workout.exercises.length">
               {{ l('Save workout template', 'حفظ قالب التمرين') }}</button
             ><RouterLink class="button secondary danger-action" to="/workout-templates">{{
@@ -287,3 +295,36 @@ onMounted(load)
     >
   </div>
 </template>
+<style scoped>
+.template-editor-fields {
+  display: grid;
+  gap: var(--space-6);
+}
+.template-identity .field-pair {
+  margin: 0;
+  align-items: start;
+}
+.template-identity label {
+  margin: 0;
+  font-size: var(--text-small);
+}
+.template-identity input {
+  margin: 0;
+}
+.template-identity .small-print {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.template-identity h2 {
+  font-size: var(--text-panel);
+  margin: 0;
+}
+.template-editor-fields > .editor-footer {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .template-identity .field-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+</style>

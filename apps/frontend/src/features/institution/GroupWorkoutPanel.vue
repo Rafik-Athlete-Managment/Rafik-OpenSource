@@ -14,6 +14,7 @@ import PageState from '../../components/PageState.vue'
 import CommandStatus from '../../components/CommandStatus.vue'
 import SidePanel from '../../components/SidePanel.vue'
 import ListPagination from '../../components/ListPagination.vue'
+import EmptyState from '../../components/EmptyState.vue'
 type Person = {
   member_id: string
   name: string
@@ -231,7 +232,7 @@ onMounted(load)
 </script>
 <template>
   <section class="group-workout-section">
-    <div class="heading-actions">
+    <div class="group-workout-heading">
       <div>
         <h2>{{ l('Group workout', 'التمرين الجماعي') }}</h2>
         <p class="small-print">
@@ -260,16 +261,17 @@ onMounted(load)
             {{ l('Shared workout prescription', 'وصفة التمرين المشتركة') }} ·
             <bdi>{{ data.workout.title }}</bdi>
           </summary>
-          <WorkoutPreview :workout="data.workout.day" />
+          <WorkoutPreview :workout="data.workout.day" heading-level="h3" />
         </details>
-        <div class="list-toolbar">
-          <label
+        <div class="list-controls">
+          <label class="plan-search"
             >{{ l('Search athletes', 'البحث عن الرياضيين')
             }}<input
               v-model="search"
               type="search"
               :placeholder="l('Search athlete names…', 'ابحث بأسماء الرياضيين…')" /></label
           ><ListPagination
+            class="list-toolbar-pagination"
             v-if="filtered.length > 10"
             :offset="offset"
             :page-size="10"
@@ -277,10 +279,13 @@ onMounted(load)
             @page="offset = $event"
           />
         </div>
-        <p v-if="!filtered.length" class="small-print">
-          {{ l('No athletes match this search.', 'لا يوجد رياضيون مطابقون للبحث.') }}
-        </p>
-        <ul class="group-workout-roster">
+        <EmptyState
+          v-if="!filtered.length"
+          compact
+          :title="l('No matching athletes', 'لا يوجد رياضيون مطابقون')"
+          :description="l('Try another athlete name.', 'جرّب اسم رياضي آخر.')"
+        />
+        <ul v-else class="group-workout-roster panel">
           <li v-for="person in visible" :key="person.member_id">
             <div>
               <h3>
@@ -354,7 +359,7 @@ onMounted(load)
           : l('Skip participant workout', 'تخطي تمرين المشارك')
       "
       :description="selected?.name"
-      ><form v-if="selected" @submit.prevent="submit">
+      ><form v-if="selected" class="form-stack group-participant-form" @submit.prevent="submit">
         <p class="small-print">
           {{
             l(
@@ -386,7 +391,7 @@ onMounted(load)
           >{{ l('Reason (no health details)', 'السبب (دون تفاصيل صحية)')
           }}<textarea v-model="reason" required maxlength="2000" :disabled="locked" />
         </label>
-        <div class="actions">
+        <div class="actions editor-footer">
           <button class="button" :disabled="locked">
             {{
               mode === 'start'
@@ -412,25 +417,59 @@ onMounted(load)
   gap: var(--space-5);
   margin-block: var(--space-6);
 }
+.group-workout-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.group-workout-heading h2 {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.group-workout-heading p {
+  margin: var(--space-2) 0 0;
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: 1.65;
+  font-size: var(--text-small);
+}
+.group-workout-section > :deep(.list-controls),
+.group-workout-section .plan-search input {
+  margin: 0;
+}
+.group-participant-form > label {
+  margin: 0;
+}
+.group-participant-form > label textarea {
+  margin: 0;
+}
+.group-participant-form > .button {
+  margin: 0;
+}
 .group-workout-roster {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: var(--space-3);
 }
 .group-workout-roster > li {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--line);
+}
+.group-workout-roster > li:last-child {
+  border: 0;
 }
 .group-workout-roster h3 {
   margin-block: 0 var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: 1.5;
 }
 .group-workout-roster p {
   margin-block: var(--space-2) 0;

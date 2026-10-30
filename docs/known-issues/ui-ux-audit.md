@@ -4,6 +4,20 @@
 
 The [design system proposal](../DESIGN_SYSTEM.md) is the one proposed visual specification. This report records problems and sequencing, not a competing style guide. Business rules, API contracts, routing, permission boundaries and persistence behavior must remain intact.
 
+## New workout screen review — 30 October 2026
+
+Scope: WorkoutTemplatesPage, WorkoutTemplateEditor, WorkoutFields, WorkoutPreview, WorkoutTemplatePicker and GroupWorkoutPanel, including their program/event insertion points. Founder screenshots establish the People tabs/search/pagination arrangement and Programs full-width Add exercise as the references. This correction preserves commands, routes, copies and participant permissions.
+
+| Finding                                                                                           | Evidence                                                | Resolution                                                                                      |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| First-use exercise state floated above Add exercise; Save/Cancel touched it                       | Founder-rendered screenshot; source                     | One shared empty card with its action; existing editor footer owns save/cancel separation       |
+| Grid gaps compounded legacy form-label/control margins; picker labels also lost their own spacing | Source and component-rendered editor/adaptation         | One spacing owner per section; explicit 8px label/control spacing at the new component boundary |
+| Directory tabs shared the search row instead of matching People                                   | Founder reference and source                            | Tabs row, then search/pagination toolbar                                                        |
+| Preview/list typography and generic heading styles did not fit subsection hierarchy               | Source and component-rendered preview/picker/group rows | Shared section/panel/body/caption tokens; no oversized inherited headings                       |
+| Phone identity fields stayed in two cramped columns                                               | Component-rendered Arabic editor                        | Stack identity fields; keep compact prescription controls in two columns                        |
+
+Rendered checks and limits are in [verification](../verification/README.md); a synthetic component fixture is not authenticated whole-platform acceptance. No new business rule or Android work belongs to this visual correction.
+
 ## Evidence labels
 
 - **Rendered:** the named screen/state was actually opened and its screenshot inspected.

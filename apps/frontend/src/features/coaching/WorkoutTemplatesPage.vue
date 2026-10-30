@@ -105,26 +105,30 @@ onMounted(load)
           <TabsTrigger value="active">{{ l('Active', 'النشطة') }}</TabsTrigger>
           <TabsTrigger value="archived">{{ l('Archived', 'المؤرشفة') }}</TabsTrigger>
         </TabsList>
-        <label class="plan-search">
-          {{ l('Search workouts', 'البحث عن التمارين') }}
-          <input
-            v-model="search"
-            type="search"
-            :placeholder="l('Search workout names…', 'ابحث بأسماء التمارين…')"
-            @keydown.enter.prevent="live.submit()"
-          />
-        </label>
-        <ListPagination
-          :offset="offset"
-          :page-size="appliedLimit"
-          :total="total"
-          :sizes="pageSizes"
-          :disabled="loading"
-          @page="page"
-          @page-size="changeLimit"
-        />
       </div>
       <TabsContent :value="archived ? 'archived' : 'active'">
+        <div class="list-toolbar">
+          <form class="workout-template-search" @submit.prevent="live.submit()">
+            <label>
+              {{ l('Search workouts', 'البحث عن التمارين') }}
+              <input
+                v-model="search"
+                type="search"
+                :placeholder="l('Search workout names…', 'ابحث بأسماء التمارين…')"
+              />
+            </label>
+          </form>
+          <ListPagination
+            class="list-toolbar-pagination"
+            :offset="offset"
+            :page-size="appliedLimit"
+            :total="total"
+            :sizes="pageSizes"
+            :disabled="loading"
+            @page="page"
+            @page-size="changeLimit"
+          />
+        </div>
         <PageState
           :loading="loading && (!items.length || loadedArchived !== archived)"
           :error="error"
@@ -182,6 +186,10 @@ onMounted(load)
   </div>
 </template>
 <style scoped>
+.list-toolbar > .workout-template-search {
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1 1 320px;
+}
 .workout-template-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
@@ -196,6 +204,11 @@ onMounted(load)
 .workout-template-grid h2,
 .workout-template-grid p {
   margin: 0;
+}
+.workout-template-grid h2 {
+  font-size: var(--text-panel);
+  font-weight: 600;
+  line-height: 1.4;
 }
 .workout-template-grid .actions {
   margin-top: auto;

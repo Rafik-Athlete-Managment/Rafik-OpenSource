@@ -8,6 +8,7 @@ import type { WorkoutTemplate } from '../../lib/workout-templates'
 import ListPagination from '../../components/ListPagination.vue'
 import PageState from '../../components/PageState.vue'
 import EmptyState from '../../components/EmptyState.vue'
+import { PhArrowSquareOut } from '@phosphor-icons/vue'
 const props = defineProps<{ selected?: string; revision?: number; disabled?: boolean }>()
 const emit = defineEmits<{ choose: [WorkoutTemplate] }>()
 const context = institutionContext(),
@@ -86,18 +87,31 @@ function page(value: number) {
 </script>
 <template>
   <section class="workout-template-picker" :aria-label="l('Workout templates', 'قوالب التمارين')">
-    <div class="heading-actions">
-      <label
+    <header class="workout-picker-heading">
+      <h2>{{ l('Workout template', 'قالب التمرين') }}</h2>
+      <RouterLink class="text-link" to="/workout-templates/new" target="_blank" rel="noopener">
+        {{ l('Create a template', 'إنشاء قالب') }}<PhArrowSquareOut :size="16" aria-hidden="true" />
+      </RouterLink>
+    </header>
+    <div class="list-controls">
+      <label class="plan-search"
         >{{ l('Find a workout template', 'البحث عن قالب تمرين')
         }}<input
           v-model="search"
           type="search"
           :disabled="disabled"
           :placeholder="l('Search workout names…', 'ابحث بأسماء التمارين…')"
-          @keydown.enter.prevent="live.submit()" /></label
-      ><RouterLink class="text-link" to="/workout-templates/new" target="_blank" rel="noopener">{{
-        l('Create a template ↗', 'إنشاء قالب ↗')
-      }}</RouterLink>
+          @keydown.enter.prevent="live.submit()"
+      /></label>
+      <ListPagination
+        class="list-toolbar-pagination"
+        v-if="total > 5"
+        :offset="offset"
+        :page-size="5"
+        :total="total"
+        :disabled="loading || disabled"
+        @page="page"
+      />
     </div>
     <p v-if="chosen" class="small-print">
       {{ l('Selected:', 'المحدد:') }} <strong dir="auto">{{ chosen.title }}</strong>
@@ -124,7 +138,8 @@ function page(value: number) {
             'Try another name or create a reusable workout.',
             'جرّب اسماً آخر أو أنشئ تمريناً قابلاً لإعادة الاستخدام.',
           )
-        " />
+        "
+      />
       <div v-else class="template-choices">
         <button
           v-for="item in items"
@@ -143,14 +158,7 @@ function page(value: number) {
           >
         </button>
       </div>
-      <ListPagination
-        v-if="total > 5"
-        :offset="offset"
-        :page-size="5"
-        :total="total"
-        :disabled="loading || disabled"
-        @page="page"
-    /></PageState>
+    </PageState>
   </section>
 </template>
 <style scoped>
@@ -158,9 +166,24 @@ function page(value: number) {
   display: grid;
   gap: var(--space-4);
 }
-.workout-template-picker .heading-actions > label {
-  flex: 1;
-  min-width: 0;
+.workout-picker-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.workout-picker-heading h2 {
+  margin: 0;
+  font-size: var(--text-panel);
+  line-height: 1.4;
+}
+.workout-template-picker > .list-controls,
+.workout-template-picker > p {
+  margin: 0;
+}
+.workout-template-picker .plan-search input {
+  margin: 0;
 }
 .template-choices {
   display: grid;
@@ -168,13 +191,20 @@ function page(value: number) {
 }
 .template-choice {
   display: grid;
-  gap: 4px;
+  gap: var(--space-2);
   text-align: start;
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--ink);
+  font: inherit;
+  min-width: 0;
+}
+.template-choice strong {
+  font-size: var(--text-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .template-choice.selected {
   border-color: var(--accent);
@@ -182,5 +212,7 @@ function page(value: number) {
 }
 .template-choice small {
   color: var(--muted);
+  font-size: var(--text-caption);
+  line-height: 1.5;
 }
 </style>

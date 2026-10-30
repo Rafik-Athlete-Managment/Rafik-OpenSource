@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## New workout screen consistency review — 30 October 2026
+
+Founder supplied the People toolbar and Programs add-action as references. Reviewed the six new workout components plus their program/event insertion points. Removed compounded form margins, standardized subsection type and rows, made directory tabs a separate row above search/pagination, grouped the first exercise action inside its empty card and reused the editor-footer pattern. Full-width Add exercise is retained deliberately. Preview uses the shared surface/tokens; participant results use dense divided rows, with the existing side-panel adaptation and all commands unchanged. Phone identity fields stack; prescription fields retain compact two-column layout. Verification records actual component-rendered coverage separately from authenticated integration.
+
 ## Workout template archive tabs — 30 October 2026
 
 Founder rejected the oversized archive checkbox. The template directory now uses shared Reka/ui-tabs Active/Archived controls alongside search/pagination, with direction-aware keyboard navigation and collection-specific empty/loading states. Requests retain existing authorization, search and server pagination; switching status resets the offset. The local API startup error was a second launch against the verified Rafik listener started on 28 October, before template routes existed. Stopped only that stale API process and launched current source on 127.0.0.1:55331; the database and other Node processes were not reset. Search uses the exact Programs label/input pattern (8px gap, no added form-label margins). Verification records the focused checks and limits.

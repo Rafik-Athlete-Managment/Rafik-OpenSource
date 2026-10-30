@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align the new workout-template editor, preview, picker and group-results screens with existing type/spacing tokens. Use People’s tabs-then-search layout, keep Programs-style full-width Add exercise, place its first-use action inside the empty card, and separate save actions in the existing editor footer. Improve phone form layout and exercise-picker label spacing.
+
 - Replace the workout template archive checkbox with the shared Active/Archived tabs, reset pagination on status changes and hide stale rows while the other collection loads.
 
 - Backport fixes for Expo tooling prototype poisoning and bounded-collection allocation, with explicit plugin/output budgets. Install-time version/hash guards and focused regressions preserve the existing SDK; upstream version-based audit alerts remain visible.

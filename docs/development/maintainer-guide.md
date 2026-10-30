@@ -4,6 +4,10 @@
 
 Root `scripts/tooling-security.mjs` applies/checks exact-version patches from its adjacent manifest. Root postinstall, Metro/build entry checks and CI keep the currently used Expo call paths patched. Run `npm run test:tooling-security` after a patch/dependency change; preserve original/patched hashes and review both module formats. Dockerfiles copy the installer before scoped installation. Revisit/remove patches when compatible upstream fixes are available; do not suppress version-based audit alerts. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md) for limits and provenance.
 
+## Workout screen layout
+
+People is the directory spacing reference: role/status tabs form a separate row above the search/filter/pagination toolbar. Programs is the authoring reference: keep full-width Add exercise, place its first-use action inside the shared empty card and use editor-footer for save/cancel. New workout components own their grid/label spacing; inherited form margins must not double the token gaps. Reuse WorkoutFields and WorkoutPreview in participant adaptation rather than introducing another prescription form.
+
 ## Workout templates and group results
 
 Use `WorkoutFields`, `WorkoutPreview` and `WorkoutTemplatePicker` for single-workout authoring/reuse. `server/workout-templates.ts` reuses program snapshot validation; `server/group-workouts.ts` reuses calendar authority and the existing session recorder/history. Preserve baseline and participant prescription immutability, authority-before-receipt checks and assignment-independent progression. Focused checks from the root: `npm run test:group-workouts`; populated upgrade: `node apps/backend/scripts/prisma/verify-group-workouts.mjs`; browser: `npm run test:e2e --workspace @rafik/frontend -- group-workouts.e2e.ts`. These Docker-backed commands create/remove disposable data; never reseed preview. The single [instance walkthrough](../testing/instance-validation.md) owns manual steps. Native offline workout capture remains the next slice.
