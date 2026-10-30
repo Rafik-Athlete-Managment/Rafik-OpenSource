@@ -124,6 +124,13 @@ test('first launch creates the super admin and an invited member can join withou
   const adminNavigation = page.locator('.dashboard-navigation:visible').first()
   await expect(adminNavigation.getByRole('link', { name: 'People & access' })).toBeVisible()
   await expect(adminNavigation.getByRole('link', { name: 'Analytics', exact: true })).toBeVisible()
+  await adminNavigation.getByRole('button', { name: 'Library', exact: true }).click()
+  await expect(
+    adminNavigation.getByRole('button', { name: 'Library', exact: true }),
+  ).toHaveAttribute('aria-expanded', 'true')
+  await expect(
+    adminNavigation.getByRole('button', { name: 'Administration', exact: true }),
+  ).toHaveAttribute('aria-expanded', 'false')
   await expect(adminNavigation.getByRole('link', { name: 'Programs', exact: true })).toBeVisible()
   if (await page.getByRole('button', { name: 'Close navigation' }).isVisible())
     await page.getByRole('button', { name: 'Close navigation' }).click()
@@ -141,8 +148,11 @@ test('first launch creates the super admin and an invited member can join withou
   if (!(await roleDashboard.count()))
     await page.getByRole('button', { name: 'Open navigation' }).click()
   await expect(roleDashboard.getByRole('link', { name: 'People & access' })).toBeVisible()
-  // Navigation sections are flat and always visible; no group hides another.
-  await expect(roleDashboard.locator('details')).toHaveCount(0)
+  // Opening Library reveals its links and closes the previously expanded Administration section.
+  await roleDashboard.getByRole('button', { name: 'Library', exact: true }).click()
+  await expect(
+    roleDashboard.getByRole('button', { name: 'Administration', exact: true }),
+  ).toHaveAttribute('aria-expanded', 'false')
   await expect(roleDashboard.getByRole('link', { name: 'Exercises', exact: true })).toBeVisible()
   if (await page.getByRole('button', { name: 'Close navigation' }).isVisible())
     await page.getByRole('button', { name: 'Close navigation' }).click()

@@ -4,7 +4,7 @@
 
 GitHub Checks run 41049559168 passed backend and change-notes but failed web at frontend inventory freshness, before frontend tests/build/onboarding. Reproduced the failure in an LF-only copy while the Windows CRLF checkout passed. Normalizing source before AST parsing and expression text removes carriage-return-dependent Markdown table rows; generated navigation is regenerated without changing route counts or app behavior.
 
-The corrected inventory passed Linux CI, which then exposed a workout-template unit imported from node:test instead of Vitest. Corrected that test runner import; its independent-copy assertions are retained.
+The corrected inventory passed Linux CI, which then exposed a workout-template unit imported from node:test instead of Vitest. Corrected that test runner import; its independent-copy assertions are retained. The next web run passed inventory, all 55 units and build, then reached successful first-admin setup before an obsolete flat-navigation assertion failed. Onboarding now opens Library and asserts that Administration closes, preserving the approved UI rather than changing it for an old test.
 
 The new real-generator regression passed: LF and CRLF fixtures produce identical inventories, both pass freshness checks and source bytes remain unchanged. CI runs it before the existing inventory gate. Local inventory and documentation checks pass. These checks do not replace the subsequent GitHub web/backend/change-notes jobs; verify the corrected PR head's conclusions before handoff. See [the receipt](receipts/2026-10-30-inventory-portability.json). Temporary source fixtures are removed; no database/browser/native testing is required for this generator correction.
 

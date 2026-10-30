@@ -30,5 +30,17 @@
     "command": "npm test --workspace @rafik/frontend",
     "files_passed": 16,
     "tests_passed": 55
+  },
+  "onboarding_followup": {
+    "run": 41052322241,
+    "passed_before_failure": [
+      "inventory regression",
+      "inventory freshness",
+      "55 frontend units",
+      "production build",
+      "first administrator setup"
+    ],
+    "failure": "Onboarding assumed Programs and Exercises were always visible in a flat sidebar",
+    "fix": "Open Library explicitly and verify Administration collapses; no production navigation behavior changed"
   }
 }
