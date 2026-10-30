@@ -4,6 +4,8 @@
 
 ## Purpose and boundaries
 
+For list directories with active/archived collections, use the shared compact ui-tabs pattern with labelled Active/Archived tabs, not a large standalone archive checkbox/button. Keep search and pagination aligned in list-controls, reset the page when changing collections, and show a loading state rather than rows belonging to the previous tab. Archived empty states explain preview/restoration.
+
 Read-only timestamps use the account's preferred display timezone consistently, including their date labels and calendar grouping. Show a clear zone label in schedules and the navigation clock. Date-only workouts and calendar dates never move between days. Booking and recurring-rule editors retain an explicit authoring zone; do not silently rewrite appointments when changing a display preference. The compact digital clock appears in the desktop header and phone drawer, links to Settings and does not announce every tick to assistive technology. Utility footer links remain one column with 2px gaps, compact 32px desktop rows and at least 44px phone targets.
 
 Portaled selection menus must use the popup layer above modal backdrops and panels (currently popup 120, backdrop 100, panel 101). Check the actual positioned wrapper as well as the content, since Popper copies the content layer when mounting. Verify pointer and keyboard selection inside the dialog; DOM presence alone does not establish visibility.

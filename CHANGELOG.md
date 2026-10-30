@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replace the workout template archive checkbox with the shared Active/Archived tabs, reset pagination on status changes and hide stale rows while the other collection loads.
+
 - Backport fixes for Expo tooling prototype poisoning and bounded-collection allocation, with explicit plugin/output budgets. Install-time version/hash guards and focused regressions preserve the existing SDK; upstream version-based audit alerts remain visible.
 
 - Update transitive node-forge to 1.4.2 and fast-uri to 3.1.9 for published security fixes. Keep the existing Expo SDK and platform lock metadata; document remaining upstream Zod/deepmerge tooling advisories separately from clean web/API production audits.

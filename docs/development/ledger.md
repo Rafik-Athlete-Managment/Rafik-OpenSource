@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Workout template archive tabs — 30 October 2026
+
+Founder rejected the oversized archive checkbox. The template directory now uses shared Reka/ui-tabs Active/Archived controls alongside search/pagination, with direction-aware keyboard navigation and collection-specific empty/loading states. Requests retain existing authorization, search and server pagination; switching status resets the offset. The local API startup error was a second launch against the verified Rafik listener started on 28 October, before template routes existed. Stopped only that stale API process and launched current source on 127.0.0.1:55331; the database and other Node processes were not reset. Search uses the exact Programs label/input pattern (8px gap, no added form-label margins). Verification records the focused checks and limits.
+
 ## Remaining Expo tooling security paths — 29 October 2026
 
 Founder requested remaining fixes. Added exact-version/hash backports for deepmerge and Zod3, plus bounds on the actual Expo plugin schemas/output collector; root installation applies them and maintained mobile entry points verify them. No framework change or audit suppression. ADR 0035 records provenance, maintenance and unused-entry-point limitations. Tests and Linux installation evidence are recorded in verification; this is tooling remediation, not native/device acceptance. Continue on the same beta.3 PR, unmerged.

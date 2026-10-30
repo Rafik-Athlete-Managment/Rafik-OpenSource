@@ -2,7 +2,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { institutionContext } from '../../app/institution'
 import { request } from '../../lib/backend'
-import { language as l, errorMessage } from '../../lib/i18n'
+import { language as l, errorMessage, locale } from '../../lib/i18n'
+import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
 import { useListPageSize } from '../../lib/list-page-size'
 import { useLiveSearch } from '../../lib/live-search'
 import type { WorkoutTemplate } from '../../lib/workout-templates'
@@ -17,6 +18,7 @@ const context = institutionContext(),
   offset = ref(0),
   total = ref(0),
   archived = ref(false),
+  loadedArchived = ref<boolean | null>(null),
   loading = ref(true),
   error = ref('')
 const { recordLimit, appliedLimit, pageSizes, acceptLimit, changeLimit } = useListPageSize(
@@ -34,6 +36,7 @@ onUnmounted(() => {
 })
 async function load() {
   const current = ++generation
+  const requestedArchived = archived.value
   loading.value = true
   error.value = ''
   try {
@@ -44,12 +47,13 @@ async function load() {
           search: search.value,
           offset: String(offset.value),
           limit: String(recordLimit.value),
-          archived: String(archived.value),
+          archived: String(requestedArchived),
         }),
       { feedback: 'none' },
     )
     if (disposed || current !== generation) return
     items.value = data.items
+    loadedArchived.value = requestedArchived
     total.value = data.total
     acceptLimit()
   } catch (e) {
@@ -66,7 +70,8 @@ function page(value: number) {
   offset.value = value
   void load()
 }
-function filter() {
+function filter(value: string | number) {
+  archived.value = value === 'archived'
   offset.value = 0
   void load()
 }
@@ -90,70 +95,90 @@ onMounted(load)
         ><PhPlus :size="18" />{{ l('Create workout template', 'إنشاء قالب تمرين') }}</RouterLink
       ></PageHeading
     >
-    <div class="list-toolbar">
-      <form @submit.prevent="live.submit()">
-        <label
-          >{{ l('Search workouts', 'البحث عن التمارين')
-          }}<input
+    <TabsRoot
+      :model-value="archived ? 'archived' : 'active'"
+      :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+      @update:model-value="filter"
+    >
+      <div class="list-controls">
+        <TabsList class="ui-tabs" :aria-label="l('Workout template status', 'حالة قوالب التمارين')">
+          <TabsTrigger value="active">{{ l('Active', 'النشطة') }}</TabsTrigger>
+          <TabsTrigger value="archived">{{ l('Archived', 'المؤرشفة') }}</TabsTrigger>
+        </TabsList>
+        <label class="plan-search">
+          {{ l('Search workouts', 'البحث عن التمارين') }}
+          <input
             v-model="search"
             type="search"
             :placeholder="l('Search workout names…', 'ابحث بأسماء التمارين…')"
-        /></label>
-      </form>
-      <label
-        ><input v-model="archived" type="checkbox" @change="filter" />{{
-          l('Show archived', 'عرض المؤرشفة')
-        }}</label
-      ><ListPagination
-        :offset="offset"
-        :page-size="appliedLimit"
-        :total="total"
-        :sizes="pageSizes"
-        :disabled="loading"
-        @page="page"
-        @page-size="changeLimit"
-      />
-    </div>
-    <PageState :loading="loading && !items.length" :error="error" @retry="load"
-      ><EmptyState
-        v-if="!items.length"
-        :title="l('No matching workout templates', 'لا توجد قوالب تمارين مطابقة')"
-        :description="
-          l(
-            'Create one workout, then copy it into a program or choose it for a group session.',
-            'أنشئ تمريناً ثم انسخه إلى برنامج أو اختره لحصة جماعية.',
-          )
-        "
-      />
-      <div v-else class="workout-template-grid">
-        <article v-for="item in items" :key="item.id" class="panel">
-          <PhBarbell :size="24" aria-hidden="true" />
-          <h2>
-            <RouterLink :to="'/workout-templates/' + item.id"
-              ><bdi>{{ item.title }}</bdi></RouterLink
-            >
-          </h2>
-          <p class="small-print">
-            {{ item.workout.minutes }} {{ l('minutes', 'دقيقة') }} ·
-            {{ item.workout.exercises.length }} {{ l('exercises', 'تمارين') }} ·
-            {{ l('Revision', 'النسخة') }} {{ item.revision }}
-          </p>
-          <div class="actions">
-            <RouterLink class="button secondary" :to="'/workout-templates/' + item.id">{{
-              item.can_edit
-                ? l('View and edit', 'عرض وتعديل')
-                : l('Preview workout', 'معاينة التمرين')
-            }}</RouterLink
-            ><RouterLink
-              v-if="!item.archived"
-              class="text-link"
-              :to="{ path: '/plans/new', query: { workoutTemplate: item.id } }"
-              >{{ l('Use in a new program', 'استخدامه في برنامج جديد') }}</RouterLink
-            >
-          </div>
-        </article>
-      </div></PageState
-    >
+            @keydown.enter.prevent="live.submit()"
+          />
+        </label>
+        <ListPagination
+          :offset="offset"
+          :page-size="appliedLimit"
+          :total="total"
+          :sizes="pageSizes"
+          :disabled="loading"
+          @page="page"
+          @page-size="changeLimit"
+        />
+      </div>
+      <TabsContent :value="archived ? 'archived' : 'active'">
+        <PageState
+          :loading="loading && (!items.length || loadedArchived !== archived)"
+          :error="error"
+          @retry="load"
+          ><EmptyState
+            v-if="!items.length"
+            :title="
+              archived
+                ? l('No archived workout templates', 'لا توجد قوالب تمارين مؤرشفة')
+                : l('No matching workout templates', 'لا توجد قوالب تمارين مطابقة')
+            "
+            :description="
+              archived
+                ? l(
+                    'Archived templates appear here. Open one to preview or restore it.',
+                    'تظهر القوالب المؤرشفة هنا. افتح قالباً لمعاينته أو استعادته.',
+                  )
+                : l(
+                    'Create one workout, then copy it into a program or choose it for a group session.',
+                    'أنشئ تمريناً ثم انسخه إلى برنامج أو اختره لحصة جماعية.',
+                  )
+            "
+          />
+          <div v-else class="workout-template-grid">
+            <article v-for="item in items" :key="item.id" class="panel">
+              <PhBarbell :size="24" aria-hidden="true" />
+              <h2>
+                <RouterLink :to="'/workout-templates/' + item.id"
+                  ><bdi>{{ item.title }}</bdi></RouterLink
+                >
+              </h2>
+              <p class="small-print">
+                {{ item.workout.minutes }} {{ l('minutes', 'دقيقة') }} ·
+                {{ item.workout.exercises.length }} {{ l('exercises', 'تمارين') }} ·
+                {{ l('Revision', 'النسخة') }} {{ item.revision }}
+              </p>
+              <div class="actions">
+                <RouterLink class="button secondary" :to="'/workout-templates/' + item.id">{{
+                  item.can_edit
+                    ? l('View and edit', 'عرض وتعديل')
+                    : l('Preview workout', 'معاينة التمرين')
+                }}</RouterLink
+                ><RouterLink
+                  v-if="!item.archived"
+                  class="text-link"
+                  :to="{ path: '/plans/new', query: { workoutTemplate: item.id } }"
+                  >{{ l('Use in a new program', 'استخدامه في برنامج جديد') }}</RouterLink
+                >
+              </div>
+            </article>
+          </div></PageState
+        >
+      </TabsContent>
+    </TabsRoot>
   </div>
 </template>
 <style scoped>
@@ -166,6 +191,7 @@ onMounted(load)
   display: grid;
   align-content: start;
   gap: var(--space-3);
+  margin: 0;
 }
 .workout-template-grid h2,
 .workout-template-grid p {

@@ -59,6 +59,10 @@ The [maintainer guide](maintainer-guide.md) has the repository map and change re
 
 ## Troubleshooting
 
+### API port already in use
+
+`EADDRINUSE` on `127.0.0.1:55331` means another process already owns the API port. Check `http://127.0.0.1:55331/health`: a healthy Rafik response includes `ok: true` and `runtime: prisma-postgresql`. That response proves the listener is alive, not that it loaded the current source. Reuse it only when it matches the running checkout; new routes returning 404 after a pull are a reason to restart the old process. To load backend code changes, stop its original terminal with Ctrl+C and run `npm run start:api` once. Do not reset the database or kill every Node process. On Windows, `netstat -ano | findstr :55331` identifies the listener PID; on Unix, use `lsof -nP -iTCP:55331 -sTCP:LISTEN`. If it belongs to another application, resolve that specific conflict or configure matching API/frontend URLs deliberately.
+
 - If the API cannot reach PostgreSQL, confirm the local Compose database is healthy with `docker compose ps`; then use `npm run backend:start` to apply pending migrations and regenerate Prisma.
 - If an API contract/type change fails frontend checks, regenerate the shared database types from the Prisma schema and update the shared API contract before retrying the relevant workspace checks.
 - Do not use `seed:local` to repair an existing database. It is for an empty local database only.

@@ -64,6 +64,18 @@ test('workout template authoring, program import and coach-only group recording'
       page.getByRole('heading', { name: 'Field strength validation', exact: true }),
     ).toBeVisible()
     await page.reload()
+    await page.goto('/workout-templates')
+    await expect(page.getByRole('tab', { name: 'Active', exact: true })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await page.getByRole('tab', { name: 'Archived', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'No archived workout templates' })).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Field strength validation', exact: true }),
+    ).toHaveCount(0)
+    await page.getByRole('tab', { name: 'Active', exact: true }).click()
+    await page.getByRole('link', { name: 'Field strength validation', exact: true }).click()
     await page.getByRole('link', { name: 'Use in a new program', exact: true }).click()
     await expect(
       page.getByRole('button', { name: 'Field strength validation', exact: false }),

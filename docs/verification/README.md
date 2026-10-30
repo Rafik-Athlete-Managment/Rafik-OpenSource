@@ -1,5 +1,11 @@
 # Verification record
 
+## Template archive tabs and API restart — 30 October 2026
+
+Frontend typecheck passed. A temporary Vite harness rendered the actual directory/shared styles with mocked responses in Chromium and WebKit: English/light 1280px and Arabic/dark 320px. Checked Active/Archived selection, keyboard navigation, search/no-results, pagination reset, hiding prior-collection rows and horizontal overflow. Measured the Programs search convention: 8px label/input gap and zero added label/input margins. Inspected desktop Chromium and phone WebKit viewport captures; also removed inherited article margins that staggered template cards. This is component evidence, not authenticated end-to-end acceptance or every locale/theme combination. The existing full group-workout spec gained archive-tab regression steps but was not rerun for this small control change. Temporary harness and generated captures were removed after inspection.
+
+Verified a repository API process started on 28 October occupied port 55331, causing both a second-start EADDRINUSE and stale route 404s. Stopped that process only and started current source. Health returns 200; the template URL without cookies now returns the expected 401 unauthenticated. Founder signed-in refresh remains the live check; no database or other Node process was reset. See [the receipt](receipts/2026-10-30-template-archive-tabs.json).
+
 ## Expo tooling backports — 29 October 2026
 
 The six focused security tests passed on Windows Node 24.21.0 and a clean disposable Linux Node 22.16 installation. Linux root npm ci ran lifecycle scripts, installed 930 packages and automatically applied all eight patched files; the subsequent hash check and tests passed. Coverage includes source/target prototype keys, null-prototype targets, arrays/symbols/custom merges, CommonJS/ESM sync/async early bounds, actual Expo plugin/MCP schemas, byte/line/chunk budgets, idempotence and unknown-content/version failure before writes. Temporary fixtures and the container were removed.
