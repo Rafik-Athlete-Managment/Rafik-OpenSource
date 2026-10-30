@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Shared exercise cards, alternatives and media — 30 October 2026
+
+Founder approved the template exercise layout and requested it in Programs, with intuitive alternatives and on-demand media. Extracted WorkoutExerciseCard for both editors and participant adaptation; retained owner add/reorder/group and save/receipt behavior. Existing three-alternative/same-recording-type limits remain server-owned, with picker guards in exercise-authoring.ts. WorkoutPreview now serves template, group and program read-only views, including targets/rest/group/alternatives and optional written instructions. Media uses ExerciseDemo/ResourceAsset in a Reka dialog, preserves source credits/private access and only loads full media after opening. Researched Trainerize, TrainHeroic and WorkoutLabs screenshots at founder request; adopted compact name-row thumbnails for every shared host instead of an extra column beside form fields. Bilingual landing guidance is updated on its existing separate docs PR. Verification distinguishes the authenticated persistence flow, isolated component matrix and untested native scope.
+
 ## New workout screen consistency review — 30 October 2026
 
 Founder supplied the People toolbar and Programs add-action as references. Reviewed the six new workout components plus their program/event insertion points. Removed compounded form margins, standardized subsection type and rows, made directory tabs a separate row above search/pagination, grouped the first exercise action inside its empty card and reused the editor-footer pattern. Full-width Add exercise is retained deliberately. Preview uses the shared surface/tokens; participant results use dense divided rows, with the existing side-panel adaptation and all commands unchanged. Phone identity fields stack; prescription fields retain compact two-column layout. Verification records actual component-rendered coverage separately from authenticated integration.

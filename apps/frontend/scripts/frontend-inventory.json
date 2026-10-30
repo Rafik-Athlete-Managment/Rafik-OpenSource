@@ -352,7 +352,7 @@
     "purpose": "Staff plan scheduling policy: bounded weekly appointments or opt-in day-only preparation, diagnostics, exact-command recovery and future-rule stop/edit."
   },
   "features/coaching/WorkoutFields.vue": {
-    "purpose": "Shared single-workout prescription authoring: exercise picker, measured targets, notes and ordering.",
+    "purpose": "Single-workout authoring wrapper using the same exercise cards as Programs; duration, add/remove/order and empty state.",
     "access": "Active institution staff; calling API preserves current authority."
   },
   "features/coaching/WorkoutPreview.vue": {
@@ -374,5 +374,13 @@
   "features/institution/GroupWorkoutPanel.vue": {
     "purpose": "Shared event prescription, paginated participant outcomes, individual adaptation/start and explicit skip with durable command recovery.",
     "access": "Event staff record; administrators review; athletes see only their own results."
+  },
+  "components/ExerciseMediaPreview.vue": {
+    "purpose": "On-demand exercise-media dialog with retained source credits, public reference thumbnails on large screens and authorized private media reads through ExerciseDemo.",
+    "access": "Consumers supply already-authorized catalog or snapshot metadata; asset endpoints retain authority."
+  },
+  "features/coaching/WorkoutExerciseCard.vue": {
+    "purpose": "Shared program/template/group-participant exercise authoring card: ordering, grouping, targets, same-type alternatives, coaching notes and on-demand media.",
+    "access": "Staff editors only; save/record authority remains in their existing server services."
   }
 }

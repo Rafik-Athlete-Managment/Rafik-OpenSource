@@ -3,23 +3,14 @@ import PageHeading from '../../components/PageHeading.vue'
 import WorkoutTemplatePicker from './WorkoutTemplatePicker.vue'
 import SidePanel from '../../components/SidePanel.vue'
 import { copyWorkout, type WorkoutTemplate } from '../../lib/workout-templates'
-import ExerciseDemo from '../../components/ExerciseDemo.vue'
-import ExercisePicker from '../../components/ExercisePicker.vue'
+import WorkoutExerciseCard from './WorkoutExerciseCard.vue'
+import WorkoutPreview from './WorkoutPreview.vue'
+import EmptyState from '../../components/EmptyState.vue'
 import ProgramCover from './ProgramCover.vue'
 import { request } from '../../lib/backend'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  PhArrowLeft,
-  PhPlus,
-  PhTrash,
-  PhArrowUp,
-  PhArrowDown,
-  PhEye,
-  PhX,
-  PhBarbell,
-  PhCopy,
-} from '@phosphor-icons/vue'
+import { PhArrowLeft, PhPlus, PhTrash, PhEye, PhBarbell, PhCopy } from '@phosphor-icons/vue'
 import { user, contexts } from '../../app/auth'
 import { duplicateSession, duplicateWeek } from './program-structure'
 import { programContext } from './program-context'
@@ -28,8 +19,7 @@ import CommandStatus from '../../components/CommandStatus.vue'
 import { clone, type Plan, type PlanVersion, type Prescription } from '../../lib/domain'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
 import { language, locale, t, errorMessage } from '../../lib/i18n'
-import PrescriptionFields from './PrescriptionFields.vue'
-import { upgradePrescription, targetLabel } from '../../lib/prescriptions'
+import { upgradePrescription } from '../../lib/prescriptions'
 import type { Exercise } from '../../lib/domain'
 import PageState from '../../components/PageState.vue'
 import type { AthletePlanSummary } from '@rafik/shared/contracts'
@@ -109,45 +99,6 @@ function importWorkout(template: WorkoutTemplate) {
 const day = computed(() => draft.value.days[selected.value]!)
 const catalog = ref<Exercise[]>([])
 const activeCatalog = computed(() => catalog.value.filter((exercise) => exercise.active !== false))
-const name = (id: string) => {
-  const e =
-    catalog.value.find((e) => e.id === id) ||
-    draft.value.days
-      .flatMap((d) => d.exercises.flatMap((e) => [e, ...(e.alternatives || [])]))
-      .find((e) => e.exerciseId === id)?.info
-  return (locale.value === 'ar' ? e?.name_ar?.trim() || e?.name : e?.name) || id
-}
-function selectExercise(index: number, exerciseId: string) {
-  const ex = day.value.exercises[index]!
-  if (!exerciseId || exerciseId === ex.exerciseId) return
-  const info = catalog.value.find((e) => e.id === exerciseId)
-  if (!info || info.active === false) return
-  ex.exerciseId = exerciseId
-  ex.kind = info?.kind || 'strength'
-  ex.seconds ||= 30
-  ex.metres ||= 100
-  ex.alternatives = []
-  delete ex.info
-}
-function toggleAlternative(index: number, exerciseId: string, checked: boolean) {
-  const ex = day.value.exercises[index]!
-  const alternatives = ex.alternatives || []
-  if (!checked) {
-    ex.alternatives = alternatives.filter((alternative) => alternative.exerciseId !== exerciseId)
-    return
-  }
-  const option = catalog.value.find((exercise) => exercise.id === exerciseId)
-  if (
-    alternatives.length >= 3 ||
-    alternatives.some((alternative) => alternative.exerciseId === exerciseId) ||
-    !option ||
-    option.active === false ||
-    option.id === ex.exerciseId ||
-    (option.kind || 'strength') !== (ex.kind || 'strength')
-  )
-    return
-  ex.alternatives = [...alternatives, { exerciseId }]
-}
 function restDay() {
   if (day.value.restDay) day.value.exercises = []
 }
@@ -927,197 +878,72 @@ function removeDay() {
                 language('Recovery day. No workout to record.', 'يوم تعافٍ. لا يوجد تمرين للتسجيل.')
               }}
             </p>
-            <div
+            <h2 v-if="!preview && !day.restDay" class="program-exercises-heading">
+              {{ language('Exercises', 'التمارين') }}
+            </h2>
+            <EmptyState
               v-if="!preview && !day.restDay && !day.exercises.length"
-              class="program-empty-exercises"
+              class="program-workout-empty"
+              :title="language('Start with a real exercise', 'ابدأ بتمرين فعلي')"
+              :description="
+                language(
+                  'Choose an exercise from your library. Nothing is prefilled.',
+                  'اختر تمريناً من مكتبتك. لا توجد تمارين مضافة مسبقاً.',
+                )
+              "
             >
-              <PhBarbell :size="30" aria-hidden="true" />
-              <div>
-                <h2>{{ language('Start with a real exercise', 'ابدأ بتمرين فعلي') }}</h2>
-                <p>
-                  {{
-                    language(
-                      'Choose an exercise from your library. Nothing is prefilled.',
-                      'اختر تمريناً من مكتبتك. لا توجد تمارين مضافة مسبقاً.',
-                    )
-                  }}
-                </p>
-              </div>
+              <button type="button" class="button secondary full" @click="addExercise">
+                <PhPlus :size="18" />{{ language('Add exercise', 'إضافة تمرين') }}
+              </button>
+            </EmptyState>
+            <div v-if="!preview && !day.restDay" class="program-exercise-cards">
+              <WorkoutExerciseCard
+                v-for="(ex, i) in day.exercises"
+                :key="ex.key"
+                :model-value="ex"
+                :catalog="catalog"
+                :index="i"
+                :total="day.exercises.length"
+                :previous-group="day.exercises[i - 1]?.group"
+                :disabled="busy"
+                :remove-disabled="day.exercises.length === 1"
+                @update:model-value="day.exercises[i] = $event"
+                @move="move(i, $event)"
+                @remove="day.exercises.splice(i, 1)"
+                @pair="joinPrevious(i)"
+              />
+              <button
+                v-if="day.exercises.length && day.exercises.length < 12"
+                type="button"
+                class="button secondary full"
+                @click="addExercise"
+              >
+                <PhPlus :size="18" />{{ language('Add exercise', 'إضافة تمرين') }}
+              </button>
             </div>
-            <article
-              v-for="(ex, i) in day.exercises"
-              :key="ex.key"
-              class="editor-exercise"
-              :class="{
-                'grouped-exercise': !!ex.group,
-                'group-continued': !!ex.group && day.exercises[i - 1]?.group === ex.group,
-              }"
-            >
-              <p v-if="ex.group" class="superset-banner">
-                {{ language('Superset / circuit', 'مجموعة مركبة / دائرة') }} · {{ ex.group
-                }}<span v-if="day.exercises[i - 1]?.group === ex.group">
-                  · {{ language('Continue together', 'تابع ضمن المجموعة') }}</span
-                >
-              </p>
-              <div class="editor-exercise-top">
-                <span class="exercise-index">{{ String(i + 1).padStart(2, '0') }}</span>
-                <h3 v-if="preview">{{ name(ex.exerciseId) }}</h3>
-                <ExercisePicker
-                  v-else
-                  class="grow"
-                  :model-value="ex.exerciseId"
-                  :exercises="catalog"
-                  :fallback-name="name(ex.exerciseId)"
-                  :label="language('Exercise', 'التمرين') + ' ' + (i + 1)"
-                  hide-label
-                  @update:model-value="selectExercise(i, $event)"
-                />
-                <div v-if="!preview" class="actions compact-actions">
-                  <button
-                    class="icon-button"
-                    type="button"
-                    :disabled="i === 0"
-                    :aria-label="language('Move exercise up', 'نقل التمرين للأعلى')"
-                    @click="move(i, -1)"
-                  >
-                    <PhArrowUp :size="18" /></button
-                  ><button
-                    class="icon-button"
-                    type="button"
-                    :disabled="i === day.exercises.length - 1"
-                    :aria-label="language('Move exercise down', 'نقل التمرين للأسفل')"
-                    @click="move(i, 1)"
-                  >
-                    <PhArrowDown :size="18" /></button
-                  ><button
-                    class="icon-button danger danger-action"
-                    type="button"
-                    :disabled="day.exercises.length === 1"
-                    :aria-label="language('Remove exercise', 'حذف التمرين')"
-                    @click="day.exercises.splice(i, 1)"
-                  >
-                    <PhTrash :size="18" />
-                  </button>
-                </div>
-              </div>
-              <div v-if="preview" class="prescription-line">
-                <p>
-                  {{ ex.group }} · {{ ex.sets }} {{ t('sets') }} · {{ targetLabel(ex) }} ·
-                  {{ ex.rest }} {{ language('sec rest', 'ثانية راحة') }}
-                </p>
-                <p v-for="(target, n) in ex.targets" :key="n">
-                  {{ n + 1 }}. {{ targetLabel(ex, target) }}
-                </p>
-              </div>
-              <template v-else
-                ><button
-                  v-if="i > 0 && !ex.group"
-                  type="button"
-                  class="text-link"
-                  @click="joinPrevious(i)"
-                >
-                  {{ language('Pair with previous exercise', 'اربط بالتمرين السابق') }}</button
-                ><PrescriptionFields v-model="day.exercises[i]!"
-              /></template>
-              <div :class="{ 'preview-demo': preview || !editable }">
-                <ExerciseDemo :exercise="catalog.find((e) => e.id === ex.exerciseId) || ex.info" />
-              </div>
-              <p v-if="preview">
-                {{
-                  locale === 'ar'
-                    ? (catalog.find((e) => e.id === ex.exerciseId) || ex.info)?.instructions_ar
-                    : (catalog.find((e) => e.id === ex.exerciseId) || ex.info)?.instructions
-                }}
-              </p>
-              <details v-if="!preview" class="exercise-alternatives">
-                <summary>
-                  {{ language('Offer an alternative', 'اقتراح تمرين بديل')
-                  }}<span v-if="ex.alternatives?.length"> ({{ ex.alternatives.length }})</span>
-                </summary>
-                <p class="subtle">
-                  {{
-                    language(
-                      'Choose up to 3 exercises with the same recording type. They use the same sets and targets; athletes can adjust their recorded results.',
-                      'اختر حتى 3 تمارين من نوع التسجيل نفسه. تستخدم المجموعات والأهداف نفسها، ويمكن للرياضي تعديل نتائجه المسجلة.',
-                    )
-                  }}
-                </p>
-                <ul
-                  v-if="ex.alternatives?.length"
-                  class="alternative-chips"
-                  :aria-label="
-                    language('Approved alternatives', 'البدائل المعتمدة') + ' ' + (i + 1)
-                  "
-                >
-                  <li v-for="alternative in ex.alternatives" :key="alternative.exerciseId">
-                    <span>{{ name(alternative.exerciseId) }}</span>
-                    <button
-                      class="danger-action"
-                      type="button"
-                      :aria-label="
-                        language('Remove alternative', 'إزالة البديل') +
-                        ' ' +
-                        name(alternative.exerciseId)
-                      "
-                      @click="toggleAlternative(i, alternative.exerciseId, false)"
-                    >
-                      <PhX :size="15" aria-hidden="true" />
-                    </button>
-                  </li>
-                </ul>
-                <ExercisePicker
-                  model-value=""
-                  :exercises="catalog"
-                  :excluded-ids="[
-                    ex.exerciseId,
-                    ...(ex.alternatives || []).map((alternative) => alternative.exerciseId),
-                  ]"
-                  :kind="ex.kind || 'strength'"
-                  :disabled="(ex.alternatives?.length || 0) >= 3"
-                  :label="language('Add approved alternative', 'إضافة بديل معتمد') + ' ' + (i + 1)"
-                  :placeholder="
-                    (ex.alternatives?.length || 0) >= 3
-                      ? language('Three alternatives selected', 'تم اختيار ثلاثة بدائل')
-                      : language('Search same-type exercises', 'ابحث عن تمارين من النوع نفسه')
-                  "
-                  @update:model-value="toggleAlternative(i, $event, true)"
-                />
-              </details>
-              <p v-if="preview && ex.alternatives?.length" class="subtle">
-                {{ language('Approved alternatives', 'البدائل المعتمدة') }}:
-                {{ ex.alternatives.map((a) => name(a.exerciseId)).join(' · ') }}
-              </p>
-              <p v-if="preview && ex.note" class="coach-prescription">{{ ex.note }}</p>
-              <details v-if="!preview">
-                <summary>{{ language('Add a coaching cue', 'إضافة توجيه للرياضي') }}</summary>
-                <label
-                  ><span class="sr-only">{{ language('Coaching cue', 'توجيه الرياضي') }}</span
-                  ><textarea v-model="ex.note" maxlength="500" rows="2"></textarea>
-                </label>
-              </details>
-            </article>
-            <button
-              v-if="!preview && !day.restDay && day.exercises.length < 12"
-              type="button"
-              class="button secondary full"
-              @click="addExercise"
-            >
-              <PhPlus :size="18" />{{ language('Add exercise', 'إضافة تمرين') }}
-            </button>
+            <WorkoutPreview
+              v-if="preview && !day.restDay"
+              :workout="day"
+              :catalog="catalog"
+              show-instructions
+            />
           </section>
-        </fieldset>
-      </form></PageState
-    >
+        </fieldset></form
+    ></PageState>
   </div>
 </template>
 
 <style scoped>
-/* Read-only and athlete previews show reference positions as compact thumbnails. */
-.preview-demo :deep(.demo-positions) {
-  max-width: 330px;
+.program-exercise-cards {
+  display: grid;
+  gap: var(--space-4);
 }
-.preview-demo :deep(.exercise-demo) {
-  margin-block: var(--space-3);
+.program-workout-empty :deep(.actions) {
+  width: 100%;
+}
+.program-exercises-heading {
+  font-size: var(--text-section);
+  margin: 0 0 var(--space-4);
 }
 </style>
 <style>
@@ -1248,21 +1074,6 @@ function removeDay() {
 .program-preview-heading .program-cover {
   margin: 0;
 }
-.program-empty-exercises {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding: 20px;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  color: var(--muted);
-  text-align: start;
-}
-.program-empty-exercises h3,
-.program-empty-exercises p {
-  margin: 0 0 6px;
-}
 @media (max-width: 680px) {
   .program-identity-card,
   .program-preview-heading {
@@ -1278,58 +1089,6 @@ function removeDay() {
   }
   .program-recognition-fields {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-.alternative-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0;
-  padding: 0;
-  list-style: none;
-}
-.alternative-chips li {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--tint);
-  color: var(--ink);
-}
-.alternative-chips span {
-  overflow: hidden;
-  padding: 7px 3px 7px 11px;
-  font-size: 0.78rem;
-  font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-[dir='rtl'] .alternative-chips span {
-  padding: 7px 11px 7px 3px;
-}
-.alternative-chips button {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 34px;
-  min-height: 34px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-}
-.alternative-chips button:hover {
-  color: var(--error);
-}
-.exercise-alternatives > .exercise-picker {
-  margin-top: 12px;
-}
-@media (max-width: 600px) {
-  .editor-exercise-top > .exercise-picker {
-    flex: 1 0 calc(100% - 28px);
-    width: calc(100% - 28px);
   }
 }
 </style>
@@ -1348,18 +1107,5 @@ function removeDay() {
   padding: 0;
   margin: 0;
   flex: 0 0 auto;
-}
-.grouped-exercise {
-  border-inline-start: 4px solid var(--accent);
-}
-.group-continued {
-  margin-block-start: 8px;
-}
-.superset-banner {
-  color: var(--accent);
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
 }
 </style>

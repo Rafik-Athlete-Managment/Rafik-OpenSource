@@ -64,6 +64,16 @@ As each athlete:
 
 Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Native offline workout entry, group plans and workout sections are deferred; the current phone app can keep attendance/assessment work, but unresolved group workout completion must be resolved on the web.
 
+### Shared exercise cards — administrators and coaches
+
+Prerequisites: use the saved synthetic template and program from the checks above.
+
+For the shared exercise editor, also validate:
+
+1. As the template creator or administrator, choose a primary exercise, add three same-type alternatives through search and confirm the visible list. A fourth choice, duplicates, the primary movement and incompatible recording types must not be offered. Remove one alternative and add it again; changing the main exercise clears its old alternatives. Keep zero load valid and verify timed/distance units.
+2. Save/reload the template and import it into a program. Expect the same exercise cards, alternatives and notes; save/reload that program and verify its independent copy. Check reordering, pairing/group labels and per-set targets remain available.
+3. For a movement with media, expect a compact thumbnail beside its identity on large screens and a labelled preview action on a phone. Open the media dialog, inspect source credits, close with Escape and verify focus returns. Repeat from template/program previews and participant adaptation; closing media must leave the participant editor open. Missing media must not produce an invented thumbnail.
+
 ### Institution overview
 
 1. Open Dashboard: expect Institution overview with the reporting-period control and Open full analytics beside the Participation and activity heading, then period metrics before administrative detail. Switch 7/28/90 days; wait for the returned dates to match. No records should show honest chart empty states, not example data.

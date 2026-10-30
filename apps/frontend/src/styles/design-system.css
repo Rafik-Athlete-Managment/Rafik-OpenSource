@@ -20,6 +20,7 @@
   --motion-fast: 150ms;
   --motion-panel: 200ms;
   --motion-ease: ease-out;
+  --exercise-media-backdrop: #1c2924;
   --danger-action: #b42332;
   --danger-ink: light-dark(#b42332, #ffadb4);
   --on-danger: #fff;

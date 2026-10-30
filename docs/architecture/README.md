@@ -2,6 +2,8 @@
 
 ## Workout templates and group results — unreleased beta.3
 
+Program, template and group-participant authoring share WorkoutExerciseCard, while WorkoutFields owns single-workout structure and PlanEditor retains its cycle/day/draft lifecycle. Existing alternative IDs and snapshot validation are unchanged; this adds no API or schema. WorkoutPreview owns the shared read-only prescription presentation. ExerciseMediaPreview reuses ExerciseDemo and its authorized ResourceAsset path; only reviewed reference posters/frames are eligible for desktop thumbnails, with full media opened explicitly in a locale-aware dialog.
+
 `institution_workout_templates` stores staff-shared single-workout prescriptions. Calendar creation freezes one template revision and roster; each designated coach starts a separate participant record, optionally adapted before start. The existing measured actuals, revision receipts and attributed history are reused. Additional records have no assignment and never advance an individual cursor; existing assignment-backed rows remain unchanged. Athletes read only their own result, administrators review, designated coaches record. Attendance is separate; each present/started participant must complete or be explicitly skipped before event finish. Cancellation retains readable records. See [ADR 0034](../decisions/ADR-0034-workout-templates-and-group-results.md). Native offline capture, group plans and workout sections remain deferred.
 
 ## Viewer timezone

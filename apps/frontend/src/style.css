@@ -3834,11 +3834,6 @@ select {
   scroll-margin-top: 1rem;
 }
 
-.exercise-alternatives fieldset {
-  max-height: 15rem;
-  overflow-y: auto;
-  margin: 0.75rem 0;
-}
 .choice-label {
   display: flex;
   align-items: center;

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import ExercisePicker from '../../components/ExercisePicker.vue'
+import WorkoutExerciseCard from './WorkoutExerciseCard.vue'
 import EmptyState from '../../components/EmptyState.vue'
-import PrescriptionFields from './PrescriptionFields.vue'
-import { PhPlus, PhTrash, PhArrowUp, PhArrowDown } from '@phosphor-icons/vue'
+import { PhPlus } from '@phosphor-icons/vue'
 import type { PlanDay, Exercise } from '../../lib/domain'
 import { language as l } from '../../lib/i18n'
 const day = defineModel<PlanDay>({ required: true })
@@ -24,12 +23,10 @@ function move(index: number, delta: number) {
   const [ex] = day.value.exercises.splice(index, 1)
   day.value.exercises.splice(index + delta, 0, ex!)
 }
-function choose(index: number, id: string, catalog: Exercise[]) {
-  const ex = day.value.exercises[index]!
-  ex.exerciseId = id
-  ex.kind = catalog.find((e) => e.id === id)?.kind || 'strength'
-  ex.alternatives = []
-  delete ex.info
+function pair(index: number) {
+  const previous = day.value.exercises[index - 1]!
+  previous.group ||= l('Superset', 'مجموعة مركبة') + ' ' + index
+  day.value.exercises[index]!.group = previous.group
 }
 </script>
 <template>
@@ -57,49 +54,20 @@ function choose(index: number, id: string, catalog: Exercise[]) {
         <PhPlus :size="18" aria-hidden="true" />{{ l('Add exercise', 'إضافة تمرين') }}
       </button>
     </EmptyState>
-    <article v-for="(ex, index) in day.exercises" :key="ex.key" class="workout-exercise panel">
-      <div class="workout-exercise-heading">
-        <ExercisePicker
-          :model-value="ex.exerciseId"
-          :exercises="catalog"
-          :fallback-name="ex.info?.name"
-          :label="l('Exercise', 'التمرين') + ' ' + (index + 1)"
-          :disabled="disabled"
-          @update:model-value="choose(index, $event, catalog)"
-        />
-        <div class="actions">
-          <button
-            type="button"
-            class="button secondary icon-only"
-            :aria-label="l('Move exercise up', 'نقل التمرين للأعلى')"
-            :disabled="index === 0"
-            @click="move(index, -1)"
-          >
-            <PhArrowUp :size="18" /></button
-          ><button
-            type="button"
-            class="button secondary icon-only"
-            :aria-label="l('Move exercise down', 'نقل التمرين للأسفل')"
-            :disabled="index === day.exercises.length - 1"
-            @click="move(index, 1)"
-          >
-            <PhArrowDown :size="18" /></button
-          ><button
-            type="button"
-            class="button secondary danger-action icon-only"
-            :aria-label="l('Remove exercise', 'إزالة التمرين')"
-            @click="day.exercises.splice(index, 1)"
-          >
-            <PhTrash :size="18" />
-          </button>
-        </div>
-      </div>
-      <PrescriptionFields :model-value="ex" @update:model-value="day.exercises[index] = $event" />
-      <label
-        >{{ l('Coaching notes', 'ملاحظات التدريب')
-        }}<textarea v-model="ex.note" maxlength="500" rows="2" />
-      </label>
-    </article>
+    <WorkoutExerciseCard
+      v-for="(ex, index) in day.exercises"
+      :key="ex.key"
+      :model-value="ex"
+      :catalog="catalog"
+      :index="index"
+      :total="day.exercises.length"
+      :previous-group="day.exercises[index - 1]?.group"
+      :disabled="disabled"
+      @update:model-value="day.exercises[index] = $event"
+      @move="move(index, $event)"
+      @remove="day.exercises.splice(index, 1)"
+      @pair="pair(index)"
+    />
     <button
       v-if="day.exercises.length && day.exercises.length < 12"
       type="button"
@@ -119,13 +87,7 @@ function choose(index: number, id: string, catalog: Exercise[]) {
   margin: 0;
   min-width: 0;
 }
-.workout-exercise {
-  display: grid;
-  gap: var(--space-4);
-  margin: 0;
-}
-.workout-fields-heading,
-.workout-exercise-heading {
+.workout-fields-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -138,45 +100,12 @@ function choose(index: number, id: string, catalog: Exercise[]) {
 }
 .workout-duration {
   flex: 0 1 180px;
-}
-.workout-exercise-heading > :first-child {
-  flex: 1 1 240px;
-  min-width: 0;
-}
-.workout-fields :deep(label:not(.check-label)) {
   display: grid;
   gap: var(--space-2);
   margin: 0;
-  min-width: 0;
   font-size: var(--text-small);
 }
-.workout-fields :deep(label input),
-.workout-fields :deep(label select),
-.workout-fields :deep(label textarea) {
-  margin: 0;
-}
-.workout-fields :deep(.exercise-fields) {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
-  gap: var(--space-4);
-}
-.workout-fields :deep(.exercise-picker) {
-  display: grid;
-  gap: var(--space-2);
-}
-.workout-fields :deep(.advanced-prescription) {
-  margin: 0;
-  border-block-start: 1px solid var(--line);
-  padding-block-start: var(--space-4);
-}
-.workout-fields :deep(.advanced-prescription > div) {
-  padding-block: 0;
-}
-.workout-fields :deep(.prescription-label) {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-small);
-  font-weight: 600;
-}
-.workout-exercise-heading .actions {
+.workout-duration input {
   margin: 0;
 }
 .add-workout-exercise {
@@ -192,10 +121,6 @@ function choose(index: number, id: string, catalog: Exercise[]) {
 @media (max-width: 600px) {
   .workout-duration {
     flex-basis: 100%;
-  }
-  .workout-fields :deep(.exercise-fields) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: end;
   }
 }
 </style>

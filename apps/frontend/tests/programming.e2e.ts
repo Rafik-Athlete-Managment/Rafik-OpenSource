@@ -31,8 +31,8 @@ test('organization program authoring, reviewed delivery, recording and feedback 
     await f.call(f.client, `/v1/invitations/${token}`, {})
     const base = ``
     await f.login(page, f.owner, base + '/plans/new')
-    await expect(page.locator('.editor-exercise')).toHaveCount(0)
-    await expect(page.locator('.program-empty-exercises')).toBeVisible()
+    await expect(page.locator('.workout-exercise')).toHaveCount(0)
+    await expect(page.locator('.program-workout-empty')).toBeVisible()
     await page.getByLabel('Program name', { exact: true }).fill('Three-day foundation')
     await expect(page.getByLabel('Main goal', { exact: true })).toBeVisible()
     await page.getByLabel('Main goal', { exact: true }).fill('Build a steady training habit')

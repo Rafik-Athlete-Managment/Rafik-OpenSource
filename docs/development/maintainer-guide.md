@@ -6,6 +6,8 @@ Root `scripts/tooling-security.mjs` applies/checks exact-version patches from it
 
 ## Workout screen layout
 
+WorkoutExerciseCard is the single exercise authoring surface for Programs, WorkoutFields/template editing and group-participant adaptation. Keep existing owner actions and durable drafts/receipts; do not reintroduce a second exercise form in PlanEditor. ExerciseMediaPreview supplies the shared credited modal and compact name-row thumbnail. Full media stays behind the explicit action; private uploads continue through ResourceAsset. Keep thumbnail placement aligned with the exercise name in WorkoutPreview as well as the editable card. Alternatives remain at most three distinct, active, same-type choices; the backend snapshot validator remains authoritative.
+
 People is the directory spacing reference: role/status tabs form a separate row above the search/filter/pagination toolbar. Programs is the authoring reference: keep full-width Add exercise, place its first-use action inside the shared empty card and use editor-footer for save/cancel. New workout components own their grid/label spacing; inherited form margins must not double the token gaps. Reuse WorkoutFields and WorkoutPreview in participant adaptation rather than introducing another prescription form.
 
 ## Workout templates and group results

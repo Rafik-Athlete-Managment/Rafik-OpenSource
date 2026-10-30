@@ -41,7 +41,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [components/EmptyState.vue](../../../apps/frontend/src/components/EmptyState.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Shared icon-led empty/no-match state with optional action slot.
-- **Direct rendered consumers:** [features/coaching/WorkoutFields.vue](../../../apps/frontend/src/features/coaching/WorkoutFields.vue), [features/coaching/WorkoutTemplatePicker.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue), [features/coaching/WorkoutTemplatesPage.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplatesPage.vue), [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue), [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue), [features/resources/ResourcesPage.vue](../../../apps/frontend/src/features/resources/ResourcesPage.vue)
+- **Direct rendered consumers:** [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/coaching/WorkoutFields.vue](../../../apps/frontend/src/features/coaching/WorkoutFields.vue), [features/coaching/WorkoutTemplatePicker.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue), [features/coaching/WorkoutTemplatesPage.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplatesPage.vue), [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue), [features/institution/ServiceCatalog.vue](../../../apps/frontend/src/features/institution/ServiceCatalog.vue), [features/institution/WorkoutAgenda.vue](../../../apps/frontend/src/features/institution/WorkoutAgenda.vue), [features/resources/ResourcesPage.vue](../../../apps/frontend/src/features/resources/ResourcesPage.vue)
 - **Views using it:** `/activity`, `/assessment-templates`, `/assessment-templates/:editor`, `/dashboard`, `/groups`, `/groups/:editor`, `/institution-settings`, `/people`, `/plans/:id`, `/resources`, `/schedule/:id`, `/schedule/new`, `/training`, `/training/:assignment`, `/workout-templates`, `/workout-templates/:id`
 
 ## ExerciseDemo
@@ -49,15 +49,23 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [components/ExerciseDemo.vue](../../../apps/frontend/src/components/ExerciseDemo.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Movement demonstration using authorized media or the maintained reference illustration/video.
-- **Direct rendered consumers:** [features/coaching/ExercisesPage.vue](../../../apps/frontend/src/features/coaching/ExercisesPage.vue), [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/training/WorkoutPage.vue](../../../apps/frontend/src/features/training/WorkoutPage.vue)
-- **Views using it:** `/exercises`, `/exercises/:editor`, `/plans/:id`, `/training/:assignment`, `/workout/:id`
+- **Direct rendered consumers:** [components/ExerciseMediaPreview.vue](../../../apps/frontend/src/components/ExerciseMediaPreview.vue), [features/coaching/ExercisesPage.vue](../../../apps/frontend/src/features/coaching/ExercisesPage.vue), [features/coaching/WorkoutPreview.vue](../../../apps/frontend/src/features/coaching/WorkoutPreview.vue), [features/training/WorkoutPage.vue](../../../apps/frontend/src/features/training/WorkoutPage.vue)
+- **Views using it:** `/exercises`, `/exercises/:editor`, `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`, `/workout/:id`
+
+## ExerciseMediaPreview
+
+- **Source:** [components/ExerciseMediaPreview.vue](../../../apps/frontend/src/components/ExerciseMediaPreview.vue)
+- **Kind:** Reusable/domain component.
+- **Purpose:** On-demand exercise-media dialog with retained source credits, public reference thumbnails on large screens and authorized private media reads through ExerciseDemo.
+- **Direct rendered consumers:** [features/coaching/WorkoutExerciseCard.vue](../../../apps/frontend/src/features/coaching/WorkoutExerciseCard.vue), [features/coaching/WorkoutPreview.vue](../../../apps/frontend/src/features/coaching/WorkoutPreview.vue)
+- **Views using it:** `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`
 
 ## ExercisePicker
 
 - **Source:** [components/ExercisePicker.vue](../../../apps/frontend/src/components/ExercisePicker.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Searchable exercise library popup with equipment/body-area filters and stable selection.
-- **Direct rendered consumers:** [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/coaching/WorkoutFields.vue](../../../apps/frontend/src/features/coaching/WorkoutFields.vue)
+- **Direct rendered consumers:** [features/coaching/WorkoutExerciseCard.vue](../../../apps/frontend/src/features/coaching/WorkoutExerciseCard.vue)
 - **Views using it:** `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`
 
 ## ExerciseVideo
@@ -66,7 +74,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Accessible motion playback with pause, loading/error recovery and reduced-motion handling.
 - **Direct rendered consumers:** [components/ExerciseDemo.vue](../../../apps/frontend/src/components/ExerciseDemo.vue)
-- **Views using it:** `/exercises`, `/exercises/:editor`, `/plans/:id`, `/training/:assignment`, `/workout/:id`
+- **Views using it:** `/exercises`, `/exercises/:editor`, `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`, `/workout/:id`
 
 ## FileDropzone
 
@@ -138,7 +146,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Kind:** Reusable/domain component.
 - **Purpose:** Authorized private-media preview/download with object-URL lifecycle cleanup.
 - **Direct rendered consumers:** [components/ExerciseDemo.vue](../../../apps/frontend/src/components/ExerciseDemo.vue), [features/institution/ChannelThread.vue](../../../apps/frontend/src/features/institution/ChannelThread.vue), [features/resources/ResourcesPage.vue](../../../apps/frontend/src/features/resources/ResourcesPage.vue)
-- **Views using it:** `/exercises`, `/exercises/:editor`, `/messages/:channel?`, `/plans/:id`, `/resources`, `/training/:assignment`, `/workout/:id`
+- **Views using it:** `/exercises`, `/exercises/:editor`, `/messages/:channel?`, `/plans/:id`, `/resources`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`, `/workout/:id`
 
 ## ResourceUpload
 
@@ -321,7 +329,7 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/coaching/PrescriptionFields.vue](../../../apps/frontend/src/features/coaching/PrescriptionFields.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Measurement-aware sets, reps, load, duration, distance, effort and per-set prescription controls.
-- **Direct rendered consumers:** [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/coaching/WorkoutFields.vue](../../../apps/frontend/src/features/coaching/WorkoutFields.vue)
+- **Direct rendered consumers:** [features/coaching/WorkoutExerciseCard.vue](../../../apps/frontend/src/features/coaching/WorkoutExerciseCard.vue)
 - **Views using it:** `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`
 
 ## ProgramCover
@@ -340,11 +348,19 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Direct rendered consumers:** Router.
 - **Views using it:** `/review/:id`
 
+## WorkoutExerciseCard
+
+- **Source:** [features/coaching/WorkoutExerciseCard.vue](../../../apps/frontend/src/features/coaching/WorkoutExerciseCard.vue)
+- **Kind:** Reusable/domain component.
+- **Purpose:** Shared program/template/group-participant exercise authoring card: ordering, grouping, targets, same-type alternatives, coaching notes and on-demand media.
+- **Direct rendered consumers:** [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/coaching/WorkoutFields.vue](../../../apps/frontend/src/features/coaching/WorkoutFields.vue)
+- **Views using it:** `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`
+
 ## WorkoutFields
 
 - **Source:** [features/coaching/WorkoutFields.vue](../../../apps/frontend/src/features/coaching/WorkoutFields.vue)
 - **Kind:** Reusable/domain component.
-- **Purpose:** Shared single-workout prescription authoring: exercise picker, measured targets, notes and ordering.
+- **Purpose:** Single-workout authoring wrapper using the same exercise cards as Programs; duration, add/remove/order and empty state.
 - **Direct rendered consumers:** [features/coaching/WorkoutTemplateEditor.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue), [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue)
 - **Views using it:** `/schedule/:id`, `/workout-templates/:id`
 
@@ -353,8 +369,8 @@ Every local Vue file is listed, including routed screens. Direct rendered consum
 - **Source:** [features/coaching/WorkoutPreview.vue](../../../apps/frontend/src/features/coaching/WorkoutPreview.vue)
 - **Kind:** Reusable/domain component.
 - **Purpose:** Read-only prescribed workout preview; no inferred readiness/load claims.
-- **Direct rendered consumers:** [features/coaching/WorkoutTemplateEditor.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue), [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue)
-- **Views using it:** `/schedule/:id`, `/workout-templates/:id`
+- **Direct rendered consumers:** [features/coaching/PlanEditor.vue](../../../apps/frontend/src/features/coaching/PlanEditor.vue), [features/coaching/WorkoutTemplateEditor.vue](../../../apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue), [features/institution/GroupWorkoutPanel.vue](../../../apps/frontend/src/features/institution/GroupWorkoutPanel.vue)
+- **Views using it:** `/plans/:id`, `/schedule/:id`, `/training/:assignment`, `/workout-templates/:id`
 
 ## WorkoutTemplateEditor
 

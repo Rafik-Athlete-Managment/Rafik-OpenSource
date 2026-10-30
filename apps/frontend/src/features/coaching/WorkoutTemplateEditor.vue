@@ -250,7 +250,12 @@ onMounted(load)
       :loading="loading"
       :error="error"
       @retry="load"
-      ><WorkoutPreview v-if="preview || !editable" class="panel" :workout="workout" />
+      ><WorkoutPreview
+        v-if="preview || !editable"
+        class="panel"
+        :workout="workout"
+        :catalog="catalog"
+      />
       <form v-else @submit.prevent="save">
         <fieldset :disabled="locked" class="form-fields template-editor-fields">
           <section
