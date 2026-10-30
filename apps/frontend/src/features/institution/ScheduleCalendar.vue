@@ -5,6 +5,7 @@ import { PhCaretLeft, PhCaretRight, PhTray } from '@phosphor-icons/vue'
 import ScheduleViewSwitch from '../../components/ScheduleViewSwitch.vue'
 import ListPagination from '../../components/ListPagination.vue'
 import PageHeading from '../../components/PageHeading.vue'
+import { calendarStatusLabel } from '../../lib/calendar-status'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { preferredTimezone } from '../../lib/display-time'
@@ -297,7 +298,11 @@ watch(zone, () => {
               :key="e.id"
               :class="{ 'assessment-booking': e.kind === 'assessment' }"
             >
-              <RouterLink :to="base + '/schedule/' + e.id + '?from=' + start" class="agenda-event">
+              <RouterLink
+                :to="base + '/schedule/' + e.id + '?from=' + start"
+                class="agenda-event"
+                :data-status="e.state"
+              >
                 <div class="agenda-time">
                   <strong>{{ e.starts_at ? date(e.starts_at) : e.training_date }}</strong>
                   <span v-if="e.starts_at && e.ends_at"
@@ -305,9 +310,14 @@ watch(zone, () => {
                   ><span v-else>{{ l('No fixed time', 'دون وقت محدد') }}</span>
                 </div>
                 <div class="agenda-content">
-                  <span class="tag">{{
-                    e.kind === 'assessment' ? l('Assessment', 'تقييم') : l('Training', 'تدريب')
-                  }}</span>
+                  <div class="agenda-badges">
+                    <span class="tag" :data-status="e.state">{{
+                      calendarStatusLabel(e.state)
+                    }}</span
+                    ><span class="tag">{{
+                      e.kind === 'assessment' ? l('Assessment', 'تقييم') : l('Training', 'تدريب')
+                    }}</span>
+                  </div>
                   <h2>{{ e.title }}</h2>
                   <p class="agenda-location" dir="auto">
                     {{ e.location || l('Location to be agreed', 'الموقع يحدد لاحقاً') }}
@@ -324,16 +334,7 @@ watch(zone, () => {
                     {{ l('Coach reassignment needed', 'يلزم إعادة تعيين المدرب') }}
                   </p>
                 </div>
-                <span class="event-state">
-                  {{
-                    e.state === 'completed'
-                      ? l('Completed', 'مكتمل')
-                      : e.state === 'cancelled'
-                        ? l('Cancelled', 'ملغي')
-                        : l('Open event', 'فتح الموعد')
-                  }}
-                  ↗
-                </span>
+                <span class="event-state">{{ l('Open event', 'فتح الموعد') }} ↗</span>
               </RouterLink>
             </li>
           </ol>
@@ -419,8 +420,16 @@ watch(zone, () => {
 .assessment-booking .agenda-event {
   background: var(--surface-soft);
 }
+.agenda-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
 .agenda-event:hover {
   border-color: var(--accent);
+}
+.agenda-event[data-status='completed'] {
+  border-inline-start-color: var(--completion-accent);
 }
 .agenda-time {
   display: flex;

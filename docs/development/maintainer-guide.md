@@ -1,5 +1,11 @@
 # Maintainer guide
 
+## Calendar completion and sign-in feedback
+
+Use `lib/calendar-status.ts` for calendar lifecycle labels and explicit `data-status` values for styling. Completion comes from the acknowledged event state, never elapsed appointment time or a count of participant results. Keep the month marker, phone completion count, booking card and list consistent. Completion tokens are shared with green status tags; sealing is a separate, unimplemented next-release policy.
+
+Login remains busy through password authentication, profile loading and navigation. Keep duplicate-submit protection, an accessible progress message and reduced-motion support; errors restore retry. Do not treat a spinner as proof of faster authentication. The focused calendar/login browser regression is documented in [Testing](../testing/README.md#calendar-and-sign-in-feedback).
+
 ## Group recording UI
 
 Keep GroupWorkoutPanel as the group selection/preview coordinator. DelegatedWorkout and ReviewPage own actuals and review in both embedded and routed modes; pass explicit IDs and key instances by session. Do not navigate the group to standalone record/review routes after acknowledgment. EventDetail owns attendance and event completion. Preserve pending command scopes, guard delayed acknowledgments and flush local drafts before selection changes. A stale revision must never overwrite a newer server record.

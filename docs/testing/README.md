@@ -6,6 +6,16 @@ The [instance validation walkthrough](instance-validation.md) is the single sour
 
 Messaging/nutrition request-fault browser specs use the frozen preview and block service workers so Playwright can intercept the actual requests in both engines. Their result does not establish service-worker/offline-shell behavior, which requires its separate acceptance.
 
+## Calendar and sign-in feedback
+
+From the repository root, with Node 24 (or 22.16+) and the local Docker database running:
+
+```sh
+node apps/frontend/scripts/isolated-browser.mjs calendar-login-feedback.e2e.ts --project=chromium --max-failures=1
+```
+
+This creates and removes its own disposable database and files. It checks completed calendar markers/cards at desktop and phone sizes using a mocked authorized read projection, then holds/rejects a sign-in request to check progress, reduced motion, duplicate-submit protection and retry. It does not establish server completion authority, real authentication success or sealing. Manual steps stay in the [canonical walkthrough](instance-validation.md#sign-in-and-calendar-feedback--unreleased-beta3).
+
 ## Individual sequence API
 
 `npm run test:workout-sequence` uses the isolated API harness. Coverage includes concurrent binding, independent assignments, unchanged exact retries, athlete denial of staff scheduling, bound-start requirements, completion/correction, explicit skip reasons, cycle repetition, rescheduling without consumption, cancellation/pause on assignment end, a generic participation restriction and revoked receipt access. The existing delegated-session regression covers unaffected unlinked coach logging/corrections. These are server checks; no browser/native acceptance or recurring-worker/DST claim follows.

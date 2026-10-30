@@ -9,6 +9,7 @@ This page is the index for maintained Rafik documentation. The root [README](../
 
 - [Requirements and staged plan](requirements/README.md): goals, scope, constraints, acceptance criteria and current stage gates.
 - [Beta.3 sessions and backend consolidation](requirements/beta3-sessions.md): accepted individual/group rules, implemented storage/fixed-time API status, pending offline Android scope and remaining migration/release acceptance.
+- [Record sealing specification](requirements/record-sealing.md): confirmed next-release scope, administrator unseal with a fresh window, proposed lifecycle and required tests; not implemented in beta.3.
 - [Stage 4 workflow audit](requirements/stage4-workflow-audit.md): current university workflow coverage and remaining review.
 - [Stage 7 mobile scope](requirements/stage7-mobile-scope.md): confirmed coach-first Android field tasks, offline boundary, API contract and acceptance evidence.
 - [Post-beta.1 release plan](requirements/release-plan-post-beta1.md): founder-ordered releases, with the sports/coaching foundation merged for beta.2 preparation and the later field-dashboard and sport-specific releases still planned.

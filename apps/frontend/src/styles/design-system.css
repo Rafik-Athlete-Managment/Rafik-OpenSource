@@ -24,6 +24,8 @@
   --danger-action: #b42332;
   --danger-ink: light-dark(#b42332, #ffadb4);
   --on-danger: #fff;
+  --completion-accent: light-dark(#176340, #a4e6bd);
+  --completion-background: light-dark(#e4f5e9, #183e2a);
   --success: var(--accent);
   --success-bg: var(--tint);
   --warning: light-dark(#795208, #f0cb7a);
@@ -667,8 +669,8 @@ input[type='radio'] {
   [data-status='resolved'],
   [data-status='published']
 ) {
-  --status-ink: light-dark(#176340, #a4e6bd);
-  --status-bg: light-dark(#e4f5e9, #183e2a);
+  --status-ink: var(--completion-accent);
+  --status-bg: var(--completion-background);
   --status-border: light-dark(#a0cdb0, #3e7652);
 }
 .tag:is(

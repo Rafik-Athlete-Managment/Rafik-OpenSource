@@ -6,6 +6,10 @@ Approved 22 October 2026; not part of published beta.2. Remove Tasks and its dat
 
 **Status:** approved staged plan. Stage 6 optional cloud VM templates are implemented as unverified starter templates; provider checks remain deferred to user testing and do not block Stage 7. Stage 7 coach-first Android beta.1 is published and accepted for beta evaluation on 20 October 2026; packaging, focused API/emulator checks, founder S20+ walkthrough and public APK checksum verification are complete. Broader native coverage and optional URL scanning remain follow-up work, not beta.1 release blockers. The [release checklist](../operations/release-checklist.md) separates project beta readiness from each institution’s setup and live-data gates.
 
+## Planned after beta.3
+
+[Record sealing](record-sealing.md) is confirmed for the following release, not implemented in beta.3. It will default to a three-day correction window; any institution administrator may unseal with a new configured window. The specification records lifecycle, offline-recovery and migration work still required.
+
 ## Product goal
 
 Rafik should help universities and university coaches support young athletes by tracking training, attendance, performance, and relevant health information. The software should be publicly available for self-hosting without a Rafik software subscription. Each university owns and operates its own isolated deployment, data, identity, and infrastructure costs.

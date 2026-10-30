@@ -38,6 +38,16 @@ Use an empty synthetic institution or your existing local demo; do not reset ano
 3. Date-only workouts and plan/nutrition dates must retain their original date. In a booking/recurrence editor, verify the explicit authoring zone and local time remain unchanged until deliberately edited.
 4. Check English/Arabic, light/dark, desktop/phone, keyboard access to the clock and compact footer links. This does not validate Android or change training eligibility.
 
+## Sign-in and calendar feedback — unreleased beta.3
+
+Use the synthetic accounts prepared above; no reset is needed.
+
+1. Sign out and sign in again. While the request/account loading is pending, expect a spinner, Signing in text and a disabled submit button. A slow response must not look like idle input. With reduced motion the busy label remains useful without continuous rotation. If sign-in fails, expect the error and an enabled retry button, with no duplicate submission from pressing Enter repeatedly.
+2. As administrator or designated coach, finish a synthetic individual workout, resolve/finish a group event and finish an assessment through their existing flows. Open Schedule in month and list views: completed items should have a distinct completion border/check marker and a Completed tag on booked cards. An unfinished event remains Scheduled even if its appointment is in the past. A group is completed only after explicit event finish, not just because one participant finished.
+3. On a phone, expect completion counts in month cells and readable status badges on booked cards. Check English/Arabic, both themes and keyboard access; the status must be understandable without color.
+
+Automatic three-day sealing is **not implemented in beta.3**. Its [next-release specification](../requirements/record-sealing.md) is planned work; do not expect lock/unseal controls during current validation.
+
 ## Administrator
 
 ### Workout templates and group workouts — unreleased beta.3

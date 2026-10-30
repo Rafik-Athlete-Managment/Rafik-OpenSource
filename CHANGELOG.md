@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Distinguish completed sessions and assessments in the calendar and booked cards with semantic markers/tags. Show active sign-in feedback and block duplicate submissions. Record sealing is specified for the release after beta.3 and is not enabled here.
+
 - Keep the shared group-workout preview collapsed by default and preserve its explicit open/closed choice when selecting another athlete or reloading. Keep the desktop athlete roster sticky while the recording sheet scrolls.
 
 - Make generated frontend navigation references identical across CRLF and LF source checkouts, with a cross-platform generator regression in web CI. Register the workout-template copy regression with Vitest, matching the frontend test runner. Align onboarding acceptance with the approved collapsible sidebar.

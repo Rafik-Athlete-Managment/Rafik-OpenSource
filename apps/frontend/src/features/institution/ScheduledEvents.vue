@@ -6,6 +6,7 @@ import { useListPageSize } from '../../lib/list-page-size'
 import ScheduleViewSwitch from '../../components/ScheduleViewSwitch.vue'
 import { useLiveSearch } from '../../lib/live-search'
 import PageHeading from '../../components/PageHeading.vue'
+import { calendarStatusLabel as stateLabel } from '../../lib/calendar-status'
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '../../lib/backend'
@@ -62,12 +63,6 @@ const search = ref(String(route.query.search || '')),
   offset = ref(0)
 let generation = 0,
   disposed = false
-const stateLabel = (value: string) =>
-  value === 'completed'
-    ? l('Completed', 'مكتمل')
-    : value === 'cancelled'
-      ? l('Cancelled', 'ملغى')
-      : l('Scheduled', 'مجدول')
 const { recordLimit, appliedLimit, pageSizes, acceptLimit, changeLimit } = useListPageSize(
   10,
   () => {
@@ -229,6 +224,7 @@ onUnmounted(() => {
           <li
             v-for="event in data.items"
             :key="event.id"
+            :data-status="event.state"
             :class="{ assessment: event.kind === 'assessment' }"
           >
             <div>
@@ -292,6 +288,9 @@ onUnmounted(() => {
   margin: 0 0 4px;
   font-size: var(--text-small);
   font-variant-numeric: tabular-nums;
+}
+.event-list li[data-status='completed'] {
+  border-inline-start-color: var(--completion-accent);
 }
 .event-list li.assessment {
   background: var(--surface-soft);

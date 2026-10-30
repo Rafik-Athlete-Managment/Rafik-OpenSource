@@ -1,5 +1,7 @@
 # Rafik web revamp working context
 
+- **Record sealing decision, 30 October 2026:** planned for the release after beta.3, not currently implemented. Default correction window is three configured days; any institution administrator may unseal, starting a new window from the current setting. Do not add a separate super-admin grant or a UI-only lock. Follow `docs/requirements/record-sealing.md` before implementation. Calendar completion uses event state, not elapsed time or participant inference.
+
 - **Inventory portability, 30 October 2026:** normalize source line endings before AST parsing and textual expression output. Keep CRLF/LF generation/freshness regression coverage in web CI; a passing Windows inventory check alone does not establish Linux freshness.
 
 - **Shared exercise authoring/media, 30 October 2026:** use WorkoutExerciseCard in Programs, Templates and participant adaptation; keep one authoring implementation. Alternatives retain the existing maximum of three distinct active same-type movements and server snapshot authority. ExerciseMediaPreview opens reviewed media/credits on demand through existing authorized viewers; compact desktop thumbnails belong by exercise identity in every editable/read-only host, including template previews, never in a separate prescription-form column. Phones keep the preview action without downloading desktop posters. Preserve rest/group/per-set targets, source credits, durable owner drafts and receipt flows.

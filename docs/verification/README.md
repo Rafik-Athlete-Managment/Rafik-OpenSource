@@ -1,5 +1,13 @@
 # Verification record
 
+## Calendar completion and login feedback — 30 October 2026
+
+The isolated Chromium regression passed against a production frontend build and a disposable database. It checks an authenticated calendar with mocked read-projection states (scheduled training plus completed solo/group/assessment bookings), explicit tags, distinct borders, desktop markers and phone completion counts. A separate signed-out context holds and rejects the password request: spinner, busy semantics, reduced motion, duplicate-submit protection and retry passed. The runner removed its own database/files/output.
+
+A synthetic fixture rendered the actual calendar and login components in Chromium and WebKit, each at English/light 1280px and Arabic/dark 390px. All eight page cases passed. Calendar completion color survives hover, phone counts/accessible date labels expose completion and no document horizontal overflow was observed. Held password/profile requests check that login remains busy until account loading/navigation settles. Inspected English desktop calendar, Arabic/dark phone calendar and phone login captures. These mocked flows do not establish real authentication success, server event-completion authority, physical-device behavior or every locale/theme/breakpoint combination.
+
+Frontend typecheck, production build, the shared control/token tests, generated inventory and maintained documentation links passed. See [the receipt](receipts/2026-10-30-calendar-login-feedback.json) and the [canonical walkthrough](../testing/instance-validation.md#sign-in-and-calendar-feedback--unreleased-beta3). Temporary component fixtures/captures were removed after inspection. Record sealing remains [planned after beta.3](../requirements/record-sealing.md), with no runtime lock or migration introduced here.
+
 ## Shared preview and sticky roster — 30 October 2026
 
 A focused fixture rendered the actual group panel and delegated recorder with twelve athletes and a twenty-set record. Chromium and WebKit each passed English/light at 1280×800, Arabic/dark at 1280×500 and English/light phone at 390×700. Confirmed preview defaults closed, explicit open/closed choice survives athlete switching and router-preserving component remount, sticky roster top remains stable while the nested main scroller advances, search/pagination remain reachable and the names scroller accepts keyboard scrolling. Phone retains its selector and hides the desktop roster; no document horizontal overflow was observed. Inspected the long-form desktop capture and short Arabic/dark capture.

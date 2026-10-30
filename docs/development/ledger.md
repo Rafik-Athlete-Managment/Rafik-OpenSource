@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## Sealing scope and completion/sign-in feedback — 30 October 2026
+
+Founder confirmed sealing belongs after beta.3, all institution administrators may unseal, and unseal starts a fresh configured correction window. Recorded confirmed scope separately from proposed clock/bundle/migration details in the sealing specification; no sealing schema, API or enforcement is claimed. The existing super-admin wording does not represent a distinct permission grant.
+
+For beta.3, completed event state now drives calendar/check markers, phone completion counts, booked-card status tags and matching list borders. One shared label helper and completion palette avoid date-based or translated-text inference. Login shows a reduced-motion-aware spinner and busy announcement through the existing request/profile/navigation lifecycle; a reentry guard blocks duplicate submission. Focused rendered/request-held checks and the targeted regression are recorded in verification.
+
 ## Shared preview disclosure correction — 30 October 2026
 
 The shared group preview was incorrectly bound to the selected athlete's session/adaptation state, reopening when another unstarted athlete was selected. It now defaults closed and follows an explicit disclosure choice preserved in the event query. Selecting an athlete does not change it; explicitly opening adaptation still collapses it to preserve editing space. The founder also requested persistent access to athlete selection while scrolling: desktop uses a sticky roster with only its names scrolling, retaining search/pagination outside that scroller. Phone selection and natural page scrolling remain. Recording commands and the shared baseline are unchanged. The group browser regression covers open/closed state across selection; focused component evidence is recorded in verification.

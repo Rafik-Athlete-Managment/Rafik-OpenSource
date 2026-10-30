@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { PhCheckCircle } from '@phosphor-icons/vue'
+import { calendarStatusLabel } from '../lib/calendar-status'
 import { addDays, localDate } from '../lib/dates'
 import { language as l, locale } from '../lib/i18n'
 type Props = {
@@ -38,6 +40,8 @@ const cells = computed(() => {
     }
   })
 })
+const completedCount = (events: Props['events']) =>
+  events.filter((e) => e.state === 'completed').length
 const time = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     hour: '2-digit',
@@ -97,7 +101,14 @@ function keyboard(event: KeyboardEvent) {
       :class="{ selected: selected === cell.date, today: cell.date === localDate(zone) }"
       :aria-pressed="selected === cell.date"
       :aria-label="
-        label(cell.date) + ' · ' + cell.events.length + ' ' + l('loaded events', 'موعد محمّل')
+        label(cell.date) +
+        ' · ' +
+        cell.events.length +
+        ' ' +
+        l('loaded events', 'موعد محمّل') +
+        (completedCount(cell.events)
+          ? ' · ' + completedCount(cell.events) + ' ' + calendarStatusLabel('completed')
+          : '')
       "
       @click="emit('select', cell.date)"
     >
@@ -108,14 +119,25 @@ function keyboard(event: KeyboardEvent) {
         class="month-event"
         :class="{ cancelled: e.state === 'cancelled' }"
         :data-kind="kindOf(e)"
+        :data-status="e.state"
+        :title="e.title + ' · ' + calendarStatusLabel(e.state)"
         dir="auto"
-        ><bdi v-if="e.starts_at" class="month-event-time">{{ time(e.starts_at) }}</bdi>
+        ><PhCheckCircle
+          v-if="e.state === 'completed'"
+          :size="12"
+          class="month-completed-icon"
+          weight="fill"
+          aria-hidden="true"
+        /><bdi v-if="e.starts_at" class="month-event-time">{{ time(e.starts_at) }}</bdi>
         {{ e.title }}</span
       >
       <small v-if="cell.events.length > 2" class="month-more">+{{ cell.events.length - 2 }}</small>
       <span v-if="cell.events.length" class="month-count"
         >{{ cell.events.length }}
         {{ cell.events.length === 1 ? l('event', 'موعد') : l('events', 'مواعيد') }}</span
+      >
+      <span v-if="completedCount(cell.events)" class="month-completed-count" aria-hidden="true"
+        ><PhCheckCircle :size="12" weight="fill" />{{ completedCount(cell.events) }}</span
       >
     </button>
   </div>
@@ -189,6 +211,19 @@ function keyboard(event: KeyboardEvent) {
 .month-event[data-kind='workout'] {
   border-inline-start-color: light-dark(#8a5a00, #f0cb7a);
 }
+.month-event[data-status='completed'] {
+  border-inline-start-color: var(--completion-accent);
+  background: var(--completion-background);
+}
+.month-completed-icon {
+  vertical-align: text-bottom;
+  margin-inline-end: 3px;
+  color: var(--completion-accent);
+}
+.month-completed-count {
+  display: none;
+  color: var(--completion-accent);
+}
 .month-event-time {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -210,6 +245,13 @@ function keyboard(event: KeyboardEvent) {
   .month-event,
   .month-more {
     display: none;
+  }
+  .month-completed-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    justify-content: center;
+    font-size: var(--text-caption);
   }
   .month-count {
     display: block;
