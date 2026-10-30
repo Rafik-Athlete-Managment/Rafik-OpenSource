@@ -145,6 +145,14 @@ test('attendance-first group workspace, draft recovery, review and next athlete'
         await page.getByRole('option').click()
       } else await page.getByRole('button', { name: new RegExp(name) }).click()
     }
+    const preview = page.locator('.shared-workout-preview')
+    await expect(preview).toHaveJSProperty('open', false)
+    await preview.locator('summary').click()
+    await chooseAthlete('Validation Second')
+    await expect(preview).toHaveJSProperty('open', true)
+    await preview.locator('summary').click()
+    await chooseAthlete('R4 Athlete')
+    await expect(preview).toHaveJSProperty('open', false)
     await sheet.getByRole('button', { name: 'Adapt workout for this athlete', exact: true }).click()
     await sheet.getByRole('combobox', { name: 'Exercise 1', exact: true }).fill('goblet squat')
     await page

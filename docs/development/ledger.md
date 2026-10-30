@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Shared preview disclosure correction — 30 October 2026
+
+The shared group preview was incorrectly bound to the selected athlete's session/adaptation state, reopening when another unstarted athlete was selected. It now defaults closed and follows an explicit disclosure choice preserved in the event query. Selecting an athlete does not change it; explicitly opening adaptation still collapses it to preserve editing space. The founder also requested persistent access to athlete selection while scrolling: desktop uses a sticky roster with only its names scrolling, retaining search/pagination outside that scroller. Phone selection and natural page scrolling remain. Recording commands and the shared baseline are unchanged. The group browser regression covers open/closed state across selection; focused component evidence is recorded in verification.
+
 ## Frontend inventory CI portability — 30 October 2026
 
 The release PR's Linux web job stopped at generated navigation freshness while the Windows check passed. Reproduced with an LF-only source fixture: CR characters from multiline AST expressions produced different Markdown table rows. Normalize source line endings before parsing and normalize display text defensively, regenerate the reference, and add a real generator regression for CRLF/LF output equality and freshness. The web workflow runs that focused regression before its existing inventory gate. The next CI stage exposed a workout-template unit using node:test inside the Vitest suite; corrected its runner import without changing the assertions. The onboarding stage then exposed stale flat-navigation assumptions: its journey now opens Library explicitly and verifies single-open sidebar state, matching the founder-approved shell. Application logic/API and native behavior are unchanged; final GitHub job conclusions are recorded in verification.

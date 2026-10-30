@@ -1,5 +1,11 @@
 # Verification record
 
+## Shared preview and sticky roster — 30 October 2026
+
+A focused fixture rendered the actual group panel and delegated recorder with twelve athletes and a twenty-set record. Chromium and WebKit each passed English/light at 1280×800, Arabic/dark at 1280×500 and English/light phone at 390×700. Confirmed preview defaults closed, explicit open/closed choice survives athlete switching and router-preserving component remount, sticky roster top remains stable while the nested main scroller advances, search/pagination remain reachable and the names scroller accepts keyboard scrolling. Phone retains its selector and hides the desktop roster; no document horizontal overflow was observed. Inspected the long-form desktop capture and short Arabic/dark capture.
+
+This is mocked component behavior/geometry evidence, not authenticated reload, whole-shell, all breakpoint/theme combinations or physical-device acceptance. Added preview selection assertions to the existing group journey without repeating its database suite. A formatter-sensitive inline handler caused a preflight rendering failure and was replaced with a named handler before the six-case pass. See [the receipt](receipts/2026-10-30-preview-sticky.json) and [canonical walkthrough](../testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3). Temporary fixture/captures were removed after inspection.
+
 ## Frontend inventory CI portability — 30 October 2026
 
 GitHub Checks run 41049559168 passed backend and change-notes but failed web at frontend inventory freshness, before frontend tests/build/onboarding. Reproduced the failure in an LF-only copy while the Windows CRLF checkout passed. Normalizing source before AST parsing and expression text removes carriage-return-dependent Markdown table rows; generated navigation is regenerated without changing route counts or app behavior.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the shared group-workout preview collapsed by default and preserve its explicit open/closed choice when selecting another athlete or reloading. Keep the desktop athlete roster sticky while the recording sheet scrolls.
+
 - Make generated frontend navigation references identical across CRLF and LF source checkouts, with a cross-platform generator regression in web CI. Register the workout-template copy regression with Vitest, matching the frontend test runner. Align onboarding acceptance with the approved collapsible sidebar.
 
 - Group events open with attendance at the top. Recording uses a searchable desktop athlete roster or phone selector, one shared workout preview and the existing recorder/review in place. Athlete selection, roster search and review mode survive reload; account-scoped local recording drafts retain unsent values without claiming server acknowledgment. Participant adaptations, explicit completion and skip requirements remain unchanged.

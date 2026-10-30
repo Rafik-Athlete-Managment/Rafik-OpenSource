@@ -56,6 +56,7 @@ const data = ref<Group>(),
   open = ref(false),
   preparing = ref(false)
 const adapting = ref(false)
+const previewOpen = ref(route.query.groupPreview === 'true')
 const offset = ref(Math.floor(Math.max(0, Number(route.query.rosterPage) || 0) / 10) * 10),
   search = ref(String(route.query.rosterSearch || ''))
 const activeMember = ref(String(route.query.groupAthlete || ''))
@@ -91,10 +92,11 @@ async function remember() {
       rosterSearch: search.value || undefined,
       rosterPage: offset.value ? String(offset.value) : undefined,
       groupReview: reviewing.value ? 'true' : undefined,
+      groupPreview: previewOpen.value ? 'true' : undefined,
     },
   })
 }
-watch([activeMember, search, offset, reviewing], () => {
+watch([activeMember, search, offset, reviewing, previewOpen], () => {
   void remember()
 })
 async function choose(member: string) {
@@ -109,6 +111,10 @@ async function completed() {
   reviewing.value = true
   childLocked.value = false
   await load()
+}
+function toggleAdaptation() {
+  adapting.value = !adapting.value
+  if (adapting.value) previewOpen.value = false
 }
 async function nextAthlete() {
   if (!nextPerson.value) return
@@ -336,7 +342,11 @@ onMounted(load)
     <CommandStatus :command="command" />
     <PageState :loading="loading && !data" :error="error" @retry="load">
       <template v-if="data?.workout">
-        <details class="shared-workout-preview" :open="!activePerson?.session && !adapting">
+        <details
+          class="shared-workout-preview"
+          :open="previewOpen"
+          @toggle="previewOpen = ($event.target as HTMLDetailsElement).open"
+        >
           <summary>
             {{ l('Shared workout preview', 'معاينة التمرين المشترك') }} ·
             <bdi>{{ data.workout.title }}</bdi>
@@ -385,7 +395,11 @@ onMounted(load)
                 type="search"
                 :placeholder="l('Search athlete names…', 'ابحث بأسماء الرياضيين…')"
             /></label>
-            <ul class="group-athlete-list">
+            <ul
+              class="group-athlete-list"
+              tabindex="0"
+              :aria-label="l('Athlete list', 'قائمة الرياضيين')"
+            >
               <li v-for="person in visible" :key="person.member_id">
                 <button
                   type="button"
@@ -562,7 +576,7 @@ onMounted(load)
                     class="button secondary"
                     :disabled="locked"
                     :aria-expanded="adapting"
-                    @click="adapting = !adapting"
+                    @click="toggleAdaptation"
                   >
                     {{ l('Adapt workout for this athlete', 'تكييف التمرين لهذا الرياضي') }}
                   </button>
@@ -672,11 +686,17 @@ onMounted(load)
   align-items: start;
 }
 .group-athlete-sidebar {
+  position: sticky;
+  top: calc(var(--dashboard-sticky-top, 0px) + var(--space-4));
+  display: flex;
+  flex-direction: column;
+  max-block-size: calc(100dvh - var(--dashboard-header-height, 64px) - var(--space-8));
   min-width: 0;
   border-inline-end: 1px solid var(--line);
   padding-inline-end: var(--space-4);
 }
 .group-roster-search {
+  flex-shrink: 0;
   display: grid;
   gap: var(--space-2);
   margin: 0;
@@ -685,8 +705,12 @@ onMounted(load)
   margin: 0;
 }
 .group-athlete-list {
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   list-style: none;
-  padding: 0;
+  padding: var(--space-1);
   margin: var(--space-3) 0;
   display: grid;
   gap: var(--space-2);
