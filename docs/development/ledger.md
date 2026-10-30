@@ -2,7 +2,7 @@
 
 ## Frontend inventory CI portability — 30 October 2026
 
-The release PR's Linux web job stopped at generated navigation freshness while the Windows check passed. Reproduced with an LF-only source fixture: CR characters from multiline AST expressions produced different Markdown table rows. Normalize source line endings before parsing and normalize display text defensively, regenerate the reference, and add a real generator regression for CRLF/LF output equality and freshness. The web workflow runs that focused regression before its existing inventory gate. Application logic/API and native behavior are unchanged; final GitHub job conclusions are recorded in verification.
+The release PR's Linux web job stopped at generated navigation freshness while the Windows check passed. Reproduced with an LF-only source fixture: CR characters from multiline AST expressions produced different Markdown table rows. Normalize source line endings before parsing and normalize display text defensively, regenerate the reference, and add a real generator regression for CRLF/LF output equality and freshness. The web workflow runs that focused regression before its existing inventory gate. The next CI stage exposed a workout-template unit using node:test inside the Vitest suite; corrected its runner import without changing the assertions. Application logic/API and native behavior are unchanged; final GitHub job conclusions are recorded in verification.
 
 ## Group recording workspace — 30 October 2026
 

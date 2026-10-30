@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { copyWorkout } from '../src/lib/workout-templates.ts'
 import type { PlanDay } from '../src/lib/domain.ts'
