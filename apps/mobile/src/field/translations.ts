@@ -43,6 +43,8 @@ const arabic: Record<string, string> = {
     'لم يحِن وقت بدء هذا التمرين. احتفظ بالعمل المحفوظ وتحقق من وقت الموعد.',
   'The plan sequence changed. Keep this recording and review the current workout online.':
     'تغيّر تسلسل الخطة. احتفظ بهذا التسجيل وراجع التمرين الحالي أثناء الاتصال.',
+  'This workout was already started on the web or another device. Keep this recording and ask authorized staff to reconcile it online.':
+    'بدأ هذا التمرين بالفعل على الويب أو جهاز آخر. احتفظ بهذا التسجيل واطلب من الطاقم المخوّل مطابقته عبر الإنترنت.',
   'This athlete plan is no longer available for recording. Keep saved work for review.':
     'لم تعد خطة الرياضي هذه متاحة للتسجيل. احتفظ بالعمل المحفوظ للمراجعة.',
   'Finish or explicitly resolve the previous workout in this plan first.':
