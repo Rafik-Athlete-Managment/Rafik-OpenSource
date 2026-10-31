@@ -1095,6 +1095,31 @@
           }
         }
       }
+    },
+    "/v1/mobile/capabilities": {
+      "get": {
+        "tags": ["Coach field work"],
+        "summary": "Inspect supported native field contracts",
+        "description": "Authenticated implementation flags, not account permissions. Protocol 1 currently supports timed attendance, assessments and event completion; native individual/group workout capture and day-only calendar remain unavailable. No draft, queue or record is modified. An older server may return 404 not_found; clients must distinguish this from network, authentication and permission errors.",
+        "responses": {
+          "200": {
+            "description": "Supported native contracts; not authorization to record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldCapabilities"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "405": {
+            "description": "Read-only endpoint; GET required"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2495,6 +2520,47 @@
           }
         },
         "description": "Uses the existing calendar preview/collision and bounded recurrence validation. Coaches must designate themselves as sole staff and choose authorized athletes; administrators may designate multiple coaches. The roster and exact template revision are copied into each occurrence."
+      },
+      "FieldCapabilities": {
+        "type": "object",
+        "required": ["protocol", "features"],
+        "properties": {
+          "protocol": {
+            "type": "integer",
+            "const": 1
+          },
+          "features": {
+            "type": "object",
+            "required": [
+              "attendance",
+              "assessments",
+              "event_completion",
+              "individual_workout_recording",
+              "group_workout_recording",
+              "day_only_calendar"
+            ],
+            "properties": {
+              "attendance": {
+                "type": "boolean"
+              },
+              "assessments": {
+                "type": "boolean"
+              },
+              "event_completion": {
+                "type": "boolean"
+              },
+              "individual_workout_recording": {
+                "type": "boolean"
+              },
+              "group_workout_recording": {
+                "type": "boolean"
+              },
+              "day_only_calendar": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
       }
     },
     "responses": {

@@ -1,5 +1,9 @@
 # Maintainer guide
 
+## Native capability flags
+
+Keep the endpoint, shared FieldCapabilities type, Android parser and canonical OpenAPI aligned. Only enable a flag after the corresponding native download/record/replay contract is implemented and accepted; web support is insufficient. `test:institution-api` includes the authenticated discovery regression; `npm run test:request --workspace @rafik/mobile` checks missing/invalid/offline/denied responses. The optional schedule disclosure never changes queue state or access warnings. Native rendered/device evidence is separate from these Node/API checks.
+
 ## Calendar completion and sign-in feedback
 
 Use `lib/calendar-status.ts` for calendar lifecycle labels and explicit `data-status` values for styling. Completion comes from the acknowledged event state, never elapsed appointment time or a count of participant results. Keep the month marker, phone completion count, booking card and list consistent. Completion tokens are shared with green status tags; sealing is a separate, unimplemented next-release policy.

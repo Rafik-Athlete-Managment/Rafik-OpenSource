@@ -1,5 +1,11 @@
 # API conventions
 
+## Native capabilities — unreleased beta.3
+
+`GET /v1/mobile/capabilities` requires an authenticated session and returns protocol `1` plus boolean native feature flags. Attendance, assessments and event completion are supported; individual/group workout capture and day-only calendar are not yet available in the field app. This describes implementation support, not account grants. Responses are not cached and writes return 405. See the canonical [OpenAPI](../../apps/backend/openapi.json).
+
+Clients treat only `404 not_found` as absent discovery on an older server. Network failures, 401/403, malformed data and unknown protocol versions must retain their own recovery explanation. Never clear a queue, switch its owner, assume workout support or bypass command authority after a discovery failure.
+
 ## Workout templates and group results — unreleased beta.3
 
 `GET/POST /v1/institution/workout-templates` provides the staff library and creator/administrator revision-checked save/archive. `GET /v1/institution/group-workouts?view=...&event=<UUID>` returns the frozen baseline and authorized participant outcome projection (maximum 100). Only the owning athlete is included for athlete reads. `POST` start uses the event/member/current participant revision and new workout ID, optionally an athlete-specific prescription. Start requires designated coach authority, arrived time, present attendance, active athlete and no applicable cannot-train restriction. Competing new starts fail rather than losing a prescription; exact retries return the acknowledged result after current authority. Skip requires an explicit reason and preserves partial history.

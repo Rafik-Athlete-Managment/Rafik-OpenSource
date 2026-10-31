@@ -1,5 +1,13 @@
 # Verification record
 
+## Native capability foundation — 31 October 2026
+
+Mobile typechecks and eight focused request/session tests passed, including strict capability parsing and separate missing-endpoint, malformed/unknown-protocol, offline, denied and server-error cases. Existing credentials/owner identity and authorized-response observer regressions remain passing. Backend typecheck and the isolated capability API regression passed: authentication, revoked bearer denial, GET-only/no-store response and disabled native workout/day-only flags. The disposable API harness cleaned its own data.
+
+Both bundled Swagger tests, backend inventory freshness and maintained documentation checks passed (2230 local links, 674 heading links). Four landing bilingual content/link tests passed for the paired Markdown-only update on draft PR #41. No landing UI/build acceptance is inferred from those content checks.
+
+No SQLCipher format, saved command, receipt or signing change is introduced. The optional compatibility disclosure is source-reviewed only; no Android rendering, native rebuild, physical device, offline process-death or whole-workout acceptance is claimed. Workout downloads/capture remain unimplemented. The [canonical walkthrough](../testing/instance-validation.md#android-compatibility-foundation--unreleased-beta3) records manual checks for the next available source app.
+
 ## Calendar completion and login feedback — 30 October 2026
 
 The isolated Chromium regression passed against a production frontend build and a disposable database. It checks an authenticated calendar with mocked read-projection states (scheduled training plus completed solo/group/assessment bookings), explicit tags, distinct borders, desktop markers and phone completion counts. A separate signed-out context holds and rejects the password request: spinner, busy semantics, reduced motion, duplicate-submit protection and retry passed. The runner removed its own database/files/output.

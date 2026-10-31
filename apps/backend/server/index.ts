@@ -4,7 +4,7 @@ import {
   startWorkoutScheduler,
 } from "./workout-scheduler.ts";
 import { institutionRoute, responseTransport } from "./institution-routing.ts";
-import type { ApiErrorBody } from "@rafik/shared/contracts";
+import type { ApiErrorBody, FieldCapabilities } from "@rafik/shared/contracts";
 import { feedback, feedbackCommand } from "./feedback.ts";
 import { followUp } from "./follow-up.ts";
 import { injuries, injuryCommand } from "./injuries.ts";
@@ -274,6 +274,23 @@ const server = createServer(async (req, res) => {
       return;
     }
     const actor = await identify(req);
+    if (path === "/v1/mobile/capabilities") {
+      requireActor(actor);
+      if (req.method !== "GET") throw new ApiError(405, "method_not_allowed");
+      // Describe native contracts, not web functionality or account permissions.
+      send(res, 200, {
+        protocol: 1,
+        features: {
+          attendance: true,
+          assessments: true,
+          event_completion: true,
+          individual_workout_recording: false,
+          group_workout_recording: false,
+          day_only_calendar: false,
+        },
+      } satisfies FieldCapabilities);
+      return;
+    }
     const scheduledMatch = path.match(
       /^\/v1\/institutions\/([a-f0-9-]{36})\/scheduled-events$/,
     );

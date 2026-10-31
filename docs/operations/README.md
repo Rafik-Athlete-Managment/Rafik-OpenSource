@@ -1,5 +1,9 @@
 # Operations
 
+## Native capability foundation — unreleased beta.3
+
+Deploy the matching backend/web source using the existing backup/forward-upgrade procedure. The new authenticated capability GET needs no schema migration, provider secret, SQLCipher reset or signing change. Existing institution queues/receipts retain their identity. This slice does not produce an APK or enable native workout capture; published beta.2 and the breaking beta.3 upgrade boundary remain unchanged. Never clear saved work to satisfy a compatibility check.
+
 ## Dependency installation
 
 The maintained Dockerfiles include the guarded dependency installer before `npm ci`. Web/API-only installs skip Expo patches when Expo is absent. Custom full-workspace images must copy `scripts/tooling-security.mjs` and `scripts/tooling-security-patches.json` before installation; after `--ignore-scripts`, explicitly apply/check them. Keep Expo/Metro off public networks. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md).

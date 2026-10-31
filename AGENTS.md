@@ -1,5 +1,7 @@
 # Rafik web revamp working context
 
+- **Native compatibility foundation, 31 October 2026:** authenticated `/v1/mobile/capabilities` describes native contracts, never grants. Keep its protocol/shared type/OpenAPI/parser aligned. Existing timed attendance/assessments/event completion are supported; individual/group recording and day-only native calendar stay false until their complete slice is accepted. Distinguish `404 not_found` from network, malformed or denied responses. Compatibility reads/disclosures never change owner keys, queues, access warnings or mounted editors. No native build is needed for a contract-only check; record rendered/device limits honestly.
+
 - **Record sealing decision, 30 October 2026:** planned for the release after beta.3, not currently implemented. Default correction window is three configured days; any institution administrator may unseal, starting a new window from the current setting. Do not add a separate super-admin grant or a UI-only lock. Follow `docs/requirements/record-sealing.md` before implementation. Calendar completion uses event state, not elapsed time or participant inference.
 
 - **Inventory portability, 30 October 2026:** normalize source line endings before AST parsing and textual expression output. Keep CRLF/LF generation/freshness regression coverage in web CI; a passing Windows inventory check alone does not establish Linux freshness.

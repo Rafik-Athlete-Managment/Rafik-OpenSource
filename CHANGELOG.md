@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add authenticated, read-only native capability discovery and an English/Arabic Server compatibility disclosure in the Android schedule. Missing contracts, denied sessions and connection failures remain distinct without changing saved work. Native workout capture and day-only calendar remain unavailable until the following slice; no release APK is produced here.
+
 - Distinguish completed sessions and assessments in the calendar and booked cards with semantic markers/tags. Show active sign-in feedback and block duplicate submissions. Record sealing is specified for the release after beta.3 and is not enabled here.
 
 - Keep the shared group-workout preview collapsed by default and preserve its explicit open/closed choice when selecting another athlete or reloading. Keep the desktop athlete roster sticky while the recording sheet scrolls.

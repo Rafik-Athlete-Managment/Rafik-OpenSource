@@ -1,5 +1,9 @@
 # Android coach field development
 
+## Unreleased beta.3 compatibility check
+
+The source app's schedule has a collapsed **Server compatibility** disclosure after the event list. It reports native support for attendance, assessments and event completion, with a separate **Check again** action. Workout recording and workouts without a fixed time remain unavailable in this slice. A missing discovery endpoint requests a version check; offline/denied/invalid responses retain their own error. Saved events and pending work remain reviewable. This does not require a native dependency change or establish APK/device acceptance. Use the [canonical instance walkthrough](../testing/instance-validation.md) for manual checks.
+
 **Status, 20 October 2026:** the coach Android beta.1 is published and accepted for beta evaluation. Attendance, assessment drafts/results, event completion, online correction history, recovery comparison/sharing and English/Arabic UI are implemented. Focused API and Android emulator checks passed, including queued score replay after app restart and recovery share cancellation. A signed emulator build also passed cold offline startup and controlled current-format versionCode upgrade preservation. The founder reports the S20+ standalone field/offline walkthrough passed on 20 October; broader device/accessibility and security/recovery coverage remain open; see [verification](../verification/README.md). Instance URL scanning remains open.
 
 ## Start a development instance and native build

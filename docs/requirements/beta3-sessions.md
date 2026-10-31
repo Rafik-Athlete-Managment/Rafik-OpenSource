@@ -1,5 +1,9 @@
 # Beta.3 — sessions, workouts and backend consolidation
 
+## Native compatibility foundation — implemented 31 October 2026
+
+Authenticated protocol-1 capability discovery, shared typing and strict Android parsing now distinguish native feature support from account permissions and distinguish missing endpoints from connectivity/authorization failures. A collapsed schedule disclosure exposes the result without changing saved events or queues. Existing timed attendance, assessments and event completion are advertised; native individual/group recording and day-only calendar stay false. Workout download, durable capture/replay and physical upgrade acceptance remain the next implementation slice. See the [API reference](../reference/api.md#native-capabilities--unreleased-beta3) and [canonical walkthrough](../testing/instance-validation.md#android-compatibility-foundation--unreleased-beta3).
+
 ## Group workout web slice — implemented 29 October 2026, acceptance in progress
 
 Workout templates now have a staff library and dedicated create/preview/edit pages, independent program/athlete-plan imports and explicit archive. Group calendar creation freezes a template revision and roster. Designated coaches record separate participant actuals through the shared logger, may adapt before starting, and explicitly skip with a reason. Athletes view only their own results; administrators schedule/review. Event completion requires attendance plus resolved present/started workouts. This additional training does not advance individual plans. Sections, group plans and native offline workout capture remain deferred. See [ADR 0034](../decisions/ADR-0034-workout-templates-and-group-results.md), [canonical walkthrough](../testing/instance-validation.md) and [verification](../verification/README.md) for current evidence and limits.

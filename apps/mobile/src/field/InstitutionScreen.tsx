@@ -32,6 +32,7 @@ import type { FieldStore } from './store'
 import { AttendanceSync } from './sync'
 import { Button, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
+import { checkCapabilities, type CapabilityCheck } from './capabilities'
 
 export function InstitutionScreen({
   client,
@@ -68,6 +69,26 @@ export function InstitutionScreen({
   const [draftSaving, setDraftSaving] = useState(false)
   const [editor, setEditor] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [compatibility, setCompatibility] = useState<CapabilityCheck | null>(null)
+  const [compatibilityError, setCompatibilityError] = useState('')
+  const [showCompatibility, setShowCompatibility] = useState(false)
+  const [compatibilityAttempt, setCompatibilityAttempt] = useState(0)
+  useEffect(() => {
+    let active = true
+    setCompatibility(null)
+    setCompatibilityError('')
+    void checkCapabilities((path) => client.request(path)).then(
+      (result) => {
+        if (active) setCompatibility(result)
+      },
+      (error) => {
+        if (active) setCompatibilityError(failureText(error))
+      },
+    )
+    return () => {
+      active = false
+    }
+  }, [client, compatibilityAttempt])
   const [search, setSearch] = useState('')
   const [reviewing, setReviewing] = useState(false)
   const [now, setNow] = useState(Date.now)
@@ -496,6 +517,75 @@ export function InstitutionScreen({
                   'Ask your institution to assign you as event staff. Open the event online before heading offline.',
                 )}{' '}
               </Text>
+            </View>
+          ) : null}
+          <Button
+            title={l('Server compatibility', 'توافق الخادم')}
+            onPress={() => setShowCompatibility((value) => !value)}
+            styles={styles}
+          />
+          {showCompatibility ? (
+            <View style={styles.card}>
+              <Text style={styles.label}>{l('Field app features', 'ميزات تطبيق الميدان')}</Text>
+              {compatibilityError ? (
+                <Text style={styles.message}>{t(compatibilityError)}</Text>
+              ) : compatibility?.state === 'legacy' ? (
+                <Text style={styles.hint}>
+                  {l(
+                    'This server does not report field capabilities. Ask your institution to check the app and server versions. Saved work is retained.',
+                    'لا يعرض هذا الخادم إمكانات تطبيق الميدان. اطلب من مؤسستك التحقق من إصداري التطبيق والخادم. يبقى العمل المحفوظ محفوظاً.',
+                  )}
+                </Text>
+              ) : compatibility?.state === 'available' ? (
+                <>
+                  {(
+                    [
+                      ['attendance', l('Attendance', 'الحضور')],
+                      ['assessments', l('Assessment results', 'نتائج التقييم')],
+                      ['event_completion', l('Event completion', 'إنهاء الموعد')],
+                      [
+                        'individual_workout_recording',
+                        l('Individual workout recording', 'تسجيل التمرين الفردي'),
+                      ],
+                      [
+                        'group_workout_recording',
+                        l('Group workout recording', 'تسجيل التمرين الجماعي'),
+                      ],
+                      [
+                        'day_only_calendar',
+                        l('Workouts without a fixed time', 'تمارين دون وقت محدد'),
+                      ],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <Text key={key} style={styles.hint}>
+                      {label}
+                      {': '}
+                      {compatibility.value.features[key]
+                        ? l('Supported', 'مدعوم')
+                        : l('Not available in the field app', 'غير متاح في تطبيق الميدان')}
+                    </Text>
+                  ))}
+                  <Text style={styles.hint}>
+                    {l(
+                      'Server support does not change your account permissions. Use the web dashboard for workout recording until the matching field update is available.',
+                      'دعم الخادم لا يغيّر صلاحيات حسابك. استخدم لوحة الويب لتسجيل التمارين حتى يتوفر تحديث تطبيق الميدان المطابق.',
+                    )}
+                  </Text>
+                </>
+              ) : (
+                <ActivityIndicator
+                  accessibilityLabel={l(
+                    'Checking server compatibility',
+                    'جارٍ التحقق من توافق الخادم',
+                  )}
+                />
+              )}
+              <Button
+                title={l('Check again', 'تحقق مجدداً')}
+                disabled={!compatibility && !compatibilityError}
+                onPress={() => setCompatibilityAttempt((value) => value + 1)}
+                styles={styles}
+              />
             </View>
           ) : null}
         </>

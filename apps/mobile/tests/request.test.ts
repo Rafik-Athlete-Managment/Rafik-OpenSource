@@ -4,6 +4,59 @@ import { instanceUrl, jsonRequest } from '../src/field/request.ts'
 import { ApiFailure, ConnectionFailure, failureText } from '../src/field/model.ts'
 import { translate } from '../src/field/translations.ts'
 import { selectedInstitution } from '../src/field/access.ts'
+import { checkCapabilities, fieldCapabilities } from '../src/field/capabilities.ts'
+
+test('capability discovery separates legacy, invalid, offline and denied responses without assuming workout support', async () => {
+  const value = {
+    protocol: 1,
+    features: {
+      attendance: true,
+      assessments: true,
+      event_completion: true,
+      individual_workout_recording: false,
+      group_workout_recording: false,
+      day_only_calendar: false,
+    },
+  }
+  const result = await checkCapabilities(async (path) => {
+    assert.equal(path, '/mobile/capabilities')
+    return value
+  })
+  assert.deepEqual(result, { state: 'available', value })
+  assert.throws(() => fieldCapabilities({ ...value, protocol: 2 }), /unsupported/)
+  assert.throws(
+    () => fieldCapabilities({ ...value, features: { attendance: true } }),
+    /unsupported/,
+  )
+  assert.throws(
+    () =>
+      fieldCapabilities({
+        ...value,
+        features: { ...value.features, group_workout_recording: 'false' },
+      }),
+    /unsupported/,
+  )
+  assert.deepEqual(
+    await checkCapabilities(async () => {
+      throw new ApiFailure(404, 'not_found')
+    }),
+    { state: 'legacy' },
+  )
+  for (const error of [
+    new ConnectionFailure(),
+    new ApiFailure(401, 'invalid_mobile_session'),
+    new ApiFailure(403, 'forbidden'),
+    new ApiFailure(500, 'server_error'),
+    new ApiFailure(404, 'event_unavailable'),
+  ]) {
+    await assert.rejects(
+      checkCapabilities(async () => {
+        throw error
+      }),
+      (actual) => actual === error,
+    )
+  }
+})
 
 test('connection failures hide raw host details and recover on the next successful request', async (t) => {
   const fetch = t.mock.method(globalThis, 'fetch', async () => {

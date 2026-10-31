@@ -1,6 +1,8 @@
 export type Language = 'en' | 'ar'
 // English keys also translate persisted messages from earlier app builds.
 const arabic: Record<string, string> = {
+  'The server compatibility response is unsupported. Ask your institution to check the app and server versions.':
+    'استجابة توافق الخادم غير مدعومة. اطلب من مؤسستك التحقق من إصداري التطبيق والخادم.',
   'Saved event opened from this device. Refresh roster online for the latest data.':
     'فُتح الموعد المحفوظ على هذا الجهاز. حدّث القائمة أثناء الاتصال للحصول على أحدث البيانات.',
   'The server returned invalid institution access. Check the API URL and server version.':

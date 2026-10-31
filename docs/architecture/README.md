@@ -1,5 +1,11 @@
 # Rafik architecture
 
+## Native capability discovery — unreleased beta.3
+
+`GET /v1/mobile/capabilities` describes supported native contracts for an authenticated account. Protocol 1 currently advertises timed attendance, assessments and event completion only. Native individual/group workout recording and day-only calendar stay false despite their existing web implementations. Capability flags never grant institution/event access; every command retains its current authorization checks.
+
+The Android schedule offers a collapsed Server compatibility disclosure. Its independent read cannot remount editors, block cached event access, clear permission warnings or modify saved commands. Missing discovery (`404 not_found`), connectivity failures, unsupported responses and session denials remain distinct. Capabilities are not persisted as permissions. No encrypted-store migration occurs in this foundation slice.
+
 ## Workout templates and group results — unreleased beta.3
 
 Program, template and group-participant authoring share WorkoutExerciseCard, while WorkoutFields owns single-workout structure and PlanEditor retains its cycle/day/draft lifecycle. Existing alternative IDs and snapshot validation are unchanged; this adds no API or schema. WorkoutPreview owns the shared read-only prescription presentation. ExerciseMediaPreview reuses ExerciseDemo and its authorized ResourceAsset path; only reviewed reference posters/frames are eligible for desktop thumbnails, with full media opened explicitly in a locale-aware dialog.

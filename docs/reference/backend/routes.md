@@ -639,6 +639,15 @@ Frozen group prescription and separate participant results; exact start/adapt/sk
 - Handler: [groupWorkouts](../../../apps/backend/server/group-workouts.ts), [groupWorkoutCommand](../../../apps/backend/server/group-workouts.ts).
 - Source-derived table touches (including known called helpers/SQL functions): [public.institution_audit_events](schema.md#publicinstitution_audit_events), [public.institution_event_people](schema.md#publicinstitution_event_people), [public.institution_events](schema.md#publicinstitution_events), [public.institution_exercises](schema.md#publicinstitution_exercises), [public.institution_injury_records](schema.md#publicinstitution_injury_records), [public.institution_members](schema.md#publicinstitution_members), [public.institution_operations](schema.md#publicinstitution_operations), [public.institution_session_history](schema.md#publicinstitution_session_history), [public.institution_sessions](schema.md#publicinstitution_sessions), [public.program_media](schema.md#publicprogram_media), [public.reference_exercises](schema.md#publicreference_exercises).
 
+### GET /v1/mobile/capabilities
+
+Native field implementation capability discovery without modifying records or queues.
+
+- Authority: Authenticated account; feature support is not a membership grant.
+- Apps/workflow: Android field compatibility check; canonical OpenAPI.
+- Handler: Inline liveness query.
+- Source-derived table touches (including known called helpers/SQL functions): Static reference/byte content; no direct table dependency found.
+
 ## Retired surfaces
 
 Generic commands/queries, standalone file transport, workspace/context and organization-prefixed aliases are removed. Use explicit account/support and institution endpoints. Published beta.2 clients require replacement for beta.3; no legacy route fallback is provided. Historical migration sources remain immutable.

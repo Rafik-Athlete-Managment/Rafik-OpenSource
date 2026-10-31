@@ -1,5 +1,16 @@
 # Instance validation walkthrough
 
+## Android compatibility foundation — unreleased beta.3
+
+Prerequisite: a matching source development app already installed, the updated backend and a synthetic coach account. This slice does not require a new native dependency or prove a release APK upgrade. Administrators can inspect the authenticated API contract, while the field UI remains coach-only; athletes gain no new recording access.
+
+1. As the coach, open the schedule and expand **Server compatibility** below its event list. Expect attendance, assessment results and event completion supported. Individual/group workout recording and workouts without a fixed time remain unavailable. Collapse the details: normal event selection remains unchanged.
+2. Open a previously downloaded synthetic event, save an attendance change while offline and return to the schedule. Expand compatibility and choose **Check again**: expect a connection message, not a version or permission claim. The saved event/change must remain present. Returning to its editor must retain the pending work.
+3. Reconnect and check again. Expect current capabilities without clearing separate permission/session warnings. Open the saved event and use the existing sync/review flow; capability discovery itself must not send or discard its command.
+4. For a developer-controlled older or mocked server returning `404 not_found`, expect the version-check explanation, with saved work retained. A denied/revoked session must show its own authentication/access explanation rather than reporting a legacy server. Do not change a real institution's server merely to simulate this condition.
+
+Record app/backend revision, account role, connection state and exact failure text if these checks fail. Rendered Android acceptance remains pending; Node parser/API tests are separate evidence. Workout download, durable workout actuals and offline completion are the next slice, not available in this foundation.
+
 This is the single source of truth for manual administrator, coach and athlete validation walkthroughs, for founder acceptance and institution owners checking their own installation. Update the relevant steps here when implemented workflows change; other guides and landing link here rather than copying the procedures. Automated evidence belongs in [verification](../verification/README.md), not in a parallel walkthrough.
 
 **Version scope:** current unreleased beta.3 release branch. These steps include changes not present in published beta.2. Use the document from the same release tag or source commit as your installation; passing this checklist does not establish whole-release acceptance or institutional live-data approval.

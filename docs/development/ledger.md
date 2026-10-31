@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## Native compatibility foundation — 31 October 2026
+
+Started the accepted Android workout slice with authenticated `GET /v1/mobile/capabilities`, a shared typed contract, strict native parsing and optional schedule compatibility details. Protocol 1 advertises existing timed attendance, assessments and event completion; individual/group workout capture and day-only calendar remain false. Only a genuine missing endpoint is classified as legacy; connection, malformed response, authorization and server errors remain distinct. No schema, SQLCipher owner keys, queue payloads, receipt identities, signing settings or published version changed. The next slice must implement authorized workout downloads and durable recording before enabling those flags.
+
+Paired English/Arabic API and phone guidance is pushed to existing draft landing PR #41 at `28420e4`; four content/link tests passed. Application and landing drafts remain unmerged. The canonical instance walkthrough owns the new manual compatibility checks; no duplicate walkthrough or published beta.2 change was introduced.
+
 ## Sealing scope and completion/sign-in feedback — 30 October 2026
 
 Founder confirmed sealing belongs after beta.3, all institution administrators may unseal, and unseal starts a fresh configured correction window. Recorded confirmed scope separately from proposed clock/bundle/migration details in the sealing specification; no sealing schema, API or enforcement is claimed. The existing super-admin wording does not represent a distinct permission grant.

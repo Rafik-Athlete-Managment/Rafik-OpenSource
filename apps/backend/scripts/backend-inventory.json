@@ -912,6 +912,15 @@
       "purpose": "Frozen group prescription and separate participant results; exact start/adapt/skip commands",
       "access": "Designated event coaches record; administrators review; athletes read only their own participant/results",
       "clients": "Web event detail and shared coach recorder; native offline capture remains a later slice"
+    },
+    {
+      "anchor": "/v1/mobile/capabilities",
+      "path": "/v1/mobile/capabilities",
+      "methods": ["GET"],
+      "handlers": [],
+      "purpose": "Native field implementation capability discovery without modifying records or queues",
+      "access": "Authenticated account; feature support is not a membership grant",
+      "clients": "Android field compatibility check; canonical OpenAPI"
     }
   ]
 }

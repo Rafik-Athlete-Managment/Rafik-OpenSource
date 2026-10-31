@@ -6,6 +6,19 @@ export type ApiUser = {
 
 export type ApiErrorBody = { message: string }
 
+/** Server implementations, not grants to the signed-in account. */
+export type FieldCapabilities = {
+  protocol: 1
+  features: {
+    attendance: boolean
+    assessments: boolean
+    event_completion: boolean
+    individual_workout_recording: boolean
+    group_workout_recording: boolean
+    day_only_calendar: boolean
+  }
+}
+
 export type WorkoutTemplate = {
   id: string
   institution_id: string
