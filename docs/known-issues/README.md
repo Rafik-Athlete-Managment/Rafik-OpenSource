@@ -1,5 +1,9 @@
 # Known issues and release gaps
 
+## Code quality audit — 31 October 2026
+
+The [monorepo audit](code-quality-audit.md) records typing, duplication, unused-code, styling and dependency findings, safe changes and intentionally deferred work. The existing 117-file formatting baseline is not a new regression.
+
 ## Dependency review — 29 October 2026
 
 Updated compatible lockfile resolutions from node-forge 1.4.0 to 1.4.2 and fast-uri 3.1.8 to 3.1.9. The [Forge release notes](https://github.com/digitalbazaar/forge/blob/v1.4.2/CHANGELOG.md) confirm the RSA verification fix; the [fast-uri advisory](https://github.com/advisories/GHSA-w74x-v6f9-j3xg) identifies 3.1.9 as patched. Earlier dated counts below are historical checkpoints.

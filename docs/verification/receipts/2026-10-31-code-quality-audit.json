@@ -1,0 +1,5380 @@
+{
+  "date": "2026-10-31",
+  "baseline_commit": "a6fc3a09fa7a714e9ef58f218b62308ea24cfabc",
+  "method": "Tracked active TypeScript/TSX, Vue scripts, MJS and CSS; excludes generated declaration/database/client files. AST counts and identical-body candidates are not proof of dead code. Vue line offsets are script-relative.",
+  "packages": {
+    "apps/frontend": {
+      "files": 211,
+      "typescript": 94,
+      "vue": 104,
+      "lines": 29424,
+      "explicit_any": 76
+    },
+    "apps/backend": {
+      "files": 109,
+      "typescript": 80,
+      "vue": 0,
+      "lines": 24613,
+      "explicit_any": 137
+    },
+    "apps/mobile": {
+      "files": 29,
+      "typescript": 26,
+      "vue": 0,
+      "lines": 7486,
+      "explicit_any": 0
+    },
+    "packages/shared": {
+      "files": 2,
+      "typescript": 2,
+      "vue": 0,
+      "lines": 252,
+      "explicit_any": 0
+    }
+  },
+  "files": [
+    {
+      "file": "apps/backend/prisma.config.ts",
+      "lines": 11,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/scripts/backend-inventory.mjs",
+      "lines": 671,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 35
+    },
+    {
+      "file": "apps/backend/scripts/backend-schema-snapshot.mjs",
+      "lines": 106,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/scripts/check-docs.mjs",
+      "lines": 62,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/scripts/check-docs.test.mjs",
+      "lines": 46,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/scripts/content.mjs",
+      "lines": 140,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/scripts/content/exercise-dataset.mjs",
+      "lines": 391,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 12
+    },
+    {
+      "file": "apps/backend/scripts/content/exercise-media.mjs",
+      "lines": 61,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/scripts/content/exercise-videos.mjs",
+      "lines": 71,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/scripts/content/wger-exercises.mjs",
+      "lines": 333,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/backend/scripts/dispatch-notifications.ts",
+      "lines": 20,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/scripts/documentation-links.mjs",
+      "lines": 93,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/scripts/prepare-workouts.ts",
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/scripts/prisma/cleanup-private.mjs",
+      "lines": 75,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/scripts/prisma/docker.mjs",
+      "lines": 13,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/scripts/prisma/fresh.mjs",
+      "lines": 147,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/backend/scripts/prisma/isolated-api.mjs",
+      "lines": 120,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/scripts/prisma/local-storage-target.mjs",
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/scripts/prisma/local-storage-target.test.mjs",
+      "lines": 35,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/scripts/prisma/local.mjs",
+      "lines": 75,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/scripts/prisma/operator.mjs",
+      "lines": 63,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/scripts/prisma/production-migrate.mjs",
+      "lines": 39,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/scripts/prisma/recovery.mjs",
+      "lines": 127,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/scripts/prisma/types.ts",
+      "lines": 31,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/scripts/prisma/verify-group-workouts.mjs",
+      "lines": 78,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/scripts/prisma/verify-institution-cleanup.mjs",
+      "lines": 141,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/scripts/prisma/verify-institution-names.mjs",
+      "lines": 124,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 9
+    },
+    {
+      "file": "apps/backend/scripts/prisma/verify-retired-domains.mjs",
+      "lines": 100,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/backend/scripts/prisma/verify-workout-foundation.mjs",
+      "lines": 174,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 14
+    },
+    {
+      "file": "apps/backend/scripts/release-guard.mjs",
+      "lines": 22,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/scripts/release-guard.test.mjs",
+      "lines": 31,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/scripts/support-local.mjs",
+      "lines": 25,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/scripts/verify-release.mjs",
+      "lines": 173,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/server/account-data.ts",
+      "lines": 124,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/server/account.ts",
+      "lines": 63,
+      "any": 0,
+      "assertions": 8,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/server/analytics.ts",
+      "lines": 148,
+      "any": 6,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/server/api-docs.ts",
+      "lines": 96,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 2
+    },
+    {
+      "file": "apps/backend/server/assets.ts",
+      "lines": 269,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 3,
+      "typeImports": 0,
+      "functions": 18
+    },
+    {
+      "file": "apps/backend/server/athlete-plans.ts",
+      "lines": 232,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/server/auth.ts",
+      "lines": 535,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 34
+    },
+    {
+      "file": "apps/backend/server/calendar.ts",
+      "lines": 902,
+      "any": 2,
+      "assertions": 8,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 47
+    },
+    {
+      "file": "apps/backend/server/coaching-links.ts",
+      "lines": 197,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/server/communication.ts",
+      "lines": 712,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 32
+    },
+    {
+      "file": "apps/backend/server/db.ts",
+      "lines": 103,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/server/experience-report.ts",
+      "lines": 27,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/server/feedback.ts",
+      "lines": 141,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/server/field-workout.ts",
+      "lines": 88,
+      "any": 7,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/server/follow-up.ts",
+      "lines": 46,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/server/group-workouts.ts",
+      "lines": 333,
+      "any": 4,
+      "assertions": 4,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 17
+    },
+    {
+      "file": "apps/backend/server/index.ts",
+      "lines": 980,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 11
+    },
+    {
+      "file": "apps/backend/server/injuries.ts",
+      "lines": 381,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 17
+    },
+    {
+      "file": "apps/backend/server/injury-retention.ts",
+      "lines": 71,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/server/instance-branding.ts",
+      "lines": 96,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/server/institution-routing.ts",
+      "lines": 73,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/server/institution.ts",
+      "lines": 834,
+      "any": 0,
+      "assertions": 7,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 43
+    },
+    {
+      "file": "apps/backend/server/notifications.ts",
+      "lines": 453,
+      "any": 0,
+      "assertions": 8,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 20
+    },
+    {
+      "file": "apps/backend/server/nutrition-plan-index.ts",
+      "lines": 53,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/backend/server/nutrition.ts",
+      "lines": 376,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 11
+    },
+    {
+      "file": "apps/backend/server/pagination.ts",
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/server/people.ts",
+      "lines": 343,
+      "any": 0,
+      "assertions": 7,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 20
+    },
+    {
+      "file": "apps/backend/server/plan-prescription.ts",
+      "lines": 23,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/backend/server/platform.ts",
+      "lines": 201,
+      "any": 5,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/server/private-bytes.ts",
+      "lines": 32,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/server/program-media.ts",
+      "lines": 115,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/server/programming.ts",
+      "lines": 2094,
+      "any": 19,
+      "assertions": 34,
+      "nonNull": 4,
+      "typeImports": 1,
+      "functions": 97
+    },
+    {
+      "file": "apps/backend/server/public-catalog.ts",
+      "lines": 88,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/backend/server/service-catalog.ts",
+      "lines": 203,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 9
+    },
+    {
+      "file": "apps/backend/server/service-definitions.ts",
+      "lines": 97,
+      "any": 0,
+      "assertions": 5,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/backend/server/sports.ts",
+      "lines": 165,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/backend/server/support.ts",
+      "lines": 37,
+      "any": 0,
+      "assertions": 7,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/server/workout-scheduler.ts",
+      "lines": 463,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 3,
+      "typeImports": 0,
+      "functions": 26
+    },
+    {
+      "file": "apps/backend/server/workout-sequence.ts",
+      "lines": 523,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 16
+    },
+    {
+      "file": "apps/backend/server/workout-templates.ts",
+      "lines": 201,
+      "any": 6,
+      "assertions": 6,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 12
+    },
+    {
+      "file": "apps/backend/tests/api-docs.test.ts",
+      "lines": 137,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 15
+    },
+    {
+      "file": "apps/backend/tests/api.test.ts",
+      "lines": 126,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/tests/backend-boundary.test.ts",
+      "lines": 144,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/tests/coaching-team.test.ts",
+      "lines": 415,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 20
+    },
+    {
+      "file": "apps/backend/tests/communication.test.ts",
+      "lines": 382,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/tests/concurrent-plans.test.ts",
+      "lines": 520,
+      "any": 5,
+      "assertions": 6,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 28
+    },
+    {
+      "file": "apps/backend/tests/delegated-sessions.test.ts",
+      "lines": 468,
+      "any": 6,
+      "assertions": 4,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 19
+    },
+    {
+      "file": "apps/backend/tests/exercise-video.test.ts",
+      "lines": 46,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/tests/field-acceptance.test.ts",
+      "lines": 424,
+      "any": 3,
+      "assertions": 6,
+      "nonNull": 2,
+      "typeImports": 0,
+      "functions": 15
+    },
+    {
+      "file": "apps/backend/tests/field-capabilities.test.ts",
+      "lines": 56,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/tests/group-workouts.test.ts",
+      "lines": 522,
+      "any": 4,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/backend/tests/institution-access.test.ts",
+      "lines": 69,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/backend/tests/institution-fixture.ts",
+      "lines": 37,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/backend/tests/institution-transport.test.ts",
+      "lines": 26,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/tests/local-boundary.test.ts",
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/backend/tests/maintenance.test.ts",
+      "lines": 84,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/tests/native-workouts.test.ts",
+      "lines": 202,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/backend/tests/notifications.test.ts",
+      "lines": 254,
+      "any": 2,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/backend/tests/organization-assets.test.ts",
+      "lines": 366,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/tests/organization-feedback.test.ts",
+      "lines": 303,
+      "any": 11,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/backend/tests/organization-fixture.ts",
+      "lines": 142,
+      "any": 1,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/backend/tests/organization-injuries.test.ts",
+      "lines": 277,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/tests/organization-injury-retention-scheduler.test.ts",
+      "lines": 36,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/tests/organization-nutrition.test.ts",
+      "lines": 402,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/tests/organization-services.test.ts",
+      "lines": 561,
+      "any": 4,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/backend/tests/organization-sports.test.ts",
+      "lines": 342,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 17
+    },
+    {
+      "file": "apps/backend/tests/plan-adaptation.test.ts",
+      "lines": 225,
+      "any": 6,
+      "assertions": 5,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/backend/tests/platform.test.ts",
+      "lines": 155,
+      "any": 3,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/backend/tests/program-media.test.ts",
+      "lines": 130,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/backend/tests/programming.test.ts",
+      "lines": 496,
+      "any": 7,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/backend/tests/public-catalog.test.ts",
+      "lines": 238,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 2,
+      "typeImports": 0,
+      "functions": 22
+    },
+    {
+      "file": "apps/backend/tests/retired-domains.test.ts",
+      "lines": 121,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/backend/tests/scale.test.ts",
+      "lines": 169,
+      "any": 6,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/backend/tests/test-target.ts",
+      "lines": 12,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/backend/tests/workout-scheduler.test.ts",
+      "lines": 583,
+      "any": 12,
+      "assertions": 7,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 16
+    },
+    {
+      "file": "apps/backend/tests/workout-sequence.test.ts",
+      "lines": 535,
+      "any": 8,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 19
+    },
+    {
+      "file": "apps/frontend/build/offline-shell.ts",
+      "lines": 26,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/env.d.ts",
+      "lines": 2,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/playwright.config.ts",
+      "lines": 25,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/scripts/audit-cohesion.ts",
+      "lines": 64,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/scripts/audit-communication.ts",
+      "lines": 33,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/scripts/audit-operations.ts",
+      "lines": 125,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 3,
+      "typeImports": 0,
+      "functions": 9
+    },
+    {
+      "file": "apps/frontend/scripts/audit-programming.ts",
+      "lines": 33,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/scripts/audit-services.ts",
+      "lines": 33,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/scripts/check-shell-build.mjs",
+      "lines": 45,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/scripts/frontend-inventory.mjs",
+      "lines": 393,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 71
+    },
+    {
+      "file": "apps/frontend/scripts/frontend-inventory.test.mjs",
+      "lines": 93,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/frontend/scripts/isolated-browser.mjs",
+      "lines": 157,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 9
+    },
+    {
+      "file": "apps/frontend/src/App.vue",
+      "lines": 72,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 15
+    },
+    {
+      "file": "apps/frontend/src/app/auth.ts",
+      "lines": 81,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/src/app/institution.ts",
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/app/router.ts",
+      "lines": 316,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 58
+    },
+    {
+      "file": "apps/frontend/src/app/updates.ts",
+      "lines": 48,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/src/components/AppUpdates.vue",
+      "lines": 4,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/AthleteSearch.vue",
+      "lines": 5,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/CommandStatus.vue",
+      "lines": 13,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/EmptyState.vue",
+      "lines": 6,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/ExerciseDemo.vue",
+      "lines": 33,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/src/components/ExerciseMediaPreview.vue",
+      "lines": 33,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 4
+    },
+    {
+      "file": "apps/frontend/src/components/ExercisePicker.vue",
+      "lines": 228,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 41
+    },
+    {
+      "file": "apps/frontend/src/components/ExerciseVideo.vue",
+      "lines": 103,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/components/FileDropzone.vue",
+      "lines": 25,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/components/ListPagination.vue",
+      "lines": 15,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/components/MonthCalendar.vue",
+      "lines": 87,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/components/MultiChoice.vue",
+      "lines": 14,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/components/OverflowMenu.vue",
+      "lines": 41,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/components/PageHeading.vue",
+      "lines": 1,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/PageState.vue",
+      "lines": 5,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/PasswordField.vue",
+      "lines": 18,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/components/ResourceAsset.vue",
+      "lines": 39,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/components/ResourceUpload.vue",
+      "lines": 97,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/frontend/src/components/ScheduleViewSwitch.vue",
+      "lines": 7,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/SectionHeader.vue",
+      "lines": 6,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/components/SidePanel.vue",
+      "lines": 31,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/components/TimezoneClock.vue",
+      "lines": 27,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/components/TimezonePicker.vue",
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/account/AccessPage.vue",
+      "lines": 26,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/features/account/EntryPage.vue",
+      "lines": 32,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/features/account/HelpPage.vue",
+      "lines": 4,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/account/LocalPreview.vue",
+      "lines": 25,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/features/account/LoginPage.vue",
+      "lines": 31,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/features/account/PasswordSetupPage.vue",
+      "lines": 39,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/features/account/SettingsPage.vue",
+      "lines": 117,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "typeImports": 1,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/account/SetupPage.vue",
+      "lines": 64,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/analytics/AnalyticsPage.vue",
+      "lines": 141,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/frontend/src/features/analytics/ExperienceReport.vue",
+      "lines": 61,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/analytics/MetricChart.vue",
+      "lines": 85,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 19
+    },
+    {
+      "file": "apps/frontend/src/features/analytics/TrainerDelivery.vue",
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+      "lines": 357,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 51
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/ExercisesPage.vue",
+      "lines": 382,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 44
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/PlanEditor.vue",
+      "lines": 475,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 9,
+      "typeImports": 2,
+      "functions": 38
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/PlansPage.vue",
+      "lines": 85,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/PrescriptionFields.vue",
+      "lines": 36,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/ProgramCover.vue",
+      "lines": 10,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/ReviewPage.vue",
+      "lines": 131,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+      "lines": 53,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/WorkoutFields.vue",
+      "lines": 31,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "typeImports": 1,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/WorkoutPreview.vue",
+      "lines": 29,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue",
+      "lines": 190,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 2,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+      "lines": 87,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 9
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/WorkoutTemplatesPage.vue",
+      "lines": 79,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/program-context.ts",
+      "lines": 54,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 9
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/program-structure.test.ts",
+      "lines": 27,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 4,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/coaching/program-structure.ts",
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ActivityLog.vue",
+      "lines": 159,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AdminOverview.vue",
+      "lines": 99,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AssessmentHistory.vue",
+      "lines": 99,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 16
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AssignedPlanPage.vue",
+      "lines": 115,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 3,
+      "typeImports": 2,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AthleteDay.vue",
+      "lines": 42,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AthletePlans.vue",
+      "lines": 128,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AthleteProfile.vue",
+      "lines": 231,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 30
+    },
+    {
+      "file": "apps/frontend/src/features/institution/AthleteTraining.vue",
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "apps/frontend/src/features/institution/BrandingSettings.vue",
+      "lines": 86,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ChannelEditor.vue",
+      "lines": 129,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 13,
+      "typeImports": 1,
+      "functions": 24
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ChannelThread.vue",
+      "lines": 289,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 5,
+      "typeImports": 0,
+      "functions": 30
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ChannelsPage.vue",
+      "lines": 227,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 3,
+      "typeImports": 1,
+      "functions": 39
+    },
+    {
+      "file": "apps/frontend/src/features/institution/CoachDesk.vue",
+      "lines": 138,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/src/features/institution/CoachingTeam.vue",
+      "lines": 120,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 30
+    },
+    {
+      "file": "apps/frontend/src/features/institution/DashboardPage.vue",
+      "lines": 347,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 45
+    },
+    {
+      "file": "apps/frontend/src/features/institution/DelegatedWorkout.vue",
+      "lines": 336,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 4,
+      "typeImports": 2,
+      "functions": 39
+    },
+    {
+      "file": "apps/frontend/src/features/institution/EventComposer.vue",
+      "lines": 345,
+      "any": 1,
+      "assertions": 4,
+      "nonNull": 3,
+      "typeImports": 3,
+      "functions": 45
+    },
+    {
+      "file": "apps/frontend/src/features/institution/EventDetail.vue",
+      "lines": 380,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 8,
+      "typeImports": 2,
+      "functions": 49
+    },
+    {
+      "file": "apps/frontend/src/features/institution/FeedbackPage.vue",
+      "lines": 50,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/institution/FollowUpPanel.vue",
+      "lines": 81,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/src/features/institution/GroupWorkoutPanel.vue",
+      "lines": 339,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 4,
+      "typeImports": 0,
+      "functions": 40
+    },
+    {
+      "file": "apps/frontend/src/features/institution/InjuryStatus.vue",
+      "lines": 149,
+      "any": 9,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 15
+    },
+    {
+      "file": "apps/frontend/src/features/institution/InvitationPage.vue",
+      "lines": 86,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/institution/MemberManagement.vue",
+      "lines": 91,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 13
+    },
+    {
+      "file": "apps/frontend/src/features/institution/MemberPicker.vue",
+      "lines": 139,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 26
+    },
+    {
+      "file": "apps/frontend/src/features/institution/MemberSports.vue",
+      "lines": 52,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/institution/PersonActionIcon.vue",
+      "lines": 3,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/institution/RatingForm.vue",
+      "lines": 116,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+      "lines": 149,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 21
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ScheduledEvents.vue",
+      "lines": 131,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 9
+    },
+    {
+      "file": "apps/frontend/src/features/institution/ServiceCatalog.vue",
+      "lines": 222,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 2,
+      "typeImports": 2,
+      "functions": 22
+    },
+    {
+      "file": "apps/frontend/src/features/institution/SessionHistory.vue",
+      "lines": 110,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/institution/SessionNote.vue",
+      "lines": 109,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/src/features/institution/SportsSettings.vue",
+      "lines": 74,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/institution/TrainingRoute.vue",
+      "lines": 6,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/institution/UpcomingSessions.vue",
+      "lines": 55,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+      "lines": 377,
+      "any": 0,
+      "assertions": 5,
+      "nonNull": 8,
+      "typeImports": 1,
+      "functions": 32
+    },
+    {
+      "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+      "lines": 168,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/src/features/institution/institution.css",
+      "lines": 467,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/institution/role-dashboard.css",
+      "lines": 199,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/institution/service-types.ts",
+      "lines": 81,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/institution/types.ts",
+      "lines": 59,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/navigation/DashboardNav.vue",
+      "lines": 147,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/src/features/navigation/section-path.ts",
+      "lines": 12,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/features/navigation/types.ts",
+      "lines": 18,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/notifications/NotificationPreferences.vue",
+      "lines": 47,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/features/notifications/NotificationsPage.vue",
+      "lines": 96,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/FoodPicker.vue",
+      "lines": 30,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/MacroPlanner.vue",
+      "lines": 30,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/MealFields.vue",
+      "lines": 27,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/MealPlanEditor.vue",
+      "lines": 83,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/NutrientFields.vue",
+      "lines": 16,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/NutritionPage.vue",
+      "lines": 404,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 3,
+      "typeImports": 0,
+      "functions": 49
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/NutritionPlans.vue",
+      "lines": 125,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/NutritionRoute.vue",
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/institution-nutrition.css",
+      "lines": 168,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/nutrition/model.ts",
+      "lines": 82,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 4,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/src/features/platform/PlatformPage.vue",
+      "lines": 124,
+      "any": 4,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/src/features/public/NotFound.vue",
+      "lines": 4,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/public/PrivacyPage.vue",
+      "lines": 3,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/features/resources/ResourcesPage.vue",
+      "lines": 119,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/frontend/src/features/support/SupportPage.vue",
+      "lines": 88,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/features/training/WorkoutPage.vue",
+      "lines": 376,
+      "any": 0,
+      "assertions": 5,
+      "nonNull": 15,
+      "typeImports": 1,
+      "functions": 67
+    },
+    {
+      "file": "apps/frontend/src/lib/backend.ts",
+      "lines": 145,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 17
+    },
+    {
+      "file": "apps/frontend/src/lib/branding.ts",
+      "lines": 94,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 6,
+      "typeImports": 0,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/src/lib/calendar-status.ts",
+      "lines": 12,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/lib/command-errors.ts",
+      "lines": 11,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/lib/commands.ts",
+      "lines": 95,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/src/lib/dates.ts",
+      "lines": 50,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/lib/display-time.ts",
+      "lines": 10,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/lib/domain.ts",
+      "lines": 224,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/lib/editor-draft.ts",
+      "lines": 19,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/src/lib/exercise-authoring.ts",
+      "lines": 30,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/lib/exercise-catalog.ts",
+      "lines": 174,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/src/lib/exercise-media.ts",
+      "lines": 50,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/src/lib/feedback.ts",
+      "lines": 41,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/frontend/src/lib/focus-refresh.ts",
+      "lines": 28,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/lib/i18n.ts",
+      "lines": 561,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/lib/list-page-size.ts",
+      "lines": 25,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/src/lib/live-search.ts",
+      "lines": 35,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/lib/prescriptions.ts",
+      "lines": 57,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/src/lib/set-measures.ts",
+      "lines": 31,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/lib/storage.ts",
+      "lines": 79,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 17
+    },
+    {
+      "file": "apps/frontend/src/lib/timezones.ts",
+      "lines": 39,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/src/lib/training.ts",
+      "lines": 208,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 2,
+      "typeImports": 0,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/src/lib/workout-templates.ts",
+      "lines": 14,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/src/main.ts",
+      "lines": 18,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/style.css",
+      "lines": 3922,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/styles/dashboard.css",
+      "lines": 290,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/styles/design-system.css",
+      "lines": 1011,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/styles/navigation.css",
+      "lines": 323,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/styles/nutrition.css",
+      "lines": 131,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/src/styles/utilities.css",
+      "lines": 13,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/frontend/tests/app-updates.e2e.ts",
+      "lines": 103,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/tests/athlete-profile.e2e.ts",
+      "lines": 472,
+      "any": 2,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/tests/beta-web-refinements.e2e.ts",
+      "lines": 352,
+      "any": 5,
+      "assertions": 1,
+      "nonNull": 4,
+      "typeImports": 0,
+      "functions": 16
+    },
+    {
+      "file": "apps/frontend/tests/calendar-login-feedback.e2e.ts",
+      "lines": 94,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/tests/coaching-team.e2e.ts",
+      "lines": 170,
+      "any": 3,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/tests/cohesion.e2e.ts",
+      "lines": 16,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/tests/command-errors.test.ts",
+      "lines": 10,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/tests/command-navigation.test.ts",
+      "lines": 99,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 27
+    },
+    {
+      "file": "apps/frontend/tests/communication.e2e.ts",
+      "lines": 199,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 2,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/tests/concurrent-plans.e2e.ts",
+      "lines": 240,
+      "any": 3,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/tests/consolidated-views.e2e.ts",
+      "lines": 67,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/tests/dates.test.ts",
+      "lines": 56,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/tests/delegated-sessions.e2e.ts",
+      "lines": 1174,
+      "any": 14,
+      "assertions": 2,
+      "nonNull": 3,
+      "typeImports": 0,
+      "functions": 76
+    },
+    {
+      "file": "apps/frontend/tests/design-controls.test.ts",
+      "lines": 29,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/tests/exercise-authoring.test.ts",
+      "lines": 79,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/tests/exercise-catalog.test.ts",
+      "lines": 128,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/tests/group-workouts.e2e.ts",
+      "lines": 299,
+      "any": 4,
+      "assertions": 1,
+      "nonNull": 2,
+      "typeImports": 0,
+      "functions": 12
+    },
+    {
+      "file": "apps/frontend/tests/gym-direction.e2e.ts",
+      "lines": 77,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/tests/instance-branding.e2e.ts",
+      "lines": 133,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/tests/institution-fixture.ts",
+      "lines": 149,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/tests/institution-names.e2e.ts",
+      "lines": 82,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/tests/institution-routing.e2e.ts",
+      "lines": 116,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 14
+    },
+    {
+      "file": "apps/frontend/tests/layout-contract.ts",
+      "lines": 64,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/tests/live-search.test.ts",
+      "lines": 64,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/tests/local-config.ts",
+      "lines": 14,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/tests/native-lockfile.test.ts",
+      "lines": 36,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/tests/navigation-section.test.ts",
+      "lines": 21,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/tests/nutrition.test.ts",
+      "lines": 47,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 7
+    },
+    {
+      "file": "apps/frontend/tests/offline-shell.test.ts",
+      "lines": 23,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/tests/onboarding.e2e.ts",
+      "lines": 227,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 10
+    },
+    {
+      "file": "apps/frontend/tests/operations.e2e.ts",
+      "lines": 184,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 8,
+      "typeImports": 0,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/tests/organization-assets.e2e.ts",
+      "lines": 143,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/tests/organization-feedback.e2e.ts",
+      "lines": 398,
+      "any": 6,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 15
+    },
+    {
+      "file": "apps/frontend/tests/organization-injuries.e2e.ts",
+      "lines": 129,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/frontend/tests/organization-injury-fixture.ts",
+      "lines": 113,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 8
+    },
+    {
+      "file": "apps/frontend/tests/organization-nutrition.e2e.ts",
+      "lines": 351,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 18
+    },
+    {
+      "file": "apps/frontend/tests/organization-services.e2e.ts",
+      "lines": 267,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 13
+    },
+    {
+      "file": "apps/frontend/tests/organization-sports.e2e.ts",
+      "lines": 183,
+      "any": 4,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 9
+    },
+    {
+      "file": "apps/frontend/tests/organizations.e2e.ts",
+      "lines": 128,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/tests/programming.e2e.ts",
+      "lines": 172,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/tests/set-measures.test.ts",
+      "lines": 36,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 4
+    },
+    {
+      "file": "apps/frontend/tests/static-preview.ts",
+      "lines": 39,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/tests/ui-audit.e2e.ts",
+      "lines": 700,
+      "any": 4,
+      "assertions": 5,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 40
+    },
+    {
+      "file": "apps/frontend/tests/ui-standardization.e2e.ts",
+      "lines": 164,
+      "any": 2,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/tests/units.test.ts",
+      "lines": 44,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/frontend/tests/view-consolidation.test.ts",
+      "lines": 45,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/tests/workout-authoring.e2e.ts",
+      "lines": 129,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 9,
+      "typeImports": 1,
+      "functions": 11
+    },
+    {
+      "file": "apps/frontend/tests/workout-templates.test.ts",
+      "lines": 35,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 8,
+      "typeImports": 1,
+      "functions": 1
+    },
+    {
+      "file": "apps/frontend/vite.config.ts",
+      "lines": 52,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 6
+    },
+    {
+      "file": "apps/frontend/vitest.config.ts",
+      "lines": 5,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/mobile/scripts/acceptance.mjs",
+      "lines": 164,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 11
+    },
+    {
+      "file": "apps/mobile/scripts/android.mjs",
+      "lines": 120,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/mobile/scripts/release.mjs",
+      "lines": 291,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 12
+    },
+    {
+      "file": "apps/mobile/src/app/_layout.tsx",
+      "lines": 13,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/mobile/src/app/index.tsx",
+      "lines": 2,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "apps/mobile/src/field/EventHistory.tsx",
+      "lines": 246,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 2,
+      "typeImports": 1,
+      "functions": 16
+    },
+    {
+      "file": "apps/mobile/src/field/Home.tsx",
+      "lines": 330,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 25
+    },
+    {
+      "file": "apps/mobile/src/field/InstitutionScreen.tsx",
+      "lines": 1061,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 87
+    },
+    {
+      "file": "apps/mobile/src/field/Language.tsx",
+      "lines": 66,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 14
+    },
+    {
+      "file": "apps/mobile/src/field/LanguageControl.tsx",
+      "lines": 32,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/mobile/src/field/RecoveryPanel.tsx",
+      "lines": 318,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "typeImports": 2,
+      "functions": 29
+    },
+    {
+      "file": "apps/mobile/src/field/ScoreEditor.tsx",
+      "lines": 237,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 18
+    },
+    {
+      "file": "apps/mobile/src/field/WorkoutsScreen.tsx",
+      "lines": 966,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 0,
+      "typeImports": 2,
+      "functions": 88
+    },
+    {
+      "file": "apps/mobile/src/field/access.ts",
+      "lines": 10,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 2
+    },
+    {
+      "file": "apps/mobile/src/field/capabilities.ts",
+      "lines": 45,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 4
+    },
+    {
+      "file": "apps/mobile/src/field/model.ts",
+      "lines": 258,
+      "any": 0,
+      "assertions": 10,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 22
+    },
+    {
+      "file": "apps/mobile/src/field/native.ts",
+      "lines": 228,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 26
+    },
+    {
+      "file": "apps/mobile/src/field/request.ts",
+      "lines": 55,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 3
+    },
+    {
+      "file": "apps/mobile/src/field/store.ts",
+      "lines": 503,
+      "any": 0,
+      "assertions": 7,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 52
+    },
+    {
+      "file": "apps/mobile/src/field/sync.ts",
+      "lines": 71,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 5
+    },
+    {
+      "file": "apps/mobile/src/field/translations.ts",
+      "lines": 370,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "apps/mobile/src/field/ui.tsx",
+      "lines": 191,
+      "any": 0,
+      "assertions": 5,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 4
+    },
+    {
+      "file": "apps/mobile/src/field/workout-input.ts",
+      "lines": 32,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 5
+    },
+    {
+      "file": "apps/mobile/src/field/workout-model.ts",
+      "lines": 194,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 18
+    },
+    {
+      "file": "apps/mobile/src/field/workout-store.ts",
+      "lines": 361,
+      "any": 0,
+      "assertions": 8,
+      "nonNull": 1,
+      "typeImports": 1,
+      "functions": 38
+    },
+    {
+      "file": "apps/mobile/src/field/workout-sync.ts",
+      "lines": 97,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 1,
+      "functions": 6
+    },
+    {
+      "file": "apps/mobile/tests/attendance.test.ts",
+      "lines": 900,
+      "any": 0,
+      "assertions": 7,
+      "nonNull": 8,
+      "typeImports": 1,
+      "functions": 66
+    },
+    {
+      "file": "apps/mobile/tests/native.test.ts",
+      "lines": 115,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 9
+    },
+    {
+      "file": "apps/mobile/tests/request.test.ts",
+      "lines": 210,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 32
+    },
+    {
+      "file": "packages/shared/src/contracts.ts",
+      "lines": 241,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 0
+    },
+    {
+      "file": "packages/shared/src/password.ts",
+      "lines": 11,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 1
+    },
+    {
+      "file": "scripts/tooling-security.mjs",
+      "lines": 60,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 4
+    },
+    {
+      "file": "scripts/tooling-security.test.mjs",
+      "lines": 209,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "typeImports": 0,
+      "functions": 15
+    }
+  ],
+  "duplicate_function_candidates": [
+    [
+      {
+        "file": "apps/backend/server/calendar.ts",
+        "name": "anonymous",
+        "line": 259,
+        "characters": 171
+      },
+      {
+        "file": "apps/backend/server/calendar.ts",
+        "name": "anonymous",
+        "line": 348,
+        "characters": 171
+      }
+    ],
+    [
+      {
+        "file": "apps/backend/tests/backend-boundary.test.ts",
+        "name": "auth",
+        "line": 6,
+        "characters": 323
+      },
+      {
+        "file": "apps/backend/tests/plan-adaptation.test.ts",
+        "name": "cookie",
+        "line": 9,
+        "characters": 323
+      },
+      {
+        "file": "apps/backend/tests/workout-scheduler.test.ts",
+        "name": "cookie",
+        "line": 18,
+        "characters": 323
+      },
+      {
+        "file": "apps/backend/tests/workout-sequence.test.ts",
+        "name": "cookie",
+        "line": 18,
+        "characters": 323
+      }
+    ],
+    [
+      {
+        "file": "apps/backend/tests/coaching-team.test.ts",
+        "name": "anonymous",
+        "line": 12,
+        "characters": 170
+      },
+      {
+        "file": "apps/backend/tests/concurrent-plans.test.ts",
+        "name": "anonymous",
+        "line": 12,
+        "characters": 170
+      },
+      {
+        "file": "apps/backend/tests/delegated-sessions.test.ts",
+        "name": "anonymous",
+        "line": 12,
+        "characters": 170
+      },
+      {
+        "file": "apps/backend/tests/organization-sports.test.ts",
+        "name": "anonymous",
+        "line": 11,
+        "characters": 170
+      }
+    ],
+    [
+      {
+        "file": "apps/backend/tests/coaching-team.test.ts",
+        "name": "call",
+        "line": 36,
+        "characters": 495
+      },
+      {
+        "file": "apps/backend/tests/concurrent-plans.test.ts",
+        "name": "call",
+        "line": 36,
+        "characters": 495
+      },
+      {
+        "file": "apps/backend/tests/delegated-sessions.test.ts",
+        "name": "call",
+        "line": 36,
+        "characters": 495
+      },
+      {
+        "file": "apps/backend/tests/organization-sports.test.ts",
+        "name": "call",
+        "line": 35,
+        "characters": 495
+      }
+    ],
+    [
+      {
+        "file": "apps/backend/tests/coaching-team.test.ts",
+        "name": "institution",
+        "line": 55,
+        "characters": 224
+      },
+      {
+        "file": "apps/backend/tests/concurrent-plans.test.ts",
+        "name": "institution",
+        "line": 55,
+        "characters": 224
+      },
+      {
+        "file": "apps/backend/tests/delegated-sessions.test.ts",
+        "name": "institution",
+        "line": 55,
+        "characters": 224
+      },
+      {
+        "file": "apps/backend/tests/organization-sports.test.ts",
+        "name": "institution",
+        "line": 54,
+        "characters": 224
+      }
+    ],
+    [
+      {
+        "file": "apps/backend/tests/coaching-team.test.ts",
+        "name": "join",
+        "line": 71,
+        "characters": 355
+      },
+      {
+        "file": "apps/backend/tests/concurrent-plans.test.ts",
+        "name": "join",
+        "line": 71,
+        "characters": 355
+      },
+      {
+        "file": "apps/backend/tests/delegated-sessions.test.ts",
+        "name": "join",
+        "line": 71,
+        "characters": 355
+      },
+      {
+        "file": "apps/backend/tests/organization-sports.test.ts",
+        "name": "join",
+        "line": 70,
+        "characters": 355
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "name": "anonymous",
+        "line": 176,
+        "characters": 429
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "name": "anonymous",
+        "line": 194,
+        "characters": 429
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/ExercisesPage.vue",
+        "name": "anonymous",
+        "line": 272,
+        "characters": 180
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ServiceCatalog.vue",
+        "name": "anonymous",
+        "line": 127,
+        "characters": 180
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/tests/organization-feedback.e2e.ts",
+        "name": "anonymous",
+        "line": 118,
+        "characters": 193
+      },
+      {
+        "file": "apps/frontend/tests/programming.e2e.ts",
+        "name": "anonymous",
+        "line": 85,
+        "characters": 193
+      }
+    ],
+    [
+      {
+        "file": "apps/mobile/src/field/workout-model.ts",
+        "name": "anonymous",
+        "line": 73,
+        "characters": 257
+      },
+      {
+        "file": "apps/mobile/src/field/workout-model.ts",
+        "name": "anonymous",
+        "line": 85,
+        "characters": 257
+      }
+    ]
+  ],
+  "duplicate_css_candidates": [
+    [
+      {
+        "file": "apps/frontend/src/components/ExerciseDemo.vue",
+        "selector": ".demo-positions figure",
+        "line": 17,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/AthletePlans.vue",
+        "selector": ".plan-filters label",
+        "line": 8,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/FollowUpPanel.vue",
+        "selector": ".followup-tabs",
+        "line": 35,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/navigation.css",
+        "selector": ".institution-switch",
+        "line": 8,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/components/ExercisePicker.vue",
+        "selector": ".exercise-picker > label:not(.sr-only)",
+        "line": 6,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/components/TimezonePicker.vue",
+        "selector": ".timezone-picker > label",
+        "line": 5,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/components/ExercisePicker.vue",
+        "selector": ".exercise-picker-anchor:focus-within",
+        "line": 20,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/components/TimezonePicker.vue",
+        "selector": ".timezone-anchor:focus-within",
+        "line": 18,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".search-field:focus-within",
+        "line": 77,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/MemberPicker.vue",
+        "selector": ".member-search-field:focus-within",
+        "line": 24,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/components/ExercisePicker.vue",
+        "selector": ".exercise-picker-copy small",
+        "line": 152,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/PlanEditor.vue",
+        "selector": ".program-cover-drop small",
+        "line": 97,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/components/FileDropzone.vue",
+        "selector": ".file-dropzone.dragging",
+        "line": 17,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".match-card:hover:not(:disabled)",
+        "line": 117,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".plan-choice:has(input:checked)",
+        "line": 317,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/PlanEditor.vue",
+        "selector": ".program-cover-drop.dragging",
+        "line": 70,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".template-choice.selected",
+        "line": 46,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".event-composer .kind-card.selected",
+        "line": 88,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".week-day.selected",
+        "line": 47,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-method:has(input:checked)",
+        "line": 126,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/components/PasswordField.vue",
+        "selector": ".password-reveal:hover",
+        "line": 23,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".ui-tabs button:hover",
+        "line": 290,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/analytics/AnalyticsPage.vue",
+        "selector": ".report-scope span",
+        "line": 30,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".kind-card small",
+        "line": 84,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/analytics/AnalyticsPage.vue",
+        "selector": ".person-filter-panel label",
+        "line": 61,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".delivery-card-head > div",
+        "line": 21,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+        "selector": ".workout-exercise-identity > .exercise-picker",
+        "line": 22,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/platform/PlatformPage.vue",
+        "selector": ".platform-filters label",
+        "line": 12,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".grow",
+        "line": 409,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".match-card.is-added",
+        "line": 125,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/MemberPicker.vue",
+        "selector": ".member-match.is-chosen",
+        "line": 71,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".match-card.is-added .match-icon",
+        "line": 129,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ChannelsPage.vue",
+        "selector": "[aria-checked='true'] .switch-indicator",
+        "line": 44,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".match-text small",
+        "line": 148,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".selected-identity small",
+        "line": 249,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".agenda-time span,\n.event-state",
+        "line": 89,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/nutrition.css",
+        "selector": ".food-results span",
+        "line": 68,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".match-text .match-status",
+        "line": 152,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ServiceCatalog.vue",
+        "selector": ".group-text p strong",
+        "line": 97,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".match-card.is-assigned .match-icon",
+        "line": 167,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/MemberPicker.vue",
+        "selector": ".member-match:has(input:disabled):not(.is-chosen) .member-match-icon",
+        "line": 114,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".selected-identity",
+        "line": 243,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/DeliverPlan.vue",
+        "selector": ".plan-choice span",
+        "line": 326,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/institution/UpcomingSessions.vue",
+        "selector": ".upcoming-text",
+        "line": 48,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/notifications/NotificationsPage.vue",
+        "selector": ".notification-text",
+        "line": 65,
+        "context": "",
+        "declarations": 4
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/ExercisesPage.vue",
+        "selector": ".catalog-arrow",
+        "line": 157,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".workout-preview-exercises small",
+        "line": 280,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/ExercisesPage.vue",
+        "selector": ".library-tools .catalog-sort",
+        "line": 234,
+        "context": "media:(max-width: 760px)",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/nutrition.css",
+        "selector": ".nutrition-plan-fields > *",
+        "line": 108,
+        "context": "media:(max-width: 760px)",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/PlanEditor.vue",
+        "selector": ".program-exercise-cards",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/ReviewPage.vue",
+        "selector": ".feedback-form",
+        "line": 28,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".workout-template-picker",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".dashboard-action-panel",
+        "line": 22,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/PlansPage.vue",
+        "selector": ".assign-mode",
+        "line": 2,
+        "context": "",
+        "declarations": 5
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".workout-picker-heading",
+        "line": 6,
+        "context": "",
+        "declarations": 5
+      },
+      {
+        "file": "apps/frontend/src/features/institution/GroupWorkoutPanel.vue",
+        "selector": ".group-recording-heading,\n.group-sheet-toolbar",
+        "line": 21,
+        "context": "",
+        "declarations": 5
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/PlansPage.vue",
+        "selector": ".assign-hint",
+        "line": 12,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".dashboard-metrics > a small",
+        "line": 102,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/PrescriptionFields.vue",
+        "selector": ".per-set-target",
+        "line": 5,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/RatingForm.vue",
+        "selector": ".rating-form fieldset",
+        "line": 19,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/ReviewPage.vue",
+        "selector": ":deep(.page-heading h3)",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutFields.vue",
+        "selector": ".workout-fields-heading h2",
+        "line": 17,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/DelegatedWorkout.vue",
+        "selector": ".delegated-workout :deep(.work-heading h3)",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".template-picker-heading h2",
+        "line": 120,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/FollowUpPanel.vue",
+        "selector": ".followup-heading h2",
+        "line": 10,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/GroupWorkoutPanel.vue",
+        "selector": ".group-recording-heading h2",
+        "line": 29,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/GroupWorkoutPanel.vue",
+        "selector": ".group-athlete-sheet h3",
+        "line": 94,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".role-dashboard-main > h2",
+        "line": 106,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".dashboard-period h2",
+        "line": 164,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+        "selector": ".workout-exercise-heading",
+        "line": 8,
+        "context": "",
+        "declarations": 5
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutFields.vue",
+        "selector": ".workout-fields-heading",
+        "line": 10,
+        "context": "",
+        "declarations": 5
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+        "selector": ".workout-exercise :deep(.exercise-picker)",
+        "line": 41,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+        "selector": ".workout-alternative-search",
+        "line": 111,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutPreview.vue",
+        "selector": ".workout-preview-heading",
+        "line": 7,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".template-choices",
+        "line": 25,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+        "selector": ".workout-alternatives h3",
+        "line": 77,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".workout-picker-heading h2",
+        "line": 13,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutExerciseCard.vue",
+        "selector": ".workout-alternative-list bdi",
+        "line": 102,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".template-option span",
+        "line": 162,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventDetail.vue",
+        "selector": ".event-participant > div",
+        "line": 72,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".agenda-content",
+        "line": 94,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ScheduledEvents.vue",
+        "selector": ".event-list li > div",
+        "line": 35,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ServiceCatalog.vue",
+        "selector": ".service-library-row > div",
+        "line": 32,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".workout-preview-exercises li span",
+        "line": 276,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".slot-row > div",
+        "line": 3432,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".team-staff > *,\n.team-library-row > *",
+        "line": 3492,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutPreview.vue",
+        "selector": ".workout-preview",
+        "line": 2,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/GroupWorkoutPanel.vue",
+        "selector": ".group-athlete-sheet",
+        "line": 89,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutPreview.vue",
+        "selector": ".workout-preview-exercise strong",
+        "line": 67,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".template-choice strong",
+        "line": 41,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue",
+        "selector": ".template-editor-fields",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-form-body",
+        "line": 66,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".role-dashboard",
+        "line": 1,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue",
+        "selector": ".template-identity .small-print",
+        "line": 17,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/SportsSettings.vue",
+        "selector": ".sports-add .role-choices",
+        "line": 22,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplateEditor.vue",
+        "selector": ".template-identity h2",
+        "line": 21,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/CoachDesk.vue",
+        "selector": ".desk-today :deep(.organization-upcoming h3)",
+        "line": 53,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/coaching/WorkoutTemplatePicker.vue",
+        "selector": ".template-choice small",
+        "line": 50,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".record-title small,\n.record-meta small",
+        "line": 849,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ActivityLog.vue",
+        "selector": ".activity-item",
+        "line": 29,
+        "context": "",
+        "declarations": 5
+      },
+      {
+        "file": "apps/frontend/src/features/notifications/NotificationsPage.vue",
+        "selector": ".notification-row",
+        "line": 29,
+        "context": "",
+        "declarations": 5
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ActivityLog.vue",
+        "selector": ".activity-text",
+        "line": 48,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ServiceCatalog.vue",
+        "selector": ".group-text",
+        "line": 78,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".record-title",
+        "line": 822,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".record-meta > span",
+        "line": 863,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssessmentHistory.vue",
+        "selector": ".history-filters label",
+        "line": 11,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".library-tools label",
+        "line": 2851,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssessmentHistory.vue",
+        "selector": ".history-result h2",
+        "line": 20,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/RatingForm.vue",
+        "selector": ".rating-form h2",
+        "line": 5,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssessmentHistory.vue",
+        "selector": ".history-result dl",
+        "line": 24,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventDetail.vue",
+        "selector": ".event-results dl",
+        "line": 94,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssignedPlanPage.vue",
+        "selector": ".assigned-summary",
+        "line": 21,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".composer-summary",
+        "line": 23,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssignedPlanPage.vue",
+        "selector": ".assigned-summary dl",
+        "line": 26,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/FollowUpPanel.vue",
+        "selector": ".daily-followup",
+        "line": 2,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".workout-rule-settings",
+        "line": 2,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssignedPlanPage.vue",
+        "selector": ".assigned-summary dt",
+        "line": 31,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".composer-summary dt",
+        "line": 37,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssignedPlanPage.vue",
+        "selector": ".assigned-actions .button",
+        "line": 47,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/DelegatedWorkout.vue",
+        "selector": ".back-link",
+        "line": 83,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-toolbar-actions .button,\n.agenda-actions .button",
+        "line": 153,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AssignedPlanPage.vue",
+        "selector": ".plan-preview",
+        "line": 57,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-group",
+        "line": 70,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AthletePlans.vue",
+        "selector": ".plan-filters",
+        "line": 2,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/nutrition/NutritionPlans.vue",
+        "selector": ".nutrition-plan-filters",
+        "line": 2,
+        "context": "",
+        "declarations": 4
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AthleteProfile.vue",
+        "selector": ".profile-facts dt",
+        "line": 14,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/nutrition/NutritionPlans.vue",
+        "selector": ".nutrition-plan-card dt",
+        "line": 40,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".result-facts span",
+        "line": 1402,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/AthleteProfile.vue",
+        "selector": ".profile-summary h2",
+        "line": 72,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-heading h2,\n.agenda-heading h3,\n.agenda-copy h3,\n.agenda-copy h4,\n.agenda-copy h2",
+        "line": 109,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-form h3",
+        "line": 366,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-header h2",
+        "line": 14,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ChannelsPage.vue",
+        "selector": ".contact-person:focus-visible",
+        "line": 85,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/MemberPicker.vue",
+        "selector": ".member-match:has(input:focus-visible)",
+        "line": 67,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ChannelsPage.vue",
+        "selector": ".contact-person small",
+        "line": 89,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".nutrition-totals small",
+        "line": 3353,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/CoachDesk.vue",
+        "selector": ".desk-columns",
+        "line": 6,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".role-dashboard-columns",
+        "line": 5,
+        "context": "",
+        "declarations": 4
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/CoachingTeam.vue",
+        "selector": ".coaching-team h2",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/MemberManagement.vue",
+        "selector": ".management-card h2",
+        "line": 28,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".institution-settings-grid h2,\n.institution-settings-grid h3",
+        "line": 167,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/DelegatedWorkout.vue",
+        "selector": ".delegated-workout",
+        "line": 6,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".workout-preview-sections",
+        "line": 254,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".role-dashboard-context",
+        "line": 15,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/DelegatedWorkout.vue",
+        "selector": ".delegated-set input[type='number']",
+        "line": 44,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/SessionNote.vue",
+        "selector": ".session-note",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/DelegatedWorkout.vue",
+        "selector": ".record-progress",
+        "line": 75,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/navigation.css",
+        "selector": ".work-heading p",
+        "line": 53,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".kind-card input",
+        "line": 69,
+        "context": "",
+        "declarations": 5
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-weekdays input",
+        "line": 185,
+        "context": "",
+        "declarations": 5
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".kind-card > svg",
+        "line": 76,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/FollowUpPanel.vue",
+        "selector": ".followup-clear svg",
+        "line": 31,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".kind-card span",
+        "line": 80,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-method span",
+        "line": 112,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".kind-card:has(input:focus-visible)",
+        "line": 92,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-method:has(input:focus-visible)",
+        "line": 133,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-weekdays label:has(input:focus-visible)",
+        "line": 197,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".filter-chips label:has(input:focus-visible)",
+        "line": 988,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".template-option.selected",
+        "line": 150,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/GroupWorkoutPanel.vue",
+        "selector": ".group-athlete-list button[aria-current='true']",
+        "line": 82,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventComposer.vue",
+        "selector": ".service-field-row > label,\n.service-field-row :deep(.timezone-picker)",
+        "line": 203,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".week-agenda",
+        "line": 31,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".exercise-nav",
+        "line": 1197,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/EventDetail.vue",
+        "selector": ".event-participant h3",
+        "line": 68,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ServiceCatalog.vue",
+        "selector": ".service-library-row h2",
+        "line": 36,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/FollowUpPanel.vue",
+        "selector": ".followup-tabs .record-meta,\n  .followup-tabs .record-actions",
+        "line": 63,
+        "context": "media:(max-width: 520px)",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-compact .record-meta,\n  .agenda-compact .record-actions",
+        "line": 81,
+        "context": "media:(max-width: 520px)",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/InjuryStatus.vue",
+        "selector": ".consent-tags",
+        "line": 26,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".agenda-badges",
+        "line": 70,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".workout-muscles",
+        "line": 284,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-weekdays",
+        "line": 159,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/MemberPicker.vue",
+        "selector": ".member-search",
+        "line": 6,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/institution/SportsSettings.vue",
+        "selector": ".sports-add > label",
+        "line": 10,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".settings-inline-form > label",
+        "line": 141,
+        "context": "",
+        "declarations": 4
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".week-day span",
+        "line": 43,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/nutrition/institution-nutrition.css",
+        "selector": ".org-food-row small,\n.org-food-row span",
+        "line": 105,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".business-facts dt",
+        "line": 3511,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".team-activity time",
+        "line": 3554,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/nutrition.css",
+        "selector": ".planned-food-row small,\n.planned-food-row span",
+        "line": 86,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".agenda-list",
+        "line": 51,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".trend-results",
+        "line": 3204,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".event-state",
+        "line": 109,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".client-row > small",
+        "line": 1872,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".invitation-result small",
+        "line": 1924,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+        "selector": ".agenda-location",
+        "line": 209,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/role-dashboard.css",
+        "selector": ".dashboard-metrics > span,\n.dashboard-metrics > * > span",
+        "line": 86,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/ScheduledEvents.vue",
+        "selector": ".event-filters label",
+        "line": 2,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-fields > *",
+        "line": 144,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/nutrition/NutritionPlans.vue",
+        "selector": ".nutrition-plan-filters label",
+        "line": 8,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/SessionNote.vue",
+        "selector": ".session-note-copy",
+        "line": 6,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".preserve-lines",
+        "line": 629,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".answer-row p",
+        "line": 3044,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/SportsSettings.vue",
+        "selector": ".sports-add input:not([type='radio']),\n.sports-add > .button",
+        "line": 16,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".settings-inline-form input,\n.settings-inline-form > .button",
+        "line": 147,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".list-toolbar > form input,\n.list-toolbar > form select,\n.list-controls > .plan-search input",
+        "line": 515,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".list-toolbar > form > .button",
+        "line": 522,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".people-search-filters input,\n.people-search-filters select",
+        "line": 594,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-list",
+        "line": 117,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".organization-events",
+        "line": 295,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".team-activity",
+        "line": 3497,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-actions",
+        "line": 125,
+        "context": "",
+        "declarations": 4
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".agenda-toolbar-actions",
+        "line": 147,
+        "context": "",
+        "declarations": 4
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".athlete-workout-preview .agenda-actions",
+        "line": 205,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".staff-workout-cards .agenda-actions",
+        "line": 336,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".workout-preview-sections h3",
+        "line": 258,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutAgenda.vue",
+        "selector": ".workout-preview-sections h4",
+        "line": 370,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/WorkoutRuleSettings.vue",
+        "selector": ".rule-status-icon[data-active='true']",
+        "line": 42,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/notifications/NotificationsPage.vue",
+        "selector": ".notification-row.unread .notification-icon",
+        "line": 49,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".tag.success,\n.tinted",
+        "line": 517,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".notice.success",
+        "line": 539,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".organization-nav a.selected",
+        "line": 14,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/navigation.css",
+        "selector": ".institution-nav a.selected",
+        "line": 37,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".brand-fields > label",
+        "line": 244,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".brand-colors label",
+        "line": 254,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".list-toolbar > form > label,\n.list-controls > .plan-search",
+        "line": 509,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/institution/institution.css",
+        "selector": ".person-action:hover",
+        "line": 386,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/nutrition/institution-nutrition.css",
+        "selector": ".org-nutrition-sections button[aria-pressed='true']",
+        "line": 49,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/features/navigation/DashboardNav.vue",
+        "selector": ".navigation-group h2 button:hover",
+        "line": 31,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/features/navigation/DashboardNav.vue",
+        "selector": "a:hover",
+        "line": 77,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": "progress::-webkit-progress-value",
+        "line": 1183,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": "progress::-moz-progress-bar",
+        "line": 1187,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".record-button.checked",
+        "line": 1321,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".role-choices label:has(input[type='radio']:checked)",
+        "line": 114,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".hero",
+        "line": 2142,
+        "context": "media:(max-width: 760px)",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".routine-layout,\n  .today-layout,\n  .coach-home-layout,\n  .clients-layout,\n  .review-layout",
+        "line": 2246,
+        "context": "media:(max-width: 760px)",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".context-form label,\n.library-tools label,\n.roster-tools label,\n.field-pair label",
+        "line": 2817,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".message-attachments",
+        "line": 3741,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".field-pair",
+        "line": 2824,
+        "context": "",
+        "declarations": 3
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".nutrient-fields,\n.nutrition-totals",
+        "line": 3335,
+        "context": "",
+        "declarations": 3
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".library-tools",
+        "line": 2909,
+        "context": "media:(max-width: 760px)",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/navigation.css",
+        "selector": ".tool-shortcuts",
+        "line": 278,
+        "context": "media:(max-width: 760px)",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".slot-row",
+        "line": 3424,
+        "context": "",
+        "declarations": 6
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".team-staff,\n.team-library-row",
+        "line": 3483,
+        "context": "",
+        "declarations": 6
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".slot-row",
+        "line": 3437,
+        "context": "media:(max-width: 600px)",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/style.css",
+        "selector": ".team-staff,\n  .team-library-row",
+        "line": 3530,
+        "context": "media:(max-width: 600px)",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".role-choices label:has(input:disabled)",
+        "line": 130,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ":where(input, select, textarea):disabled",
+        "line": 334,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".ui-tabs button:disabled",
+        "line": 300,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".overflow-item[data-disabled]",
+        "line": 745,
+        "context": "",
+        "declarations": 2
+      }
+    ],
+    [
+      {
+        "file": "apps/frontend/src/styles/design-system.css",
+        "selector": ".list-toolbar-pagination",
+        "line": 425,
+        "context": "",
+        "declarations": 2
+      },
+      {
+        "file": "apps/frontend/src/styles/nutrition.css",
+        "selector": ".nutrition-institution input[type='date']",
+        "line": 96,
+        "context": "",
+        "declarations": 2
+      }
+    ]
+  ],
+  "excluded_tracked_generated": [
+    "packages/shared/src/database.types.ts"
+  ],
+  "baseline_unused_diagnostics": {
+    "web": [
+      "apps/frontend/src/components/ExercisePicker.vue(21,3): error TS6133: 'exerciseArea' is declared but its value is never read.",
+      "apps/frontend/src/features/account/SettingsPage.vue(23,3): error TS6133: 'message' is declared but its value is never read.",
+      "apps/frontend/src/features/analytics/AnalyticsPage.vue(17,7): error TS6133: 'route' is declared but its value is never read.",
+      "apps/frontend/src/features/coaching/ExercisesPage.vue(44,10): error TS6133: 'getDraft' is declared but its value is never read.",
+      "apps/frontend/src/features/coaching/PlanEditor.vue(14,16): error TS6133: 'contexts' is declared but its value is never read.",
+      "apps/frontend/src/features/coaching/ReviewPage.vue(9,20): error TS6133: 'locale' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/AssessmentHistory.vue(24,3): error TS6133: 'id' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/AthletePlans.vue(85,10): error TS6133: 'selectAssignment' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/ChannelEditor.vue(38,7): error TS6133: 'visible' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/ChannelThread.vue(72,19): error TS6133: 'args' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/DashboardPage.vue(5,3): error TS6133: 'PhTray' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/DashboardPage.vue(280,13): error TS6133: 'result' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/EventDetail.vue(218,13): error TS6133: 'result' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/InvitationPage.vue(44,11): error TS6133: 'result' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/ScheduleCalendar.vue(20,3): error TS6133: 'id' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/ScheduledEvents.vue(21,7): error TS6133: 'institution' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/ServiceCatalog.vue(12,10): error TS6133: 'getDraft' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/UpcomingSessions.vue(18,7): error TS6133: 'route' is declared but its value is never read.",
+      "apps/frontend/src/features/institution/UpcomingSessions.vue(19,3): error TS6133: 'id' is declared but its value is never read.",
+      "apps/frontend/src/features/nutrition/NutritionPage.vue(74,7): error TS6133: 'institutionName' is declared but its value is never read.",
+      "apps/frontend/src/features/training/WorkoutPage.vue(19,10): error TS6133: 'clone' is declared but its value is never read.",
+      "apps/frontend/src/features/training/WorkoutPage.vue(33,7): error TS6133: 'router' is declared but its value is never read.",
+      "apps/frontend/src/lib/training.ts(16,3): error TS6133: 'title' is declared but its value is never read.",
+      "apps/frontend/tests/athlete-profile.e2e.ts(171,22): error TS6133: 'view' is declared but its value is never read.",
+      "apps/frontend/tests/beta-web-refinements.e2e.ts(53,13): error TS6133: 'institution' is declared but its value is never read.",
+      "apps/frontend/tests/beta-web-refinements.e2e.ts(246,13): error TS6133: 'institution' is declared but its value is never read.",
+      "apps/frontend/tests/delegated-sessions.e2e.ts(184,11): error TS6133: 'firstDay' is declared but its value is never read.",
+      "apps/frontend/tests/delegated-sessions.e2e.ts(751,11): error TS6133: 'prepared' is declared but its value is never read.",
+      "apps/frontend/tests/delegated-sessions.e2e.ts(1098,11): error TS6133: 'coach' is declared but its value is never read.",
+      "apps/frontend/tests/institution-routing.e2e.ts(6,90): error TS6133: 'info' is declared but its value is never read.",
+      "apps/frontend/tests/ui-audit.e2e.ts(674,9): error TS6133: 'institution' is declared but its value is never read."
+    ],
+    "backend": [
+      "apps/backend/server/calendar.ts(21,8): error TS6133: 'Drill' is declared but its value is never read.",
+      "apps/backend/server/calendar.ts(416,13): error TS6133: 'authorized' is declared but its value is never read.",
+      "apps/backend/server/feedback.ts(9,8): error TS6133: 'Role' is declared but its value is never read.",
+      "apps/backend/server/injuries.ts(6,3): error TS6133: 'access' is declared but its value is never read.",
+      "apps/backend/server/institution-routing.ts(50,35): error TS6133: 'res' is declared but its value is never read.",
+      "apps/backend/server/notifications.ts(124,11): error TS6133: 'view' is declared but its value is never read.",
+      "apps/backend/server/service-catalog.ts(10,8): error TS6133: 'Role' is declared but its value is never read.",
+      "apps/backend/server/service-catalog.ts(14,27): error TS6133: 'pageOffset' is declared but its value is never read.",
+      "apps/backend/tests/api.test.ts(24,16): error TS6133: 'person' is declared but its value is never read.",
+      "apps/backend/tests/coaching-team.test.ts(71,36): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/coaching-team.test.ts(86,38): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/communication.test.ts(20,7): error TS6133: 'other' is declared but its value is never read.",
+      "apps/backend/tests/concurrent-plans.test.ts(71,36): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/concurrent-plans.test.ts(86,38): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/delegated-sessions.test.ts(71,36): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/delegated-sessions.test.ts(86,38): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/maintenance.test.ts(10,31): error TS6133: 'call' is declared but its value is never read.",
+      "apps/backend/tests/organization-feedback.test.ts(27,7): error TS6133: 'other' is declared but its value is never read.",
+      "apps/backend/tests/organization-services.test.ts(30,7): error TS6133: 'other' is declared but its value is never read.",
+      "apps/backend/tests/organization-sports.test.ts(70,36): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/organization-sports.test.ts(85,38): error TS6133: 'id' is declared but its value is never read.",
+      "apps/backend/tests/program-media.test.ts(45,7): error TS6133: 'other' is declared but its value is never read.",
+      "apps/backend/tests/programming.test.ts(80,7): error TS6133: 'other' is declared but its value is never read."
+    ],
+    "mobile": [
+      "apps/mobile/src/field/EventHistory.tsx(51,3): error TS6133: 'institution' is declared but its value is never read."
+    ]
+  },
+  "baseline_checks": {
+    "types": "Web, backend and mobile passed.",
+    "web_units": "55 tests, 16 files passed.",
+    "mobile_queue": "20 passed.",
+    "mobile_request": "10 passed.",
+    "web_build": "passed",
+    "backend_fresh_database": "passed; owned disposable database removed, preview unchanged",
+    "format": "failed in 117 existing frontend files",
+    "semantic_lint": "No configured lint command."
+  },
+  "final_checks": {
+    "shared_types": "passed",
+    "backend_types": "passed",
+    "mobile_types": "passed including test tsconfig",
+    "web_units": "55 tests, 16 files passed",
+    "web_build": "passed",
+    "mobile_queue": "20 passed",
+    "mobile_request": "12 passed including 2 new regressions",
+    "native_workout_api": "1 journey passed; disposable database/files cleaned",
+    "frontend_inventory": "passed: 104 Vue, 49 screens, 47 routes, 234 navigation references",
+    "backend_inventory": "passed: 58 models, 483 columns, 70 route records",
+    "metro_android_js": "passed: 1199 modules, 1 Android JavaScript bundle, 26 assets; no bytecode/Gradle/APK",
+    "changed_source_format": "13 source/config files passed Prettier using package configuration",
+    "docs": "passed: 2 checker tests; 2259 local links and 684 heading links across 81 maintained documents"
+  },
+  "limits": [
+    "No browser/device/Gradle/APK/production acceptance",
+    "No registry audit or clean Linux dependency install",
+    "No CSS or layout change",
+    "Large-module extraction and remaining unused diagnostics deferred"
+  ],
+  "removed_files": [],
+  "generated_edits": []
+}

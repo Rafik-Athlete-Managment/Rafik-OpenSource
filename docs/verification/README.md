@@ -1,5 +1,13 @@
 # Verification record
 
+## Code quality audit — 31 October 2026
+
+Baseline at a6fc3a09 passed web/backend/mobile typechecks, 55 web tests in 16 files, 20 native queue and ten request tests, the web production build and fresh-database migration/SQL assertions. The full frontend formatter already failed in 117 files; optional noUnused probes reported 31 web, 23 backend and one mobile diagnostic. No semantic lint command is configured. Those probes are diagnostic, not newly enabled release gates.
+
+After the conservative refactor, shared/backend/mobile typechecks passed, as did 55 web tests, the web production build, 20 real-SQLite queue tests and 12 request/projection/input tests. The isolated native-workout API journey passed and removed its owned database/files. Both generated inventories remained fresh: web 104 Vue files/49 screens/47 route records, backend 58 models/483 columns/70 routes. Metro exported the Android JavaScript bundle (1,199 modules/26 assets) successfully with two workers and no bytecode, verifying the shared runtime import without native compilation. Thirteen changed source/config files passed formatting; documentation checks passed (two tests, 2,259 local links and 684 heading links). No generated files were edited. See the [audit report](../known-issues/code-quality-audit.md) and [raw source/check receipt](receipts/2026-10-31-code-quality-audit.json).
+
+No browser suite, native compilation/APK, physical device test, registry vulnerability audit, clean Linux install or production deployment was performed. These source/API/Node checks do not close native rendered/device acceptance. Existing unused bindings, formatting, larger module extraction and cascade-sensitive CSS consolidation remain documented debt. No landing update is required for internal refactoring with unchanged public workflows/contracts.
+
 ## Native individual workout source — 31 October 2026
 
 Mobile and backend typechecks passed. Ten request/session/input cases cover capability refusal, authentication/connectivity separation, decimal/Arabic numeric entry and retained owner identity. Twenty real-SQLite cases cover existing attendance/assessment behavior plus workout disk restart, sending-to-uncertain recovery, exact replay, newer edits during a held save, rejection/replacement, resource-version access restoration, owner boundaries and ten-record pagination. The final-empty-read handoff case confirms newly queued work receives another sync pass instead of waiting for the timer.

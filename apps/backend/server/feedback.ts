@@ -6,7 +6,6 @@ import {
   event,
   uuid,
   type Tx,
-  type Role,
   access,
 } from "./institution.ts";
 import { role } from "./programming.ts";

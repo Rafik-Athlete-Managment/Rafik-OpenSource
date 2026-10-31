@@ -2,14 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { ApiError, type Actor } from "./db.ts";
 import { calendarDate } from "./service-definitions.ts";
 import { role } from "./programming.ts";
-import {
-  access,
-  event,
-  scoped,
-  uuid,
-  type Role,
-  type Tx,
-} from "./institution.ts";
+import { event, scoped, uuid, type Role, type Tx } from "./institution.ts";
 
 const POLICY_VERSION = "injury-status-v1-2026-10";
 type Injury = {

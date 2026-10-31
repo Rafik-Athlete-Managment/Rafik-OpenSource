@@ -1,6 +1,56 @@
-import type { FieldWorkoutPackage } from "@rafik/shared/contracts";
+import type {
+  FieldWorkoutEntry,
+  FieldWorkoutPackage,
+} from "@rafik/shared/contracts";
 
-const entry = (e: any) => ({
+import type {
+  institution_assignments,
+  institution_events,
+  institution_sessions,
+} from "./generated/prisma/client.ts";
+
+type Assignment = Pick<institution_assignments, "id" | "member_id"> & {
+  institution_versions: { title: string };
+  institution_members_institution_assignments_institution_id_member_idToinstitution_members: {
+    name: string;
+  };
+};
+type Occurrence = Pick<
+  institution_events,
+  "id" | "title" | "starts_at" | "training_date" | "timezone"
+>;
+type Session = Pick<
+  institution_sessions,
+  "id" | "version" | "document" | "local_date" | "completed_at"
+>;
+type Target = Pick<FieldWorkoutEntry, "reps" | "load"> &
+  Partial<Pick<FieldWorkoutEntry, "seconds" | "metres" | "effort">>;
+type ExerciseKind = FieldWorkoutPackage["exercises"][number]["kind"];
+type Day = {
+  id: string;
+  name: string;
+  nameAr?: string;
+  exercises: (Target & {
+    key: string;
+    exerciseId: string;
+    sets: number;
+    unit: FieldWorkoutEntry["unit"];
+    targets?: Target[];
+    kind?: ExerciseKind;
+    info?: { name?: string; name_ar?: string; kind?: ExerciseKind };
+    rest?: number;
+    note?: string;
+  })[];
+};
+type EntrySource = Omit<
+  FieldWorkoutEntry,
+  "exercise_id" | "seconds" | "metres" | "effort"
+> &
+  Partial<
+    Pick<FieldWorkoutEntry, "exercise_id" | "seconds" | "metres" | "effort">
+  >;
+
+const entry = (e: EntrySource): FieldWorkoutEntry => ({
   exercise_id: e.exercise_id ?? null,
   exercise_key: e.exercise_key,
   set_index: e.set_index,
@@ -16,16 +66,23 @@ const entry = (e: any) => ({
 /** Called only inside workoutAgenda's authorized transaction; never an allocator. */
 export function fieldWorkoutPackage(
   institution: string,
-  assignment: any,
-  day: any,
-  occurrence: any,
-  session: any,
+  assignment: Assignment,
+  day: Day | null | undefined,
+  occurrence: Occurrence | null | undefined,
+  session: Session | null | undefined,
   canStart: boolean,
   canRecord: boolean,
 ): FieldWorkoutPackage | null {
   if (!day || !occurrence) return null;
-  const document = session?.document;
-  const targets = day.exercises.flatMap((e: any) =>
+  // Session JSON is written by the validated recorder; this mapper only projects it.
+  const document = session?.document as
+    | {
+        title?: string;
+        entries?: FieldWorkoutEntry[];
+        note?: string;
+      }
+    | undefined;
+  const targets = day.exercises.flatMap((e) =>
     Array.from({ length: e.sets }, (_, index) => {
       const t = e.targets?.[index] || e;
       return {
@@ -42,7 +99,7 @@ export function fieldWorkoutPackage(
     }),
   );
   return {
-    id: occurrence?.id || session.id,
+    id: occurrence.id,
     institution_id: institution,
     assignment_id: assignment.id,
     member_id: assignment.member_id,
@@ -50,7 +107,7 @@ export function fieldWorkoutPackage(
       assignment
         .institution_members_institution_assignments_institution_id_member_idToinstitution_members
         .name,
-    occurrence_id: occurrence?.id || null,
+    occurrence_id: occurrence.id,
     title:
       occurrence?.title ||
       document?.title ||
@@ -59,13 +116,11 @@ export function fieldWorkoutPackage(
     day_name: day.name,
     day_name_ar: day.nameAr || "",
     starts_at: occurrence?.starts_at?.toISOString() || null,
-    training_date: (occurrence?.training_date || session.local_date)
-      .toISOString()
-      .slice(0, 10),
+    training_date: occurrence.training_date.toISOString().slice(0, 10),
     timezone: occurrence?.timezone || "UTC",
     allow_provisional_start: canStart,
     can_record: canRecord,
-    exercises: day.exercises.map((e: any) => ({
+    exercises: day.exercises.map((e) => ({
       key: e.key,
       name: e.info?.name || e.exerciseId,
       name_ar: e.info?.name_ar || "",

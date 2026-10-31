@@ -5,6 +5,7 @@ import { ApiFailure, ConnectionFailure, failureText } from '../src/field/model.t
 import { translate } from '../src/field/translations.ts'
 import { selectedInstitution } from '../src/field/access.ts'
 import { checkCapabilities, fieldCapabilities } from '../src/field/capabilities.ts'
+import { workoutPackage } from '../src/field/workout-model.ts'
 import { workoutNumber } from '../src/field/workout-input.ts'
 import { requireWorkoutSupport } from '../src/field/workout-sync.ts'
 
@@ -206,4 +207,64 @@ test('access changes preserve saved work selection but leave removed empty insti
   assert.equal(selectedInstitution('old', [{ institution_id: 'new' }], ['old']), 'old')
   assert.equal(selectedInstitution('old', [], ['old']), 'old')
   assert.equal(selectedInstitution('', [], ['saved']), 'saved')
+})
+
+test('workout projections strip extra entry fields from both actuals and targets without changing zero values', () => {
+  const id = '00000000-0000-4000-8000-000000000001'
+  const entry = {
+    exercise_key: 'bodyweight',
+    set_index: 0,
+    reps: 8,
+    load: 0,
+    unit: 'kg',
+    seconds: null,
+    metres: null,
+    effort: null,
+    completed: false,
+  }
+  const projection = workoutPackage({
+    id,
+    institution_id: id,
+    assignment_id: id,
+    member_id: id,
+    member_name: 'Athlete',
+    occurrence_id: id,
+    title: 'Strength',
+    day_id: 'day-1',
+    day_name: 'Day 1',
+    training_date: '2026-10-31',
+    starts_at: null,
+    timezone: 'UTC',
+    allow_provisional_start: true,
+    can_record: false,
+    session: null,
+    exercises: [
+      { key: 'bodyweight', name: 'Push-up', name_ar: '', kind: 'strength', rest: 30, note: '' },
+    ],
+    entries: [{ ...entry, unrelated: 'must not persist' }],
+    targets: [{ ...entry, unrelated: 'must not persist' }],
+  })
+  const expected = { ...entry, exercise_id: null }
+  assert.deepEqual(projection.entries, [expected])
+  assert.deepEqual(projection.targets, [expected])
+  assert.notEqual(projection.entries[0], projection.targets?.[0])
+})
+
+test('measurement extraction preserves numeric boundaries and optional effort precision', () => {
+  for (const [field, value] of [
+    ['load', '1000'],
+    ['reps', '200'],
+    ['seconds', '86400'],
+    ['metres', '1000000'],
+    ['effort', '1.25'],
+    ['effort', '10'],
+  ] as const)
+    assert.deepEqual(workoutNumber(field, value), { valid: true, value: Number(value) })
+  for (const [field, value] of [
+    ['seconds', '86401'],
+    ['metres', '1000000.01'],
+    ['effort', '0.99'],
+    ['load', '-1'],
+  ] as const)
+    assert.equal(workoutNumber(field, value).valid, false)
 })

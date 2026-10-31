@@ -59,6 +59,7 @@ jobs:
       - run: npm run content:wger-exercises:check
       - run: npm run content:videos
       - run: npm run test:catalog
+      - run: npm run typecheck --workspace @rafik/shared
       - run: npm run backend:typecheck
       - run: npm run typecheck --workspace @rafik/mobile
       - run: npm run test:request --workspace @rafik/mobile

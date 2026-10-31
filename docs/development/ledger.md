@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Code quality audit — 31 October 2026
+
+Completed a tracked-source/configuration inventory across all four workspaces and established type/unit/build/disposable-database baselines. Applied the first low-risk refactoring pass: shared measurement facts with stable web imports, one native entry projector, typed Prisma-backed field-package inputs and removal of five unused backend imports. Added a standalone shared compiler check to CI and maintained TypeScript/refactoring guidance. The audit records existing formatter/unused-code failures and the larger module/CSS extractions deferred for coverage. No API/schema/migration/owner-key changes, new dependencies, generated edits or new product features. Internal-only changes need no landing PR. See the [audit](../known-issues/code-quality-audit.md) and [verification](../verification/README.md#code-quality-audit--31-october-2026) for actual evidence and remaining acceptance limits.
+
 ## Native individual workout capture — 31 October 2026
 
 The founder delegated the start policy; selected provisional offline starts with server revalidation. Trainer-only field packages extend the authorized agenda without another allocator or event. The existing SQLCipher connection gains owner-scoped workout records, frozen start requests and measured drafts/save intents; the first save binds its revision only after start acknowledgment. Restart recovery preserves exact operations, later edits remain unsynced, and current capability support is checked before replay. Field views stay mounted when switching; cached and online lists page ten records and avoid duplicate download cards. Strength/timed/distance entry, explicit Done checks, confirmed read-only summaries, sharing, clean-copy removal and explicit rejected-save/server-version recovery are implemented in source. Group capture and native rendered/device acceptance remain pending. ADR 0036 records boundaries and trade-offs.

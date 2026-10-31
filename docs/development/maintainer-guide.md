@@ -1,5 +1,15 @@
 # Maintainer guide
 
+## TypeScript and refactoring standards
+
+Use strict typing with each workspace's existing toolchain: Vue/Vite uses Bundler resolution and isolated modules, the API uses NodeNext, and mobile extends Expo's configuration. Do not copy compiler flags between them blindly. The shared source package uses strict NodeNext, verbatimModuleSyntax and erasableSyntaxOnly, checked by `npm run typecheck --workspace @rafik/shared` from the repository root after the normal root install. CI runs this separately from consumer checks.
+
+Use explicit type-only imports for type dependencies; keep runtime exports explicit at package boundaries. Prefer inferred local values, named domain types for recurring shapes, unknown plus narrowing for external input and documented assertions only at an already-validated boundary. Do not replace any with an unchecked generic cast and call it validation. Preserve mutable form/draft models and existing component signatures. Strip-only Node helpers cannot use parameter properties, runtime enums or other syntax requiring transformation. Follow [TypeScript strict options](https://www.typescriptlang.org/tsconfig/strict.html), [isolatedModules](https://www.typescriptlang.org/tsconfig/isolatedModules.html), [verbatimModuleSyntax](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html) and [erasableSyntaxOnly](https://www.typescriptlang.org/tsconfig/erasableSyntaxOnly.html).
+
+Shared measurement facts live at `@rafik/shared/workout-measures`. The web set-measures module re-exports its established interface. Native input uses the same bounds without treating an input step as a server validation rule; optional effort precision and unfinished decimal text remain supported. Server validation is authoritative. DTO projection must whitelist fields; object spreading an untrusted response into durable storage changes that boundary.
+
+Verify references, runtime effects, peer/plugin dependencies and fixture cleanup before removal. Use existing shared UI components/design tokens; merge repeated CSS only after checking cascade, scoped selectors, responsive behavior and RTL/themes. Preserve package formatter conventions and avoid unrelated formatting churn. See the [audit and prioritized debt](../known-issues/code-quality-audit.md).
+
 ## Native workout ownership and replay
 
 WorkoutsScreen owns selection/measurement entry; workout-model/input validate presentation and keep missing values distinct from zero. FieldStore initializes the additive workout table and shares its existing serialized database lane with WorkoutStore. WorkoutSync sends the existing session commands, with capability preflight in the native sender. Do not add another allocator or guess the first save revision before the start is acknowledged. Frozen requests and later drafts are distinct; observer/read failures must not turn committed writes into uncertain replay. Keep explicit recovery for rejection, exact retry for uncertainty and resource-authorized access restoration.

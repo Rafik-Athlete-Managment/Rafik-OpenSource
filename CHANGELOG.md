@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Audit all active workspaces for typing, duplication, unused code and styling debt. Share web/native workout measurement facts, type the backend field-package mapper, consolidate native entry projection and add an independent shared-package CI check without changing public contracts or stored data. Record existing formatting failures and deferred structural/CSS work.
+
 - Add source-level Android individual workout downloads and provisional offline start/result capture in the existing encrypted cache. Exact start/save replay reuses server sequence/permission checks; measurement-aware actuals, explicit completion, recovery sharing, rejected-save review and bounded saved/online lists are included. Group recording, rendered/physical Android acceptance and release packaging remain pending; no new APK is published.
 
 - Add authenticated, read-only native capability discovery and an English/Arabic Server compatibility disclosure in the Android schedule. Missing contracts, denied sessions and connection failures remain distinct without changing saved work. The subsequent individual capture slice is listed above; group capture and day-only attendance calendar remain unavailable. No release APK is produced here.

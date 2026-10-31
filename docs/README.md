@@ -40,6 +40,8 @@ This page is the index for maintained Rafik documentation. The root [README](../
 
 ## Development and quality
 
+- [Monorepo code quality audit](known-issues/code-quality-audit.md): baseline, safe refactoring decisions, dependency/removal review and prioritized source/CSS debt.
+
 - [Instance validation walkthrough](testing/instance-validation.md): single source of truth for manual administrator, coach and athlete checks, setup, expected results and version-specific boundaries.
 
 - [Development setup and workflows](development/README.md): prerequisites, local setup, common change workflows and troubleshooting.

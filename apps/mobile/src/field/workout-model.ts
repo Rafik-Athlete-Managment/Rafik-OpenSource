@@ -70,30 +70,8 @@ export function workoutPackage(input: unknown): FieldWorkoutPackage {
       rest: e.rest,
       note: e.note,
     })),
-    targets: p.targets?.map((e) => ({
-      exercise_id: e.exercise_id ?? null,
-      exercise_key: e.exercise_key,
-      set_index: e.set_index,
-      reps: e.reps,
-      load: e.load,
-      unit: e.unit,
-      seconds: e.seconds,
-      metres: e.metres,
-      effort: e.effort,
-      completed: e.completed,
-    })),
-    entries: p.entries.map((e) => ({
-      exercise_id: e.exercise_id ?? null,
-      exercise_key: e.exercise_key,
-      set_index: e.set_index,
-      reps: e.reps,
-      load: e.load,
-      unit: e.unit,
-      seconds: e.seconds,
-      metres: e.metres,
-      effort: e.effort,
-      completed: e.completed,
-    })),
+    targets: p.targets?.map(projectEntry),
+    entries: p.entries.map(projectEntry),
     session: p.session
       ? {
           id: p.session.id,
@@ -190,4 +168,20 @@ export type WorkoutRecord = {
   blocked: boolean
   error: string
   saved_at: string
+}
+
+// Project only transport fields; never persist extra properties from a response.
+function projectEntry(e: FieldWorkoutEntry): FieldWorkoutEntry {
+  return {
+    exercise_id: e.exercise_id ?? null,
+    exercise_key: e.exercise_key,
+    set_index: e.set_index,
+    reps: e.reps,
+    load: e.load,
+    unit: e.unit,
+    seconds: e.seconds,
+    metres: e.metres,
+    effort: e.effort,
+    completed: e.completed,
+  }
 }
