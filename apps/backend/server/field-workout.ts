@@ -1,3 +1,5 @@
+import type { PlanDay } from "@rafik/shared/workouts";
+import { prescribedEntries } from "./workout-document.ts";
 import type {
   FieldWorkoutEntry,
   FieldWorkoutPackage,
@@ -23,25 +25,6 @@ type Session = Pick<
   institution_sessions,
   "id" | "version" | "document" | "local_date" | "completed_at"
 >;
-type Target = Pick<FieldWorkoutEntry, "reps" | "load"> &
-  Partial<Pick<FieldWorkoutEntry, "seconds" | "metres" | "effort">>;
-type ExerciseKind = FieldWorkoutPackage["exercises"][number]["kind"];
-type Day = {
-  id: string;
-  name: string;
-  nameAr?: string;
-  exercises: (Target & {
-    key: string;
-    exerciseId: string;
-    sets: number;
-    unit: FieldWorkoutEntry["unit"];
-    targets?: Target[];
-    kind?: ExerciseKind;
-    info?: { name?: string; name_ar?: string; kind?: ExerciseKind };
-    rest?: number;
-    note?: string;
-  })[];
-};
 type EntrySource = Omit<
   FieldWorkoutEntry,
   "exercise_id" | "seconds" | "metres" | "effort"
@@ -67,7 +50,7 @@ const entry = (e: EntrySource): FieldWorkoutEntry => ({
 export function fieldWorkoutPackage(
   institution: string,
   assignment: Assignment,
-  day: Day | null | undefined,
+  day: PlanDay | null | undefined,
   occurrence: Occurrence | null | undefined,
   session: Session | null | undefined,
   canStart: boolean,
@@ -82,22 +65,7 @@ export function fieldWorkoutPackage(
         note?: string;
       }
     | undefined;
-  const targets = day.exercises.flatMap((e) =>
-    Array.from({ length: e.sets }, (_, index) => {
-      const t = e.targets?.[index] || e;
-      return {
-        exercise_key: e.key,
-        set_index: index,
-        reps: t.reps,
-        load: t.load,
-        unit: e.unit,
-        seconds: t.seconds ?? null,
-        metres: t.metres ?? null,
-        effort: t.effort ?? null,
-        completed: false,
-      };
-    }),
-  );
+  const targets = prescribedEntries(day.exercises);
   return {
     id: occurrence.id,
     institution_id: institution,

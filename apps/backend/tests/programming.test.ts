@@ -72,12 +72,12 @@ test("organization publication, actuals, reassignment and exact replay preserve 
   const f = await organizationFixture();
   try {
     const admin = await f.person(),
-trainer = await f.person(),
-client = await f.person(),
-replacement = await f.person(),
-foreign = await f.person(),
-id = await f.create(admin);
-await f.create(foreign);
+      trainer = await f.person(),
+      client = await f.person(),
+      replacement = await f.person(),
+      foreign = await f.person(),
+      id = await f.create(admin);
+    await f.create(foreign);
     const staff = await f.join(admin, id, trainer, ["trainer"]),
       trainee = await f.join(admin, id, client, ["trainee"]),
       next = await f.join(admin, id, replacement, ["trainer"]);

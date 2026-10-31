@@ -1,10 +1,15 @@
 # Testing
 
-## Native individual workouts
+## Code quality gates
 
-From the root, `npm run test:native-workouts` creates/removes a disposable database and runs the actual native SQLite queue against the API: trainer package download, provisional start, measured completion, simulated lost start acknowledgment, exact replay and one sequence advancement. Athlete field-package access is rejected; ordinary agenda reads omit full packages. Existing test fixtures affect only that disposable database.
+Run from the repository root after the normal npm ci. All four workspace compilers enforce unused locals/parameters; root format:check checks the web formatter and build includes Vue typechecking. CI also checks the shared package separately.
 
-`npm run test:queue --workspace @rafik/mobile` covers SQLite restart, owner boundaries, edits during a held request, rejection/recovery, access restoration and cached pagination. `npm run test:request --workspace @rafik/mobile` covers numeric entry and unsupported-server preflight. These Node/API checks do not establish rendered Android, native SQLCipher, physical offline/process death or signed upgrade acceptance. Use the [single role walkthrough](instance-validation.md#native-individual-workouts--unreleased-beta3) for those manual checks; do not reset/reseed an instance.
+- `npm run test:workout-document` checks unfinished prescribed entries, zero load, per-set targets and nullable time/distance measures without a database.
+- `npm run test:components --workspace @rafik/mobile` checks controlled TSX element/callback contracts with explicit host stubs. It does not establish native layout or device persistence.
+- `npm run test:backend-inventory` and `npm run test:frontend-inventory` compare LF/CRLF source behavior. Backend coverage also rejects a deliberately stale reference; temporary fixture trees are removed.
+- The existing queue/request tests and disposable API journeys validate persistence, permissions, retries and current-server authority. Browser/device scope is recorded separately in verification.
+
+The legacy operations/cohesion layout npm aliases now run maintained isolated browser specs; they no longer require an existing dev server or use old role-prefixed navigation.
 
 ## Native individual workouts
 
@@ -117,7 +122,7 @@ Backend `test:*` integration commands now use `apps/backend/scripts/prisma/isola
 
 ## Frontend inventory coverage
 
-Run `npm run test:frontend-inventory` after changing the analyzer. It generates the actual inventories in isolated CRLF and LF source fixtures, compares every generated document, checks freshness in both and removes its fixtures. This is also a web CI step; it does not start browsers, the API or a database.
+Run ``npm run test:frontend-inventory`` after changing the analyzer. It generates the actual inventories in isolated CRLF and LF source fixtures, compares every generated document, checks freshness in both and removes its fixtures. This is also a web CI step; it does not start browsers, the API or a database.
 
 Run `npm run frontend:inventory:check` for the maintained [view/component/route reference](../reference/frontend/README.md). The analyzer detects missing descriptions, orphan Vue files, missing rendered consumers, unknown navigation targets and generated-document drift. Review dynamic destinations and role/state-specific branches, not just the command result. It does not execute route guards or prove server authorization.
 

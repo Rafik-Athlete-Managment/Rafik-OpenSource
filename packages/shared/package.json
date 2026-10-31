@@ -19,6 +19,10 @@
     "./workout-measures": {
       "types": "./src/workout-measures.ts",
       "default": "./src/workout-measures.ts"
+    },
+    "./workouts": {
+      "types": "./src/workouts.ts",
+      "default": "./src/workouts.ts"
     }
   },
   "scripts": {

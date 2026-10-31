@@ -1,3 +1,4 @@
+import type { Prescription } from "@rafik/shared/workouts";
 import { db, ApiError, type Actor } from "./db.ts";
 import {
   access,
@@ -341,12 +342,13 @@ export async function prepareWorkoutRule(id: string, now = new Date()) {
       )
         return stamp("waiting_for_day");
       if (automatic) {
-        const prescription = plan.institution_versions.prescription as any;
+        const prescription = plan.institution_versions
+          .prescription as unknown as Prescription;
         const index =
           Math.floor((Date.parse(day) - plan.start_date.getTime()) / 86400000) %
           (7 * (prescription.cycleWeeks || 1));
         const calendarDay = (prescription.days || []).find(
-          (d: any) => ((d.week || 1) - 1) * 7 + d.weekday === index,
+          (d) => ((d.week || 1) - 1) * 7 + (d.weekday as number) === index,
         );
         if (!calendarDay || calendarDay.restDay) return stamp("rest_day");
       }

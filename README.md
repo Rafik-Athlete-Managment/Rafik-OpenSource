@@ -84,6 +84,8 @@ The Compose profile is an implemented deployment foundation, not a production-re
 
 For inventory-analyzer changes, run `npm run test:frontend-inventory` to compare CRLF/LF generation, then `npm run frontend:inventory:check` for the maintained reference.
 
+The [code quality gates](docs/testing/README.md#code-quality-gates) cover compiler, formatter, shared projections and native component contracts before device practice validation.
+
 From the repository root:
 
 ```sh

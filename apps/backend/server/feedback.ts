@@ -62,7 +62,16 @@ export async function feedback(
         next: items.length > 24 ? pageOffset(q.get("offset")) + 24 : null,
       };
     }
-    const rows = await tx.$queryRaw<any[]>`WITH eligible AS (
+    const rows = await tx.$queryRaw<
+      {
+        id: string;
+        source: "workout" | "calendar";
+        title: string | null;
+        at: Date | null;
+        score: number | null;
+        revision: number;
+      }[]
+    >`WITH eligible AS (
    SELECT s.id,'workout' source,s.document->>'title' title,s.completed_at at FROM public.institution_sessions s WHERE s.source_kind='assignment' AND s.institution_id=${institution}::uuid AND s.member_id=${self.id}::uuid AND s.completed_at IS NOT NULL
    UNION ALL SELECT e.id,'calendar',e.title,e.ends_at FROM public.institution_events e JOIN public.institution_event_people p ON p.event_id=e.id WHERE e.institution_id=${institution}::uuid AND p.member_id=${self.id}::uuid AND p.duty='trainee' AND p.attendance='present' AND e.state='completed' AND e.kind='training'
   ) SELECT e.*,f.score,coalesce(f.revision,0) revision FROM eligible e LEFT JOIN public.institution_session_feedback f ON f.member_id=${self.id}::uuid AND (CASE WHEN e.source='workout' THEN f.workout_id ELSE f.event_id END)=e.id ORDER BY e.at DESC,e.source,e.id LIMIT 25 OFFSET ${pageOffset(q.get("offset"))}`;

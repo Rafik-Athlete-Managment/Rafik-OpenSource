@@ -162,16 +162,25 @@ async function catalogPage(kind: 'templates' | 'groups', append = false) {
     ...(kind === 'templates' ? { limit: '5' } : {}),
     offset: String(append ? (kind === 'templates' ? templateNext.value : groupNext.value) || 0 : 0),
   })
-  const page = await request<{ items: any[]; next: number | null }>(`/v1/institution/services?${q}`)
+  const page = await request<{
+    items: (AssessmentTemplate | TrainingGroup)[]
+    next: number | null
+  }>(`/v1/institution/services?${q}`)
   if (kind === 'templates') {
     const selected = selectedTemplate.value
     templates.value = append
-      ? Array.from(new Map([...templates.value, ...page.items].map((t) => [t.id, t])).values())
-      : page.items
+      ? Array.from(
+          new Map(
+            [...templates.value, ...(page.items as AssessmentTemplate[])].map((t) => [t.id, t]),
+          ).values(),
+        )
+      : (page.items as AssessmentTemplate[])
     if (selected) retainedTemplate.value = selected
     templateNext.value = page.next
   } else {
-    groups.value = append ? [...groups.value, ...page.items] : page.items
+    groups.value = append
+      ? [...groups.value, ...(page.items as TrainingGroup[])]
+      : (page.items as TrainingGroup[])
     groupNext.value = page.next
   }
 }

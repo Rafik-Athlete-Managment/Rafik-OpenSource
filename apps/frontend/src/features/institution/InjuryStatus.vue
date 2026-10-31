@@ -9,12 +9,51 @@ import { errorMessage, language as l } from '../../lib/i18n'
 import { dateLabel } from '../../lib/display-time'
 import { localDate } from '../../lib/dates'
 
+type HealthConsent = {
+  age_group: 'adult' | 'minor'
+  guardian_authorized: boolean
+  athlete_assented_at: string | null
+  withdrawn_at: string | null
+  assent_policy_version: string | null
+  revision: number
+}
+type HealthMember = {
+  member_id: string
+  name: string
+  age_group: 'adult' | 'minor' | null
+  guardian_authorized: boolean | null
+  athlete_assented_at: string | null
+  withdrawn_at: string | null
+  revision: number | null
+}
+type HealthHistory = {
+  revision: number
+  action: string
+  participation: string
+  effective_from: string
+}
+type HealthRecord = {
+  id: string
+  revision?: number
+  participation: string
+  effective_from: string
+  state?: string
+  athlete_member_id?: string
+  athlete_name?: string
+  history?: HealthHistory[]
+}
+type HealthPage = {
+  consent?: HealthConsent | null
+  items?: HealthRecord[]
+  members?: HealthMember[]
+}
+
 const context = programContext(useRoute()),
   endpoint = `/v1/institution/injuries`,
   busy = ref(false),
   error = ref(''),
   loaded = ref(false),
-  data = ref<any>(),
+  data = ref<HealthPage>(),
   participation = ref('modified'),
   effective = ref(localDate(profile.value?.timezone || 'UTC')),
   // Consent setup is chosen per athlete, beside the athlete it applies to.
@@ -26,7 +65,7 @@ const items = computed(() => data.value?.items || [])
 async function load() {
   error.value = ''
   try {
-    data.value = await request(`${endpoint}?view=${view}`)
+    data.value = await request<HealthPage>(`${endpoint}?view=${view}`)
     loaded.value = true
   } catch (e) {
     error.value = errorMessage(e)
@@ -65,7 +104,7 @@ function report() {
     revision: 0,
   })
 }
-function update(record: any, action: 'correct' | 'close') {
+function update(record: HealthRecord, action: 'correct' | 'close') {
   return command(action, {
     operation: crypto.randomUUID(),
     id: record.id,
@@ -74,17 +113,18 @@ function update(record: any, action: 'correct' | 'close') {
     revision: record.revision,
   })
 }
-const ageOf = (member: any) => ageGroups.value[member.member_id] || member.age_group || 'adult'
-const needsSetup = (member: any) => !member.age_group
+const ageOf = (member: HealthMember) =>
+  ageGroups.value[member.member_id] || member.age_group || 'adult'
+const needsSetup = (member: HealthMember) => !member.age_group
 const setupMembers = computed(() =>
   (data.value?.members || []).filter(
-    (member: any) => setupFilter.value === 'all' || needsSetup(member),
+    (member: HealthMember) => setupFilter.value === 'all' || needsSetup(member),
   ),
 )
 const pendingSetup = computed(
-  () => (data.value?.members || []).filter((member: any) => needsSetup(member)).length,
+  () => (data.value?.members || []).filter((member: HealthMember) => needsSetup(member)).length,
 )
-async function configure(member: any) {
+async function configure(member: HealthMember) {
   const age = ageOf(member)
   await command('configure', {
     member_id: member.member_id,
@@ -117,13 +157,13 @@ async function exportRecords() {
         format: 'rafik-injury-participation-v1',
         exported_at: new Date().toISOString(),
         policy_version: response.consent?.assent_policy_version || null,
-        records: response.items.map((record: any) => ({
+        records: response.items.map((record) => ({
           participation: record.participation,
           effective_from: record.effective_from,
           state: record.state,
           created_at: record.created_at,
           closed_at: record.closed_at,
-          history: record.history.map((entry: any) => ({
+          history: record.history.map((entry) => ({
             action: entry.action,
             participation: entry.participation,
             effective_from: entry.effective_from,
@@ -167,7 +207,7 @@ onMounted(load)
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="!loaded" aria-live="polite">{{ l('Loading…', 'جارٍ التحميل…') }}</p>
 
-    <template v-else-if="view === 'trainee'">
+    <template v-else-if="data && view === 'trainee'">
       <section class="panel">
         <h2>{{ l('Sharing and consent', 'المشاركة والموافقة') }}</h2>
         <p v-if="!data.consent">
@@ -273,7 +313,7 @@ onMounted(load)
       </section>
     </template>
 
-    <section v-else-if="view === 'trainer'" aria-labelledby="assigned-status-title">
+    <section v-else-if="data && view === 'trainer'" aria-labelledby="assigned-status-title">
       <h2 id="assigned-status-title">{{ l('Assigned athletes', 'الرياضيون المعيّنون') }}</h2>
       <p class="small-print">
         {{
@@ -313,7 +353,7 @@ onMounted(load)
       </ul>
     </section>
 
-    <section v-else class="panel consent-setup" aria-labelledby="consent-setup-title">
+    <section v-else-if="data" class="panel consent-setup" aria-labelledby="consent-setup-title">
       <h2 id="consent-setup-title">{{ l('Consent setup', 'إعداد الموافقة') }}</h2>
       <p>
         {{
@@ -334,7 +374,7 @@ onMounted(load)
           ><input v-model="setupFilter" type="radio" value="all" />{{
             l('All athletes', 'كل الرياضيين')
           }}
-          ({{ data.members.length }})</label
+          ({{ data.members?.length || 0 }})</label
         >
       </fieldset>
       <p v-if="!setupMembers.length" class="small-print">

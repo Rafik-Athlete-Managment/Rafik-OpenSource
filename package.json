@@ -91,7 +91,9 @@
     "security:check": "node scripts/tooling-security.mjs --check",
     "test:tooling-security": "node --test scripts/tooling-security.test.mjs",
     "test:frontend-inventory": "node --test apps/frontend/scripts/frontend-inventory.test.mjs",
-    "test:native-workouts": "node apps/backend/scripts/prisma/isolated-api.mjs tests/native-workouts.test.ts"
+    "test:native-workouts": "node apps/backend/scripts/prisma/isolated-api.mjs tests/native-workouts.test.ts",
+    "test:backend-inventory": "node --test apps/backend/scripts/backend-inventory.test.mjs",
+    "test:workout-document": "node --experimental-strip-types --test apps/backend/tests/workout-document.test.ts"
   },
   "overrides": {
     "tar": "7.5.22",

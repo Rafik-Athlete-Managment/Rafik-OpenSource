@@ -449,7 +449,7 @@ CREATE UNIQUE INDEX institution_assets_pkey ON public.institution_assets USING b
 Athlete assignment to an immutable program version, date range, goal/sport and independent sequence cursor.
 
 - Prisma model: `institution_assignments`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/assets.ts](../../../apps/backend/server/assets.ts), [server/athlete-plans.ts](../../../apps/backend/server/athlete-plans.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/program-media.ts](../../../apps/backend/server/program-media.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/assets.ts](../../../apps/backend/server/assets.ts), [server/athlete-plans.ts](../../../apps/backend/server/athlete-plans.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/people.ts](../../../apps/backend/server/people.ts), [server/program-media.ts](../../../apps/backend/server/program-media.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-agenda.ts](../../../apps/backend/server/workout-agenda.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.institution_sessions](schema.md#publicinstitution_sessions), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions), [public.institution_workout_recurrences](schema.md#publicinstitution_workout_recurrences).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -734,7 +734,7 @@ CREATE TRIGGER notification_org_person AFTER INSERT ON public.institution_event_
 Timed institution training/assessment occurrences and explicit day-only individual workouts, frozen prescription, staff/athlete roster and local training date.
 
 - Prisma model: `institution_events`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/feedback.ts](../../../apps/backend/server/feedback.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/experience-report.ts](../../../apps/backend/server/experience-report.ts), [server/feedback.ts](../../../apps/backend/server/feedback.ts), [server/follow-up.ts](../../../apps/backend/server/follow-up.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/workout-agenda.ts](../../../apps/backend/server/workout-agenda.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.assessment_results](schema.md#publicassessment_results), [public.institution_event_people](schema.md#publicinstitution_event_people), [public.institution_workout_positions](schema.md#publicinstitution_workout_positions).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -1040,7 +1040,7 @@ CREATE UNIQUE INDEX institution_injury_permissions_pkey ON public.institution_in
 Athlete-authored non-diagnostic participation restrictions; not general administrator-visible medical records.
 
 - Prisma model: `institution_injury_records`; domain: Health and privacy; treatment: **retain-current**.
-- Direct server source references: [server/group-workouts.ts](../../../apps/backend/server/group-workouts.ts), [server/injuries.ts](../../../apps/backend/server/injuries.ts), [server/injury-retention.ts](../../../apps/backend/server/injury-retention.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/group-workouts.ts](../../../apps/backend/server/group-workouts.ts), [server/injuries.ts](../../../apps/backend/server/injuries.ts), [server/injury-retention.ts](../../../apps/backend/server/injury-retention.ts), [server/workout-agenda.ts](../../../apps/backend/server/workout-agenda.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: [public.institution_injury_access_log](schema.md#publicinstitution_injury_access_log), [public.institution_injury_history](schema.md#publicinstitution_injury_history), [public.institution_injury_operations](schema.md#publicinstitution_injury_operations).
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -1753,7 +1753,7 @@ CREATE UNIQUE INDEX institution_versions_program_id_revision_key ON public.insti
 Assignment sequence position/cycle, occurrence/workout links and attributed once-only resolution.
 
 - Prisma model: `institution_workout_positions`; domain: Training and scheduling; treatment: **retain-current**.
-- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
+- Direct server source references: [server/account-data.ts](../../../apps/backend/server/account-data.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/calendar.ts](../../../apps/backend/server/calendar.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-agenda.ts](../../../apps/backend/server/workout-agenda.ts), [server/workout-scheduler.ts](../../../apps/backend/server/workout-scheduler.ts), [server/workout-sequence.ts](../../../apps/backend/server/workout-sequence.ts).
 - Referenced by: No incoming SQL foreign key.
 - Access: RLS not enabled; guest SELECT false; user SELECT false; server SELECT true. Grants alone never publish an HTTP operation.
 
@@ -2176,7 +2176,7 @@ CREATE INDEX platform_operations_recent ON public.platform_operations USING btre
 Own account display name, locale, measurement units and timezone; identity bridge for historical subject data.
 
 - Prisma model: `profiles`; domain: Identity and access; treatment: **retain-current**.
-- Direct server source references: [server/account.ts](../../../apps/backend/server/account.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/athlete-plans.ts](../../../apps/backend/server/athlete-plans.ts), [server/institution.ts](../../../apps/backend/server/institution.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/programming.ts](../../../apps/backend/server/programming.ts).
+- Direct server source references: [server/account.ts](../../../apps/backend/server/account.ts), [server/analytics.ts](../../../apps/backend/server/analytics.ts), [server/athlete-plans.ts](../../../apps/backend/server/athlete-plans.ts), [server/institution.ts](../../../apps/backend/server/institution.ts), [server/notifications.ts](../../../apps/backend/server/notifications.ts), [server/programming.ts](../../../apps/backend/server/programming.ts), [server/workout-agenda.ts](../../../apps/backend/server/workout-agenda.ts).
 - Referenced by: [public.notification_events](schema.md#publicnotification_events), [public.notification_intercepts](schema.md#publicnotification_intercepts), [public.notification_preferences](schema.md#publicnotification_preferences), [public.support_cases](schema.md#publicsupport_cases).
 - Access: RLS enabled; guest SELECT false; user SELECT true; server SELECT false. Grants alone never publish an HTTP operation.
 

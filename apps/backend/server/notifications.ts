@@ -122,7 +122,7 @@ export async function notificationTarget(
     });
     if (!m?.active || m.institutions.archived) return null;
     const base = "",
-context = m.institutions.name;
+      context = m.institutions.name;
     if (n.source_kind === "organization_message") {
       const message = await tx.institution_messages.findUnique({
         where: { id: n.source_id },

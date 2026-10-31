@@ -17,6 +17,9 @@ test('platform operator has a separate audited account workflow and private deep
     await page.goto('/local-preview')
     await page.getByRole('button', { name: /Amina/ }).click()
     await expect(page).toHaveURL('/platform')
+    await expect(page.locator('.platform-row').first()).toContainText(
+      /(?:Open|Closed) · \d+ members/,
+    )
     await page.getByRole('combobox', { name: 'Area', exact: true }).selectOption('users')
     await page.getByRole('searchbox', { name: 'Search', exact: true }).fill(f.client.email)
     await page.getByRole('button', { name: 'Refresh results', exact: true }).click()

@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, ref, watch, computed, useId } from 'vue'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage } from '../../lib/i18n'
 import { PhCheck, PhMagnifyingGlass, PhPlus } from '@phosphor-icons/vue'
-import type { Member } from './types'
+import type { Member, Role } from './types'
 const props = withDefaults(
   defineProps<{
     institution: string
@@ -89,7 +89,7 @@ const missing = computed(() =>
   props.modelValue.filter(
     (id) =>
       !chosen.value.some(
-        (m) => m.id === id && m.active && (!props.role || m.roles.includes(props.role as any)),
+        (m) => m.id === id && m.active && (!props.role || m.roles.includes(props.role as Role)),
       ),
   ),
 )

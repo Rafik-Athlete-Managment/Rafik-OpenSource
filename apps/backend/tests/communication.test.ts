@@ -12,15 +12,15 @@ test("organization conversation scope, participation, read cursors and replay re
   const f = await organizationFixture();
   try {
     const admin = await f.person(),
-trainer = await f.person(),
-client = await f.person(),
-foreign = await f.person(),
-secondClient = await f.person(),
-id = await f.create(admin);
-await f.create(foreign);
-const staff = await f.join(admin, id, trainer, ["trainer"]),
-trainee = await f.join(admin, id, client, ["trainee"]),
-second = await f.join(admin, id, secondClient, ["trainee"]);
+      trainer = await f.person(),
+      client = await f.person(),
+      foreign = await f.person(),
+      secondClient = await f.person(),
+      id = await f.create(admin);
+    await f.create(foreign);
+    const staff = await f.join(admin, id, trainer, ["trainer"]),
+      trainee = await f.join(admin, id, client, ["trainee"]),
+      second = await f.join(admin, id, secondClient, ["trainee"]);
     await call(
       admin,
       `/v1/institution`,

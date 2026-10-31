@@ -1,3 +1,4 @@
+import { workoutAgenda } from "./workout-agenda.ts";
 import {
   workoutRules,
   workoutRuleCommand,
@@ -67,7 +68,6 @@ import {
   delivery,
   deliveryCommand,
   workoutSchedulingCommand,
-  workoutAgenda,
   institutionSession,
   institutionSessionHistory,
   sessionCommand,

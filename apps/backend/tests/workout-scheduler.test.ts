@@ -1,5 +1,5 @@
 import { accountProfile } from "../server/account.ts";
-import { workoutAgenda } from "../server/programming.ts";
+import { workoutAgenda } from "../server/workout-agenda.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHash } from "node:crypto";

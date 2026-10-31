@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Consolidate shared workout types and prescribed-entry projection, type active runtime JSON/SQL boundaries, separate the authorized agenda read model and controlled native exercise UI, and fix platform institution counts. Add focused component/default-entry and backend inventory portability checks to CI.
+
+- Consolidate duplicate fixture/draft/calendar helpers, remove five obsolete audit runners and five unused legacy interfaces, retain isolated browser aliases and clean duplicated testing guidance.
+
 - Normalize maintained code line endings for consistent formatter checks across local and Linux checkouts; keep formatting separate from behavior changes.
 
 - Remove verified unused code and enforce unused-local/parameter checks across all TypeScript workspaces, preserving authorization effects, fixture setup and component interfaces.

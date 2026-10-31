@@ -1,3 +1,4 @@
+import type { Prescription } from "@rafik/shared/workouts";
 import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
 import { randomUUID } from "node:crypto";
 import { ApiError, type Actor } from "./db.ts";
@@ -122,8 +123,9 @@ export async function scheduleIndividualWorkout(
     })
   )
     throw new ApiError(409, "legacy_workout_unresolved");
-  const plan = assignment.institution_versions.prescription as any;
-  const days = (plan.days || []).filter((day: any) => !day.restDay);
+  const plan = assignment.institution_versions
+    .prescription as unknown as Prescription;
+  const days = (plan.days || []).filter((day) => !day.restDay);
   if (!days.length) throw new ApiError(409, "no_workout_days");
   const cursor = assignment.sequence_cursor;
   if (cursor >= 2147483646) throw new ApiError(409, "sequence_limit_reached");

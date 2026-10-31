@@ -8,15 +8,9 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": [
-    "server/**/*.ts",
-    "tests/**/*.ts",
-    "prisma.config.ts"
-  ]
+  "include": ["server/**/*.ts", "tests/**/*.ts", "prisma.config.ts"]
 }

@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Audit follow-up: source and ownership cleanup — 31 October 2026
+
+Moved active workout shapes to the shared package with stable web type exports; application runtime source no longer uses explicit any annotations. Owned SQL projections and SQL-validated snapshot assertions preserve current validation/permissions. One prescribed-entry constructor serves individual/group/field targets. Authorized agenda reads are separated from programming commands; native exercise JSX is controlled by its existing mounted owner. Fixture registries/cleanup stay file-owned. Duplicate draft/calendar projections, obsolete route-bound audit runners, five dead private interfaces and duplicated testing guidance are cleaned. Source-level component/default-entry tests and backend LF/CRLF freshness regression are added to CI. Final code/workflow evidence is recorded in verification; no API/schema/owner-key or release change is intended.
+
 ## Audit follow-up: formatter portability — 31 October 2026
 
 The 117 baseline formatter warnings were predominantly CRLF/LF mismatches. Maintained TS/TSX/Vue/CSS now explicitly use LF through Git attributes, with local frontend files normalized and the small actual formatting changes isolated. Existing historical SQL migration rules are unchanged. Web units pass 55/55 and the source inventory remains fresh. Full formatter check is rerun against this normalized source; no UI redesign is included.

@@ -1,0 +1,223 @@
+{
+  "date": "2026-10-31",
+  "baseline_commit": "d2b4766d423dff871c32266e3aff9d58bb03ce14",
+  "status": "Local source and workflow validation complete; GitHub checks are attached to the pushed commit",
+  "runtime_metrics": {
+    "backend": {
+      "files": 42,
+      "explicit_any": 0
+    },
+    "frontend": {
+      "files": 140,
+      "explicit_any": 0
+    },
+    "mobile": {
+      "files": 24,
+      "explicit_any": 0
+    },
+    "shared": {
+      "files": 4,
+      "explicit_any": 0
+    }
+  },
+  "changed_files": [
+    ".gitattributes",
+    ".github/workflows/check.yml",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "README.md",
+    "apps/backend/scripts/backend-inventory.mjs",
+    "apps/backend/scripts/backend-inventory.test.mjs",
+    "apps/backend/server/analytics.ts",
+    "apps/backend/server/calendar.ts",
+    "apps/backend/server/feedback.ts",
+    "apps/backend/server/field-workout.ts",
+    "apps/backend/server/group-workouts.ts",
+    "apps/backend/server/index.ts",
+    "apps/backend/server/institution-routing.ts",
+    "apps/backend/server/notifications.ts",
+    "apps/backend/server/platform.ts",
+    "apps/backend/server/programming.ts",
+    "apps/backend/server/workout-agenda.ts",
+    "apps/backend/server/workout-document.ts",
+    "apps/backend/server/workout-scheduler.ts",
+    "apps/backend/server/workout-sequence.ts",
+    "apps/backend/server/workout-templates.ts",
+    "apps/backend/tests/api.test.ts",
+    "apps/backend/tests/coaching-team.test.ts",
+    "apps/backend/tests/communication.test.ts",
+    "apps/backend/tests/concurrent-plans.test.ts",
+    "apps/backend/tests/delegated-sessions.test.ts",
+    "apps/backend/tests/institution-test-helpers.ts",
+    "apps/backend/tests/maintenance.test.ts",
+    "apps/backend/tests/organization-feedback.test.ts",
+    "apps/backend/tests/organization-services.test.ts",
+    "apps/backend/tests/organization-sports.test.ts",
+    "apps/backend/tests/program-media.test.ts",
+    "apps/backend/tests/programming.test.ts",
+    "apps/backend/tests/workout-document.test.ts",
+    "apps/backend/tests/workout-scheduler.test.ts",
+    "apps/backend/tsconfig.json",
+    "apps/frontend/package.json",
+    "apps/frontend/scripts/audit-cohesion.ts",
+    "apps/frontend/scripts/audit-communication.ts",
+    "apps/frontend/scripts/audit-operations.ts",
+    "apps/frontend/scripts/audit-programming.ts",
+    "apps/frontend/scripts/audit-services.ts",
+    "apps/frontend/src/components/ExercisePicker.vue",
+    "apps/frontend/src/features/account/SettingsPage.vue",
+    "apps/frontend/src/features/analytics/AnalyticsPage.vue",
+    "apps/frontend/src/features/coaching/DeliverPlan.vue",
+    "apps/frontend/src/features/coaching/ExercisesPage.vue",
+    "apps/frontend/src/features/coaching/PlanEditor.vue",
+    "apps/frontend/src/features/coaching/ReviewPage.vue",
+    "apps/frontend/src/features/institution/AssessmentHistory.vue",
+    "apps/frontend/src/features/institution/AthletePlans.vue",
+    "apps/frontend/src/features/institution/ChannelEditor.vue",
+    "apps/frontend/src/features/institution/ChannelThread.vue",
+    "apps/frontend/src/features/institution/DashboardPage.vue",
+    "apps/frontend/src/features/institution/EventComposer.vue",
+    "apps/frontend/src/features/institution/EventDetail.vue",
+    "apps/frontend/src/features/institution/InjuryStatus.vue",
+    "apps/frontend/src/features/institution/InvitationPage.vue",
+    "apps/frontend/src/features/institution/MemberPicker.vue",
+    "apps/frontend/src/features/institution/ScheduleCalendar.vue",
+    "apps/frontend/src/features/institution/ScheduledEvents.vue",
+    "apps/frontend/src/features/institution/ServiceCatalog.vue",
+    "apps/frontend/src/features/institution/UpcomingSessions.vue",
+    "apps/frontend/src/features/nutrition/NutritionPage.vue",
+    "apps/frontend/src/features/platform/PlatformPage.vue",
+    "apps/frontend/src/features/training/WorkoutPage.vue",
+    "apps/frontend/src/lib/domain.ts",
+    "apps/frontend/src/lib/training.ts",
+    "apps/frontend/src/styles/design-system.css",
+    "apps/frontend/tests/athlete-profile.e2e.ts",
+    "apps/frontend/tests/beta-web-refinements.e2e.ts",
+    "apps/frontend/tests/delegated-sessions.e2e.ts",
+    "apps/frontend/tests/institution-routing.e2e.ts",
+    "apps/frontend/tests/operations.e2e.ts",
+    "apps/frontend/tests/ui-audit.e2e.ts",
+    "apps/frontend/tsconfig.json",
+    "apps/mobile/package.json",
+    "apps/mobile/src/field/EventHistory.tsx",
+    "apps/mobile/src/field/WorkoutExercises.tsx",
+    "apps/mobile/src/field/WorkoutsScreen.tsx",
+    "apps/mobile/tests/workout-exercises.test.ts",
+    "apps/mobile/tsconfig.json",
+    "docs/README.md",
+    "docs/development/ledger.md",
+    "docs/development/maintainer-guide.md",
+    "docs/known-issues/README.md",
+    "docs/known-issues/code-quality-audit.md",
+    "docs/reference/backend/routes.md",
+    "docs/reference/backend/schema.md",
+    "docs/reference/frontend/navigation.md",
+    "docs/testing/README.md",
+    "docs/verification/README.md",
+    "docs/verification/receipts/2026-10-31-code-quality-followup.json",
+    "package.json",
+    "packages/shared/package.json",
+    "packages/shared/src/workouts.ts",
+    "packages/shared/tsconfig.json"
+  ],
+  "removed_files": [
+    "apps/frontend/scripts/audit-cohesion.ts",
+    "apps/frontend/scripts/audit-communication.ts",
+    "apps/frontend/scripts/audit-operations.ts",
+    "apps/frontend/scripts/audit-programming.ts",
+    "apps/frontend/scripts/audit-services.ts"
+  ],
+  "removed_unreferenced_interfaces": [
+    "Assignment",
+    "Relationship",
+    "Invitation",
+    "ClientContext",
+    "ScheduledDay"
+  ],
+  "type_cleanup_transpiled_javascript_identical": true,
+  "code_checks": [
+    {
+      "exit_code": 0,
+      "label": "gate-backend-types"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-shared-types"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-mobile-types"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-components"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-request"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-queue"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-targets"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-web-unit"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-format"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-web-build"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-web-inventory"
+    },
+    {
+      "exit_code": 0,
+      "label": "gate-backend-inventory"
+    }
+  ],
+  "workflow_checks": [
+    {
+      "label": "gate-fixture-workflows",
+      "exit_code": 0
+    },
+    {
+      "label": "gate-native-api",
+      "exit_code": 0
+    },
+    {
+      "label": "gate-scheduler-api",
+      "exit_code": 0
+    },
+    {
+      "label": "gate-platform-browser",
+      "exit_code": 0
+    }
+  ],
+  "additional_checks": {
+    "backend_inventory_portability": "1 passed; LF/CRLF generation/output checks and stale-reference rejection; owned fixture tree removed",
+    "native_component": "3 passed; actual transpiled component with explicit host stubs; not a native renderer",
+    "prescribed_targets": "2 passed",
+    "metro": "Android JS export passed: 1 bundle, 26 assets, 1200 modules; no bytecode/Gradle/APK",
+    "group_recording": "1 passed on final source: frozen baseline, separate actuals, permissions, receipts, no plan advancement",
+    "final_docs": "2 checker tests passed; 2264 local links and 683 heading links across 81 maintained documents",
+    "final_format": "passed; LF code attributes, existing formatter, CI gate",
+    "final_diff": "git diff --check passed"
+  },
+  "limits": [
+    "Broad integration-test JSON/negative fixture types retained",
+    "No Android device/rendering/SQLCipher/physical-offline/upgrade acceptance",
+    "One focused Chromium operator journey; no full visual/browser matrix or inspected screenshots",
+    "No new registry audit or dependency version changes",
+    "Historical migrations/generated/client compatibility untouched; reference files regenerated canonically"
+  ]
+}

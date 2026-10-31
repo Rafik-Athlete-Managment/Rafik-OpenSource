@@ -514,11 +514,7 @@ input[type='radio'] {
 }
 .list-toolbar > form input,
 .list-toolbar > form select,
-.list-controls > .plan-search input {
-  height: 44px;
-  min-height: 44px;
-  margin: 0;
-}
+.list-controls > .plan-search input,
 .list-toolbar > form > .button {
   height: 44px;
   min-height: 44px;

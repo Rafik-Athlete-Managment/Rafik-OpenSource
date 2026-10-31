@@ -1,3 +1,4 @@
+import type { Prescription } from "@rafik/shared/workouts";
 import { ApiError, type Actor } from "./db.ts";
 import {
   scoped,
@@ -29,18 +30,26 @@ export async function workoutSnapshot(
     throw new ApiError(400, "invalid_plan");
   // Resolve selected movements once rather than serializing the whole library twice.
   const keys = new Set<string>();
-  for (const ex of day.exercises as any[]) {
+  for (const ex of day.exercises as {
+    exerciseId?: unknown;
+    alternatives?: unknown[];
+  }[]) {
     if (!ex || typeof ex !== "object" || !Array.isArray(ex.alternatives || []))
       throw new ApiError(400, "invalid_plan");
     if (typeof ex.exerciseId === "string") keys.add(ex.exerciseId);
-    for (const alt of ex.alternatives || [])
-      if (typeof alt?.exerciseId === "string") keys.add(alt.exerciseId);
+    for (const alt of ex.alternatives || []) {
+      const key = (alt as { exerciseId?: unknown } | null)?.exerciseId;
+      if (typeof key === "string") keys.add(key);
+    }
   }
   const library = await catalog(tx, institution, self, [...keys]);
   const shared = new Set(
-    library.filter((e: any) => e.scope !== "private").map((e: any) => e.id),
+    library.filter((e) => e.scope !== "private").map((e) => e.id),
   );
-  for (const ex of day.exercises as any[]) {
+  for (const ex of day.exercises as {
+    exerciseId?: unknown;
+    alternatives?: unknown[];
+  }[]) {
     if (!ex || typeof ex !== "object" || !Array.isArray(ex.alternatives || []))
       throw new ApiError(400, "invalid_plan");
     if (
@@ -50,8 +59,10 @@ export async function workoutSnapshot(
     )
       throw new ApiError(400, "invalid_plan");
     if (
-      !shared.has(ex.exerciseId) ||
-      (ex.alternatives || []).some((a: any) => !shared.has(a.exerciseId))
+      !shared.has(ex.exerciseId as string) ||
+      (ex.alternatives || []).some(
+        (a) => !shared.has((a as { exerciseId: string }).exerciseId),
+      )
     )
       throw new ApiError(400, "template_requires_shared_exercises");
   }
@@ -65,8 +76,8 @@ export async function workoutSnapshot(
       days: [{ ...day, week: 1, weekday: 0, restDay: false }],
     },
     library,
-  )) as any;
-  return prescription.days[0] as Prisma.InputJsonObject;
+  )) as unknown as Prescription;
+  return prescription.days[0] as unknown as Prisma.InputJsonObject;
 }
 export async function selectedWorkoutTemplate(
   tx: Tx,

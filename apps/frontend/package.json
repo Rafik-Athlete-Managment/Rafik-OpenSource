@@ -17,8 +17,8 @@
     "format:check": "prettier --check src tests build *.ts",
     "test:build": "node --experimental-strip-types scripts/check-shell-build.mjs",
     "test:e2e:running": "playwright test",
-    "test:operations:layout": "node --experimental-strip-types scripts/audit-operations.ts",
-    "test:cohesion:layout": "node --experimental-strip-types scripts/audit-cohesion.ts"
+    "test:operations:layout": "node scripts/isolated-browser.mjs operations.e2e.ts",
+    "test:cohesion:layout": "node scripts/isolated-browser.mjs cohesion.e2e.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "5.3.0",

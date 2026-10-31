@@ -171,42 +171,22 @@ function clearAll() {
 }
 const recipients = computed(() => people.value.filter((p) => selected.value.includes(p.id)))
 let initialized = false
-watch(
-  [selected, start, end, mode, automatic, timezone],
-  () => {
-    if (initialized)
-      void storeDraft(key, {
-        selected: [...selected.value],
-        start: start.value,
-        end: end.value,
-        mode: mode.value,
-        automatic: automatic.value,
-        timezone: timezone.value,
-        replace: { ...replace.value },
-        goal: goal.value,
-        sport: sport.value,
-      }).catch((e) => (error.value = errorMessage(e)))
-  },
-  { deep: true },
-)
-watch(
-  [replace, goal, sport],
-  () => {
-    if (initialized)
-      void storeDraft(key, {
-        selected: [...selected.value],
-        start: start.value,
-        end: end.value,
-        mode: mode.value,
-        automatic: automatic.value,
-        timezone: timezone.value,
-        replace: { ...replace.value },
-        goal: goal.value,
-        sport: sport.value,
-      }).catch((e) => (error.value = errorMessage(e)))
-  },
-  { deep: true },
-)
+function persistDraft() {
+  if (initialized)
+    void storeDraft(key, {
+      selected: [...selected.value],
+      start: start.value,
+      end: end.value,
+      mode: mode.value,
+      automatic: automatic.value,
+      timezone: timezone.value,
+      replace: { ...replace.value },
+      goal: goal.value,
+      sport: sport.value,
+    }).catch((e) => (error.value = errorMessage(e)))
+}
+watch([selected, start, end, mode, automatic, timezone], persistDraft, { deep: true })
+watch([replace, goal, sport], persistDraft, { deep: true })
 const planLabel = (plan: ActivePlan) =>
   [plan.title, plan.goal, sports.value.find((s) => s.id === plan.sport)?.name]
     .filter(Boolean)

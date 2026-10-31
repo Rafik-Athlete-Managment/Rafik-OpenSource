@@ -1,3 +1,4 @@
+import { WorkoutExercises } from './WorkoutExercises'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -70,16 +71,6 @@ export function WorkoutsScreen({
   const invalidInput = Object.values(invalidInputs).some(Boolean)
   const dayName = (p: FieldWorkoutPackage) =>
     language === 'ar' && p.day_name_ar ? p.day_name_ar : p.day_name
-  const fieldLabel = (field: WorkoutMeasure, unit: string) =>
-    field === 'load'
-      ? l('Load', 'الحمل') + ' (' + unit + ')'
-      : field === 'reps'
-        ? l('Reps', 'تكرارات')
-        : field === 'seconds'
-          ? l('Seconds', 'ثوانٍ')
-          : field === 'metres'
-            ? l('Metres', 'أمتار')
-            : l('Effort (RPE, optional)', 'الجهد (اختياري)')
   const alive = useRef(true),
     selection = useRef(''),
     flight = useRef(false),
@@ -482,13 +473,29 @@ export function WorkoutsScreen({
   backAction.current = () => {
     void back()
   }
-  const targetMap = new Map(
-    (record?.package.targets || record?.package.entries || []).map((e) => [
-      e.exercise_key + ':' + e.set_index,
-      e,
-    ]),
-  )
-  const targetFor = (e: FieldWorkoutEntry) => targetMap.get(e.exercise_key + ':' + e.set_index) || e
+  function changeMeasure(index: number, field: WorkoutMeasure, value: string) {
+    const key = index + ':' + field,
+      parsed = workoutNumber(field, value)
+    setRaw((previous) => ({ ...previous, [key]: value }))
+    setInvalidInputs((previous) => ({ ...previous, [key]: !parsed.valid }))
+    if (!parsed.valid) {
+      setError(l('Check the numeric value and its limits.', 'تحقق من القيمة الرقمية وحدودها.'))
+      return
+    }
+    setError('')
+    edit(
+      drafts.current.entries.map((r, i) =>
+        i === index ? { ...r, [field]: parsed.value, completed: false } : r,
+      ),
+      drafts.current.note,
+    )
+  }
+  function toggleSet(index: number) {
+    edit(
+      drafts.current.entries.map((r, i) => (i === index ? { ...r, completed: !r.completed } : r)),
+      drafts.current.note,
+    )
+  }
   const editable =
     !!record?.session &&
     !record.blocked &&
@@ -751,120 +758,17 @@ export function WorkoutsScreen({
                       )}
             </Text>
           ) : null}
-          {record.package.exercises.map((ex) => (
-            <View key={ex.key} style={styles.card}>
-              <Text style={styles.cardTitle}>
-                {language === 'ar' && ex.name_ar ? ex.name_ar : ex.name}
-              </Text>
-              {ex.note ? <Text style={styles.hint}>{ex.note}</Text> : null}
-              {entries.map((e, index) =>
-                e.exercise_key !== ex.key ? null : (
-                  <View key={index} style={{ gap: 8, paddingVertical: 10 }}>
-                    <Text style={styles.label}>
-                      {l('Set', 'مجموعة')} {e.set_index + 1}
-                    </Text>
-                    <Text style={styles.hint}>
-                      {record.package.targets || !record.package.session
-                        ? l('Prescribed target', 'الهدف الموصوف')
-                        : l('Downloaded reference', 'القيم المنزّلة')}
-                      :{' '}
-                      {ex.kind === 'strength'
-                        ? `${targetFor(e).reps} × ${targetFor(e).load} ${e.unit}`
-                        : ex.kind === 'timed'
-                          ? `${targetFor(e).seconds ?? '—'} ${l('seconds', 'ثانية')}`
-                          : `${targetFor(e).metres ?? '—'} ${l('metres', 'متر')}`}
-                    </Text>
-                    {e.exercise_id ? (
-                      <Text style={styles.hint}>
-                        {l(
-                          'Previously selected exercise alternative is retained.',
-                          'يُحفظ بديل التمرين المحدد مسبقاً.',
-                        )}
-                      </Text>
-                    ) : null}
-                    {(ex.kind === 'strength'
-                      ? (['load', 'reps'] as const)
-                      : ex.kind === 'timed'
-                        ? (['seconds', 'effort'] as const)
-                        : (['metres', 'effort'] as const)
-                    ).map((field) => (
-                      <View key={field} style={{ gap: 6 }}>
-                        <Text style={styles.label}>
-                          {field === 'load'
-                            ? l('Load', 'الحمل') + ' (' + e.unit + ')'
-                            : field === 'reps'
-                              ? l('Reps', 'تكرارات')
-                              : field === 'seconds'
-                                ? l('Seconds', 'ثوانٍ')
-                                : field === 'metres'
-                                  ? l('Metres', 'أمتار')
-                                  : l('Effort (RPE, optional)', 'الجهد (اختياري)')}
-                        </Text>
-                        <TextInput
-                          accessibilityLabel={
-                            (language === 'ar' && ex.name_ar ? ex.name_ar : ex.name) +
-                            ' ' +
-                            (e.set_index + 1) +
-                            ' ' +
-                            fieldLabel(field, e.unit)
-                          }
-                          style={styles.input}
-                          keyboardType="decimal-pad"
-                          editable={editable && !busy}
-                          value={
-                            raw[index + ':' + field] ?? (e[field] === null ? '' : String(e[field]))
-                          }
-                          onChangeText={(value) => {
-                            const key = index + ':' + field,
-                              parsed = workoutNumber(field, value)
-                            setRaw((previous) => ({ ...previous, [key]: value }))
-                            setInvalidInputs((previous) => ({ ...previous, [key]: !parsed.valid }))
-                            if (!parsed.valid) {
-                              setError(
-                                l(
-                                  'Check the numeric value and its limits.',
-                                  'تحقق من القيمة الرقمية وحدودها.',
-                                ),
-                              )
-                              return
-                            }
-                            setError('')
-                            edit(
-                              drafts.current.entries.map((r, i) =>
-                                i === index ? { ...r, [field]: parsed.value, completed: false } : r,
-                              ),
-                              drafts.current.note,
-                            )
-                          }}
-                        />
-                      </View>
-                    ))}
-                    <Button
-                      title={
-                        e.completed
-                          ? l('Done ✓', 'تم ✓')
-                          : l('Mark set done', 'تأكيد إتمام المجموعة')
-                      }
-                      disabled={!editable || busy || invalidInput}
-                      primary={e.completed}
-                      onPress={() =>
-                        edit(
-                          drafts.current.entries.map((r, i) =>
-                            i === index ? { ...r, completed: !r.completed } : r,
-                          ),
-                          drafts.current.note,
-                        )
-                      }
-                      styles={styles}
-                    />
-                  </View>
-                ),
-              )}
-              <Text style={styles.hint}>
-                {l('Rest (seconds)', 'الراحة (ثوانٍ)')}: {ex.rest}
-              </Text>
-            </View>
-          ))}
+          <WorkoutExercises
+            workout={record.package}
+            entries={entries}
+            raw={raw}
+            editable={editable}
+            busy={busy}
+            invalidInput={invalidInput}
+            styles={styles}
+            onMeasure={changeMeasure}
+            onToggle={toggleSet}
+          />
           <Text style={styles.label}>{l('Workout note', 'ملاحظة التمرين')}</Text>
           <TextInput
             accessibilityLabel={l('Workout note', 'ملاحظة التمرين')}

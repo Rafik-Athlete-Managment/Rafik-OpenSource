@@ -2,7 +2,7 @@
 
 ## Code quality audit — 31 October 2026
 
-The [monorepo audit](code-quality-audit.md) records typing, duplication, unused-code, styling and dependency findings, safe changes and intentionally deferred work. The existing 117-file formatting baseline is not a new regression.
+The [monorepo audit](code-quality-audit.md) records typing, duplication, unused-code, styling and dependency findings, safe changes and intentionally deferred work. The formatter and unused-code baselines are closed by the follow-up; the audit distinguishes completed source checks from device acceptance.
 
 ## Dependency review — 29 October 2026
 

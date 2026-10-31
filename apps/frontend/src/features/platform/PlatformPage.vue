@@ -8,8 +8,28 @@ import { dateLabel } from '../../lib/display-time'
 import { useCommand } from '../../lib/commands'
 import CommandStatus from '../../components/CommandStatus.vue'
 import PageState from '../../components/PageState.vue'
+type PlatformRecord = {
+  id: string
+  revision?: number
+  name?: string
+  email?: string | null
+  subject?: string
+  kind?: string
+  archived?: boolean
+  suspended?: boolean
+  operator?: boolean
+  state?: string
+  detail?: string
+  reply?: string | null
+  reason?: string
+  created_at: string
+  actor_name?: string | null
+  subject_label?: string | null
+  _count?: { institution_members: number }
+}
+type PlatformSection = 'organizations' | 'users' | 'support' | 'audit'
 const includeReads = ref(false)
-const actionLabel = (kind: string) =>
+const actionLabel = (kind?: string) =>
   l(
     (
       {
@@ -21,7 +41,7 @@ const actionLabel = (kind: string) =>
         view_support: 'Support queue viewed',
         view_audit: 'Audit history viewed',
       } as Record<string, string>
-    )[kind] || 'Platform action',
+    )[kind || ''] || 'Platform action',
     (
       {
         identity_state: 'تغيير وصول الحساب',
@@ -32,15 +52,15 @@ const actionLabel = (kind: string) =>
         view_support: 'عرض طلبات الدعم',
         view_audit: 'عرض سجل الإجراءات',
       } as Record<string, string>
-    )[kind] || 'إجراء في المنصة',
+    )[kind || ''] || 'إجراء في المنصة',
   )
-const section = ref('organizations'),
+const section = ref<PlatformSection>('organizations'),
   search = ref(''),
-  items = ref<any[]>([]),
+  items = ref<PlatformRecord[]>([]),
   next = ref<number | null>(null),
   loading = ref(true),
   error = ref(''),
-  selected = ref<any>(),
+  selected = ref<PlatformRecord>(),
   reason = ref(''),
   reply = ref('')
 const labels = () => ({
@@ -55,7 +75,7 @@ async function load(append = false) {
   loading.value = true
   error.value = ''
   try {
-    const data = await request<{ items: any[]; next: number | null }>(
+    const data = await request<{ items: PlatformRecord[]; next: number | null }>(
       `/v1/platform?section=${section.value}&search=${encodeURIComponent(search.value)}&includeReads=${includeReads.value}&offset=${append ? next.value || 0 : 0}`,
     )
     if (current !== generation) return
@@ -97,13 +117,13 @@ const command = useCommand<'apply'>(
           : l('Support reply sent.', 'تم إرسال رد الدعم.'),
   },
 )
-function choose(item: any) {
+function choose(item: PlatformRecord) {
   selected.value = item
   reason.value = ''
   reply.value = item.reply || ''
 }
 function apply() {
-  const item = selected.value
+  const item = selected.value!
   return command.run('apply', {
     operation: crypto.randomUUID(),
     id: item.id,
@@ -202,9 +222,9 @@ onMounted(() => load())
             <h2 dir="auto">
               {{ item.name || item.email || item.subject || actionLabel(item.kind) }}
             </h2>
-            <p v-if="section === 'institutions'">
+            <p v-if="section === 'organizations'">
               {{ item.archived ? l('Closed', 'مغلقة') : l('Open', 'مفتوحة') }} ·
-              {{ item._count.workspace_members }} {{ l('members', 'عضو') }}
+              {{ item._count?.institution_members }} {{ l('members', 'عضو') }}
             </p>
             <p v-else-if="section === 'users'">
               {{

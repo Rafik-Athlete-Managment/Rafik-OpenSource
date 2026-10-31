@@ -1,3 +1,28 @@
+import type {
+  assessment_results,
+  institution_events,
+  institution_event_people,
+} from "./generated/prisma/client.ts";
+type Summary = {
+  active: number;
+  unassigned: number;
+  without_program: number;
+  joined: number;
+  completed: number;
+  participating: number;
+  pending_review: number;
+  coach_recorded: number;
+};
+type LabelCount = { id?: string; label: string; value: number };
+type AssessmentRow = Pick<
+  assessment_results,
+  "event_id" | "member_id" | "values" | "note" | "revision" | "recorded_at"
+> &
+  Pick<
+    institution_events,
+    "title" | "starts_at" | "template_id" | "template_revision" | "definition"
+  > &
+  Pick<institution_event_people, "attendance">;
 import { experienceReport } from "./experience-report.ts";
 import { ApiError, asActor, type Actor } from "./db.ts";
 import { scoped, uuid } from "./institution.ts";
@@ -32,7 +57,7 @@ export async function institutionAnalytics(
     const selected = q.get("member") ? uuid(q.get("member")) : null;
     if (selected) await recipient(tx, id, self, view, selected);
     const trainer = view === "trainer" ? self.id : null;
-    const [summary] = await tx.$queryRaw<any[]>`WITH roster AS (
+    const [summary] = await tx.$queryRaw<Summary[]>`WITH roster AS (
    SELECT m.* FROM public.institution_members m WHERE m.institution_id=${id}::uuid AND (${trainer}::uuid IS NULL OR m.trainer_id=${trainer}::uuid) AND (${selected}::uuid IS NULL OR m.id=${selected}::uuid)
   ), active AS (SELECT * FROM roster WHERE active AND 'trainee'=ANY(roles)),completed AS (
    SELECT s.* FROM public.institution_sessions s JOIN roster m ON m.id=s.member_id WHERE s.completed_at>=${window.start} AND s.completed_at<${window.end}
@@ -44,19 +69,19 @@ export async function institutionAnalytics(
    (SELECT count(*)::int FROM completed WHERE document->>'reviewed_at' IS NULL) AS pending_review,
    (SELECT count(*)::int FROM completed WHERE recorded_mode='delegated') AS coach_recorded`;
     const daily = await tx.$queryRaw<
-      any[]
+      { date: string; value: number }[]
     >`SELECT (s.completed_at AT TIME ZONE ${window.zone})::date::text AS date,count(*)::int AS value FROM public.institution_sessions s JOIN public.institution_members m ON m.id=s.member_id WHERE s.institution_id=${id}::uuid AND (${trainer}::uuid IS NULL OR m.trainer_id=${trainer}::uuid) AND (${selected}::uuid IS NULL OR m.id=${selected}::uuid) AND s.completed_at>=${window.start} AND s.completed_at<${window.end} GROUP BY 1 ORDER BY 1`;
     const attendance = await tx.$queryRaw<
-      any[]
+      LabelCount[]
     >`SELECT p.attendance AS label,count(*)::int AS value FROM public.institution_event_people p JOIN public.institution_events e ON e.id=p.event_id JOIN public.institution_members m ON m.id=p.member_id WHERE e.institution_id=${id}::uuid AND p.duty='trainee' AND e.state<>'cancelled' AND COALESCE(e.starts_at,e.training_date::timestamp AT TIME ZONE e.timezone)>=${window.start} AND COALESCE(e.starts_at,e.training_date::timestamp AT TIME ZONE e.timezone)<${window.end} AND COALESCE(e.starts_at,e.training_date::timestamp AT TIME ZONE e.timezone)<=now() AND (${trainer}::uuid IS NULL OR m.trainer_id=${trainer}::uuid) AND (${selected}::uuid IS NULL OR m.id=${selected}::uuid) GROUP BY 1`;
     const workload =
       view === "admin"
         ? await tx.$queryRaw<
-            any[]
+            LabelCount[]
           >`SELECT t.id,t.name AS label,count(m.id)::int AS value FROM public.institution_members t LEFT JOIN public.institution_members m ON m.trainer_id=t.id AND m.active AND 'trainee'=ANY(m.roles) WHERE t.institution_id=${id}::uuid AND t.active AND 'trainer'=ANY(t.roles) GROUP BY t.id ORDER BY t.name,t.id LIMIT 26 OFFSET ${pageOffset(q.get("workloadOffset"))}`
         : [];
     const programs = await tx.$queryRaw<
-      any[]
+      LabelCount[]
     >`SELECT v.program_id AS id,v.title AS label,count(*)::int AS value FROM public.institution_assignments a JOIN public.institution_members m ON m.id=a.member_id JOIN public.institution_versions v ON v.id=a.version_id WHERE a.institution_id=${id}::uuid AND a.state='active' AND a.start_date<=(now() AT TIME ZONE ${window.zone})::date AND (a.end_date IS NULL OR a.end_date>=(now() AT TIME ZONE ${window.zone})::date) AND m.active AND 'trainee'=ANY(m.roles) AND (${trainer}::uuid IS NULL OR m.trainer_id=${trainer}::uuid) AND (${selected}::uuid IS NULL OR m.id=${selected}::uuid) GROUP BY v.program_id,v.title ORDER BY value DESC,v.title,v.program_id LIMIT 26 OFFSET ${pageOffset(q.get("programOffset"))}`;
     const performance =
       view === "admin" && workload.length
@@ -135,7 +160,7 @@ export async function assessmentHistory(
       // Events carry no sport yet: a supporting coach sees results from events they staffed.
       everything = view !== "trainer" || person.trainer_id === self.id;
     const results = await tx.$queryRaw<
-      any[]
+      AssessmentRow[]
     >`SELECT r.event_id,r.member_id,r.values,r.note,r.revision,r.recorded_at,e.title,e.starts_at,e.template_id,e.template_revision,e.definition,p.attendance FROM public.assessment_results r JOIN public.institution_events e ON e.id=r.event_id JOIN public.institution_event_people p ON p.event_id=r.event_id AND p.member_id=r.member_id WHERE r.institution_id=${id}::uuid AND r.member_id=${member}::uuid AND e.state<>'cancelled' AND COALESCE(e.starts_at,e.training_date::timestamp AT TIME ZONE e.timezone)>=${window.start} AND COALESCE(e.starts_at,e.training_date::timestamp AT TIME ZONE e.timezone)<${window.end} AND (${everything} OR EXISTS(SELECT 1 FROM public.institution_event_people staff WHERE staff.event_id=e.id AND staff.member_id=${self.id}::uuid AND staff.duty='staff')) ORDER BY e.starts_at DESC,e.id LIMIT 51 OFFSET ${offset}`;
     return {
       window,

@@ -1,5 +1,15 @@
 # Maintainer guide
 
+## Audit ownership boundaries
+
+Shared type-only workout shapes live in packages/shared/src/workouts.ts; frontend lib/domain.ts re-exports active shapes so existing imports remain stable. Editable Entry has optional measures, while the native FieldWorkoutEntry wire contract has explicit nullable fields; these serve different boundaries.
+
+Backend workout-document.ts owns prescribed defaults, not actual completion or sequence allocation. workout-agenda.ts owns the authorized read projection; programming.ts retains commands and plan authority. Keep projections separate from mutations without introducing circular imports or a second allocator.
+
+Native WorkoutExercises is controlled JSX only. Keep raw inputs, mounted selection, persistence, owner checks and replay in WorkoutsScreen. Its test:components command uses real transpiled component output with explicit host stubs; it does not render React Native. InstitutionScreen intentionally retains its mounted coordination state.
+
+Institution test helpers accept registries owned by each caller. Keep teardown/Prisma disconnect in each test file, preserve setup ordering and never introduce a shared fixture registry. The operations/cohesion layout npm aliases now use the isolated browser wrapper and maintained specs, replacing obsolete manual runners. Backend inventory portability is checked with `npm run test:backend-inventory`; regenerate references with the existing inventory commands rather than editing them by hand.
+
 ## TypeScript and refactoring standards
 
 All four workspaces enforce noUnusedLocals and noUnusedParameters. Preserve effectful initializers when removing unused result bindings, and prefix intentionally retained positional parameters with an underscore.
@@ -260,7 +270,7 @@ The supported web entrypoint must reach every checked-in Vue component. `tests/v
 
 ## Frontend inventory and route audit
 
-The [frontend reference](../reference/frontend/README.md) inventories every local Vue file and route. Normalize source line endings before AST analysis; multiline expressions must produce identical Markdown from Windows and Unix checkouts. Use `npm run test:frontend-inventory` to verify both formats without rewriting source files.
+The [frontend reference](../reference/frontend/README.md) inventories every local Vue file and route. Normalize source line endings before AST analysis; multiline expressions must produce identical Markdown from Windows and Unix checkouts. Use ``npm run test:frontend-inventory`` to verify both formats without rewriting source files.
 
 Run `npm run frontend:inventory` after a route/component change, review the diff, and run `npm run frontend:inventory:check`. Update the script-side purpose/access metadata and reviewed dynamic navigation in the same PR. `DashboardNav.vue` is the single institutional navigation component for both sidebar and phone drawer; `section-path.ts` associates detail/edit routes with their parent sections. Do not restore per-page hidden navigation or guest acquisition/recording screens. Token, recovery, compatibility and DEV-only entries have explicit classifications in the reference.
 

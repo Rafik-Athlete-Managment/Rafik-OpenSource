@@ -20,6 +20,19 @@ import {
   pageOffset,
 } from "./service-definitions.ts";
 import type { Prisma } from "./generated/prisma/client.ts";
+function calendarPerson<
+  T extends {
+    institution_members: { name: string; active: boolean; roles: string[] };
+  },
+>(p: T) {
+  return {
+    ...p,
+    institution_members: undefined,
+    name: p.institution_members.name,
+    active: p.institution_members.active,
+    roles: p.institution_members.roles,
+  };
+}
 type Input = Record<string, unknown>;
 type Self = Awaited<ReturnType<typeof access>>;
 const json = (v: unknown) => v as Prisma.InputJsonValue;
@@ -255,13 +268,7 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
           training_date: item.training_date.toISOString().slice(0, 10),
           institution_event_people: undefined,
         },
-        people: people.map((p) => ({
-          ...p,
-          institution_members: undefined,
-          name: p.institution_members.name,
-          active: p.institution_members.active,
-          roles: p.institution_members.roles,
-        })),
+        people: people.map(calendarPerson),
         results: await tx.assessment_results.findMany({ where }),
         history: history.slice(0, historyMember ? 25 : 100),
         historyNext:
@@ -344,13 +351,7 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
               p.duty === "staff" ||
               p.member_id === self.id,
           )
-          .map((p) => ({
-            ...p,
-            institution_members: undefined,
-            name: p.institution_members.name,
-            active: p.institution_members.active,
-            roles: p.institution_members.roles,
-          })),
+          .map(calendarPerson),
       })),
       next: offset + 50 < total ? offset + 50 : null,
     };
@@ -754,7 +755,8 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         if (
           item.state === "completed" &&
           input.attendance === "present" &&
-          (item.workout_snapshot as any)?.source === "group" &&
+          (item.workout_snapshot as { source?: string } | null)?.source ===
+            "group" &&
           !person.workout_skip_reason
         ) {
           const recorded = await tx.institution_sessions.findFirst({
@@ -858,7 +860,10 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         );
         if (participants.some((p) => p.attendance === "unmarked"))
           throw new ApiError(400, "attendance_required");
-        if ((item.workout_snapshot as any)?.source === "group") {
+        if (
+          (item.workout_snapshot as { source?: string } | null)?.source ===
+          "group"
+        ) {
           const workouts = await tx.institution_sessions.findMany({
             where: { institution_id: id, occurrence_id: key },
             select: { member_id: true, completed_at: true },

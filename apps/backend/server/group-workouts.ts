@@ -1,3 +1,5 @@
+import { prescribedEntries, type FrozenWorkout } from "./workout-document.ts";
+import type { PlanDay } from "@rafik/shared/workouts";
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { ApiError, type Actor } from "./db.ts";
@@ -36,7 +38,8 @@ export async function groupSessionAuthority(
     session.occurrence_id,
   );
   if (
-    (occurrence.workout_snapshot as any)?.source !== "group" ||
+    (occurrence.workout_snapshot as unknown as FrozenWorkout)?.source !==
+      "group" ||
     (view === "trainee" && self.id !== session.member_id)
   )
     throw new ApiError(403, "forbidden");
@@ -80,7 +83,7 @@ export async function groupWorkouts(
     eid = uuid(query.get("event"));
   return scoped(actor, institution, [view], async (tx, self) => {
     const occurrence = await eventAccess(tx, institution, self, view, eid),
-      source = occurrence.workout_snapshot as any;
+      source = occurrence.workout_snapshot as unknown as FrozenWorkout;
     if (source?.source !== "group") return { workout: null, participants: [] };
     const people = occurrence.institution_event_people.filter(
       (p) =>
@@ -235,12 +238,17 @@ export async function groupWorkoutCommand(
         localDay(occurrence.timezone, new Date()),
       );
       if (existing) throw new ApiError(409, "group_workout_already_started");
-      const source = occurrence.workout_snapshot as any;
+      const source = occurrence.workout_snapshot as unknown as FrozenWorkout;
       // An unchanged frozen baseline remains usable after a catalog edit/archive.
       // Actual participant adaptations are validated against today's shared catalog.
       const day =
         input.workout && !isDeepStrictEqual(input.workout, source.day)
-          ? await workoutSnapshot(tx, institution, self, input.workout)
+          ? ((await workoutSnapshot(
+              tx,
+              institution,
+              self,
+              input.workout,
+            )) as unknown as PlanDay)
           : source.day;
       const sessionId = uuid(input.id);
       if (
@@ -265,22 +273,7 @@ export async function groupWorkoutCommand(
         recorded_by: self.id,
         recorded_by_name: self.name,
         status: "in_progress",
-        entries: day.exercises.flatMap((e: any) =>
-          Array.from({ length: e.sets }, (_, i) => {
-            const target = e.targets?.[i] || e;
-            return {
-              exercise_key: e.key,
-              set_index: i,
-              reps: target.reps,
-              load: target.load,
-              unit: e.unit,
-              seconds: target.seconds ?? null,
-              metres: target.metres ?? null,
-              effort: target.effort ?? null,
-              completed: false,
-            };
-          }),
-        ),
+        entries: prescribedEntries(day.exercises),
         note: "",
         coach_note: "",
         reviewed_at: null,

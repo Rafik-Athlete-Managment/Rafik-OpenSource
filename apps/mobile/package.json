@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
     "test:queue": "node --experimental-strip-types --test tests/attendance.test.ts",
     "test:request": "node --experimental-transform-types --experimental-test-module-mocks --test --test-isolation=none tests/request.test.ts tests/native.test.ts",
-    "prestart": "node ../../scripts/tooling-security.mjs --check"
+    "prestart": "node ../../scripts/tooling-security.mjs --check",
+    "test:components": "node --experimental-strip-types --test tests/workout-exercises.test.ts"
   },
   "dependencies": {
     "@rafik/shared": "1.0.0-beta.2",

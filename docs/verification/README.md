@@ -1,12 +1,24 @@
 # Verification record
 
+## Code quality follow-up closure — 31 October 2026
+
+All four workspace compiler gates pass with unused locals/parameters enforced. Active runtime source has zero explicit any annotations (frontend 140 files, backend 42, mobile 24, shared four; generated declarations excluded). This does not claim that arbitrary server JSON is validated by TypeScript or that integration/negative fixtures are any-free. The five deleted private interfaces have no references and produce identical JavaScript before/after removal.
+
+Final checks passed: 55 web unit cases; three controlled-component host-stub cases; 12 native request/input cases; 20 real-SQLite queue cases; two prescribed-entry cases; five coaching/plan/delegated/sports API cases using the refactored fixture helper; one native API/SQLite replay journey; three scheduler/DST cases; and one final group-workout journey. The web production build and full formatter pass. Metro exported one Android JavaScript bundle (1,200 modules, 26 assets) with two workers and no bytecode/Gradle/APK.
+
+One Chromium desktop operator journey passed against disposable services, including institution member counts, suspension/restoration, audit access, private-link return through sign-in and existing layout/Axe assertions. Its generated screenshot was not separately inspected; this is functional browser evidence, not full visual acceptance. It does not cover every theme/RTL/device/layout. Native component tests exercise the real transpiled TSX element/callback contract with explicit host stubs; they do not mount React Native or prove lifecycle/device persistence. The compiler-based harness avoids loading React Native's Flow entry in Node without adding a renderer dependency.
+
+Backend inventory portability passed LF/CRLF source and generated-output checks, plus rejection of deliberately stale output; its owned fixture trees were removed. Canonical frontend/backend inventories passed after regeneration. The [follow-up receipt](receipts/2026-10-31-code-quality-followup.json) and [audit resolutions](../known-issues/code-quality-audit.md) retain exact scope. Documentation checks and final diff review are recorded with the final commit. Disposable API/browser fixtures were removed by their harnesses; audit-only logs/exported bundles are cleaned after recording evidence.
+
+No schema/migration, API route/command, receipt/owner key, signing or dependency version changed. No production install, registry security audit, native build/device/offline-process-death or upgrade acceptance was performed. Current CI runs the new gates; release PR remains unmerged. Use the single canonical walkthrough for later practice validation.
+
 ## Formatter baseline closure — 31 October 2026
 
 The 117 baseline formatter warnings were predominantly CRLF/LF mismatches. Maintained TS/TSX/Vue/CSS now explicitly use LF through Git attributes, with local frontend files normalized and the small actual formatting changes isolated. Existing historical SQL migration rules are unchanged. Web units pass 55/55 and the source inventory remains fresh. Full formatter check is rerun against this normalized source; no UI redesign is included.
 
 ## Unused-code enforcement — 31 October 2026
 
-Web, backend, mobile (including its test configuration) and shared typechecks passed with noUnusedLocals/noUnusedParameters enabled. Web units passed 55/55 and native request tests 12/12. The backend inventory remained fresh. The web inventory detected the removed private navigation helper; its generated navigation reference is refreshed through the existing generator. No browser/native build was required for removal of unused bindings. Formatting and source typing continue as separate audit slices.
+Web, backend, mobile (including its test configuration) and shared typechecks passed with noUnusedLocals/noUnusedParameters enabled. Web units passed 55/55 and native request tests 12/12. The backend inventory remained fresh. The web inventory detected the removed private navigation helper; its generated navigation reference is refreshed through the existing generator. No browser/native build was required for removal of unused bindings. The completed source/ownership follow-up is recorded above.
 
 ## Code quality audit — 31 October 2026
 

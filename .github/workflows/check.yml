@@ -22,6 +22,7 @@ jobs:
       - run: npm run test:tooling-security
       - run: npm run test:frontend-inventory
       - run: npm run frontend:inventory:check
+      - run: npm run format:check
       - run: npm test --workspace @rafik/frontend
       - run: npm run build --workspace @rafik/frontend
       - run: npx playwright install --with-deps chromium
@@ -46,6 +47,7 @@ jobs:
       - run: npm run backend:start
       - run: npm run seed:local
       - run: npm run docs:check
+      - run: npm run test:backend-inventory
       - run: npm run backend:inventory:check
       - run: npm run test:retired-domains
       - run: npm run test:institution-names
@@ -59,9 +61,11 @@ jobs:
       - run: npm run content:wger-exercises:check
       - run: npm run content:videos
       - run: npm run test:catalog
+      - run: npm run test:workout-document
       - run: npm run typecheck --workspace @rafik/shared
       - run: npm run backend:typecheck
       - run: npm run typecheck --workspace @rafik/mobile
+      - run: npm run test:components --workspace @rafik/mobile
       - run: npm run test:request --workspace @rafik/mobile
       - run: npm run test:queue --workspace @rafik/mobile
       - run: npm run test:api

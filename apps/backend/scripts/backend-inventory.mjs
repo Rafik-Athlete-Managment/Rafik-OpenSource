@@ -70,15 +70,11 @@ const walk = (dir) =>
 const serverFiles = walk(resolve(backendRoot, "server")).filter(
   (p) => p.endsWith(".ts") && !p.includes("generated"),
 );
+const readSource = (file) => readFileSync(file, "utf8").replace(/\r\n?/g, "\n");
 const asts = new Map(
   serverFiles.map((file) => [
     file,
-    ts.createSourceFile(
-      file,
-      readFileSync(file, "utf8"),
-      ts.ScriptTarget.Latest,
-      true,
-    ),
+    ts.createSourceFile(file, readSource(file), ts.ScriptTarget.Latest, true),
   ]),
 );
 const functions = new Map(),
@@ -600,7 +596,7 @@ for (const t of snapshot.tables) {
   const modules = serverFiles
     .filter((file) => {
       if (!directTouches.has(file))
-        directTouches.set(file, tablesIn(readFileSync(file, "utf8")));
+        directTouches.set(file, tablesIn(readSource(file)));
       return directTouches.get(file).includes(q);
     })
     .map(
@@ -661,7 +657,7 @@ for (const [name, source] of [
   const normalized = source.replaceAll("\\`", "`");
   const path = resolve(output, name);
   if (process.argv.includes("--check")) {
-    if (!existsSync(path) || readFileSync(path, "utf8") !== normalized)
+    if (!existsSync(path) || readSource(path) !== normalized)
       throw Error("Stale backend reference: " + name);
   } else writeFileSync(path, normalized);
 }
