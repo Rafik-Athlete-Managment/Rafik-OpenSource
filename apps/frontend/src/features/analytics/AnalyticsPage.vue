@@ -14,8 +14,8 @@ import TrainerDelivery from './TrainerDelivery.vue'
 import ExperienceReport, { type Experience } from './ExperienceReport.vue'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
 const institution = institutionContext().institution,
-view = institutionContext().view,
-base = '';
+  view = institutionContext().view,
+  base = ''
 const from = ref(addDays(localDate(profile.value?.timezone || 'UTC'), -27)),
   to = ref(localDate(profile.value?.timezone || 'UTC')),
   loading = ref(true),

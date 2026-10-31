@@ -24,10 +24,10 @@ const props = defineProps<{
 const emit = defineEmits<{ saved: [id: string]; close: [] }>()
 const key = `channel-editor:${user.value!.id}:${props.institution}:${props.view}:${props.initial?.id || 'new'}:${[...(props.initialMembers || [])].sort().join(',')}`
 const people = ref<Institution>(),
-loading = ref(true),
-error = ref('');
+  loading = ref(true),
+  error = ref('')
 const ready = ref(false),
-saved = ref(false);
+  saved = ref(false)
 const draft = ref({
   id: props.initial?.id || crypto.randomUUID(),
   title: props.initial?.title || props.initialTitle || '',

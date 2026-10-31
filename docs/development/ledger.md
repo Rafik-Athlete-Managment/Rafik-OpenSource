@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Audit follow-up: formatter portability — 31 October 2026
+
+The 117 baseline formatter warnings were predominantly CRLF/LF mismatches. Maintained TS/TSX/Vue/CSS now explicitly use LF through Git attributes, with local frontend files normalized and the small actual formatting changes isolated. Existing historical SQL migration rules are unchanged. Web units pass 55/55 and the source inventory remains fresh. Full formatter check is rerun against this normalized source; no UI redesign is included.
+
 ## Audit follow-up: unused-code gate — 31 October 2026
 
 Removed compiler-confirmed unused private state, helpers and imports across web/API/tests, while keeping authorization calls and fixture creation in their original order. Unused positional parameters retain their signatures with explicit underscore names; EventHistory still accepts its institution prop. All four workspaces now enforce noUnusedLocals/noUnusedParameters. Typechecks, 55 web units and 12 native requests pass. Removing an unreachable athlete-plan navigation helper required canonical navigation inventory regeneration; generated files are never edited manually. Formatting and typing follow-ups continue before founder device validation.

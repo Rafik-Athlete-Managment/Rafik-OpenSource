@@ -20,10 +20,10 @@ type Result = AssessmentResult & {
   definition: Drill[]
   attendance: string
 }
-const route = useRoute();
+const route = useRoute()
 const view = institutionContext().view,
-member = String(route.params.member || ''),
-base = '';
+  member = String(route.params.member || ''),
+  base = ''
 const from = ref(addDays(localDate(profile.value?.timezone || 'UTC'), -89)),
   to = ref(localDate(profile.value?.timezone || 'UTC')),
   items = ref<Result[]>([]),

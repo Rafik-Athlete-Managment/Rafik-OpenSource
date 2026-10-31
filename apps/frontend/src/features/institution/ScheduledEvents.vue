@@ -18,7 +18,7 @@ import PageState from '../../components/PageState.vue'
 import type { CalendarEvent } from './service-types'
 const route = useRoute(),
   router = useRouter()
-const view = institutionContext().view;
+const view = institutionContext().view
 const base = ''
 const zone = preferredTimezone
 const format = (value: string, parts: Intl.DateTimeFormatOptions) =>

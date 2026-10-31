@@ -181,7 +181,7 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
     await f.login(page, f.coach, `${base}/athletes/${athlete.id}`)
     await page.getByRole('tab', { name: 'Plans', exact: true }).click()
     await page.getByRole('link', { name: 'Manage workouts for Track block' }).click()
-    
+
     await page.getByRole('button', { name: 'Start workout', exact: true }).click()
     await expect(page).toHaveURL(/\/record\/[a-f0-9-]{36}$/)
     await expect(page.getByText('Recorded on behalf of')).toBeVisible()

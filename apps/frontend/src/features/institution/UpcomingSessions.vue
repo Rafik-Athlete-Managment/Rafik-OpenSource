@@ -15,9 +15,9 @@ const props = defineProps<{
   hideLink?: boolean
 }>()
 const view = institutionContext().view,
-base = '',
-zone = preferredTimezone,
-today = localDate(zone.value);
+  base = '',
+  zone = preferredTimezone,
+  today = localDate(zone.value)
 const events = ref<CalendarEvent[]>([]),
   error = ref(''),
   loading = ref(true)

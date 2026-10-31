@@ -1,5 +1,9 @@
 # Verification record
 
+## Formatter baseline closure — 31 October 2026
+
+The 117 baseline formatter warnings were predominantly CRLF/LF mismatches. Maintained TS/TSX/Vue/CSS now explicitly use LF through Git attributes, with local frontend files normalized and the small actual formatting changes isolated. Existing historical SQL migration rules are unchanged. Web units pass 55/55 and the source inventory remains fresh. Full formatter check is rerun against this normalized source; no UI redesign is included.
+
 ## Unused-code enforcement — 31 October 2026
 
 Web, backend, mobile (including its test configuration) and shared typechecks passed with noUnusedLocals/noUnusedParameters enabled. Web units passed 55/55 and native request tests 12/12. The backend inventory remained fresh. The web inventory detected the removed private navigation helper; its generated navigation reference is refreshed through the existing generator. No browser/native build was required for removal of unused bindings. Formatting and source typing continue as separate audit slices.

@@ -16,7 +16,7 @@ import {
 import PageState from '../../components/PageState.vue'
 import { user } from '../../app/auth'
 import { language, locale, t, errorMessage } from '../../lib/i18n'
-import {  convertLoad, type LocalSession, type Session, type Unit } from '../../lib/domain'
+import { convertLoad, type LocalSession, type Session, type Unit } from '../../lib/domain'
 import { loadWorkout, changeWorkout, syncWorkout, reloadServerSession } from '../../lib/training'
 import { editLocalSession, getLocalSession } from '../../lib/storage'
 import { request } from '../../lib/backend'

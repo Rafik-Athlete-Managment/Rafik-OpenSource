@@ -2,7 +2,7 @@
 import { institutionContext } from '../../app/institution'
 
 import {
-     PhPlus,
+  PhPlus,
   PhCalendarPlus,
   PhClipboardText,
   PhBowlFood,

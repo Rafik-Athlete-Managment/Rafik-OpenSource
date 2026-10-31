@@ -19,7 +19,7 @@ const busy = ref(false),
   deleting = ref(false),
   confirmLogout = ref(false)
 const confirmation = ref(''),
-error = ref('');
+  error = ref('')
 const pending = ref(0)
 const diagnostics = ref<{ name: string; at: string }[]>([])
 async function save() {
