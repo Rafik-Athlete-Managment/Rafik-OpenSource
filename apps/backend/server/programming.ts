@@ -1,6 +1,28 @@
+import type { Exercise, Entry, Prescription } from "@rafik/shared/workouts";
+import {
+  prescribedEntries,
+  type FrozenWorkout,
+  type WorkoutDocument,
+} from "./workout-document.ts";
+import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
+import {
+  groupSessionAuthority,
+  assertGroupWritable,
+} from "./group-workouts.ts";
+import {
+  scheduleIndividualWorkout,
+  skipIndividualWorkout,
+  rescheduleIndividualWorkout,
+  workoutStartContext,
+  assertLinkedWorkoutWritable,
+  resolveCompletedWorkout,
+  stopAssignmentWork,
+  lockedAssignment,
+} from "./workout-sequence.ts";
 import { pageSize } from "./pagination.ts";
+import type { WorkoutAgendaItem } from "@rafik/shared/contracts";
 import { pageOffset } from "./service-definitions.ts";
-import { usableExerciseAsset } from "./organization-assets.ts";
+import { usableExerciseAsset } from "./assets.ts";
 import media from "../content/exercise-media.json" with { type: "json" };
 import videos from "../content/exercise-videos.json" with { type: "json" };
 import { isDeepStrictEqual } from "node:util";
@@ -15,8 +37,8 @@ import {
   type Tx,
   type Role,
   access,
-} from "./workspaces.ts";
-import type { Prisma } from "./generated/prisma/client.ts";
+} from "./institution.ts";
+import { Prisma } from "./generated/prisma/client.ts";
 type Member = Awaited<ReturnType<typeof access>>;
 type Input = Record<string, unknown>;
 const json = (v: unknown) => v as Prisma.InputJsonValue;
@@ -49,27 +71,37 @@ const date = (v: unknown) => {
     throw new ApiError(400, "invalid_date");
   return new Date(v + "T00:00:00Z");
 };
-export async function catalog(tx: Tx, id: string, self: Member) {
+export async function catalog(
+  tx: Tx,
+  id: string,
+  self: Member,
+  keys?: string[],
+) {
   const [shared, own] = await Promise.all([
-    tx.exercises.findMany({
-      where: { owner_id: null },
+    tx.reference_exercises.findMany({
+      ...(keys ? { where: { id: { in: keys } } } : {}),
       orderBy: { name: "asc" },
     }),
-    tx.organization_exercises.findMany({
-      where: { workspace_id: id },
+    tx.institution_exercises.findMany({
+      where: {
+        institution_id: id,
+        ...(keys ? { id: { in: keys } } : {}),
+      },
       orderBy: { id: "asc" },
     }),
   ]);
   return [
-    ...shared,
+    ...(shared as ((typeof shared)[number] & { scope?: string })[]),
     ...own
       .filter(
-        (e) => (e.data as any).scope !== "private" || e.created_by === self.id,
+        (e) =>
+          (e.data as { scope?: string }).scope !== "private" ||
+          e.created_by === self.id,
       )
       .map((e) => ({
-        ...(e.data as object),
+        ...(e.data as unknown as Exercise),
         id: e.id,
-        workspace_id: id,
+        institution_id: id,
         created_by: e.created_by,
         revision: e.revision,
         active: e.active,
@@ -84,18 +116,29 @@ async function programAccess(
   programId: string,
   write = false,
 ) {
-  const p = await tx.organization_programs.findUnique({
+  const p = await tx.institution_programs.findUnique({
     where: { id: uuid(programId) },
   });
   if (
     !p ||
-    p.workspace_id !== id ||
+    p.institution_id !== id ||
     (view !== "admin" &&
       (p.created_by !== self.id || view === "trainee") &&
       (write || !p.listed))
   )
     throw new ApiError(403, "program_unavailable");
   if (write && view === "trainee") throw new ApiError(403, "forbidden");
+  if (
+    view === "trainee" &&
+    !(await tx.institution_assignments.findFirst({
+      where: {
+        institution_id: id,
+        member_id: self.id,
+        institution_versions: { program_id: p.id },
+      },
+    }))
+  )
+    throw new ApiError(403, "program_unavailable");
   return p;
 }
 /**
@@ -130,7 +173,7 @@ export async function coaches(
 ) {
   if (athlete.trainer_id === coach) return true;
   if (scope === "primary") return false;
-  return !!(await tx.organization_coaching_links.findFirst({
+  return !!(await tx.institution_coaching_links.findFirst({
     where: {
       athlete_member_id: athlete.id,
       coach_member_id: coach,
@@ -148,12 +191,12 @@ export async function recipient(
   active = false,
   scope: CoachScope = "primary",
 ) {
-  const m = await tx.workspace_members.findUnique({
+  const m = await tx.institution_members.findUnique({
     where: { id: uuid(memberId) },
   });
   if (
     !m ||
-    m.workspace_id !== id ||
+    m.institution_id !== id ||
     (active && !m.roles.includes("trainee")) ||
     (active && !m.active) ||
     (view === "trainer" && !(await coaches(tx, m, self.id, scope))) ||
@@ -165,12 +208,12 @@ export async function recipient(
 /** Active supporting links of a coach: each covers one athlete for one sport or specialty. */
 export async function supportingLinks(
   tx: Tx,
-  workspace: string,
+  institution: string,
   coach: string,
 ) {
-  return tx.organization_coaching_links.findMany({
+  return tx.institution_coaching_links.findMany({
     where: {
-      workspace_id: workspace,
+      institution_id: institution,
       coach_member_id: coach,
       kind: "supporting",
       ended_at: null,
@@ -188,7 +231,7 @@ export const assignmentScope = (coach: string, links: Links) => ({
     {
       OR: [
         {
-          workspace_members_organization_assignments_workspace_id_member_idToworkspace_members:
+          institution_members_institution_assignments_institution_id_member_idToinstitution_members:
             { trainer_id: coach },
         },
         ...links.map((l) => ({
@@ -204,10 +247,10 @@ export const sessionScope = (coach: string, links: Links) => ({
   AND: [
     {
       OR: [
-        { workspace_members: { trainer_id: coach } },
+        { institution_members: { trainer_id: coach } },
         ...links.map((l) => ({
           member_id: l.athlete_member_id,
-          organization_assignments: { sport_id: l.sport_id },
+          institution_assignments: { sport_id: l.sport_id },
         })),
       ],
     },
@@ -217,9 +260,9 @@ export const sessionScope = (coach: string, links: Links) => ({
  * Plan writes: admins and the primary coach for any plan; a supporting coach only for plans
  * labelled with a sport they are linked to for this athlete (including the plan replaced).
  */
-async function planAuthority(
+export async function planAuthority(
   tx: Tx,
-  workspace: string,
+  institution: string,
   self: Member,
   view: Role,
   member: string,
@@ -227,7 +270,7 @@ async function planAuthority(
 ) {
   const m = await recipient(
     tx,
-    workspace,
+    institution,
     self,
     view,
     member,
@@ -235,15 +278,23 @@ async function planAuthority(
     "training",
   );
   if (view !== "trainer" || m.trainer_id === self.id) return m;
-  const covered = (await supportingLinks(tx, workspace, self.id))
+  const covered = (await supportingLinks(tx, institution, self.id))
     .filter((l) => l.athlete_member_id === m.id)
     .map((l) => l.sport_id);
   if (sports.some((sport) => !sport || !covered.includes(sport)))
     throw new ApiError(403, "trainee_unavailable");
   return m;
 }
-async function snapshot(tx: Tx, id: string, self: Member, draft: unknown) {
-  const items = JSON.stringify(await catalog(tx, id, self)),
+export async function snapshot(
+  tx: Tx,
+  id: string,
+  self: Member,
+  draft: unknown,
+  selectedCatalog?: Awaited<ReturnType<typeof catalog>>,
+) {
+  const items = JSON.stringify(
+      selectedCatalog ?? (await catalog(tx, id, self)),
+    ),
     p = JSON.stringify(draft);
   await tx.$queryRaw`SELECT public.validate_program_presentation(${p}::jsonb,${id}::uuid)::text`;
   await tx.$queryRaw`SELECT public.validate_prescription_catalog(${p}::jsonb,${items}::jsonb)::text`;
@@ -261,13 +312,13 @@ export async function programs(
   const view = role(query.get("view"));
   return scoped(actor, id, [view], async (tx, self) => {
     const requestedVersion = query.get("version")
-      ? await tx.organization_versions.findUnique({
+      ? await tx.institution_versions.findUnique({
           where: { id: uuid(query.get("version")) },
         })
       : null;
     if (
       query.get("version") &&
-      (!requestedVersion || requestedVersion.workspace_id !== id)
+      (!requestedVersion || requestedVersion.institution_id !== id)
     )
       throw new ApiError(403, "program_unavailable");
     const programId = query.get("program") || requestedVersion?.program_id;
@@ -275,13 +326,29 @@ export async function programs(
       const p = await programAccess(tx, id, self, view, programId),
         editable =
           view === "admin" || (view === "trainer" && p.created_by === self.id);
-      const versions = await tx.organization_versions.findMany({
-        where: { program_id: p.id },
+      const versions = await tx.institution_versions.findMany({
+        where: {
+          program_id: p.id,
+          ...(view === "trainee"
+            ? {
+                ...(requestedVersion ? { id: requestedVersion.id } : {}),
+                institution_assignments: {
+                  some: { institution_id: id, member_id: self.id },
+                },
+              }
+            : {}),
+        },
         orderBy: { revision: "desc" },
         take: editable ? 50 : 1,
       });
       if (!editable && !versions.length)
         throw new ApiError(404, "program_unavailable");
+      if (
+        view === "trainee" &&
+        requestedVersion &&
+        !versions.some((v) => v.id === requestedVersion.id)
+      )
+        throw new ApiError(403, "program_unavailable");
       return {
         version: requestedVersion,
         program: editable
@@ -295,7 +362,7 @@ export async function programs(
     const take = pageSize(query, 24),
       offset = Math.max(0, Math.min(100000, Number(query.get("offset")) || 0));
     const where = {
-      workspace_id: id,
+      institution_id: id,
       archived: false,
       title: {
         contains: (query.get("search") || "").slice(0, 100),
@@ -305,23 +372,43 @@ export async function programs(
         ? {}
         : view === "trainer"
           ? { OR: [{ created_by: self.id }, { listed: true }] }
-          : { listed: true, organization_versions: { some: {} } }),
+          : {
+              listed: true,
+              institution_versions: {
+                some: {
+                  institution_assignments: {
+                    some: { institution_id: id, member_id: self.id },
+                  },
+                },
+              },
+            }),
     };
     const [list, total] = await Promise.all([
-      tx.organization_programs.findMany({
+      tx.institution_programs.findMany({
         where,
         orderBy: [{ updated_at: "desc" }, { id: "asc" }],
         skip: offset,
         take,
         include: {
-          organization_versions: { orderBy: { revision: "desc" }, take: 1 },
+          institution_versions: {
+            where:
+              view === "trainee"
+                ? {
+                    institution_assignments: {
+                      some: { institution_id: id, member_id: self.id },
+                    },
+                  }
+                : {},
+            orderBy: { revision: "desc" },
+            take: 1,
+          },
         },
       }),
-      tx.organization_programs.count({ where }),
+      tx.institution_programs.count({ where }),
     ]);
     return {
       items: list.map((p) => {
-        const v = p.organization_versions[0],
+        const v = p.institution_versions[0],
           editable =
             view === "admin" ||
             (view === "trainer" && p.created_by === self.id);
@@ -348,22 +435,25 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
     programId = String(input.id || "");
   const authorize = async (tx: Tx, self: Member) => {
     if (["save", "publish", "archive"].includes(action)) {
-      const existing = await tx.organization_programs.findUnique({
+      const existing = await tx.institution_programs.findUnique({
         where: { id: uuid(programId) },
       });
       if (existing) await programAccess(tx, id, self, view, programId, true);
       else if (action !== "save" && action !== "publish")
         throw new ApiError(404, "program_unavailable");
     } else if (["exercise", "exercise-active"].includes(action)) {
-      const e = await tx.organization_exercises.findUnique({
+      const e = await tx.institution_exercises.findUnique({
         where: {
-          workspace_id_id: { workspace_id: id, id: textValue(input.id, 100) },
+          institution_id_id: {
+            institution_id: id,
+            id: textValue(input.id, 100),
+          },
         },
       });
       if (
         e &&
         e.created_by !== self.id &&
-        (view !== "admin" || (e.data as any).scope === "private")
+        (view !== "admin" || (e.data as { scope?: string }).scope === "private")
       )
         throw new ApiError(403, "forbidden");
     } else throw new ApiError(400, "invalid_request");
@@ -378,8 +468,8 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
         const eid = textValue(input.id, 100);
         if (!/^org-[a-f0-9-]{36}$/.test(eid))
           throw new ApiError(400, "invalid_exercise");
-        const old = await tx.organization_exercises.findUnique({
-          where: { workspace_id_id: { workspace_id: id, id: eid } },
+        const old = await tx.institution_exercises.findUnique({
+          where: { institution_id_id: { institution_id: id, id: eid } },
         });
         if ((old?.revision || 0) !== input.revision)
           throw new ApiError(409, "conflict");
@@ -498,8 +588,8 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
         } else if (!old || typeof input.active !== "boolean")
           throw new ApiError(400, "invalid_request");
         const result = old
-          ? await tx.organization_exercises.update({
-              where: { workspace_id_id: { workspace_id: id, id: eid } },
+          ? await tx.institution_exercises.update({
+              where: { institution_id_id: { institution_id: id, id: eid } },
               data: {
                 ...(action === "exercise"
                   ? { data: json(data) }
@@ -507,9 +597,9 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
                 revision: { increment: 1 },
               },
             })
-          : await tx.organization_exercises.create({
+          : await tx.institution_exercises.create({
               data: {
-                workspace_id: id,
+                institution_id: id,
                 id: eid,
                 data: json(data),
                 created_by: self.id,
@@ -518,7 +608,7 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
         await event(tx, actor, id, "exercise_updated", null, { exercise: eid });
         return result;
       }
-      let p = await tx.organization_programs.findUnique({
+      let p = await tx.institution_programs.findUnique({
         where: { id: programId },
       });
       if ((p?.draft_version || null) !== input.revision)
@@ -528,7 +618,7 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
       if (action === "archive") {
         if (typeof input.value !== "boolean")
           throw new ApiError(400, "invalid_request");
-        p = await tx.organization_programs.update({
+        p = await tx.institution_programs.update({
           where: { id: programId },
           data: {
             archived: input.value,
@@ -540,6 +630,11 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
         return { plan: p };
       }
       const title = textValue(input.title, 100);
+      const preparation = (
+        input.draft as { automaticPreparation?: unknown } | null
+      )?.automaticPreparation;
+      if (preparation !== undefined && typeof preparation !== "boolean")
+        throw new ApiError(400, "invalid_plan");
       let prescription: Prisma.InputJsonValue | null = null;
       if (action === "publish")
         prescription = await snapshot(tx, id, self, input.draft);
@@ -554,7 +649,7 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
         p && p.title === title && isDeepStrictEqual(p.draft, input.draft);
       if (!same)
         p = p
-          ? await tx.organization_programs.update({
+          ? await tx.institution_programs.update({
               where: { id: programId },
               data: {
                 title,
@@ -563,10 +658,10 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
                 updated_at: new Date(),
               },
             })
-          : await tx.organization_programs.create({
+          : await tx.institution_programs.create({
               data: {
                 id: programId,
-                workspace_id: id,
+                institution_id: id,
                 created_by: self.id,
                 title,
                 draft: json(input.draft),
@@ -576,12 +671,12 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
       let version = null;
       if (action === "publish") {
         if (!p.listed || p.archived)
-          p = await tx.organization_programs.update({
+          p = await tx.institution_programs.update({
             where: { id: p.id },
             data: { listed: true, archived: false, revision: { increment: 1 } },
           });
         version =
-          (await tx.organization_versions.findUnique({
+          (await tx.institution_versions.findUnique({
             where: {
               program_id_revision: {
                 program_id: p.id,
@@ -589,9 +684,9 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
               },
             },
           })) ||
-          (await tx.organization_versions.create({
+          (await tx.institution_versions.create({
             data: {
-              workspace_id: id,
+              institution_id: id,
               program_id: p.id,
               revision: p.draft_version,
               title,
@@ -625,11 +720,14 @@ export async function delivery(
     const links =
         view === "trainer" ? await supportingLinks(tx, id, self.id) : null,
       plans = links ? assignmentScope(self.id, links) : {},
-      workouts = links ? sessionScope(self.id, links) : {};
+      workouts = {
+        source_kind: "assignment",
+        ...(links ? sessionScope(self.id, links) : {}),
+      };
     if (query.get("history") === "true") {
       const search = (query.get("search") || "").trim().slice(0, 100);
       const scope = {
-        workspace_id: id,
+        institution_id: id,
         ...(search
           ? { name: { contains: search, mode: "insensitive" as const } }
           : {}),
@@ -641,24 +739,54 @@ export async function delivery(
               ? { id: self.id }
               : {}),
       };
+      // Optional status filter, applied before counting and paging. "Awaiting review" uses
+      // the follow-up rule: completed with no (or an empty) reviewed_at in the document.
+      const status = query.get("status");
+      if (
+        status &&
+        !["in_progress", "awaiting_review", "reviewed"].includes(status)
+      )
+        throw new ApiError(400, "invalid_request");
+      const unreviewed = {
+        OR: [
+          { document: { path: ["reviewed_at"], equals: Prisma.AnyNull } },
+          { document: { path: ["reviewed_at"], equals: "" } },
+        ],
+      };
+      const state =
+        status === "in_progress"
+          ? { completed_at: null }
+          : status === "awaiting_review"
+            ? { completed_at: { not: null }, ...unreviewed }
+            : status === "reviewed"
+              ? { completed_at: { not: null }, NOT: unreviewed }
+              : {};
       const cursor = query.get("before");
       if (
         cursor &&
-        !(await tx.organization_sessions.findFirst({
+        !(await tx.institution_sessions.findFirst({
           where: {
             id: uuid(cursor),
-            workspace_id: id,
-            workspace_members: scope,
+            institution_id: id,
+            institution_members: scope,
             ...workouts,
+            ...state,
           },
         }))
       )
         throw new ApiError(400, "invalid_request");
       const take = pageSize(query, 10);
-      const page = await tx.organization_sessions.findMany({
-        where: { workspace_id: id, workspace_members: scope, ...workouts },
+      const page = await tx.institution_sessions.findMany({
+        where: {
+          institution_id: id,
+          institution_members: scope,
+          ...workouts,
+          ...state,
+        },
         include: {
-          workspace_members: { select: { id: true, name: true, active: true } },
+          institution_members: {
+            select: { id: true, name: true, active: true },
+          },
         },
         orderBy: [{ started_at: "desc" }, { id: "asc" }],
         take: take + 1,
@@ -669,30 +797,35 @@ export async function delivery(
       const sessions = page.slice(0, take),
         member = selected || (view === "trainee" ? self.id : null);
       const assignments = member
-        ? await tx.organization_assignments.findMany({
+        ? await tx.institution_assignments.findMany({
             where: {
-              workspace_id: id,
+              institution_id: id,
               member_id: member,
               state: "active",
               ...plans,
             },
-            include: { organization_versions: true },
+            include: { institution_versions: true },
           })
         : [];
-      const total = await tx.organization_sessions.count({
-        where: { workspace_id: id, workspace_members: scope, ...workouts },
+      const total = await tx.institution_sessions.count({
+        where: {
+          institution_id: id,
+          institution_members: scope,
+          ...workouts,
+          ...state,
+        },
       });
       return {
         total,
         members: Array.from(
           new Map(
-            sessions.map((s) => [s.member_id, s.workspace_members]),
+            sessions.map((s) => [s.member_id, s.institution_members]),
           ).values(),
         ),
         assignments: assignments.map((a) => ({
           ...a,
-          version: a.organization_versions,
-          organization_versions: undefined,
+          version: effectivePlan(a),
+          institution_versions: undefined,
         })),
         sessions: sessions.map((s) => ({
           ...(s.document as object),
@@ -704,14 +837,14 @@ export async function delivery(
         next: page.length > take ? sessions.at(-1)!.id : null,
       };
     }
-    const members = await tx.workspace_members.findMany({
+    const members = await tx.institution_members.findMany({
       where: {
-        workspace_id: id,
+        institution_id: id,
         ...(query.get("history") === "true"
           ? {
               OR: [
                 { roles: { has: "trainee" } },
-                { organization_sessions: { some: {} } },
+                { institution_sessions: { some: {} } },
               ],
             }
           : { roles: { has: "trainee" } }),
@@ -729,35 +862,35 @@ export async function delivery(
       select: { id: true, name: true, active: true, revision: true },
       orderBy: [{ name: "asc" }, { id: "asc" }],
     });
-    const assignments = await tx.organization_assignments.findMany({
+    const assignments = await tx.institution_assignments.findMany({
       where: {
-        workspace_id: id,
+        institution_id: id,
         member_id: { in: members.map((m) => m.id) },
         ...(selected ? {} : { state: "active" }),
         ...plans,
       },
-      include: { organization_versions: true },
+      include: { institution_versions: true },
       orderBy: { created_at: "desc" },
     });
     const cursor = query.get("history") === "true" ? query.get("before") : null;
     if (query.has("before") && !cursor)
       throw new ApiError(400, "invalid_request");
     if (cursor) {
-      const previous = await tx.organization_sessions.findUnique({
+      const previous = await tx.institution_sessions.findUnique({
         where: { id: uuid(cursor) },
       });
       if (
         !previous ||
-        previous.workspace_id !== id ||
+        previous.institution_id !== id ||
         !members.some((m) => m.id === previous.member_id)
       )
         throw new ApiError(400, "invalid_request");
     }
     const page =
       query.get("history") === "true"
-        ? await tx.organization_sessions.findMany({
+        ? await tx.institution_sessions.findMany({
             where: {
-              workspace_id: id,
+              institution_id: id,
               member_id: { in: members.map((m) => m.id) },
               ...workouts,
             },
@@ -771,8 +904,8 @@ export async function delivery(
       members,
       assignments: assignments.map((a) => ({
         ...a,
-        version: a.organization_versions,
-        organization_versions: undefined,
+        version: effectivePlan(a),
+        institution_versions: undefined,
       })),
       sessions: sessions.map((s) => ({
         ...(s.document as object),
@@ -790,6 +923,7 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
     action = String(input.action);
   if (view === "trainee") throw new ApiError(403, "forbidden");
   if (action === "end") return endAssignment(actor, id, view, input);
+  if (action === "adapt") return adaptAssignment(actor, id, view, input);
   if (action !== "assign") throw new ApiError(400, "invalid_request");
   const selected = input.members;
   if (
@@ -815,7 +949,7 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
   const replacedSports = async (tx: Tx, x: Input) => {
     const target = replacing(x);
     if (!target) return [];
-    const old = await tx.organization_assignments.findUnique({
+    const old = await tx.institution_assignments.findUnique({
       where: { id: target.id },
     });
     return [old?.sport_id ?? null];
@@ -835,15 +969,36 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
     [view],
     input,
     async (tx, self) => {
-      const v = await tx.organization_versions.findUnique({
+      const v = await tx.institution_versions.findUnique({
         where: { id: uuid(input.version_id) },
       });
-      if (!v || v.workspace_id !== id)
+      if (!v || v.institution_id !== id)
         throw new ApiError(403, "program_unavailable");
       const p = await programAccess(tx, id, self, view, v.program_id);
       if (p.archived) throw new ApiError(400, "program_unavailable");
       const start = date(input.start_date),
         end = input.end_date ? date(input.end_date) : null;
+      const automatic =
+        input.automatic_preparation ??
+        (v.prescription as { automaticPreparation?: boolean })
+          .automaticPreparation === true;
+      if (typeof automatic !== "boolean")
+        throw new ApiError(400, "invalid_request");
+      const zone = String(input.timezone || "");
+      if (automatic) {
+        if (
+          !end ||
+          end < start ||
+          end.getTime() - start.getTime() > 366 * 86400000
+        )
+          throw new ApiError(400, "invalid_date");
+        try {
+          new Intl.DateTimeFormat("en", { timeZone: zone }).format();
+        } catch {
+          throw new ApiError(400, "invalid_timezone");
+        }
+        if (!zone) throw new ApiError(400, "invalid_timezone");
+      }
       if (
         (end && end < start) ||
         !["cycle", "flexible"].includes(String(input.schedule_mode))
@@ -851,8 +1006,8 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
         throw new ApiError(400, "invalid_schedule");
       if (
         sport &&
-        !(await tx.organization_sports.findFirst({
-          where: { id: sport, workspace_id: id, archived: false },
+        !(await tx.institution_sports.findFirst({
+          where: { id: sport, institution_id: id, archived: false },
         }))
       )
         throw new ApiError(400, "invalid_sport");
@@ -866,26 +1021,27 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
         if (m.revision !== x.revision) throw new ApiError(409, "conflict");
         const target = replacing(x);
         if (target) {
-          const old = await tx.organization_assignments.findUnique({
+          const old = await tx.institution_assignments.findUnique({
             where: { id: target.id },
           });
           if (
             !old ||
-            old.workspace_id !== id ||
+            old.institution_id !== id ||
             old.member_id !== m.id ||
             old.state !== "active" ||
             old.revision !== target.revision
           )
             throw new ApiError(409, "conflict");
-          await tx.organization_assignments.update({
+          await stopAssignmentWork(tx, actor, id, old.id);
+          await tx.institution_assignments.update({
             where: { id: old.id },
             data: { state: "archived", revision: { increment: 1 } },
           });
         }
         if (
-          await tx.organization_assignments.findFirst({
+          await tx.institution_assignments.findFirst({
             where: {
-              workspace_id: id,
+              institution_id: id,
               member_id: m.id,
               version_id: v.id,
               state: "active",
@@ -893,9 +1049,9 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
           })
         )
           throw new ApiError(409, "already_assigned");
-        const created = await tx.organization_assignments.create({
+        const created = await tx.institution_assignments.create({
           data: {
-            workspace_id: id,
+            institution_id: id,
             member_id: m.id,
             version_id: v.id,
             created_by: self.id,
@@ -906,13 +1062,33 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
             sport_id: sport,
           },
         });
+        if (automatic) {
+          const rule = await tx.institution_workout_recurrences.create({
+            data: {
+              institution_id: id,
+              assignment_id: created.id,
+              created_by: self.id,
+              starts_on: start,
+              ends_on: end!,
+              timezone: zone,
+              weekdays: [1, 2, 3, 4, 5, 6, 7],
+              local_time: null,
+              duration_minutes: null,
+            },
+          });
+          await event(tx, actor, id, "workout_rule_saved", m.id, {
+            assignment: created.id,
+            rule: rule.id,
+            mode: "automatic",
+          });
+        }
         // Concurrent plans are allowed; overlapping dates are reported, never blocked.
         // Intentional visibility exception: so coaches can coordinate load, the warning lists every
         // overlapping active plan for this athlete, including plans outside a supporting coach's
         // sport. It is limited to title, goal and dates; no plan ID, prescription or sessions.
-        const overlaps = await tx.organization_assignments.findMany({
+        const overlaps = await tx.institution_assignments.findMany({
           where: {
-            workspace_id: id,
+            institution_id: id,
             member_id: m.id,
             state: "active",
             NOT: { id: created.id },
@@ -924,14 +1100,14 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
             goal: true,
             start_date: true,
             end_date: true,
-            organization_versions: { select: { title: true } },
+            institution_versions: { select: { title: true } },
           },
           orderBy: { start_date: "asc" },
         });
         results.push({
           ...created,
           overlaps: overlaps.map((o) => ({
-            title: o.organization_versions.title,
+            title: o.institution_versions.title,
             goal: o.goal,
             start_date: o.start_date,
             end_date: o.end_date,
@@ -951,6 +1127,58 @@ export async function deliveryCommand(actor: Actor, id: string, input: Input) {
     authorize,
   );
 }
+/** Apply only to future work in this existing athlete plan. Current occurrence snapshots survive. */
+async function adaptAssignment(
+  actor: Actor,
+  id: string,
+  view: Role,
+  input: Input,
+) {
+  const key = uuid(input.assignment);
+  const authorize = async (tx: Tx, self: Member) => {
+    const plan = await lockedAssignment(tx, id, key);
+    await planAuthority(tx, id, self, view, plan.member_id, [plan.sport_id]);
+    return plan;
+  };
+  return mutation(
+    actor,
+    id,
+    [view],
+    input,
+    async (tx, self) => {
+      const plan = await authorize(tx, self);
+      if (plan.state !== "active")
+        throw new ApiError(409, "assignment_unavailable");
+      if (
+        plan.revision !== input.revision ||
+        plan.version_id !== input.source_version_id
+      )
+        throw new ApiError(409, "conflict");
+      const title = textValue(input.title, 100);
+      const prescription = await snapshot(tx, id, self, input.draft);
+      const revision = adaptationRevision(plan) + 1;
+      const adaptation = {
+        title,
+        prescription,
+        revision,
+        source_version_id: plan.version_id,
+      };
+      const result = await tx.institution_assignments.update({
+        where: { id: key },
+        data: { adaptation: json(adaptation), revision: { increment: 1 } },
+      });
+      await event(tx, actor, id, "athlete_plan_adapted", plan.member_id, {
+        assignment: key,
+        before: plan.adaptation || null,
+        after: json(adaptation),
+      });
+      return { assignment: result, adaptation };
+    },
+    async (tx, self) => {
+      await authorize(tx, self);
+    },
+  );
+}
 /** Ending archives one plan; sessions and the immutable version stay in history. */
 async function endAssignment(
   actor: Actor,
@@ -960,10 +1188,10 @@ async function endAssignment(
 ) {
   const key = uuid(input.assignment);
   const check = async (tx: Tx, self: Member) => {
-    const a = await tx.organization_assignments.findUnique({
+    const a = await tx.institution_assignments.findUnique({
       where: { id: key },
     });
-    if (!a || a.workspace_id !== id) throw new ApiError(404, "not_found");
+    if (!a || a.institution_id !== id) throw new ApiError(404, "not_found");
     await planAuthority(tx, id, self, view, a.member_id, [a.sport_id]);
     return a;
   };
@@ -976,7 +1204,8 @@ async function endAssignment(
       const a = await check(tx, self);
       if (a.state !== "active" || a.revision !== input.revision)
         throw new ApiError(409, "conflict");
-      const result = await tx.organization_assignments.update({
+      await stopAssignmentWork(tx, actor, id, a.id);
+      const result = await tx.institution_assignments.update({
         where: { id: a.id },
         data: { state: "archived", revision: { increment: 1 } },
       });
@@ -993,13 +1222,29 @@ async function endAssignment(
 /** Session reads: the athlete, admins, the primary coach, or a supporting coach for the plan's sport. */
 async function readableSession(
   tx: Tx,
-  s: { workspace_id: string; member_id: string; assignment_id: string },
+  s: {
+    institution_id: string;
+    member_id: string;
+    assignment_id: string | null;
+    source_kind?: string;
+    occurrence_id?: string | null;
+  },
   self: Member,
   view: Role,
 ) {
+  if (s.source_kind === "additional") {
+    await groupSessionAuthority(tx, s.institution_id, self, view, {
+      member_id: s.member_id,
+      occurrence_id: s.occurrence_id || null,
+    });
+    return tx.institution_members.findUniqueOrThrow({
+      where: { id: s.member_id },
+    });
+  }
+  if (!s.assignment_id) throw new ApiError(403, "session_missing");
   const m = await recipient(
     tx,
-    s.workspace_id,
+    s.institution_id,
     self,
     view,
     s.member_id,
@@ -1007,11 +1252,11 @@ async function readableSession(
     "training",
   );
   if (view === "trainer" && m.trainer_id !== self.id) {
-    const plan = await tx.organization_assignments.findUnique({
+    const plan = await tx.institution_assignments.findUnique({
       where: { id: s.assignment_id },
       select: { sport_id: true },
     });
-    const links = await supportingLinks(tx, s.workspace_id, self.id);
+    const links = await supportingLinks(tx, s.institution_id, self.id);
     if (
       !links.some(
         (l) => l.athlete_member_id === m.id && l.sport_id === plan?.sport_id,
@@ -1022,18 +1267,18 @@ async function readableSession(
   return m;
 }
 /** Attributed versions of one session, oldest first; readable by anyone who can read the session. */
-export async function organizationSessionHistory(
+export async function institutionSessionHistory(
   actor: Actor,
   sessionId: string,
   view: Role = "trainee",
 ) {
-  const s = await db.organization_sessions.findUnique({
+  const s = await db.institution_sessions.findUnique({
     where: { id: uuid(sessionId) },
   });
   if (!s) throw new ApiError(404, "session_missing");
-  return scoped(actor, s.workspace_id, [view], async (tx, self) => {
+  return scoped(actor, s.institution_id, [view], async (tx, self) => {
     await readableSession(tx, s, self, view);
-    const rows = await tx.organization_session_history.findMany({
+    const rows = await tx.institution_session_history.findMany({
       where: { session_id: s.id },
       orderBy: { version: "asc" },
       take: 100,
@@ -1057,23 +1302,43 @@ export async function organizationSessionHistory(
     };
   });
 }
-export async function organizationSession(
+export async function institutionSession(
   actor: Actor,
   sessionId: string,
   view: Role = "trainee",
 ) {
-  const s = await db.organization_sessions.findUnique({
+  const s = await db.institution_sessions.findUnique({
     where: { id: uuid(sessionId) },
   });
   if (!s) throw new ApiError(404, "session_missing");
-  return scoped(actor, s.workspace_id, [view], async (tx, self) => {
+  return scoped(actor, s.institution_id, [view], async (tx, self) => {
     const m = await readableSession(tx, s, self, view);
+    const group =
+      s.source_kind === "additional"
+        ? await groupSessionAuthority(tx, s.institution_id, self, view, s)
+        : null;
     return {
       ...(s.document as object),
       client_id: m.user_id,
       member_name: m.name,
       version: s.version,
       completed_at: s.completed_at,
+      can_record:
+        view === "trainer" &&
+        m.active &&
+        (!group ||
+          (group.occurrence.state !== "cancelled" &&
+            group.person.attendance === "present" &&
+            !group.person.workout_skip_reason)) &&
+        (s.recorded_mode === "delegated" || !s.completed_at) &&
+        !(await tx.institution_workout_positions.findFirst({
+          where: {
+            institution_id: s.institution_id,
+            session_id: s.id,
+            state: { in: ["paused", "skipped", "cancelled"] },
+          },
+          select: { id: true },
+        })),
     };
   });
 }
@@ -1099,10 +1364,10 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
   // Delegated recording: a coach with plan authority (primary, or supporting for the plan's
   // sport) may start and save a session for an athlete under the coach's own identity.
   const delegate = async (tx: Tx, self: Member, assignmentId: string) => {
-    const a = await tx.organization_assignments.findUnique({
+    const a = await tx.institution_assignments.findUnique({
       where: { id: assignmentId },
     });
-    if (!a || a.workspace_id !== id)
+    if (!a || a.institution_id !== id)
       throw new ApiError(403, "trainee_unavailable");
     return planAuthority(tx, id, self, view, a.member_id, [a.sport_id]);
   };
@@ -1113,13 +1378,36 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
       else if (view !== "trainee") throw new ApiError(403, "forbidden");
       return;
     }
-    const s = await tx.organization_sessions.findUnique({
+    const s = await tx.institution_sessions.findUnique({
       where: { id: sessionId },
     });
-    if (!s || s.workspace_id !== id) throw new ApiError(403, "session_missing");
+    if (!s || s.institution_id !== id)
+      throw new ApiError(403, "session_missing");
+    if (s.source_kind === "additional") {
+      await groupSessionAuthority(tx, id, self, view, s);
+      if (action === "save") await assertGroupWritable(tx, id, self, view, s);
+      else if (action !== "review" || view === "trainee")
+        throw new ApiError(403, "forbidden");
+      return;
+    }
+    if (!s.assignment_id) throw new ApiError(403, "session_missing");
     if (action === "save" && view === "trainer") {
-      // Coaches edit only sessions recorded on the athlete's behalf, never self-logged ones.
-      if (s.recorded_mode !== "delegated") throw new ApiError(403, "forbidden");
+      await delegate(tx, self, s.assignment_id);
+      // Coaches may finish an athlete-started record; completed self-logged actuals remain protected.
+      // A retry of the exact acknowledged completion still reaches the shared receipt comparison.
+      if (s.recorded_mode !== "delegated" && s.completed_at) {
+        const receipt = await tx.institution_operations.findFirst({
+          where: {
+            id: uuid(input.operation),
+            actor_id: actor.id,
+            institution_id: id,
+          },
+        });
+        if (!receipt) throw new ApiError(403, "forbidden");
+      }
+      return;
+    }
+    if (action === "review" && view === "trainer") {
       await delegate(tx, self, s.assignment_id);
       return;
     }
@@ -1138,53 +1426,71 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
     input,
     async (tx, self) => {
       if (action === "start") {
-        const assignment = await tx.organization_assignments.findUnique({
+        const assignment = await tx.institution_assignments.findUnique({
           where: { id: uuid(input.assignment_id) },
-          include: { organization_versions: true },
+          include: { institution_versions: true },
         });
         if (
           !assignment ||
-          assignment.workspace_id !== id ||
+          assignment.institution_id !== id ||
           (view === "trainee" && assignment.member_id !== self.id)
         )
           throw new ApiError(403, "trainee_unavailable");
         const delegated = view === "trainer",
           athlete = delegated
-            ? await tx.workspace_members.findUniqueOrThrow({
+            ? await tx.institution_members.findUniqueOrThrow({
                 where: { id: assignment.member_id },
               })
             : self;
-        const existing = await tx.organization_sessions.findUnique({
+        const existing = await tx.institution_sessions.findUnique({
           where: { id: sessionId },
         });
         if (existing) {
           if (
             existing.assignment_id !== assignment.id ||
-            existing.day_id !== input.day_id
+            existing.day_id !== input.day_id ||
+            (input.occurrence_id &&
+              existing.occurrence_id !== input.occurrence_id)
           )
             throw new ApiError(409, "operation_reused");
           return existing.document;
         }
-        const nowDate = date(today);
+        const linked = await workoutStartContext(
+          tx,
+          id,
+          assignment.id,
+          input.occurrence_id,
+        );
+        const nowDate = linked ? linked.occurrence.training_date : date(today);
         if (
           assignment.state !== "active" ||
           assignment.start_date > nowDate ||
           (assignment.end_date && assignment.end_date < nowDate)
         )
           throw new ApiError(400, "assignment_unavailable");
-        const plan = assignment.organization_versions.prescription as any,
-          day = plan.days.find((d: any) => d.id === input.day_id);
-        if (!day || day.restDay) throw new ApiError(400, "invalid_day");
+        const effective = effectivePlan(assignment),
+          plan = effective.prescription as unknown as Prescription,
+          frozen = linked?.occurrence.workout_snapshot as unknown as
+            FrozenWorkout | undefined,
+          day = frozen?.day || plan.days.find((d) => d.id === input.day_id);
+        if (
+          !day ||
+          day.restDay ||
+          (linked &&
+            (linked.position.day_id !== day.id || input.day_id !== day.id))
+        )
+          throw new ApiError(400, "invalid_day");
         const delta = Math.floor(
           (nowDate.getTime() - assignment.start_date.getTime()) / 86400000,
         );
         if (
+          !linked &&
           assignment.schedule_mode === "cycle" &&
           delta % (7 * (plan.cycleWeeks || 1)) !==
-            ((day.week || 1) - 1) * 7 + day.weekday
+            ((day.week || 1) - 1) * 7 + (day.weekday as number)
         )
           throw new ApiError(400, "not_scheduled_today");
-        const occurrence = await tx.organization_sessions.findUnique({
+        const occurrence = await tx.institution_sessions.findUnique({
           where: {
             assignment_id_local_date_day_id: {
               assignment_id: assignment.id,
@@ -1196,7 +1502,7 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
         if (occurrence) return occurrence.document;
         const document = {
           id: sessionId,
-          workspace_id: id,
+          institution_id: id,
           member_id: athlete.id,
           // The athlete stays the subject; a delegated recorder is attributed separately.
           client_id: delegated ? athlete.user_id : actor.id,
@@ -1207,27 +1513,16 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           assignment_id: assignment.id,
           version_id: assignment.version_id,
           day_id: day.id,
-          occurrence_key: `${assignment.id}:${today}:${day.id}`,
-          local_date: today,
-          title: assignment.organization_versions.title,
+          occurrence_key: `${assignment.id}:${nowDate.toISOString().slice(0, 10)}:${day.id}`,
+          ...(linked ? { occurrence_id: linked.occurrence.id } : {}),
+          local_date: nowDate.toISOString().slice(0, 10),
+          title: linked ? linked.occurrence.title : effective.title,
+          adaptation_revision: linked
+            ? frozen?.adaptation_revision || 0
+            : adaptationRevision(assignment),
           prescription: day,
           status: "in_progress",
-          entries: day.exercises.flatMap((e: any) =>
-            Array.from({ length: e.sets }, (_, i) => {
-              const t = e.targets?.[i] || e;
-              return {
-                exercise_key: e.key,
-                set_index: i,
-                reps: t.reps,
-                load: t.load,
-                unit: e.unit,
-                seconds: t.seconds ?? null,
-                metres: t.metres ?? null,
-                effort: t.effort ?? null,
-                completed: false,
-              };
-            }),
-          ),
+          entries: prescribedEntries(day.exercises),
           note: "",
           coach_note: "",
           reviewed_at: null,
@@ -1235,10 +1530,10 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           completed_at: null,
           version: 1,
         };
-        await tx.organization_sessions.create({
+        await tx.institution_sessions.create({
           data: {
             id: sessionId,
-            workspace_id: id,
+            institution_id: id,
             member_id: athlete.id,
             assignment_id: assignment.id,
             day_id: day.id,
@@ -1246,12 +1541,18 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
             document: json(document),
             recorded_mode: delegated ? "delegated" : "self",
             recorded_by: delegated ? self.id : null,
+            occurrence_id: linked?.occurrence.id,
           },
         });
-        await tx.organization_session_history.create({
+        if (linked)
+          await tx.institution_workout_positions.update({
+            where: { id: linked.position.id },
+            data: { session_id: sessionId },
+          });
+        await tx.institution_session_history.create({
           data: {
             id: randomUUID(),
-            workspace_id: id,
+            institution_id: id,
             session_id: sessionId,
             version: 1,
             actor_member_id: self.id,
@@ -1263,14 +1564,15 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
         });
         return document;
       }
-      const s = await tx.organization_sessions.findUniqueOrThrow({
+      const s = await tx.institution_sessions.findUniqueOrThrow({
         where: { id: sessionId },
       });
       if (s.version !== input.revision) throw new ApiError(409, "conflict");
-      const current = s.document as any;
-      let document: any,
+      const current = s.document as unknown as WorkoutDocument;
+      let document: WorkoutDocument,
         completed = s.completed_at;
       if (action === "save") {
+        await assertLinkedWorkoutWritable(tx, id, sessionId);
         if (
           typeof input.complete !== "boolean" ||
           typeof input.note !== "string"
@@ -1280,7 +1582,7 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
         completed = completed || (input.complete ? new Date() : null);
         document = {
           ...current,
-          entries: input.entries,
+          entries: input.entries as Entry[],
           note: input.note,
           status: completed ? "completed" : "in_progress",
           completed_at: completed?.toISOString() || null,
@@ -1288,12 +1590,20 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           reviewed_by: null,
           coach_note: "",
           version: s.version + 1,
+          ...(!s.completed_at && input.complete
+            ? {
+                completed_by: self.id,
+                completed_by_name: self.name,
+                completed_by_role: view === "trainer" ? "trainer" : "trainee",
+              }
+            : {}),
         };
       } else {
         if (!completed) throw new ApiError(400, "session_not_completed");
-        const note = typeof input.note === "string" ? input.note.trim() : "";
-        if (!note || note.length > 2000)
+        if (typeof input.note !== "string")
           throw new ApiError(400, "invalid_feedback");
+        const note = input.note.trim();
+        if (note.length > 2000) throw new ApiError(400, "invalid_feedback");
         document = {
           ...current,
           coach_note: note,
@@ -1302,7 +1612,7 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
           version: s.version + 1,
         };
       }
-      await tx.organization_sessions.update({
+      await tx.institution_sessions.update({
         where: { id: sessionId },
         data: {
           document: json(document),
@@ -1312,10 +1622,10 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
       });
       if (action === "save")
         // Each athlete or coach save keeps an attributed version; corrections never erase history.
-        await tx.organization_session_history.create({
+        await tx.institution_session_history.create({
           data: {
             id: randomUUID(),
-            workspace_id: id,
+            institution_id: id,
             session_id: sessionId,
             version: s.version + 1,
             actor_member_id: self.id,
@@ -1325,33 +1635,120 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
             completed: !!completed,
           },
         });
+      if (action === "save")
+        await resolveCompletedWorkout(tx, actor, id, self.id, sessionId);
       return document;
     },
     authorize,
   );
 }
-export async function previousOrganizationPerformance(
+export async function previousInstitutionPerformance(
   actor: Actor,
   sessionId: string,
 ) {
-  const s = await db.organization_sessions.findUnique({
+  const s = await db.institution_sessions.findUnique({
     where: { id: uuid(sessionId) },
   });
   if (!s) throw new ApiError(404, "session_missing");
-  return scoped(actor, s.workspace_id, ["trainee"], async (tx, self) => {
+  return scoped(actor, s.institution_id, ["trainee"], async (tx, self) => {
     if (s.member_id !== self.id) throw new ApiError(403, "forbidden");
-    const wanted = (s.document as any).prescription.exercises.flatMap(
-      (e: any) => [
-        e.exerciseId,
-        ...(e.alternatives || []).map((a: any) => a.exerciseId),
-      ],
-    );
+    const wanted = (
+      s.document as unknown as WorkoutDocument
+    ).prescription.exercises.flatMap((e) => [
+      e.exerciseId,
+      ...(e.alternatives || []).map((a) => a.exerciseId),
+    ]);
     return tx.$queryRaw<unknown[]>`WITH actual AS (
    SELECT h.id,h.completed_at,e.value AS original,coalesce(nullif((SELECT x->>'exercise_id' FROM jsonb_array_elements(h.document->'entries') x WHERE x->>'exercise_key'=e.value->>'key' LIMIT 1),''),e.value->>'exerciseId') AS exercise_id,
     (SELECT jsonb_agg(x ORDER BY (x->>'set_index')::int) FROM jsonb_array_elements(h.document->'entries') x WHERE x->>'exercise_key'=e.value->>'key' AND (x->>'completed')::boolean) AS entries
-   FROM public.organization_sessions h CROSS JOIN LATERAL jsonb_array_elements(h.document->'prescription'->'exercises') e(value)
-   WHERE h.workspace_id=${s.workspace_id}::uuid AND h.member_id=${self.id}::uuid AND h.completed_at<${s.started_at}
+   FROM public.institution_sessions h CROSS JOIN LATERAL jsonb_array_elements(h.document->'prescription'->'exercises') e(value)
+   WHERE h.institution_id=${s.institution_id}::uuid AND h.member_id=${self.id}::uuid AND h.completed_at<${s.started_at}
   ) SELECT DISTINCT ON(exercise_id) exercise_id,completed_at,coalesce((SELECT original||jsonb_build_object('exerciseId',alt->>'exerciseId','info',alt->'info') FROM jsonb_array_elements(coalesce(original->'alternatives','[]')) alt WHERE alt->>'exerciseId'=exercise_id),original) AS prescription,entries
     FROM actual WHERE entries IS NOT NULL AND exercise_id=ANY(${wanted}::text[]) ORDER BY exercise_id,completed_at DESC,id DESC LIMIT 48`;
   });
+}
+
+/** Bounded, read-only projection. All roster filtering happens before pagination. */
+/** Calendar day at `now` in a zone, as a UTC-midnight date for date-column comparison. */
+export const localDay = (timezone: string, now: Date) =>
+  new Date(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now) + "T00:00:00Z",
+  );
+/** One rule for an assignment's next-workout state, shared by agenda and plan reads. */
+export function workoutState(
+  positionState: string | undefined,
+  occurrence:
+    | {
+        starts_at: Date | null;
+        ends_at: Date | null;
+        training_date: Date;
+      }
+    | null
+    | undefined,
+  unfinishedSession: boolean,
+  now: Date,
+  occurrenceToday: Date,
+): WorkoutAgendaItem["state"] {
+  return positionState === "paused"
+    ? "paused"
+    : unfinishedSession
+      ? "in_progress"
+      : !occurrence
+        ? "unscheduled"
+        : (
+              occurrence.starts_at
+                ? occurrence.starts_at > now
+                : occurrence.training_date > occurrenceToday
+            )
+          ? "scheduled"
+          : (
+                occurrence.ends_at
+                  ? occurrence.ends_at < now
+                  : occurrence.training_date < occurrenceToday
+              )
+            ? "overdue"
+            : "ready";
+}
+/** Staff scheduling uses existing plan-specific authority and exact command receipts. */
+export async function workoutSchedulingCommand(
+  actor: Actor,
+  institution: string,
+  input: Input,
+) {
+  const view = role(input.view);
+  if (view === "trainee") throw new ApiError(403, "forbidden");
+  if (
+    !["schedule-workout", "skip-workout", "reschedule-workout"].includes(
+      String(input.action),
+    )
+  )
+    throw new ApiError(400, "invalid_action");
+  const assignment = uuid(input.assignment_id);
+  const authorize = async (tx: Tx, self: Member) => {
+    const item = await tx.institution_assignments.findFirst({
+      where: { id: assignment, institution_id: institution },
+    });
+    if (!item) throw new ApiError(403, "assignment_unavailable");
+    await planAuthority(tx, institution, self, view, item.member_id, [
+      item.sport_id,
+    ]);
+  };
+  return mutation(
+    actor,
+    institution,
+    [view],
+    input,
+    (tx, self) =>
+      input.action === "schedule-workout"
+        ? scheduleIndividualWorkout(tx, actor, institution, self.id, input)
+        : input.action === "skip-workout"
+          ? skipIndividualWorkout(tx, actor, institution, self.id, input)
+          : rescheduleIndividualWorkout(tx, actor, institution, input),
+    authorize,
+  );
 }

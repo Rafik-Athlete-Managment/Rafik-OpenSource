@@ -1,15 +1,13 @@
-import type { Database } from '@rafik/shared/database.types'
 export type Nutrients = Partial<Record<'kcal' | 'protein_g' | 'carb_g' | 'fat_g', number | null>>
-export type Food = Omit<Database['public']['Tables']['saved_foods']['Row'], 'nutrients'> & {
+export type Meal = {
+  name: string
+  meal: string
+  quantity: number
+  basis: number
+  unit: string
   nutrients: Nutrients
+  source: string
 }
-export type Meal = Omit<Database['public']['Tables']['meal_entries']['Row'], 'nutrients'> & {
-  nutrients: Nutrients
-}
-export type Guidance = Omit<
-  Database['public']['Tables']['nutrition_guidance']['Row'],
-  'targets' | 'meals'
-> & { targets: Nutrients; meals: PlannedFood[] }
 export const nutrientKeys = ['kcal', 'protein_g', 'carb_g', 'fat_g'] as const
 export function nutrientTotals(meals: Pick<Meal, 'quantity' | 'basis' | 'nutrients'>[]) {
   return Object.fromEntries(

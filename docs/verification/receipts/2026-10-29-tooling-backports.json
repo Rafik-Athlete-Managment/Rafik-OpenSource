@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-29",
+  "scope": "Expo CLI/config dependency security backports, unreleased beta.3",
+  "checks": [
+    {
+      "command": "node --test scripts/tooling-security.test.mjs",
+      "platform": "Windows Node 24.21.0",
+      "exit": 0,
+      "tests": 6
+    },
+    {
+      "command": "npm ci --no-audit --offline=false; node scripts/tooling-security.mjs --check; node --test scripts/tooling-security.test.mjs",
+      "platform": "Disposable Linux node:22.16.0-bookworm-slim",
+      "exit": 0,
+      "installedPackages": 930,
+      "tests": 6,
+      "lifecyclePostinstall": "8 patches verified/applied"
+    },
+    {
+      "command": "expo config --type public --json (apps/mobile)",
+      "result": "Rafik Field / org.rafik.field / existing SQLCipher plugin / existing icon"
+    },
+    {
+      "command": "@expo/config.modifyConfigAsync on synthetic app.json",
+      "result": "Permissions arrays and nested plugin props merge normally; temp fixture removed"
+    },
+    {
+      "command": "secureTooling with no Expo in scoped installation",
+      "result": "skips successfully"
+    },
+    {
+      "command": "lock package-entry comparison against HEAD",
+      "result": "All non-root entries and native metadata unchanged; root hasInstallScript added"
+    },
+    {
+      "command": "node --check apps/mobile/scripts/android.mjs and release.mjs",
+      "exit": 0
+    },
+    {
+      "command": "npm run docs:check",
+      "exit": 0,
+      "links": 2189,
+      "headingLinks": 661,
+      "maintainedDocuments": 78
+    },
+    {
+      "command": "Final source hash check and node --test scripts/tooling-security.test.mjs on copied minimal Expo dependency subset",
+      "platform": "Disposable Linux node:22.16.0-bookworm-slim",
+      "exit": 0,
+      "tests": 6,
+      "note": "No repeated npm install; verifies final cleaned patch hunks."
+    }
+  ],
+  "audit": {
+    "command": "npm audit --offline=false --json",
+    "exit": 1,
+    "total": 8,
+    "high": 3,
+    "low": 5,
+    "meaning": "Published version-based alerts persist despite local patches; unused bundled Zod v4 entry points are not patched."
+  },
+  "lockSha256": "ca5d8a40de56ec9f903321bcca92a164807009d4847d452db349bb13e0a030c4",
+  "limits": [
+    "No Android build or device check",
+    "No full browser suite",
+    "No main merge or alert dismissal",
+    "Plugin execution remains trusted; generic unbounded Zod schemas are not secured by bounded-collection backport"
+  ]
+}

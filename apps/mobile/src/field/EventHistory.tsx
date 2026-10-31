@@ -48,7 +48,6 @@ function page(input: unknown, member: string, kind: string): Page {
 }
 export function EventHistory({
   client,
-  workspace,
   event,
   member,
   name,
@@ -59,7 +58,7 @@ export function EventHistory({
   onDenied,
 }: {
   client: NativeClient
-  workspace: string
+  institution: string
   event: string
   member: string
   name: string
@@ -105,11 +104,7 @@ export function EventHistory({
         historyMember: member,
         historyOffset: String(more ? data?.next || 0 : 0),
       })
-      const result = page(
-        await client.request(`/workspaces/${workspace}/calendar?${query}`),
-        member,
-        nextKind,
-      )
+      const result = page(await client.request(`/institution/calendar?${query}`), member, nextKind)
       if (!alive.current || stamp !== generation.current) return
       setData((prior) =>
         more && prior

@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { preferredTimezone } from '../../lib/display-time'
 import PageHeading from '../../components/PageHeading.vue'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { PhChatCircle, PhCalendarBlank, PhBell, PhStar, PhChecks } from '@phosphor-icons/vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '../../lib/backend'
-import { profile } from '../../app/auth'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import PageState from '../../components/PageState.vue'
 import NotificationPreferences from './NotificationPreferences.vue'
@@ -32,14 +33,12 @@ const title = (item: Notice) =>
       ? l('An upcoming event', 'موعد قادم')
       : item.category === 'calendar'
         ? l('A calendar update', 'تحديث في التقويم')
-        : item.category === 'checkins'
-          ? l('A check-in is due', 'متابعة مستحقة')
-          : l('Feedback or results are ready', 'الملاحظات أو النتائج جاهزة')
+        : l('Feedback or results are ready', 'الملاحظات أو النتائج جاهزة')
 const stamp = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
-    timeZone: profile.value?.timezone || 'UTC',
+    timeZone: preferredTimezone.value,
   }).format(new Date(value))
 async function load(append = false) {
   loading.value = true
@@ -77,6 +76,22 @@ async function open(item: Notice, navigate = true) {
     busy.value = ''
   }
 }
+const unread = computed(() => items.value.filter((item) => !item.read_at))
+const icon = (item: Notice) =>
+  item.category === 'messages'
+    ? PhChatCircle
+    : item.kind.endsWith('reminder')
+      ? PhBell
+      : item.category === 'calendar'
+        ? PhCalendarBlank
+        : PhStar
+// No bulk endpoint: acknowledge the loaded unread updates one at a time, stopping on the first error.
+async function markAll() {
+  for (const item of unread.value) {
+    await open(item, false)
+    if (error.value) break
+  }
+}
 onMounted(() => load())
 </script>
 <template>
@@ -88,8 +103,8 @@ onMounted(() => load())
         <p>
           {{
             l(
-              'Relevant updates across your workspaces, with each context kept clear.',
-              'تحديثات مهمة من مساحات عملك مع توضيح سياق كل تحديث.',
+              'Updates from your institution, with links to the work that needs your attention.',
+              'تحديثات من مؤسستك مع روابط إلى العمل الذي يحتاج إلى انتباهك.',
             )
           }}
         </p>
@@ -103,19 +118,30 @@ onMounted(() => load())
       </button>
     </PageHeading>
     <NotificationPreferences v-if="preferences" /><template v-else
-      ><div class="heading-actions">
+      ><div class="notification-toolbar">
         <p class="small-print">
-          {{
+          <strong v-if="unread.length"
+            >{{ unread.length }} {{ l('unread', 'غير مقروءة') }} · </strong
+          >{{
             l(
               'Latest update per conversation or event · kept for 30 days.',
               'أحدث تحديث لكل محادثة أو موعد · يُحفظ لمدة 30 يوماً.',
             )
           }}
         </p>
+        <button
+          v-if="unread.length > 1"
+          class="button secondary small"
+          :disabled="!!busy"
+          @click="markAll"
+        >
+          <PhChecks :size="18" aria-hidden="true" />{{ l('Mark all read', 'تعليم الكل كمقروء') }}
+        </button>
         <button class="text-link" @click="load()">{{ l('Refresh', 'تحديث') }}</button>
       </div>
       <PageState :loading="loading" :error="error" @retry="load()"
-        ><section v-if="!items.length" class="notification-empty">
+        ><section v-if="!items.length" class="empty-state panel">
+          <PhBell :size="28" aria-hidden="true" />
           <h2>
             {{
               next === null
@@ -131,56 +157,58 @@ onMounted(() => load())
               )
             }}
           </p>
-          <RouterLink to="/workspaces" class="text-link">{{
-            l('Open your workspaces', 'فتح مساحات عملك')
+          <RouterLink to="/dashboard" class="text-link">{{
+            l('Open dashboard', 'فتح لوحة التحكم')
           }}</RouterLink>
         </section>
-        <article
-          v-for="item in items"
-          :key="item.id"
-          class="notification-row"
-          :class="{ unread: !item.read_at }"
-        >
-          <div>
-            <p class="overline">
-              {{
-                item.context === 'independent'
-                  ? l('Independent coaching', 'التدريب المستقل')
-                  : item.context
-              }}
-            </p>
-            <h2>
-              <button class="text-link" :disabled="!!busy" @click="open(item)">
-                {{ title(item) }} ↗
-              </button>
-            </h2>
-            <time :datetime="item.created_at">{{ stamp(item.created_at) }}</time>
-            <p class="small-print" v-if="item.state === 'intercepted'">
-              {{
-                l(
-                  'Email intercepted locally · not sent externally',
-                  'البريد محتجز محلياً · لم يُرسل خارجياً',
-                )
-              }}
-            </p>
-            <p class="small-print" v-if="item.state === 'failed'">
-              {{
-                l(
-                  'Reminder delivery failed. This update is still available here.',
-                  'فشل تسليم التذكير. يبقى التحديث متاحاً هنا.',
-                )
-              }}
-            </p>
-          </div>
-          <button
-            v-if="!item.read_at"
-            class="text-link small"
-            :disabled="!!busy"
-            @click="open(item, false)"
+        <ol v-else class="notification-list">
+          <li
+            v-for="item in items"
+            :key="item.id"
+            class="notification-row"
+            :class="{ unread: !item.read_at }"
           >
-            {{ l('Mark read', 'تعليم كمقروء') }}</button
-          ><span v-else class="small-print">{{ l('Read', 'مقروء') }}</span>
-        </article>
+            <span class="notification-icon"
+              ><component :is="icon(item)" :size="18" aria-hidden="true"
+            /></span>
+            <div class="notification-text">
+              <button class="notification-open" :disabled="!!busy" @click="open(item)">
+                <span v-if="!item.read_at" class="sr-only">{{ l('Unread: ', 'غير مقروء: ') }}</span
+                >{{ title(item) }}
+              </button>
+              <small>
+                <time :datetime="item.created_at">{{ stamp(item.created_at) }}</time
+                ><template v-if="item.context === 'independent'">
+                  · {{ l('Independent coaching', 'التدريب المستقل') }}</template
+                >
+              </small>
+              <p class="small-print" v-if="item.state === 'intercepted'">
+                {{
+                  l(
+                    'Email intercepted locally · not sent externally',
+                    'البريد محتجز محلياً · لم يُرسل خارجياً',
+                  )
+                }}
+              </p>
+              <p class="small-print" v-if="item.state === 'failed'">
+                {{
+                  l(
+                    'Reminder delivery failed. This update is still available here.',
+                    'فشل تسليم التذكير. يبقى التحديث متاحاً هنا.',
+                  )
+                }}
+              </p>
+            </div>
+            <button
+              v-if="!item.read_at"
+              class="text-link"
+              :disabled="!!busy"
+              @click="open(item, false)"
+            >
+              {{ l('Mark read', 'تعليم كمقروء') }}
+            </button>
+          </li>
+        </ol>
         <button v-if="next !== null" class="button secondary" @click="load(true)">
           {{ l('Earlier updates', 'التحديثات الأقدم') }}
         </button></PageState
@@ -189,51 +217,105 @@ onMounted(() => load())
   </div>
 </template>
 <style scoped>
-.notifications-page {
-  max-width: 960px;
+.notification-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-block-end: var(--space-4);
+}
+.notification-toolbar p {
+  margin: 0 auto 0 0;
+  color: var(--muted);
+}
+.notification-toolbar p:dir(rtl) {
+  margin: 0 0 0 auto;
+}
+.notification-toolbar strong {
+  color: var(--ink);
+}
+.notification-list {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 .notification-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 24px;
-  padding: 24px 12px;
-  border-bottom: 1px solid var(--line);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
 }
-.notification-row > div {
+.notification-row + .notification-row {
+  border-top: 1px solid var(--line);
+}
+.notification-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.notification-row.unread .notification-icon {
+  background: var(--tint);
+  color: var(--accent);
+}
+/* Unread dot: colour is supplementary; the button text also says Unread to assistive tech. */
+.notification-row.unread .notification-icon::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+}
+.notification-text {
+  display: grid;
+  gap: 2px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.notification-row.unread {
-  border-inline-start: 3px solid var(--accent);
-  background: var(--surface);
+.notification-open {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: start;
+  min-height: 32px;
 }
-.notification-row h2 {
-  font-size: 1.05rem;
-  margin: 8px 0;
+.notification-row.unread .notification-open {
+  font-weight: 700;
 }
-.notification-row .overline {
-  margin: 0;
+.notification-open:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-.notification-row time {
-  font-size: 0.8rem;
+.notification-text small {
   color: var(--muted);
 }
-.notification-empty {
-  padding: 40px 0;
-  max-width: 550px;
-}
-.notification-empty h2 {
-  font-size: 1.4rem;
+.notification-text p {
+  margin: 0;
 }
 @media (max-width: 550px) {
   .notification-row {
-    align-items: start;
-    flex-direction: column;
-    gap: 14px;
+    grid-template-columns: auto minmax(0, 1fr);
   }
-  .notifications-page > .heading-actions {
-    flex-wrap: wrap;
+  .notification-row > .text-link {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 </style>

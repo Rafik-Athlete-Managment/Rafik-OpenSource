@@ -1,14 +1,14 @@
-.nutrition-workspace .nutrition-tabs {
+.nutrition-institution .nutrition-tabs {
   margin-block: 1.25rem;
 }
-.nutrition-workspace .progress-filters {
+.nutrition-institution .progress-filters {
   border: 0;
   padding: 0;
 }
-.nutrition-workspace .nutrition-totals {
+.nutrition-institution .nutrition-totals {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-.nutrition-workspace progress {
+.nutrition-institution progress {
   width: 100%;
   height: 0.5rem;
   margin-block: 0.6rem;
@@ -88,17 +88,17 @@
   color: var(--muted);
   font-size: 0.85rem;
 }
-.nutrition-workspace fieldset {
+.nutrition-institution fieldset {
   min-width: 0;
   border: 0;
   padding: 0;
 }
-.nutrition-workspace input[type='date'] {
+.nutrition-institution input[type='date'] {
   min-width: 0;
   max-width: 100%;
 }
 @media (max-width: 760px) {
-  .nutrition-workspace .nutrition-totals {
+  .nutrition-institution .nutrition-totals {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .nutrition-plan-fields {

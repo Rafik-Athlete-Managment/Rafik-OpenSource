@@ -1,5 +1,4 @@
 import type { ApiErrorBody, ApiUser } from '@rafik/shared/contracts'
-import type { Database } from '@rafik/shared/database.types'
 import { errorMessage } from './i18n'
 import { notifyErrorOnce, notifySuccess } from './feedback'
 export type { ApiUser } from '@rafik/shared/contracts'
@@ -105,7 +104,7 @@ export const api = {
     return result.user
   },
   async acceptInvitation(input: { token: string; email: string; name: string; password: string }) {
-    const result = await request<{ user: ApiUser; workspace_id: string; role: string }>(
+    const result = await request<{ user: ApiUser; institution_id: string; role: string }>(
       '/v1/auth/accept-invitation',
       {
         method: 'POST',
@@ -140,53 +139,6 @@ export const api = {
     changed(null)
   },
 }
-export async function rpc<T>(
-  name: keyof Database['public']['Functions'],
-  args: Record<string, unknown> = {},
-  options: Pick<RequestOptions, 'feedback'> = {},
-) {
-  return request<T>('/v1/commands/' + name, {
-    method: 'POST',
-    body: JSON.stringify(args),
-    ...options,
-  })
-}
-export async function rows<T>(
-  table: Exclude<keyof Database['public']['Tables'], 'set_entries' | 'session_operations'>,
-  column?: string,
-  value?: string,
-) {
-  const collected: T[] = []
-  for (let offset = 0; ; offset += 500) {
-    const parameters = new URLSearchParams({ offset: String(offset), limit: '500' })
-    if (column && value !== undefined) {
-      parameters.set('column', column)
-      parameters.set('value', value)
-    }
-    const data = await request<T[]>('/v1/queries/' + table + '?' + parameters)
-    collected.push(...data)
-    if (data.length < 500) return collected
-  }
-}
-export async function uploadFile(path: string, file: File, type: string) {
-  return request('/v1/files/' + encodeURIComponent(path), {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': type },
-  })
-}
-export async function downloadFile(path: string) {
-  const response = await fetch(url + '/v1/files/' + encodeURIComponent(path), {
-    credentials: 'include',
-    cache: 'no-store',
-  })
-  if (!response.ok) throw new ApiError(response.status, 'resource_unavailable')
-  return response.blob()
-}
-export function removeFile(path: string) {
-  return request('/v1/files/' + encodeURIComponent(path), { method: 'DELETE' })
-}
-
 export const programImage = (id: string) => url + '/v1/program-media/' + encodeURIComponent(id)
 export const instanceLogo = (version: string) =>
   url + '/v1/instance/branding/logo?v=' + encodeURIComponent(version)

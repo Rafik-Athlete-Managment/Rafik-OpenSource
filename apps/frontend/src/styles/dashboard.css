@@ -14,10 +14,16 @@
 .dashboard-menu-trigger {
   display: none;
 }
-.dashboard-sidebar {
-  display: none;
+.drawer-clock {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
 }
-.dashboard-frame .institution-nav {
+@media (max-width: 1023px) {
+  .header-actions > .desktop-clock {
+    display: none;
+  }
+}
+.dashboard-sidebar {
   display: none;
 }
 .dashboard-frame .container {
@@ -32,6 +38,12 @@
 .dashboard-frame .work-heading .overline,
 .dashboard-frame .page-heading .overline {
   display: none;
+}
+.dashboard-institution {
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-small);
+  font-weight: 600;
 }
 .dashboard-frame .organization-summary {
   margin-block: 18px 24px;
@@ -51,7 +63,7 @@
 .dashboard-frame .daily-aside {
   gap: 18px;
 }
-.dashboard-frame .workspace-shortcut {
+.dashboard-frame .institution-shortcut {
   padding: 18px;
 }
 .dashboard-frame .section-title {
@@ -138,19 +150,40 @@
     flex-direction: column;
     grid-row: 2;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
     background: var(--surface);
     border-inline-end: 1px solid var(--line);
   }
+  .dashboard-sidebar > .dashboard-navigation {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
   .dashboard-utilities {
     display: grid;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    flex-shrink: 0;
+    gap: 2px;
     border-top: 1px solid var(--line);
-    padding: 18px 24px;
+    padding: 10px 16px;
     margin-top: auto;
+    max-height: 70%;
+    overflow-y: auto;
+    scrollbar-width: thin;
     font-size: 0.75rem;
     color: var(--muted);
+  }
+  .dashboard-utilities > a {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    overflow-wrap: anywhere;
+  }
+  .dashboard-utilities > label {
+    grid-column: 1 / -1;
   }
   .dashboard-utilities select {
     margin: 0;
@@ -175,7 +208,7 @@
   .dashboard-frame > main:has(.organization-messages.is-creating) {
     overflow: auto;
   }
-  /* The paginated directory scrolls with the workspace; no nested list scroller. */
+  /* The paginated directory scrolls with the institution; no nested list scroller. */
   .dashboard-frame .organization-people aside {
     max-height: calc(100dvh - 180px);
     overflow-y: auto;
@@ -233,10 +266,15 @@
 
 .dashboard-drawer .dashboard-utilities {
   display: grid;
-  gap: 14px;
-  padding: 20px 24px;
+  gap: 2px;
+  padding: 12px 20px;
   border-top: 1px solid var(--line);
   font-size: 0.85rem;
+}
+.dashboard-drawer .dashboard-utilities > a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
 }
 @media (min-width: 1024px) {
   #app:has(.dashboard-frame):has(.organization-messages) {

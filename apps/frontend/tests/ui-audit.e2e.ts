@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { randomUUID, randomBytes } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 import { testApi, testWeb, testDatabase } from './local-config'
 
@@ -12,9 +12,9 @@ import { testApi, testWeb, testDatabase } from './local-config'
 test('web design audit inventory', async ({ page }, info) => {
   test.skip(process.env.RAFIK_UI_AUDIT !== '1', 'Opt-in design audit')
   test.setTimeout(600000)
-  const f = await teamFixture(),
-    workspace = randomUUID(),
-    endpoint = `/v1/workspaces/${workspace}`
+  const f = await institutionFixture(),
+    institution = randomUUID(),
+    endpoint = `/v1/institution`
   const controlsOnly = process.env.RAFIK_UI_AUDIT_CONTROLS === '1'
   const output = resolve(
     '../../artifacts/ui-audit/2026-10-21',
@@ -104,8 +104,8 @@ test('web design audit inventory', async ({ page }, info) => {
         })
       observations.push({
         name,
-        path: path.replace(workspace, ':workspace'),
-        url: new URL(page.url()).pathname.replace(workspace, ':workspace'),
+        path: path.replace(institution, ':institution'),
+        url: new URL(page.url()).pathname.replace(institution, ':institution'),
         viewport: page.viewportSize(),
         ...structure,
         layout,
@@ -129,9 +129,9 @@ test('web design audit inventory', async ({ page }, info) => {
     await page.keyboard.press('Escape')
   }
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'University Sports · جامعة الرياضة',
     })
     for (const [person, role] of [
@@ -147,7 +147,7 @@ test('web design audit inventory', async ({ page }, info) => {
         roles: [role],
         token,
       })
-      await f.call(person, '/v1/organization-invitations/' + token, {})
+      await f.call(person, '/v1/invitations/' + token, {})
     }
     let data = await f.call(f.owner, endpoint + '?view=admin')
     const coach = data.members.find((m: any) => m.user_id === f.coach.id),
@@ -223,7 +223,7 @@ test('web design audit inventory', async ({ page }, info) => {
       guidance: 'Regular meals around training · وجبات منتظمة حول التدريب',
       meals: [],
     })
-    await f.call(f.owner, endpoint + '/calendar', {
+    await f.call(f.owner, endpoint + '/schedule', {
       operation: randomUUID(),
       action: 'create',
       view: 'admin',
@@ -238,7 +238,7 @@ test('web design audit inventory', async ({ page }, info) => {
       count: 1,
       every: 7,
     })
-    const base = `/organization/${workspace}/admin`
+    const base = ``
     await f.login(page, f.owner, base)
     await page.evaluate(() => {
       localStorage.setItem('rafik.locale', 'en')
@@ -267,20 +267,7 @@ test('web design audit inventory', async ({ page }, info) => {
           view: 'admin',
           body: `Practice note ${i + 1}: keep the next session controlled and review readiness. ملاحظة تدريبية: راجع الجاهزية قبل الحصة القادمة.`,
         })
-      await f.call(f.owner, endpoint + '/tasks', {
-        action: 'save',
-        id: randomUUID(),
-        operation: randomUUID(),
-        view: 'admin',
-        revision: 0,
-        title:
-          'Review the squad’s readiness before the next training session · مراجعة جاهزية الفريق',
-        description: 'Discuss attendance and upcoming assessments with the coaching team.',
-        assigned_to: coach.id,
-        priority: 'high',
-        due_date: today,
-      })
-      await f.call(f.owner, endpoint + '/calendar', {
+      await f.call(f.owner, endpoint + '/schedule', {
         action: 'create',
         id: pastEvent,
         operation: randomUUID(),
@@ -313,7 +300,7 @@ test('web design audit inventory', async ({ page }, info) => {
           'ON_ERROR_STOP=1',
         ],
         {
-          input: `update public.organization_events set starts_at=now()-interval '2 hours', ends_at=now()-interval '1 hour' where id='${pastEvent}' and workspace_id='${workspace}';`,
+          input: `update public.institution_events set starts_at=now()-interval '2 hours', ends_at=now()-interval '1 hour' where id='${pastEvent}' and institution_id='${institution}';`,
           stdio: ['pipe', 'pipe', 'pipe'],
         },
       )
@@ -321,7 +308,7 @@ test('web design audit inventory', async ({ page }, info) => {
         f.owner,
         endpoint + '/calendar?view=admin&id=' + pastEvent,
       )
-      await f.call(f.owner, endpoint + '/calendar', {
+      await f.call(f.owner, endpoint + '/schedule', {
         action: 'attendance',
         id: pastEvent,
         member: athlete.id,
@@ -333,7 +320,7 @@ test('web design audit inventory', async ({ page }, info) => {
         view: 'admin',
       })
       const past = await f.call(f.owner, endpoint + '/calendar?view=admin&id=' + pastEvent)
-      await f.call(f.owner, endpoint + '/calendar', {
+      await f.call(f.owner, endpoint + '/schedule', {
         action: 'finish',
         id: pastEvent,
         revision: past.event.revision,
@@ -341,7 +328,7 @@ test('web design audit inventory', async ({ page }, info) => {
         view: 'admin',
       })
       for (let i = 0; i < 5; i++) {
-        await f.call(f.owner, endpoint + '/calendar', {
+        await f.call(f.owner, endpoint + '/schedule', {
           action: 'create',
           id: randomUUID(),
           operation: randomUUID(),
@@ -375,7 +362,7 @@ test('web design audit inventory', async ({ page }, info) => {
           'ON_ERROR_STOP=1',
         ],
         {
-          input: `update public.organization_events set starts_at=date_trunc('day',now())+interval '12 hours', ends_at=date_trunc('day',now())+interval '13 hours' where workspace_id='${workspace}' and title like 'Today card %';`,
+          input: `update public.institution_events set starts_at=date_trunc('day',now())+interval '12 hours', ends_at=date_trunc('day',now())+interval '13 hours' where institution_id='${institution}' and title like 'Today card %';`,
           stdio: ['pipe', 'pipe', 'pipe'],
         },
       )
@@ -384,15 +371,13 @@ test('web design audit inventory', async ({ page }, info) => {
         ['program-new', '/plans/new'],
         ['assignment', '/deliver/' + published.version.id],
         ['athlete-plans', '/training'],
-        ['sessions', '/session-history'],
-        ['calendar', '/calendar'],
+        ['sessions', '/workouts'],
+        ['calendar', '/schedule'],
         ['schedule-list', '/events'],
-        ['event-new', '/calendar/new'],
-        ['event-detail', '/calendar/' + pastEvent],
+        ['event-new', '/schedule/new'],
+        ['event-detail', '/schedule/' + pastEvent],
         ['template-new', '/assessment-templates/new'],
         ['group-new', '/groups/new'],
-        ['tasks', '/tasks'],
-        ['task-new', '/tasks/new'],
         ['resources', '/resources'],
         ['analytics', '/analytics'],
         ['messages', '/messages/' + channel],
@@ -437,7 +422,6 @@ test('web design audit inventory', async ({ page }, info) => {
                     'assignment',
                     'event-new',
                     'template-new',
-                    'task-new',
                     'resources',
                     'analytics',
                     'messages',
@@ -518,10 +502,11 @@ test('web design audit inventory', async ({ page }, info) => {
     await interactive('en-light-invitation-open', base + '/people', () =>
       page.getByRole('button', { name: 'Invite people', exact: true }).click(),
     )
-    await interactive('en-light-close-dialog', base + '/settings', () =>
+    await interactive('en-light-close-dialog', base + '/institution-settings', () =>
       page.getByRole('button', { name: 'Close institution', exact: true }).click(),
     )
-    await interactive('en-light-timezone-open', base + '/calendar/new', async () => {
+    await interactive('en-light-timezone-open', base + '/schedule/new', async () => {
+      await page.getByRole('radio', { name: /^Custom event/ }).check()
       await page.getByRole('button', { name: 'Choose timezone', exact: true }).click()
       await expect(page.locator('.timezone-options')).toBeVisible()
     })
@@ -571,10 +556,10 @@ test('web design audit inventory', async ({ page }, info) => {
       ['program-new', '/plans/new'],
       ['assignment', '/deliver/' + published.version.id],
       ['athlete-plans', '/training'],
-      ['session-history', '/session-history'],
+      ['session-history', '/workouts'],
       ['events', '/events'],
-      ['calendar', '/calendar'],
-      ['event-new', '/calendar/new'],
+      ['calendar', '/schedule'],
+      ['event-new', '/schedule/new'],
       ['assessment-templates', '/assessment-templates'],
       ['groups', '/groups'],
       ['nutrition', '/nutrition'],
@@ -582,7 +567,6 @@ test('web design audit inventory', async ({ page }, info) => {
       ['assessments', '/assessments/' + athlete.id],
       ['injuries', '/injuries'],
       ['messages', '/messages'],
-      ['tasks', '/tasks'],
       ['feedback', '/feedback'],
       ['resources', '/resources'],
       ['exercises', '/exercises'],
@@ -604,21 +588,14 @@ test('web design audit inventory', async ({ page }, info) => {
       ['notifications', '/notifications'],
       ['help', '/help'],
       ['support', '/support'],
-      ['workspaces', '/workspaces'],
+      ['institutions', '/institutions'],
       ['not-found', '/audit-missing-page'],
     ])
       await capture('en-light-' + name, path)
     for (const role of ['trainer', 'trainee'] as const) {
-      await f.login(
-        page,
-        role === 'trainer' ? f.coach : f.client,
-        `/organization/${workspace}/${role}`,
-      )
-      for (const path of ['', '/training', '/calendar', '/nutrition', '/messages'])
-        await capture(
-          'en-light-' + role + '-' + (path.slice(1) || 'overview'),
-          `/organization/${workspace}/${role}${path}`,
-        )
+      await f.login(page, role === 'trainer' ? f.coach : f.client, ``)
+      for (const path of ['', '/training', '/schedule', '/nutrition', '/messages'])
+        await capture('en-light-' + role + '-' + (path.slice(1) || 'overview'), `${path}`)
     }
     await f.login(page, f.owner, base)
     for (const config of [
@@ -691,12 +668,11 @@ test('web design audit bootstrap and branding', async ({ page, browser }, info) 
   await page.getByRole('button', { name: 'Create institution and account' }).click()
   await expect(page).toHaveURL(/\/organization\/[^/]+\/admin/)
   const base = new URL(page.url()).pathname
-  await page.goto(base + '/settings')
+  await page.goto(base + '/institution-settings')
   await expect(page.getByLabel('Accent color', { exact: true })).toBeVisible()
   await capture(page, 'authorized-branding')
-  const workspace = base.split('/')[2],
-    token = randomBytes(32).toString('hex')
-  const response = await page.request.post(testApi + '/v1/workspaces/' + workspace, {
+  const token = randomBytes(32).toString('hex')
+  const response = await page.request.post(testApi + '/v1/institution', {
     headers: { 'x-rafik-client': 'web', Origin: testWeb },
     data: {
       action: 'invite',

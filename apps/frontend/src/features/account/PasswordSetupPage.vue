@@ -29,7 +29,7 @@ async function save() {
   try {
     user.value = await api.completePasswordSetup(String(route.params.token), password.value)
     await refreshProfile()
-    await router.replace(contexts.value[0]?.path || '/workspaces')
+    await router.replace(contexts.value[0]?.path || '/access')
   } catch (e) {
     error.value = errorMessage(e)
   } finally {

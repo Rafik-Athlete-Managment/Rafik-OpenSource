@@ -1,5 +1,47 @@
 # Operations
 
+## Native individual workout source rollout — unreleased beta.3
+
+The matching backend advertises individual recording and supplies trainer-only field packages; older/unsupported servers pause native workout replay. No PostgreSQL migration, new credential, signing change or cache reset is required by this slice. The existing encrypted database creates an additive workout table on startup and preserves attendance/assessment records and owner keys. Keep the matching application/database/files backup and the existing coordinated beta.3 upgrade process; do not downgrade to an unsupported backend while workout requests are pending. Export/review unresolved work rather than deleting the encrypted cache. No new release APK or tag is produced by source implementation alone.
+
+## Native capability foundation — unreleased beta.3
+
+Deploy the matching backend/web source using the existing backup/forward-upgrade procedure. The new authenticated capability GET needs no schema migration, provider secret, SQLCipher reset or signing change. Existing institution queues/receipts retain their identity. This slice does not produce an APK or enable native workout capture; published beta.2 and the breaking beta.3 upgrade boundary remain unchanged. Never clear saved work to satisfy a compatibility check.
+
+## Dependency installation
+
+The maintained Dockerfiles include the guarded dependency installer before `npm ci`. Web/API-only installs skip Expo patches when Expo is absent. Custom full-workspace images must copy `scripts/tooling-security.mjs` and `scripts/tooling-security-patches.json` before installation; after `--ignore-scripts`, explicitly apply/check them. Keep Expo/Metro off public networks. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md).
+
+## Group-workout upgrade — unreleased beta.3
+
+Back up the matching application, PostgreSQL database and private files before applying `202610290900_group_workouts`. Local development: run `npm run backend:start` from the root, then restart the API and web app. The forward migration adds the template library and participant skip reasons, defaults prior sessions to assignment sources and permits assignment-free records only with a valid additional group source. It does not manufacture historical sessions, change individual cursors or delete results/receipts. Deploy the matching API/web together; rollback restores the complete matching backup/application rather than dropping columns. Current Android queues retain their identities and attendance/assessment payloads. Until the native workout slice, finish unresolved group results on the web; an Android finish rejection must retain recovery state. Use the [canonical walkthrough](../testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3) for acceptance.
+
+After deploying, use the [full instance walkthrough](../testing/instance-validation.md) to validate setup and the administrator, coach and athlete journeys on your instance. It is the single maintained role checklist; use the copy from the same release tag or source commit as your deployment. Hosted operators skip its local startup commands.
+
+## Recurring workout preparation rollout
+
+Unreleased beta.3: apply the forward migration with the matching services stopped and a complete database/private-files backup, then deploy the matching backend and web. Close/update old web tabs before enabling policies so cached clients cannot misinterpret day-only bounds. The new event timing shape does not rewrite existing timestamps, workouts or receipts. The unique active-rule constraint refuses inconsistent duplicate active policies rather than deleting them. Existing native workout capture is still a later slice; follow the coordinated beta.3 upgrade policy.
+
+The API starts a one-minute bounded scheduling poll; no separate cron host or cloud service is needed. Plans remain manual until staff opt in. To pause automatic materialization, set RAFIK_DISABLE_WORKOUT_SCHEDULER=true and restart the API; Compose forwards this setting. Saved policies/history and existing workouts remain. Restore false/restart to resume; verify the scheduler_enabled response and plan diagnostics.
+
+For a deliberate one-shot pass, from the repository root with the normal backend database environment configured, run `npm run workouts:prepare`. Expected output is a JSON checked-policy count, not a created-workout count. This explicit operator command runs even while the API poll is paused. It checks at most 50 policies and is safe to repeat. Do not copy credentials into scripts. Each rule failure retains a general diagnostic; unexpected failures are logged and do not stop the rest of the batch. Monitor policy age/issue and validate deployment throughput separately; a one-minute timer is not a guarantee for every institution size.
+
+Recovery: correct authority, restriction or timing issues, then wait for/re-run preparation. Do not delete positions or rewrite cursors to unblock a workout. Use its explicit reschedule/skip workflow. Roll back through a matching database/files/application backup, not an unsafe down migration.
+
+## Historical fixed-time API rollout checkpoint
+
+Unreleased beta.3: deploy the additive migration before the backend containing the sequence service. No new environment variable or cron job is required in this slice. No recurring scheduler was started at this checkpoint; the preparation rollout above supersedes that limitation. Fixed-time bookings use explicit offset-bearing timestamps and an IANA timezone. Existing unlinked recording and attendance/assessment receipts remain supported. Update web/native interfaces only through the coordinated later cutover; do not advertise offline workout capture from these server endpoints alone.
+
+## Additive workout foundation upgrade
+
+Unreleased beta.3: apply normal forward migrations after a matching database/files/application backup. This migration freezes historical workout sources and derives existing event dates from their timezones. It does not infer sequence progress from old completion counts or attach same-day workouts to group attendance. Existing IDs, documents and receipts remain. Current institutional record IDs and exact queued receipts remain; beta.2 clients are unsupported at the breaking beta.3 boundary and require the matching upgraded client. The fixed-time individual API is described above; subsequent recurring/day-only and group web slices are described above; native workout capture remains pending. Restore the matching backup/application for rollback; do not drop the new columns as a recovery procedure.
+
+From the repository root, with the local Docker database running, `npm run test:workout-foundation` verifies a populated upgrade in its own temporary database and deletes that database afterward. It does not migrate or seed your preview database.
+
+## Next-release cleanup upgrade
+
+Unreleased: before upgrading, back up the database and files with the matching application version. The forward migration permanently deletes Tasks data, attributable receipts and task events. It stops before deletion if multiple institutions exist, including archived institutions. Separate such deployments before retrying; do not delete an institution just to pass the guard. First-run setup is the only creation flow. Rollback after migration requires restoring the pre-upgrade database and application together. See [ADR 0026](../decisions/ADR-0026-single-institution-routing-and-task-retirement.md).
+
 This is the operator entry point for builds, self-hosted deployment, configuration, secrets, backups, recovery and operational checks. Rafik is deployed as a separate instance on infrastructure controlled by each university.
 
 For Android maintainers, [release operations](android-release.md) includes signing-key backup with an encrypted archive and a local S20+ acceptance path using USB forwarding; no public domain or running emulator is required for that device check. Keep private signing backups outside this repository.
@@ -118,7 +160,7 @@ The API performs a retention pass at startup and daily after success; a failure 
 
 ```sql
 SELECT completed_at, now() - completed_at AS age, closed_count, purged_count
-FROM public.organization_injury_retention_checkpoint
+FROM public.institution_injury_retention_checkpoint
 WHERE singleton;
 ```
 
@@ -139,3 +181,15 @@ The final launcher/tooling fixes are in release-preparation PR #140, based on th
 ### GitHub organization repository
 
 Application source, release tags/assets and cloud-template clone defaults use `https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource`. Existing checkouts can update their remote with `git remote set-url origin https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource.git` from the repository root. Published versions and uploaded bytes are unchanged by this repository transfer. Landing is maintained separately under KenseiEmam.
+
+Local recovery and orphan cleanup share the API’s validated local database/private-file target. Ordinary commands keep the local preview defaults; isolated tests use matched disposable targets and retain recovery backups only within their own temporary directory.
+
+## Unreleased backend cleanup migration
+
+Normal forward migration removes unused runtime simulation settings and two billing simulator functions, preserving historical business accounts/events. Back up before upgrading. The audit migrated only owned disposable databases; it did not reset preview. See the [backend audit](../reference/backend/README.md).
+
+## Institution identifier upgrade
+
+Stop the existing backend and operator workers for the upgrade. Deploy the complete matching backend/web version, applying migration `202610231800_institution_identifiers`, before installing the forthcoming Android APK. Back up the database and private bytes first. The DDL renames existing records; it does not reset the installation. Migration `202610232000_remove_retired_domains` then deletes the retired personal/team/business storage and removes published-client aliases. Deploy the matching new Android client; beta.2 clients are unsupported. Retired records are recoverable only from the pre-upgrade backup. Institutional IDs, history, queued payloads and byte keys are preserved. Keep the same signing key, SQLCipher database, private files and installation URL. Do not run old application binaries against the renamed database. Roll back using the complete matching pre-upgrade database/application backup, not just an old container. See [ADR 0029](../decisions/ADR-0029-institution-identifiers.md).
+
+Athlete-plan adaptation adds a nullable assignment snapshot through migration `202610261900_athlete_plan_adaptation`. Apply the forward migration before starting the matching backend/web. Current source versions and assignment IDs are retained; existing plan policies and materialized work are not rewritten. Use matching backups for rollback rather than dropping the column after personalized plans exist. Local development applies pending migrations with `npm run backend:start`; this development change does not reset preview data.

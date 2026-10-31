@@ -19,19 +19,19 @@ import { language, t } from '../../lib/i18n'
       <p>
         {{
           language(
-            'Open Messages and choose a person from the People list; the conversation opens or resumes automatically. Open group conversation on a training group starts its shared conversation; using it again returns to the same conversation. Two-person conversations are reused instead of duplicated. To assign training, open Programs, publish the program, then choose Assign this program. Publishing shares it in the institution library so coaches can see it; coaches can assign it only to athletes they are responsible for.',
-            'افتح الرسائل واختر محادثة جديدة، أو استخدم مراسلة بجانب الرياضي في الأشخاص والصلاحيات. يفتح خيار محادثة المجموعة محادثة المجموعة التدريبية نفسها، ويعيدك إليها عند استخدامه مرة أخرى. يعاد استخدام المحادثات الثنائية لتجنب تكرارها. لتعيين التدريب، افتح البرامج وانشر البرنامج ثم اختر تعيين هذا البرنامج. يشارك النشر البرنامج في مكتبة المؤسسة ليتمكن المدربون من رؤيته؛ ويمكن للمدرب تعيينه فقط للرياضيين المسؤول عنهم.',
+            'Open Messages: Chats lists your conversations and Contacts lists people and groups. Choose a contact to open or resume their conversation; search narrows the list as you type. Open group conversation on a training group starts its shared conversation; using it again returns to the same conversation. Two-person conversations are reused instead of duplicated. To assign training, open Programs, publish the program, then choose Assign this program. Publishing shares it in the institution library so coaches can see it; coaches can assign it only to athletes they are responsible for.',
+            'افتح الرسائل: تعرض المحادثات محادثاتك وتعرض جهات الاتصال الأشخاص والمجموعات. اختر جهة اتصال لفتح محادثتها أو متابعتها؛ يضيّق البحث القائمة أثناء الكتابة. يفتح خيار محادثة المجموعة محادثة المجموعة التدريبية نفسها، ويعيدك إليها عند استخدامه مرة أخرى. يعاد استخدام المحادثات الثنائية لتجنب تكرارها. لتعيين التدريب، افتح البرامج وانشر البرنامج ثم اختر تعيين هذا البرنامج. يشارك النشر البرنامج في مكتبة المؤسسة ليتمكن المدربون من رؤيته؛ ويمكن للمدرب تعيينه فقط للرياضيين المسؤول عنهم.',
           )
         }}
       </p>
     </section>
     <section>
-      <h2>{{ language('Injury status and privacy', 'حالة الإصابة والخصوصية') }}</h2>
+      <h2>{{ language('Athlete health and privacy', 'صحة الرياضي والخصوصية') }}</h2>
       <p>
         {{
           language(
-            'Athletes can share a limited participation status with their assigned coach after the institution records the required consent setup and the athlete agrees. Coaches see only the current status and effective date. Administrators manage consent prerequisites but cannot view injury records. Athletes can download a copy of their status and correction history. Do not enter diagnoses or medical details. Withdrawing stops coach access; closed records are automatically deleted after 12 months.',
-            'يمكن للرياضي مشاركة حالة مشاركة محدودة مع مدربه المعيّن بعد تسجيل إعداد الموافقة المطلوب وموافقة الرياضي. يرى المدربون الحالة الحالية وتاريخ سريانها فقط. يدير المسؤولون متطلبات الموافقة ولا يمكنهم رؤية سجلات الإصابة. يمكن للرياضي تنزيل نسخة من الحالة وسجل التصحيحات. لا تُدخل تشخيصات أو تفاصيل طبية. يؤدي سحب الموافقة إلى إيقاف وصول المدرب، وتُحذف السجلات المغلقة تلقائيًا بعد 12 شهرًا.',
+            'Athletes can share a limited participation status with their assigned coach after the institution records the required consent setup and the athlete agrees. Coaches see only the current status and effective date. Administrators manage consent prerequisites but cannot view athlete health records. Athletes can download a copy of their status and correction history. Do not enter diagnoses or medical details. Withdrawing stops coach access; closed records are automatically deleted after 12 months.',
+            'يمكن للرياضي مشاركة حالة مشاركة محدودة مع مدربه المعيّن بعد تسجيل إعداد الموافقة المطلوب وموافقة الرياضي. يرى المدربون الحالة الحالية وتاريخ سريانها فقط. يدير المسؤولون متطلبات الموافقة ولا يمكنهم رؤية سجلات صحة الرياضي. يمكن للرياضي تنزيل نسخة من الحالة وسجل التصحيحات. لا تُدخل تشخيصات أو تفاصيل طبية. يؤدي سحب الموافقة إلى إيقاف وصول المدرب، وتُحذف السجلات المغلقة تلقائيًا بعد 12 شهرًا.',
           )
         }}
       </p>
@@ -55,8 +55,8 @@ import { language, t } from '../../lib/i18n'
         }}
       </p>
     </section>
-    <section class="help-workspaces">
-      <h2>{{ language('Start in the right workspace', 'ابدأ في مساحة العمل المناسبة') }}</h2>
+    <section class="help-institutions">
+      <h2>{{ language('Your institution dashboard', 'لوحة مؤسستك') }}</h2>
       <p>
         {{
           language(
@@ -65,8 +65,8 @@ import { language, t } from '../../lib/i18n'
           )
         }}
       </p>
-      <RouterLink class="text-link" to="/workspaces">{{
-        language('Choose your workspace', 'اختر مساحة عملك')
+      <RouterLink class="text-link" to="/dashboard">{{
+        language('Open your dashboard', 'افتح لوحة التحكم')
       }}</RouterLink>
       <details>
         <summary>{{ language('I administer an institution', 'أنا مسؤول مؤسسة') }}</summary>
@@ -94,17 +94,6 @@ import { language, t } from '../../lib/i18n'
             language(
               'Your coach dashboard opens to your assigned work. Athlete plans and Nutrition plans show current published assignments without choosing an athlete first. Use status filters for expired or replaced plans. Session history lists recorded workouts across your authorized athletes, with an optional athlete filter. Calendar includes events where you are designated staff. Analytics follows your current responsibility, and conversations show their participants.',
               'تعرض خطط الرياضيين البرامج المسندة السارية مباشرة، ويعرض سجل الحصص التدريبات المسجلة لكل الرياضيين المصرّح لك بالاطلاع عليهم، دون الحاجة لاختيار رياضي أولاً. استخدم البحث والمرشحات الاختيارية لعرض الخطط القادمة أو المنتهية. تعرض خطط التغذية الخطط المنشورة دون كشف يوميات الطعام. يعرض التقويم المواعيد المسندة إليك، وتخص التحليلات مسؤوليتك الحالية. افتح الحصة لمراجعتها وتقديم ملاحظاتك.',
-            )
-          }}
-        </p>
-      </details>
-      <details>
-        <summary>{{ language('I coach independently', 'أنا مدرب مستقل') }}</summary>
-        <p>
-          {{
-            language(
-              'Today brings together sessions and check-ins awaiting review. Plans is where you prepare and publish training; Athletes is where you invite people and manage each relationship. Appointments, Resources and other tools have their own navigation links. Independent coach teams do not merge your private athlete records.',
-              'يجمع اليوم الحصص والمتابعات بانتظار المراجعة. جهّز التدريب وانشره في الخطط، وادعُ الرياضيين وأدر كل علاقة في الرياضيين. تتوفر الجدولة والملفات والأدوات الاختيارية في قائمة التنقل. لا تدمج فرق المدربين المستقلين سجلات رياضييك الخاصة.',
             )
           }}
         </p>
@@ -186,7 +175,7 @@ import { language, t } from '../../lib/i18n'
       <p>
         {{
           language(
-            'A conversation lists the people who can read its history and send messages. Institution administrators join visibly. The notification bell keeps updates from different workspaces separate. In this local preview, optional email is intercepted for testing; no real email or push is sent.',
+            'A conversation lists the people who can read its history and send messages. Institution administrators join visibly. The notification bell keeps updates grouped by their source. In this local preview, optional email is intercepted for testing; no real email or push is sent.',
             'توضح المحادثة من يستطيع قراءة سجلها وإرسال الرسائل، ويظهر انضمام مسؤول المؤسسة. يفصل جرس الإشعارات تحديثات مساحات العمل. في هذه المعاينة المحلية تُعترض الرسائل الاختيارية للاختبار ولا يُرسل بريد أو إشعار دفع فعلي.',
           )
         }}
@@ -232,13 +221,13 @@ import { language, t } from '../../lib/i18n'
 </template>
 
 <style scoped>
-.help-workspaces details {
+.help-institutions details {
   margin-top: 20px;
 }
-.help-workspaces summary {
+.help-institutions summary {
   font-weight: 600;
 }
-.help-workspaces details p {
+.help-institutions details p {
   margin-top: 16px;
 }
 </style>

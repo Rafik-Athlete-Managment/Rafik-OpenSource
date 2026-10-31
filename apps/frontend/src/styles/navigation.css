@@ -1,0 +1,322 @@
+/* Institution owns navigation and daily-task layout. Public/recorder layout stays independent. */
+.institution-header {
+  height: 76px;
+}
+.institution-header .header-inner {
+  gap: 24px;
+}
+.institution-switch {
+  margin: 0;
+  min-width: 0;
+}
+.institution-switch select {
+  width: auto;
+  max-width: 300px;
+  min-height: 44px;
+  margin: 0;
+  background: transparent;
+  border-color: transparent;
+  font-weight: 650;
+}
+.institution-nav-wrap {
+  border-bottom: 1px solid var(--line);
+  background: var(--page);
+}
+.institution-nav {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  min-height: 54px;
+}
+.institution-nav a {
+  padding: 16px 0;
+  min-height: 48px;
+  font-size: 0.85rem;
+  border-bottom: 2px solid transparent;
+}
+.institution-nav a.selected {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 750;
+}
+.work-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.work-heading h1 {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  margin: 6px 0 10px;
+}
+.work-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+.work-heading .overline {
+  color: var(--accent);
+}
+.daily-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.42fr);
+  gap: 48px;
+  align-items: start;
+}
+.attention-panel {
+  min-width: 0;
+}
+.attention-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+.attention-filter select {
+  margin: 0;
+  width: auto;
+  max-width: 100%;
+}
+.attention-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 20px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.attention-row:hover {
+  background: var(--tint);
+}
+.attention-row .grow {
+  min-width: 0;
+}
+.attention-row strong,
+.attention-row .grow span,
+.attention-row small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.attention-row strong {
+  font-size: 1.03rem;
+}
+.attention-row .grow span {
+  margin: 5px 0;
+}
+.attention-row small {
+  color: var(--muted);
+}
+.attention-panel > .button {
+  margin-top: 20px;
+}
+.daily-aside {
+  min-width: 0;
+  display: grid;
+  gap: 24px;
+}
+.institution-summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-block: 1px solid var(--line);
+  padding: 20px 0;
+}
+.institution-summary strong {
+  font-size: 2.2rem;
+}
+.institution-summary a {
+  flex-basis: 100%;
+  color: var(--accent);
+  padding-top: 10px;
+}
+.institution-shortcut {
+  display: grid;
+  gap: 12px;
+  background: var(--tint);
+  padding: 24px;
+  border-radius: 12px;
+}
+.institution-shortcut span {
+  color: var(--accent);
+}
+.institution-empty {
+  padding: 32px 0;
+  max-width: 55ch;
+}
+.institution-empty p {
+  color: var(--muted);
+}
+.tool-shortcuts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-block: 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+.tool-shortcuts a {
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.today-schedule {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.today-schedule summary {
+  color: var(--accent);
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+}
+.today-status {
+  padding: 18px 0;
+}
+.today-status h3 {
+  margin-bottom: 6px;
+}
+@media (max-width: 760px) {
+  .institution-header {
+    height: auto;
+    min-height: 70px;
+  }
+  .institution-header .header-inner {
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-block: 10px;
+  }
+  .institution-header .brand img {
+    width: 24px;
+    height: 24px;
+  }
+  .institution-header .brand > span {
+    font-size: 1.4rem;
+    min-width: 0;
+  }
+  .institution-header .brand {
+    gap: 5px;
+  }
+  .institution-switch {
+    flex: 1;
+  }
+  .institution-switch select {
+    max-width: 100%;
+    padding-inline: 6px 20px;
+    font-size: 0.75rem;
+  }
+  .institution-header .header-actions {
+    gap: 3px;
+  }
+  .institution-header .language-button span,
+  .institution-header .account-link > svg {
+    display: none;
+  }
+  .institution-header .language-button {
+    width: 36px;
+    min-height: 44px;
+  }
+  .institution-header .account-link {
+    min-height: 44px;
+  }
+  .institution-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .institution-nav a {
+    text-align: center;
+    font-size: 0.78rem;
+    padding-block: 14px;
+    overflow-wrap: anywhere;
+  }
+  .institution-nav .institution-secondary {
+    display: none;
+  }
+  .work-heading {
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .work-heading h1 {
+    font-size: 1.8rem;
+  }
+  .work-heading p {
+    font-size: 0.9rem;
+  }
+  .daily-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .attention-row {
+    padding: 16px 0;
+    gap: 12px;
+  }
+  .attention-row .avatar {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+  .attention-row small {
+    font-size: 0.73rem;
+    line-height: 1.5;
+  }
+  .attention-panel .section-title {
+    align-items: flex-start;
+  }
+  .attention-panel .section-title h2 {
+    font-size: 1.15rem;
+  }
+  .attention-filter {
+    align-items: start;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .attention-filter select {
+    width: 100%;
+  }
+  .tool-shortcuts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .tool-shortcuts a {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+}
+
+.roster-heading {
+  display: block;
+}
+.roster-heading h1 {
+  margin-block: 6px 10px;
+}
+
+.attention-panel .section-title h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.institution-switch select {
+  border-color: var(--line);
+  cursor: pointer;
+  padding-inline-end: 28px;
+}
+
+.attention-search {
+  display: block;
+  margin-block: 16px;
+  font-size: 0.85rem;
+}
+.attention-search input {
+  margin-block: 6px 0;
+}
+.attention-row .note-excerpt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

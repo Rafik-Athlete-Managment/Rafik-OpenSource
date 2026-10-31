@@ -31,7 +31,7 @@ function sql(statement: string) {
 
 export async function injuryFixture() {
   const people: Person[] = [],
-    workspaces: string[] = []
+    institutions: string[] = []
   async function call(person: Person, path: string, input?: Record<string, unknown>) {
     const response = await fetch(testApi + path, {
       method: input ? 'POST' : 'GET',
@@ -55,19 +55,19 @@ export async function injuryFixture() {
       `insert into identity.users(id,email,email_confirmed_at) values('${id}','${email}',now()); insert into identity.sessions(token_hash,user_id,expires_at) values('${createHash('sha256').update(cookie).digest('hex')}','${id}',now()+interval '1 hour');`,
     )
     const current = people.at(-1)!
-    await call(current, '/v1/commands/ensure_profile', { p_name: name })
+    await call(current, '/v1/account/profile', { p_name: name })
     return current
   }
   async function addMember(
-    workspace: string,
+    institution: string,
     current: Person,
     role: 'admin' | 'trainer' | 'trainee',
   ) {
     const id = randomUUID()
-    if (!/^[a-f0-9-]{36}$/.test(workspace) || !/^[a-f0-9-]{36}$/.test(current.id))
+    if (!/^[a-f0-9-]{36}$/.test(institution) || !/^[a-f0-9-]{36}$/.test(current.id))
       throw new Error('Invalid fixture membership ID')
     sql(
-      `insert into public.workspace_members(id,workspace_id,user_id,roles,name) values('${id}','${workspace}','${current.id}',array['${role}']::text[],'${role === 'trainee' ? 'Injury Athlete' : role === 'trainer' ? 'Injury Coach' : 'Injury Admin'}');`,
+      `insert into public.institution_members(id,institution_id,user_id,roles,name) values('${id}','${institution}','${current.id}',array['${role}']::text[],'${role === 'trainee' ? 'Injury Athlete' : role === 'trainer' ? 'Injury Coach' : 'Injury Admin'}');`,
     )
     return { id, user_id: current.id, revision: 1 }
   }
@@ -75,13 +75,13 @@ export async function injuryFixture() {
     if (!/^[a-f0-9-]{36}$/.test(athleteMember) || !/^[a-f0-9-]{36}$/.test(coachMember))
       throw new Error('Invalid fixture assignment ID')
     sql(
-      `update public.workspace_members set trainer_id='${coachMember}' where id='${athleteMember}';`,
+      `update public.institution_members set trainer_id='${coachMember}' where id='${athleteMember}';`,
     )
   }
   async function cleanup() {
-    for (const id of workspaces) {
-      if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error('Invalid fixture workspace ID')
-      sql(`delete from public.workspaces where id='${id}';`)
+    for (const id of institutions) {
+      if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error('Invalid fixture institution ID')
+      sql(`delete from public.institutions where id='${id}';`)
     }
     for (const current of people) {
       if (!/^[a-f0-9-]{36}$/.test(current.id)) throw new Error('Invalid fixture user ID')
@@ -104,7 +104,7 @@ export async function injuryFixture() {
       ])
       await page.goto(path)
     }
-    return { admin, coach, athlete, call, login, cleanup, addMember, assign, workspaces }
+    return { admin, coach, athlete, call, login, cleanup, addMember, assign, institutions }
   } catch (error) {
     await cleanup()
     throw error

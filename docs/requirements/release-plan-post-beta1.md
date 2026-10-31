@@ -1,6 +1,8 @@
 # Post-beta.1 release plan
 
-**Status, 20 October 2026:** Release 1 (slices 1a–1e) and its review fixes are merged and founder-accepted in application PR #135. Squire `1.0.0-beta.2` publication is being prepared; no beta.2 tag or package has been published. Paired feature documentation is merged in landing PR #11; release-status alignment follows separately. R0 is complete (see [verification](../verification/README.md)). Release 2 and Release 3 are not implemented. Items marked **⚑** were provisional defaults; the [confirmed decisions](#confirmed-release-1-decisions) replace them for Release 1. Each release is delivered as one `codex/` branch and one pull request, with one commit per slice, so it can be reviewed and merged as a unit.
+**Status, 22 October 2026:** Squire `1.0.0-beta.2` is published. Release 1 and the Claude web audit are accepted. The next release starts with single-institution routing and Tasks retirement ([ADR 0026](../decisions/ADR-0026-single-institution-routing-and-task-retirement.md)), then [beta.3 session/workout consolidation](beta3-sessions.md), including group training, offline Android workout recording and a coordinated legacy backend review. Keep the release branch and paired landing documentation PR unmerged until the release is complete. The audit below is historical beta.1 source analysis; its Tasks references and old route names are not current product guidance.
+
+The broader coach field dashboard and sport-specific field tools remain later work; beta.3 is not that entire mobile expansion. Tasks is removed from future mobile scope. Scheduling must distinguish planned occurrences, attendance and actual workout records; it is not implemented by the cleanup. The historical Release 2/3 labels below do not reserve beta.3/beta.4 version numbers; the beta.3 specification supersedes that provisional version mapping.
 
 ## Confirmed Release 1 decisions
 
@@ -18,7 +20,7 @@ The audit below was taken from `main` at `8ae1fbf` (Squire `1.0.0-beta.1` plus C
 The founder set this order on 19 October 2026:
 
 1. **Sports and coaching foundation:** sports, coach responsibilities, multiple coaches, concurrent goal-specific plans and athlete profiles.
-2. **Coach field dashboard:** navigation/settings, calendar, tasks, communications and useful summaries.
+2. **Coach field dashboard:** navigation/settings, calendar, communications and useful summaries.
 3. **Sport-specific field tools:** game events, formations, player notes and recorded participation warnings.
 
 Release 1 comes first because it gives the field features a clear permissions and data model. **R0** closes the open beta.1 work and adds no new scope. Version numbers are proposals: R0 keeps `1.0.0-beta.1` assets, and Releases 1–3 are planned as `1.0.0-beta.2` to `1.0.0-beta.4`.
@@ -27,7 +29,7 @@ Release 1 comes first because it gives the field features a clear permissions an
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R0 — beta.1 close-out                  | Physical acceptance, verified defect fixes, rendered web evidence                                                                                                                                          |
 | Release 1 — sports and coaching        | 1a sports and specialties → 1b coaching team and authority → 1c concurrent goal-specific plans → 1d staff athlete profile → 1e delegated workout logging (scheduling recommended; not in the founder list) |
-| Release 2 — coach field dashboard      | 2a navigation, settings and branding → 2b calendar and summaries → 2c tasks → 2d communications                                                                                                            |
+| Release 2 — coach field dashboard      | 2a navigation, settings and branding → 2b calendar and summaries → 2c communications                                                                                                                       |
 | Release 3 — sport-specific field tools | 3a game events and line-ups → 3b formations → 3c player notes → 3d recorded participation warnings                                                                                                         |
 
 Coach ratings are not in the founder list. Defer them until after Release 1, because a rating needs a named coaching link. See [deferred and unscheduled](#deferred-and-unscheduled).
@@ -37,10 +39,10 @@ Coach ratings are not in the founder list. Defer them until after Release 1, bec
 ### Coach responsibility
 
 - Each athlete membership has one optional responsible coach: `workspace_members.trainer_id`. It was created in `202609230130_workspaces` with a composite key to the same institution, a check that only athletes may have one, and the partial index `workspace_members_trainer`.
-- Organization tables have no row-level security. All coach authority is enforced in server TypeScript.
+- Institution tables have no row-level security. All coach authority is enforced in server TypeScript.
 - The central check is `recipient()` in `apps/backend/server/programming.ts`. It rejects a trainer whose ID is not the athlete's `trainer_id`. Programs, assignments, workout review, nutrition, athlete plans, analytics, assessment history, message recipients, groups and event participant selection all call it.
 - Direct `trainer_id = self` SQL filters also exist. They are in `workspaces.ts` (People view, `assign-trainer`, unassigned counts), `people.ts`, `athlete-plans.ts`, `nutrition-plan-index.ts`, `program-media.ts`, `organization-assets.ts`, `organization-injuries.ts`, `organization-tasks.ts`, `organization-catalog.ts`, `analytics.ts` and `experience-report.ts`.
-- The frontend assumes a single coach in `OrganizationPage.vue` (the "Responsible trainer" picker and the unassigned summary), `features/organizations/types.ts` and `AnalyticsPage.vue` (workload copy).
+- The frontend assumes a single coach in `DashboardPage.vue` (the "Responsible trainer" picker and the unassigned summary), `features/institution/types.ts` and `AnalyticsPage.vue` (workload copy).
 - **Event staff is a separate authority.** `organization_event_people.duty = 'staff'` governs attendance, results, completion and history after an event is created. The whole Android field API depends on event staff, not `trainer_id`. Event staff can record results for athletes they don't coach; this is intended.
 
 ### Program assignment
@@ -48,7 +50,7 @@ Coach ratings are not in the founder list. Defer them until after Release 1, bec
 - The partial unique index `organization_one_active_assignment` (`202609230160_organization_programming`) allows one active assignment per institution and athlete. Because of it, Prisma generates the back-relation on `workspace_members` as a single record.
 - `deliveryCommand` `assign` in `programming.ts` archives the current active assignment and creates a new one under an assignment revision check. There is no separate unassign or end command.
 - Workout sessions snapshot the immutable program version and are already unique per `(assignment_id, local_date, day_id)`. That suits several concurrent plans.
-- The frontend assumes one current assignment in `OrganizationTraining.vue` (`current`), `DeliverPlan.vue` (one assignment and revision per recipient, with "Replace future training") and `AthletePlans.vue`.
+- The frontend assumes one current assignment in `AthleteTraining.vue` (`current`), `DeliverPlan.vue` (one assignment and revision per recipient, with "Replace future training") and `AthletePlans.vue`.
 
 ### Workout logging, feedback and sensitive data
 
@@ -151,7 +153,7 @@ Supporting coaches can read all of an athlete's training plans until slice 1c ad
 - **Lifecycle:**
   - Linking, ending and reassigning a coach are audited admin commands.
   - Ending a link takes effect on the next read, command and retry, including a stale browser tab.
-  - Organization-owned training history stays with the athlete and is not transferred with the coach.
+  - Institution-owned training history stays with the athlete and is not transferred with the coach.
 - **Analytics:** workload counts primary athletes. Supporting links are counted separately. Reports follow the athlete, not a former coach.
 - **Mobile and OpenAPI:** no contract change. The field API keeps its event-staff authority. Check that trainer contexts are unchanged.
 - **Acceptance:**

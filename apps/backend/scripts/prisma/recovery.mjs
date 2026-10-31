@@ -12,6 +12,8 @@ import {
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { composeFile, dockerCompose } from "./docker.mjs";
+import { localStorageTarget } from "./local-storage-target.mjs";
+const target = localStorageTarget();
 const root = resolve(import.meta.dirname, "../..");
 if (
   !readFileSync(composeFile, "utf8").startsWith(
@@ -21,7 +23,7 @@ if (
   throw Error("Local project required");
 const stamp = Date.now(),
   database = "rafik_restore_" + stamp,
-  out = resolve(root, ".local/backups", String(stamp));
+  out = resolve(target.backups, String(stamp));
 const docker = (args, options = {}) =>
   dockerCompose(["exec", "-T", "db", ...args], {
     maxBuffer: 256 * 1024 * 1024,
@@ -35,10 +37,10 @@ const sql = (db, input) =>
 mkdirSync(resolve(out, "files"), { recursive: true, mode: 0o700 });
 writeFileSync(
   resolve(out, "database.dump"),
-  docker(["pg_dump", "-U", "rafik_migrate", "-d", "rafik", "-Fc"]),
+  docker(["pg_dump", "-U", "rafik_migrate", "-d", target.database, "-Fc"]),
   { mode: 0o600 },
 );
-const files = resolve(root, ".local/files"),
+const files = target.files,
   manifest = [];
 for (const name of existsSync(files) ? readdirSync(files) : []) {
   if (!/^[a-f0-9]{64}$/.test(name) || !lstatSync(resolve(files, name)).isFile())
@@ -53,7 +55,7 @@ for (const name of existsSync(files) ? readdirSync(files) : []) {
 }
 let created = false;
 try {
-  sql("rafik", `CREATE DATABASE ${database};`);
+  sql(target.database, `CREATE DATABASE ${database};`);
   created = true;
   docker(
     ["pg_restore", "-U", "rafik_migrate", "-d", database, "--exit-on-error"],
@@ -61,7 +63,7 @@ try {
   );
   const paths = sql(
     database,
-    "select object_path from public.resources where state='ready' union select 'program/'||workspace_id||'/'||id from public.program_media union select 'organization/'||workspace_id||'/'||id from public.organization_assets;",
+    "select 'program/'||institution_id||'/'||id from public.program_media union select 'organization/'||institution_id||'/'||id from public.institution_assets;",
   )
     .split("\n")
     .filter(Boolean);
@@ -69,7 +71,7 @@ try {
   const metadata = JSON.parse(
     sql(
       database,
-      "select coalesce(json_agg(x),'[]') from (select object_path path,bytes::int bytes,null::text digest from public.resources where state='ready' union all select 'program/'||workspace_id||'/'||id,bytes,digest from public.program_media union all select 'organization/'||workspace_id||'/'||id,bytes,digest from public.organization_assets) x;",
+      "select coalesce(json_agg(x),'[]') from (select 'program/'||institution_id||'/'||id as path,bytes,digest from public.program_media union all select 'organization/'||institution_id||'/'||id,bytes,digest from public.institution_assets) x;",
     ),
   );
   for (const row of metadata) {
@@ -92,7 +94,7 @@ try {
       throw Error("Restored metadata references a missing private file");
   const counts = sql(
     database,
-    "select json_build_object('users',(select count(*) from identity.users),'workspaces',(select count(*) from public.workspaces),'sessions',(select count(*) from public.sessions)+(select count(*) from public.organization_sessions),'messages',(select count(*) from public.messages)+(select count(*) from public.organization_messages));",
+    "select json_build_object('users',(select count(*) from identity.users),'institutions',(select count(*) from public.institutions),'sessions',(select count(*) from public.institution_sessions),'messages',(select count(*) from public.institution_messages));",
   );
   writeFileSync(
     resolve(out, "manifest.json"),
@@ -120,5 +122,5 @@ try {
     }),
   );
 } finally {
-  if (created) sql("rafik", `DROP DATABASE ${database} WITH (FORCE);`);
+  if (created) sql(target.database, `DROP DATABASE ${database} WITH (FORCE);`);
 }

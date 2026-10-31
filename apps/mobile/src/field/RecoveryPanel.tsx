@@ -56,9 +56,7 @@ export function RecoveryPanel({
     setError('')
     try {
       const fresh = fieldRoster(
-        await client.request(
-          `/workspaces/${owner.workspace}/calendar?view=trainer&id=${event}&summary=true`,
-        ),
+        await client.request(`/institution/calendar?view=trainer&id=${event}&summary=true`),
         event,
       )
       if (alive.current) {

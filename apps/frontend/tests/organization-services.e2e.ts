@@ -4,7 +4,7 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 
 test('organization staff schedule a group assessment, recover a result, correct it and inspect real analytics', async ({
@@ -12,14 +12,14 @@ test('organization staff schedule a group assessment, recover a result, correct 
   browser,
 }, info) => {
   test.setTimeout(120000)
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     clientContext = await browser.newContext(),
     client = await clientContext.newPage(),
     id = randomUUID()
   try {
-    await f.call(f.owner, '/v1/workspaces', {
+    await f.call(f.owner, '/v1/institutions', {
       id,
-      kind: 'organization',
+      kind: 'institution',
       name: 'Madar service test',
     })
     for (const [person, roles] of [
@@ -27,7 +27,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
       [f.client, ['trainee']],
     ] as const) {
       const token = randomBytes(32).toString('hex')
-      await f.call(f.owner, `/v1/workspaces/${id}`, {
+      await f.call(f.owner, `/v1/institution`, {
         operation: randomUUID(),
         action: 'invite',
         id: randomUUID(),
@@ -35,11 +35,11 @@ test('organization staff schedule a group assessment, recover a result, correct 
         roles,
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
     const secondClient = await f.createPerson('R4 Athlete Two'),
       secondClientToken = randomBytes(32).toString('hex')
-    await f.call(f.owner, `/v1/workspaces/${id}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'invite',
       id: randomUUID(),
@@ -47,18 +47,18 @@ test('organization staff schedule a group assessment, recover a result, correct 
       roles: ['trainee'],
       token: secondClientToken,
     })
-    await f.call(secondClient, `/v1/organization-invitations/${secondClientToken}`, {})
-    const people = await f.call(f.owner, `/v1/workspaces/${id}?view=admin`),
+    await f.call(secondClient, `/v1/invitations/${secondClientToken}`, {})
+    const people = await f.call(f.owner, `/v1/institution?view=admin`),
       trainee = people.members.find((m: any) => m.user_id === f.client.id),
       trainer = people.members.find((m: any) => m.user_id === f.coach.id)
-    await f.call(f.owner, `/v1/workspaces/${id}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'assign-trainer',
       id: trainee.id,
       revision: trainee.revision,
       trainer: trainer.id,
     })
-    const base = `/organization/${id}/admin`
+    const base = ``
     await f.login(page, f.owner, base + '/assessment-templates')
     await page.getByRole('button', { name: 'New template', exact: true }).click()
     await page.getByLabel('Name', { exact: true }).fill('Movement baseline')
@@ -76,22 +76,20 @@ test('organization staff schedule a group assessment, recover a result, correct 
     await page.getByRole('checkbox', { name: 'R4 Athlete Two', exact: true }).check()
     await page.getByRole('button', { name: 'Save group', exact: true }).click()
     await expect(page.locator('.rafik-toast').filter({ hasText: /saved/i }).last()).toBeVisible()
-    await page.goto(base + '/calendar/new')
+    await page.goto(base + '/schedule/new')
+    await page.getByRole('radio', { name: /^Assessor-led assessment/ }).check()
     await page.getByLabel('Event name', { exact: true }).fill('Morning assessment')
-    await page.getByRole('combobox', { name: 'Event type', exact: true }).selectOption('assessment')
-    await page
-      .getByRole('combobox', { name: 'Assessment template', exact: true })
-      .selectOption({ label: 'Movement baseline' })
-    await page.getByText('Find another template', { exact: true }).click()
+    await page.getByRole('radio', { name: 'Movement baseline 1 test', exact: true }).check()
     await page
       .getByRole('searchbox', { name: 'Find an assessment template', exact: true })
       .fill('No matching template')
-    await page.getByRole('button', { name: 'Search templates', exact: true }).click()
+    await page
+      .getByRole('searchbox', { name: 'Find an assessment template', exact: true })
+      .press('Enter')
     await expect(
-      page
-        .getByRole('combobox', { name: 'Assessment template', exact: true })
-        .locator('option:checked'),
-    ).toHaveText('Movement baseline')
+      page.getByText('No templates match. Try another name or create a template.', { exact: true }),
+    ).toBeVisible()
+    await expect(page.locator('.template-selection')).toContainText('Movement baseline')
     await page.getByRole('combobox', { name: 'Timezone', exact: true }).click()
     await page.getByRole('combobox', { name: 'Timezone', exact: true }).fill('UTC')
     await page.getByRole('option', { name: 'UTC · UTC', exact: true }).click()
@@ -108,7 +106,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
     expect(await layoutIssues(page)).toEqual([])
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
     let lost = false
-    await page.route(`**/v1/workspaces/${id}/calendar`, async (r) => {
+    await page.route(`**/v1/institution/calendar`, async (r) => {
       if (!lost && r.request().method() === 'POST') {
         lost = true
         await r.fetch()
@@ -121,7 +119,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
     ).toBeEnabled()
     await page.reload()
     await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
-    await expect(page).toHaveURL(/\/calendar\/[a-f0-9-]{36}$/)
+    await expect(page).toHaveURL(/\/schedule\/[a-f0-9-]{36}$/)
     const eid = new URL(page.url()).pathname.split('/').at(-1)!
     expect(eid).toMatch(/^[a-f0-9-]{36}$/)
     execFileSync(
@@ -143,7 +141,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
       ],
       {
         cwd: resolve(import.meta.dirname, '../../backend'),
-        input: `update public.organization_events e set starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour' from public.workspaces w where e.workspace_id=w.id and e.id='${eid}' and w.id='${id}' and w.created_by='${f.owner.id}';`,
+        input: `update public.institution_events e set starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour' from public.institutions w where e.institution_id=w.id and e.id='${eid}' and w.id='${id}' and w.created_by='${f.owner.id}';`,
         stdio: ['pipe', 'pipe', 'pipe'],
       },
     )
@@ -153,11 +151,12 @@ test('organization staff schedule a group assessment, recover a result, correct 
         .locator('.event-participant')
         .filter({ has: page.getByRole('heading', { name, exact: true }) })
       await card
-        .getByRole('combobox', { name: 'Attendance for ' + name, exact: true })
-        .selectOption('present')
-      await card.getByRole('button', { name: 'Save attendance', exact: true }).click()
+        .getByRole('group', { name: 'Attendance for ' + name, exact: true })
+        .getByRole('radio', { name: 'Present', exact: true })
+        .check()
+      await page.getByRole('button', { name: /^Save attendance/ }).click()
       await expect(
-        page.locator('.rafik-toast').filter({ hasText: 'Attendance recorded.' }).last(),
+        page.locator('.rafik-toast').filter({ hasText: 'Attendance saved for 1 athlete.' }).last(),
       ).toBeVisible()
       await card.getByRole('button', { name: 'Record result', exact: true }).click()
       await page
@@ -179,8 +178,8 @@ test('organization staff schedule a group assessment, recover a result, correct 
       .click()
     await page.getByRole('spinbutton', { name: 'Chair stands (reps)', exact: true }).fill('14')
     let dropped = false
-    await page.unroute(`**/v1/workspaces/${id}/calendar`)
-    await page.route(`**/v1/workspaces/${id}/calendar`, async (r) => {
+    await page.unroute(`**/v1/institution/calendar`)
+    await page.route(`**/v1/institution/calendar`, async (r) => {
       if (!dropped && r.request().method() === 'POST') {
         dropped = true
         await r.fetch()
@@ -198,7 +197,7 @@ test('organization staff schedule a group assessment, recover a result, correct 
     ).toBeVisible()
     await expect(page.getByText('14 reps', { exact: true })).toBeVisible()
     await expect(page.getByText('19 reps', { exact: true })).toBeVisible()
-    await f.login(client, f.client, `/organization/${id}/trainee/calendar/${eid}`)
+    await f.login(client, f.client, `/schedule/${eid}`)
     await expect(client.getByText('14 reps', { exact: true })).toBeVisible()
     await expect(client.getByText('19 reps', { exact: true })).toHaveCount(0)
     await page.goto(base + '/analytics')
@@ -222,27 +221,24 @@ test('organization staff schedule a group assessment, recover a result, correct 
     const calendarRequest = new Promise<void>((resolve) => {
       calendarStarted = resolve
     })
-    await page.route(`**/v1/workspaces/${id}/calendar?**`, async (r) => {
+    await page.route(`**/v1/institution/calendar?**`, async (r) => {
       const response = await r.fetch()
       calendarStarted()
       await pendingCalendar
       await r.fulfill({ response })
     })
-    await page.goto(base + '/calendar')
+    await page.goto(base + '/schedule')
     await calendarRequest
     const navigation = page.getByRole('button', { name: 'Open navigation', exact: true })
     if (await navigation.isVisible()) await navigation.click()
-    // Sidebar groups collapse to the current section; open Administration to reach Analytics.
-    const workspaceNav = page.getByRole('navigation', { name: 'Workspace navigation' })
-    const analyticsLink = workspaceNav.getByRole('link', { name: 'Analytics', exact: true })
-    if (!(await analyticsLink.isVisible()))
-      await workspaceNav.locator('summary').filter({ hasText: 'Administration' }).click()
-    await analyticsLink.click()
+    // Sidebar sections are always visible.
+    const institutionNav = page.getByRole('navigation', { name: 'Institution navigation' })
+    await institutionNav.getByRole('link', { name: 'Analytics', exact: true }).click()
     await expect(
       page.getByRole('heading', { name: 'Institution analytics', exact: true }),
     ).toBeVisible()
     const calendarResponse = page.waitForResponse((r) =>
-      r.url().includes(`/v1/workspaces/${id}/calendar?`),
+      r.url().includes(`/v1/institution/calendar?`),
     )
     releaseCalendar()
     await (await calendarResponse).finished()
@@ -253,15 +249,15 @@ test('organization staff schedule a group assessment, recover a result, correct 
         ),
     )
     await expect(page).toHaveURL(base + '/analytics')
-    await page.unroute(`**/v1/workspaces/${id}/calendar?**`)
-    await f.login(page, f.coach, `/organization/${id}/trainer/analytics`)
+    await page.unroute(`**/v1/institution/calendar?**`)
+    await f.login(page, f.coach, `/analytics`)
     await expect(
       page.getByRole('heading', { name: 'Coaching analytics', exact: true }),
     ).toBeVisible()
     await expect(
       page.getByRole('heading', { name: 'Coach responsibility', exact: true }),
     ).toHaveCount(0)
-    await page.goto(`/organization/${id}/trainer/assessments/${trainee.id}`)
+    await page.goto(`/assessments/${trainee.id}`)
     await expect(page.getByRole('definition').filter({ hasText: '14 reps' })).toBeVisible()
   } finally {
     await clientContext.close()

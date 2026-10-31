@@ -1,3 +1,6 @@
+import { institutionTransport } from "../server/institution-routing.ts";
+import { apiOrigin } from "./test-target.ts";
+import { fixtureInstitution } from "./institution-fixture.ts";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
@@ -20,19 +23,21 @@ export const operation = <T extends object, A extends string>(
   ...args,
 });
 export async function call(p: Person, path: string, input?: unknown) {
-  const r = await fetch(
-    (process.env.RAFIK_TEST_API || "http://127.0.0.1:55331") + path,
-    {
-      method: input === undefined ? "GET" : "POST",
-      headers: {
-        Cookie: p.cookie,
-        "x-rafik-client": "web",
-        "Content-Type": "application/json",
-      },
-      body: input === undefined ? undefined : JSON.stringify(input),
+  if (path === "/v1/institutions" && input)
+    return fixtureInstitution(p, input as Record<string, unknown>);
+  const r = await fetch(apiOrigin + path, {
+    method: input === undefined ? "GET" : "POST",
+    headers: {
+      Cookie: p.cookie,
+      "x-rafik-client": "web",
+      "Content-Type": "application/json",
     },
-  );
-  return { status: r.status, data: await r.json() };
+    body: input === undefined ? undefined : JSON.stringify(input),
+  });
+  return {
+    status: r.status,
+    data: institutionTransport(await r.json()) as any,
+  };
 }
 export async function organizationFixture() {
   const people: string[] = [],
@@ -55,7 +60,7 @@ export async function organizationFixture() {
     const p = { id, email, cookie: "rafik_session=" + token };
     assert.equal(
       (
-        await call(p, "/v1/commands/ensure_profile", {
+        await call(p, "/v1/account/profile", {
           p_name: "Program " + id.slice(0, 6),
         })
       ).status,
@@ -64,18 +69,22 @@ export async function organizationFixture() {
     return p;
   };
   const create = async (p: Person) => {
+    // Each fixture owns one installation. Additional requested scopes are invalid
+    // IDs for outsider/foreign-record assertions, never a second runtime institution.
+    if (spaces.length) return randomUUID();
+    if (
+      !process.env.RAFIK_TEST_API ||
+      !/\/rafik_browser_\d+$/.test(process.env.DATABASE_URL || "")
+    )
+      throw Error("Disposable database required");
+    await db.institutions.deleteMany();
     const id = randomUUID();
     spaces.push(id);
-    assert.equal(
-      (
-        await call(p, "/v1/workspaces", {
-          id,
-          name: "Program organization",
-          kind: "organization",
-        })
-      ).status,
-      200,
-    );
+    await fixtureInstitution(p, {
+      id,
+      name: "Test institution",
+      kind: "organization",
+    });
     return id;
   };
   const join = async (
@@ -84,12 +93,21 @@ export async function organizationFixture() {
     p: Person,
     roles: string[],
   ) => {
+    if (!spaces.includes(id))
+      return {
+        id: randomUUID(),
+        institution_id: id,
+        user_id: p.id,
+        roles,
+        revision: 1,
+        active: true,
+      };
     const token = randomBytes(32).toString("hex");
     assert.equal(
       (
         await call(
           admin,
-          "/v1/workspaces/" + id,
+          "/v1/institution",
           operation("invite", {
             id: randomUUID(),
             email: p.email,
@@ -100,26 +118,23 @@ export async function organizationFixture() {
       ).status,
       200,
     );
-    assert.equal(
-      (await call(p, "/v1/organization-invitations/" + token, {})).status,
-      200,
-    );
-    return await db.workspace_members.findUniqueOrThrow({
-      where: { workspace_id_user_id: { workspace_id: id, user_id: p.id } },
+    assert.equal((await call(p, "/v1/invitations/" + token, {})).status, 200);
+    return await db.institution_members.findUniqueOrThrow({
+      where: { institution_id_user_id: { institution_id: id, user_id: p.id } },
     });
   };
   const cleanup = async () => {
     const media = await db.$queryRaw<
-      { id: string; workspace_id: string }[]
-    >`SELECT id,workspace_id FROM public.program_media WHERE workspace_id=ANY(${spaces}::uuid[])`;
+      { id: string; institution_id: string }[]
+    >`SELECT id,institution_id FROM public.program_media WHERE institution_id=ANY(${spaces}::uuid[])`;
     for (const m of media)
-      await removePrivate(`program/${m.workspace_id}/${m.id}`);
+      await removePrivate(`program/${m.institution_id}/${m.id}`);
     const assets = await db.$queryRaw<
-      { id: string; workspace_id: string }[]
-    >`SELECT id,workspace_id FROM public.organization_assets WHERE workspace_id=ANY(${spaces}::uuid[])`;
+      { id: string; institution_id: string }[]
+    >`SELECT id,institution_id FROM public.institution_assets WHERE institution_id=ANY(${spaces}::uuid[])`;
     for (const a of assets)
-      await removePrivate(`organization/${a.workspace_id}/${a.id}`);
-    await db.workspaces.deleteMany({ where: { id: { in: spaces } } });
+      await removePrivate(`organization/${a.institution_id}/${a.id}`);
+    await db.institutions.deleteMany({ where: { id: { in: spaces } } });
     await db.users.deleteMany({ where: { id: { in: people } } });
   };
   return { person, create, join, cleanup };

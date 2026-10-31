@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-25",
+  "scope": "Unreleased beta.3 fixed-time individual workout web integration",
+  "baseCommit": "e38d7bb",
+  "checks": [
+    {
+      "command": "npm run test:workout-sequence",
+      "passed": true,
+      "cases": 1,
+      "coverage": [
+        "concurrent binding",
+        "independent assignments",
+        "exact retries",
+        "correction without double advance",
+        "cycles",
+        "reschedule/skip/end",
+        "agenda pagination",
+        "overdue current restriction",
+        "administrator not enrolled as coach"
+      ]
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 8,
+      "coverage": [
+        "attributed start/save/retry/history",
+        "actual seconds/metres",
+        "delayed navigation",
+        "schedule/future-start explanation",
+        "calendar plan-workout navigation"
+      ]
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach schedules from a plan\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 2,
+      "coverage": [
+        "final refresh-abort retention/recovery",
+        "calendar link",
+        "English/light",
+        "Arabic/dark",
+        "Axe and layout"
+      ]
+    },
+    {
+      "command": "node --import tsx --test apps/backend/tests/api-docs.test.ts",
+      "passed": true,
+      "cases": 2
+    },
+    {
+      "command": "npm run typecheck",
+      "passed": true
+    },
+    {
+      "command": "npm run backend:typecheck",
+      "passed": true
+    },
+    {
+      "command": "npm run frontend:inventory",
+      "passed": true
+    },
+    {
+      "command": "npm run backend:inventory",
+      "passed": true
+    },
+    {
+      "command": "npm run docs:check",
+      "passed": true,
+      "links": 1941,
+      "anchors": 613,
+      "maintainedDocuments": 74
+    }
+  ],
+  "inspectedScreenshots": [
+    "r1e-schedule-future-chromium.png",
+    "r1e-athlete-wait-ar-chromium.png",
+    "r1e-athlete-wait-ar-webkit-phone.png",
+    "r1e-record-chromium.png",
+    "r1e-record-ar-dark-320-webkit-phone.png"
+  ],
+  "sourceSha256": {
+    "apps/backend/server/programming.ts": "14632926470781c31fc1389488a82d6e004e7f6a8381c266ddbfe1e609ce92dc",
+    "apps/backend/server/workout-sequence.ts": "ba5846b977f240dc220de30ee98cda3aefec209efc9129d675b5aa5786063ad9",
+    "apps/backend/openapi.json": "1da1b044ead3f16238487dcc6f438ecc649e489abdcd504cc2f67005472e3884",
+    "packages/shared/src/contracts.ts": "6fbe3dc93fc0966d22918ad5b5dbd0f45e038c2aec7cd164bab4adc9e7596c3f",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "761f133c76d4876e278c609f86dbb5d87823647354ff88b6c7da626a0d8d0a86",
+    "apps/frontend/src/features/institution/AthleteTraining.vue": "cf985952f87d7386721cde16000d278ddf83b71894c2297d689146f2e9e636a8",
+    "apps/frontend/src/features/institution/DelegatedWorkout.vue": "0725ba666252a3b68ba773cf6a6c7a0789efb21a5a7a65ff65e014c3b214025e",
+    "apps/frontend/src/features/institution/EventDetail.vue": "b59ec5760be062f006a39bfc9e5ba68219ee2c3d19fe917f1b7559c554ec0d9c",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "ecf68b9eb831aa1ee08aac8bc8ec5bb31cf4fae219ffb2e2652ad1eb9518b525",
+    "apps/backend/tests/workout-sequence.test.ts": "80e01c43f88b4218ddf85d8f81d4c59880f08fd195852cac5b465394e14f0ea6"
+  },
+  "limits": [
+    "No full browser suite or native build",
+    "No user preview reset",
+    "Recurrence, automatic preparation, historical reconciliation, groups and Android capture pending",
+    "Initial outdated tab/fixture failure and Vue handler parse failure were repaired; failed runs excluded"
+  ],
+  "landingCommit": "d94a0cc63de15216bea5e3673ae3f38e74c552e2"
+}

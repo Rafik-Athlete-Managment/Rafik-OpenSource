@@ -1,5 +1,5 @@
 import { db, ApiError, type Actor } from "./db.ts";
-import { uuid, type Tx } from "./workspaces.ts";
+import { uuid, type Tx } from "./institution.ts";
 import { pageOffset } from "./service-definitions.ts";
 import type { notification_events as Notification } from "./generated/prisma/client.ts";
 export const categories = [
@@ -110,38 +110,33 @@ export async function notificationTarget(
   n: Notification,
 ): Promise<{ href: string; context: string } | null> {
   if (n.expires_at <= new Date()) return null;
-  if (n.workspace_id) {
-    const m = await tx.workspace_members.findUnique({
+  if (n.institution_id) {
+    const m = await tx.institution_members.findUnique({
       where: {
-        workspace_id_user_id: {
-          workspace_id: n.workspace_id,
+        institution_id_user_id: {
+          institution_id: n.institution_id,
           user_id: n.user_id,
         },
       },
-      include: { workspaces: { select: { name: true, archived: true } } },
+      include: { institutions: { select: { name: true, archived: true } } },
     });
-    if (!m?.active || m.workspaces.archived) return null;
-    const view = m.roles.includes("trainer")
-        ? "trainer"
-        : m.roles.includes("trainee")
-          ? "trainee"
-          : "admin",
-      base = `/organization/${n.workspace_id}/${view}`,
-      context = m.workspaces.name;
+    if (!m?.active || m.institutions.archived) return null;
+    const base = "",
+      context = m.institutions.name;
     if (n.source_kind === "organization_message") {
-      const message = await tx.organization_messages.findUnique({
+      const message = await tx.institution_messages.findUnique({
         where: { id: n.source_id },
         include: {
-          organization_channels: {
+          institution_channels: {
             include: {
-              organization_channel_members: { where: { member_id: m.id } },
+              institution_channel_members: { where: { member_id: m.id } },
             },
           },
         },
       });
       if (
         !message ||
-        !message.organization_channels.organization_channel_members.length
+        !message.institution_channels.institution_channel_members.length
       )
         return null;
       return { href: base + "/messages/" + message.channel_id, context };
@@ -151,13 +146,13 @@ export async function notificationTarget(
       n.source_kind === "organization_reminder" ||
       n.source_kind === "organization_result"
     ) {
-      const event = await tx.organization_events.findUnique({
+      const event = await tx.institution_events.findUnique({
           where: { id: n.source_id },
           include: {
-            organization_event_people: { where: { member_id: m.id } },
+            institution_event_people: { where: { member_id: m.id } },
           },
         }),
-        p = event?.organization_event_people[0];
+        p = event?.institution_event_people[0];
       if (
         !event ||
         !p ||
@@ -167,6 +162,7 @@ export async function notificationTarget(
       if (
         n.source_kind === "organization_reminder" &&
         (event.state !== "scheduled" ||
+          !event.starts_at ||
           event.starts_at <= new Date() ||
           event.revision !== n.source_revision)
       )
@@ -187,104 +183,26 @@ export async function notificationTarget(
       )
         return null;
       return {
-        href: `/organization/${n.workspace_id}/${p.duty === "staff" ? "trainer" : "trainee"}/calendar/${event.id}`,
+        href: `/schedule/${event.id}`,
         context,
       };
     }
     if (n.source_kind === "organization_workout") {
-      const s = await tx.organization_sessions.findUnique({
+      const s = await tx.institution_sessions.findUnique({
         where: { id: n.source_id },
       });
       if (!s || s.member_id !== m.id || !m.roles.includes("trainee"))
         return null;
-      return { href: `/workout/${s.id}?workspace=${n.workspace_id}`, context };
+      return {
+        href: `/workout/${s.id}?institution=${n.institution_id}`,
+        context,
+      };
     }
     return null;
   }
-  return asRecipient(tx, n.user_id, async () => {
-    if (n.source_kind === "message") {
-      const m = await tx.messages.findUnique({
-          where: { id: n.source_id },
-          include: { coach_clients: true },
-        }),
-        c = m?.coach_clients;
-      if (
-        !m ||
-        !c ||
-        c.state !== "active" ||
-        ![c.coach_id, c.client_id].includes(n.user_id)
-      )
-        return null;
-      return {
-        href: (c.coach_id === n.user_id ? "/coach" : "") + "/messages/" + c.id,
-        context: "independent",
-      };
-    }
-    if (n.source_kind === "workout") {
-      const s = await tx.public_sessions.findUnique({
-        where: { id: n.source_id },
-      });
-      if (!s || s.client_id !== n.user_id) return null;
-      if (
-        s.coach_id &&
-        !(await tx.coach_clients.findFirst({
-          where: {
-            coach_id: s.coach_id,
-            client_id: n.user_id,
-            state: "active",
-          },
-        }))
-      )
-        return null;
-      return { href: "/workout/" + s.id, context: "independent" };
-    }
-    if (n.source_kind === "checkin_due" || n.source_kind === "form_feedback") {
-      const r = await tx.coaching_requests.findUnique({
-        where: { id: n.source_id },
-        include: { coach_clients: true },
-      });
-      if (
-        !r ||
-        r.cancelled ||
-        r.coach_clients.client_id !== n.user_id ||
-        r.coach_clients.state !== "active" ||
-        (n.source_kind === "checkin_due" && r.submitted_at)
-      )
-        return null;
-      return { href: "/checkins/" + r.id, context: "independent" };
-    }
-    if (
-      n.source_kind === "appointment_change" ||
-      n.source_kind === "appointment_reminder"
-    ) {
-      const a = await tx.appointments.findUnique({
-        where: { id: n.source_id },
-        include: { coach_clients: true },
-      });
-      if (
-        !a ||
-        a.coach_clients.state !== "active" ||
-        ![a.coach_clients.coach_id, a.coach_clients.client_id].includes(
-          n.user_id,
-        ) ||
-        a.revision !== n.source_revision
-      )
-        return null;
-      if (
-        n.source_kind === "appointment_reminder" &&
-        (a.state !== "booked" || a.starts_at <= new Date())
-      )
-        return null;
-      return {
-        href:
-          (a.coach_clients.coach_id === n.user_id ? "/coach" : "") +
-          "/appointments?client=" +
-          a.relationship_id,
-        context: "independent",
-      };
-    }
-    return null;
-  });
+  // Independent sources have no supported browser destination in an institutional installation.
+  // Keep historical records for account lifecycle/export; never issue links into retired screens.
+  return null;
 }
 
 export async function notificationInbox(actor: Actor, q: URLSearchParams) {
@@ -321,7 +239,7 @@ export async function notificationInbox(actor: Actor, q: URLSearchParams) {
     // One visible prompt per source thread/event. A new message updates the group, not the domain message history.
     const candidates = await tx.$queryRaw<
       Notification[]
-    >`SELECT * FROM (SELECT DISTINCT ON (category,source_group) * FROM public.notification_events WHERE user_id=${actor.id}::uuid AND category=ANY(${enabled}::text[]) AND expires_at>now() ORDER BY category,source_group,sequence DESC) n ORDER BY sequence DESC LIMIT 26 OFFSET ${offset}`;
+    >`SELECT * FROM (SELECT DISTINCT ON (category,source_group) * FROM public.notification_events WHERE user_id=${actor.id}::uuid AND institution_id IS NOT NULL AND category=ANY(${enabled}::text[]) AND expires_at>now() ORDER BY category,source_group,sequence DESC) n ORDER BY sequence DESC LIMIT 26 OFFSET ${offset}`;
     const items = [];
     for (const n of candidates.slice(0, 25)) {
       const target = await notificationTarget(tx, n);
@@ -402,8 +320,8 @@ export async function dispatchNotifications(
     await db.$transaction(
       async (tx) => {
         let n = candidate;
-        if (n.workspace_id)
-          await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${n.workspace_id},73))::text`;
+        if (n.institution_id)
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${n.institution_id},73))::text`;
         await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${n.user_id},74))::text`;
         const claimed = await tx.$queryRaw<
           { id: string }[]

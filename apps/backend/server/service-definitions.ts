@@ -1,5 +1,5 @@
 import { ApiError } from "./db.ts";
-import { textValue, uuid } from "./workspaces.ts";
+import { textValue, uuid } from "./institution.ts";
 export type Drill = {
   key: string;
   name: string;

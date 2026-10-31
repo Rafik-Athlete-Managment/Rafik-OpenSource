@@ -9,20 +9,13 @@ import { language, t, errorMessage } from '../../lib/i18n'
 const busy = ref('')
 const error = ref('')
 const router = useRouter()
-async function enter(role: 'orgadmin' | 'orgtrainer' | 'orgtrainee' | 'orgadmin2' | 'operator') {
+async function enter(role: 'orgadmin' | 'orgtrainer' | 'orgtrainee' | 'operator') {
   busy.value = role
   error.value = ''
   try {
     user.value = await api.preview(role + '@rafik.test')
     await refreshProfile()
-    await router.push(
-      role === 'operator'
-        ? '/platform'
-        : '/organization/12000000-0000-4000-8000-00000000000' +
-            (role === 'orgadmin2' ? '2' : '1') +
-            '/' +
-            (role === 'orgadmin2' ? 'admin' : role.slice(3)),
-    )
+    await router.push(role === 'operator' ? '/platform' : '/dashboard')
   } catch (e) {
     error.value = errorMessage(e)
   } finally {
@@ -58,7 +51,7 @@ async function enter(role: 'orgadmin' | 'orgtrainer' | 'orgtrainee' | 'orgadmin2
       <p class="preview-context">
         {{
           language(
-            'Each institution owns its people, programs and training history. Choose an administrator, coach or athlete account to explore its workspace.',
+            'Each institution owns its people, programs and training history. Choose an administrator, coach or athlete account to explore its institution.',
             'لكل مؤسسة أفرادها وبرامجها وسجلها التدريبي. اختر حساب مسؤول أو مدرب أو رياضي لاستكشاف مساحة عمله.',
           )
         }}
@@ -80,14 +73,6 @@ async function enter(role: 'orgadmin' | 'orgtrainer' | 'orgtrainee' | 'orgadmin2
               role: 'orgtrainee' as const,
               name: 'Sara Khalil',
               description: language('Madar Training · Athlete', 'مدار للتدريب · رياضية'),
-            },
-            {
-              role: 'orgadmin2' as const,
-              name: 'Omar Saleh',
-              description: language(
-                'Athar Academy · Separate institution',
-                'أكاديمية أثر · مؤسسة منفصلة',
-              ),
             },
           ]"
           :key="account.role"

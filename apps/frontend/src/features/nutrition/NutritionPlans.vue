@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLiveSearch } from '../../lib/live-search'
+import { institutionContext } from '../../app/institution'
+
 import { PhTray } from '@phosphor-icons/vue'
 import AthleteSearch from '../../components/AthleteSearch.vue'
 import { useListPageSize } from '../../lib/list-page-size'
@@ -8,8 +11,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { formatDate } from '../../lib/dates'
-import OrganizationNav from '../organizations/OrganizationNav.vue'
-import MemberPicker from '../organizations/MemberPicker.vue'
+import MemberPicker from '../institution/MemberPicker.vue'
 import ListPagination from '../../components/ListPagination.vue'
 import PageState from '../../components/PageState.vue'
 import {
@@ -23,9 +25,9 @@ import {
 } from 'reka-ui'
 const route = useRoute(),
   router = useRouter(),
-  workspace = String(route.params.workspace),
-  view = String(route.params.view),
-  base = `/organization/${workspace}/${view}`
+  institution = institutionContext().institution,
+  view = institutionContext().view,
+  base = ''
 type Plan = {
   id: string
   member_id: string
@@ -72,7 +74,7 @@ async function load() {
     offset: String(page),
   })
   try {
-    const result = await request<Page>(`/v1/workspaces/${workspace}/nutrition-plans?${query}`)
+    const result = await request<Page>(`/v1/institution/nutrition-plans?${query}`)
     if (disposed || current !== generation) return
     data.value = result
     acceptLimit()
@@ -86,25 +88,33 @@ async function load() {
     if (!disposed && current === generation) loading.value = false
   }
 }
-function navigate(page = 0) {
-  return router.push({
+function navigate(page = 0, replace = false) {
+  return router[replace ? 'replace' : 'push']({
     query: {
       limit: route.query.limit,
-      ...(search.value ? { search: search.value } : {}),
+      ...(search.value.trim() ? { search: search.value.trim() } : {}),
       ...(status.value !== 'active' ? { status: status.value } : {}),
       ...(page ? { offset: page } : {}),
     },
   })
 }
+const live = useLiveSearch(search, () => navigate(0, true))
 watch(
   () => route.fullPath,
   () => {
-    search.value = String(route.query.search || '')
+    live.restore(String(route.query.search || ''))
     status.value = String(route.query.status || 'active')
     void load()
   },
 )
-onMounted(() => load())
+onMounted(() => {
+  void load()
+  // Contextual "New nutrition plan" links open the athlete choice directly.
+  if (route.query.create === '1') {
+    creating.value = true
+    void router.replace({ query: { ...route.query, create: undefined } })
+  }
+})
 onUnmounted(() => {
   disposed = true
   generation++
@@ -114,7 +124,6 @@ function create(ids: string[]) {
 }
 </script>
 <template>
-  <OrganizationNav />
   <div class="container page nutrition-plans-page">
     <PageHeading class="work-heading">
       <div>
@@ -150,7 +159,7 @@ function create(ids: string[]) {
             }}
           </DialogDescription>
           <MemberPicker
-            :workspace="workspace"
+            :institution="institution"
             :view="view"
             role="trainee"
             single
@@ -160,7 +169,7 @@ function create(ids: string[]) {
           />
           <div class="ui-dialog-actions">
             <DialogClose as-child
-              ><button type="button" class="button secondary">
+              ><button type="button" class="button secondary danger-action">
                 {{ l('Cancel', 'إلغاء') }}
               </button></DialogClose
             >
@@ -169,7 +178,7 @@ function create(ids: string[]) {
       </DialogPortal>
     </DialogRoot>
     <div class="list-toolbar">
-      <form class="nutrition-plan-filters" @submit.prevent="navigate()">
+      <form class="nutrition-plan-filters" @submit.prevent="live.submit()">
         <AthleteSearch v-model="search" /><label
           >{{ l('Plan status', 'حالة الخطة')
           }}<select v-model="status" @change="navigate()">
@@ -182,7 +191,7 @@ function create(ids: string[]) {
             </option>
             <option value="all">{{ l('All plans', 'جميع الخطط') }}</option>
           </select></label
-        ><button class="button secondary" :disabled="loading">{{ l('Search', 'بحث') }}</button>
+        >
       </form>
       <div class="list-toolbar-pagination">
         <ListPagination
@@ -227,7 +236,7 @@ function create(ids: string[]) {
           <article v-for="plan in data.items" :key="plan.id" class="nutrition-plan-card">
             <div class="heading-actions">
               <h2 dir="auto">{{ plan.member_name }}</h2>
-              <span class="tag">{{ label(plan.status) }}</span>
+              <span class="tag" :data-status="plan.status">{{ label(plan.status) }}</span>
             </div>
             <p class="small-print">
               {{ l('Nutrition plan · version', 'خطة تغذية · النسخة') }} {{ plan.revision }}
@@ -265,7 +274,7 @@ function create(ids: string[]) {
 <style scoped>
 .nutrition-plan-filters {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 16px;
   align-items: end;
 }

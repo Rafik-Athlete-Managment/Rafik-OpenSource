@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { startInjuryRetention } from "../server/organization-injury-retention.ts";
+import { startInjuryRetention } from "../server/injury-retention.ts";
 
 test("retention retries after a failure and returns to daily cadence after success", async () => {
   const delays: number[] = [];

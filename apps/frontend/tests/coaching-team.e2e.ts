@@ -1,8 +1,10 @@
 import { test, expect, type Page } from '@playwright/test'
 import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
+import { testPreview } from './local-config'
+test.use({ baseURL: testPreview })
 
 async function inspect(page: Page, name: string, info: { project: { name: string } }) {
   expect(await layoutIssues(page)).toEqual([])
@@ -19,15 +21,15 @@ test('admin builds a coaching team; a supporting coach sees training only until 
   browser,
 }, info) => {
   test.setTimeout(180000)
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     supportContext = await browser.newContext(),
     supportPage = await supportContext.newPage(),
-    workspace = randomUUID(),
-    endpoint = `/v1/workspaces/${workspace}`
+    institution = randomUUID(),
+    endpoint = `/v1/institution`
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Madar coaching team',
     })
     const support = await f.createPerson('Supporting Coach With A Long Name')
@@ -45,7 +47,7 @@ test('admin builds a coaching team; a supporting coach sees training only until 
         roles,
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
     const people = await f.call(f.owner, `${endpoint}?view=admin`),
       athlete = people.members.find((m: any) => m.user_id === f.client.id),
@@ -79,21 +81,33 @@ test('admin builds a coaching team; a supporting coach sees training only until 
       trainer: primary.id,
     })
 
-    const base = `/organization/${workspace}/admin`
+    const base = ``
     await f.login(page, f.owner, base + '/people')
     // Management lives on the profile's Manage tab; the directory icon opens it directly.
     await page.getByRole('link', { name: 'Manage R4 Athlete', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`/members/${athlete.id}\\?tab=manage`))
     const manageUrl = page.url()
     const team = page.locator('.coaching-team')
-    await expect(team.getByText('None yet.')).toBeVisible()
-    // The sport comes first; the coach list is then filtered to coaches who cover it.
-    await team.getByLabel('Sport or specialty they cover').selectOption({ label: 'Football' })
-    await team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }).check()
-    await team.getByRole('button', { name: 'Add supporting coach', exact: true }).click()
-    await expect(team.locator('.coaching-links li')).toContainText(
-      'Supporting Coach With A Long Name · Football',
+    await expect(
+      team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).not.toBeChecked()
+    // Choosing a coach with one eligible scope saves immediately.
+    const linked = page.waitForResponse(
+      (r) =>
+        r.url().endsWith('/v1/institution') &&
+        r.request().method() === 'POST' &&
+        r.request().postDataJSON()?.action === 'link-coach',
     )
+    await team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }).check()
+    expect((await linked).ok()).toBeTruthy()
+    await expect(
+      team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).toBeChecked()
+    await expect(
+      team.getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).toBeEnabled()
+    await expect(team.locator('.chosen-members, .coaching-links')).toHaveCount(0)
+    await inspect(page, 'supporting-inline-selected', info)
     await page.goto(base + '/people')
     const card = page
       .locator('.organization-person')
@@ -103,7 +117,7 @@ test('admin builds a coaching team; a supporting coach sees training only until 
     await inspect(page, 'admin-team', info)
 
     // The supporting coach sees the athlete, flagged as training-only, without nutrition.
-    await f.login(supportPage, support, `/organization/${workspace}/trainer/people`)
+    await f.login(supportPage, support, `/people`)
     const supportCard = supportPage
       .locator('.organization-person')
       .filter({ has: supportPage.getByRole('heading', { name: 'R4 Athlete', exact: true }) })
@@ -128,8 +142,22 @@ test('admin builds a coaching team; a supporting coach sees training only until 
     await inspect(page, 'admin-team-ar-dark-320', info)
 
     // Ending the link removes the athlete from the supporting coach's roster.
-    await page.getByRole('button', { name: /^إزالة المدرب المساند/ }).click()
-    await expect(page.locator('.coaching-team').getByText('لا يوجد بعد.')).toBeVisible()
+    const ended = page.waitForResponse(
+      (r) =>
+        r.url().endsWith('/v1/institution') &&
+        r.request().method() === 'POST' &&
+        r.request().postDataJSON()?.action === 'end-coach-link',
+    )
+    await page
+      .locator('.coaching-team')
+      .getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ })
+      .uncheck()
+    expect((await ended).ok()).toBeTruthy()
+    await expect(
+      page
+        .locator('.coaching-team')
+        .getByRole('checkbox', { name: /^Supporting Coach With A Long Name/ }),
+    ).not.toBeChecked()
     await supportPage.reload()
     await expect(supportPage.getByRole('heading', { name: 'R4 Athlete', exact: true })).toHaveCount(
       0,

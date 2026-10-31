@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test'
 import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
+import { testPreview } from './local-config'
+test.use({ baseURL: testPreview, serviceWorkers: 'block' })
 async function fixture() {
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     id = randomUUID()
-  await f.call(f.owner, '/v1/workspaces', { id, kind: 'organization', name: 'Madar nutrition' })
+  await f.call(f.owner, '/v1/institutions', { id, kind: 'institution', name: 'Madar nutrition' })
   // A second athlete: drafts must stay scoped when staff switch between athletes.
   const second = await f.createPerson('R4 Second Athlete')
   for (const [person, roles] of [
@@ -15,7 +17,7 @@ async function fixture() {
     [second, ['trainee']],
   ] as const) {
     const token = randomBytes(32).toString('hex')
-    await f.call(f.owner, `/v1/workspaces/${id}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'invite',
       id: randomUUID(),
@@ -23,20 +25,20 @@ async function fixture() {
       roles,
       token,
     })
-    await f.call(person, `/v1/organization-invitations/${token}`, {})
+    await f.call(person, `/v1/invitations/${token}`, {})
   }
-  const people = await f.call(f.owner, `/v1/workspaces/${id}?view=admin`)
+  const people = await f.call(f.owner, `/v1/institution?view=admin`)
   const member = people.members.find((m: any) => m.user_id === f.client.id),
     staff = people.members.find((m: any) => m.user_id === f.coach.id)
-  await f.call(f.owner, `/v1/workspaces/${id}`, {
+  await f.call(f.owner, `/v1/institution`, {
     operation: randomUUID(),
     action: 'assign-trainer',
     id: member.id,
     revision: member.revision,
     trainer: staff.id,
   })
-  const endpoint = `/v1/workspaces/${id}/nutrition`,
-    base = `/organization/${id}`
+  const endpoint = `/v1/institution/nutrition`,
+    base = ''
   return { ...f, id, member, staff, endpoint, base }
 }
 const today = new Date().toISOString().slice(0, 10)
@@ -96,7 +98,7 @@ test('organization plan publication flows through trainee portions, consent, cor
     await page.getByRole('button', { name: 'Close editor', exact: true }).click()
     await page.getByRole('button', { name: 'Plan', exact: true }).click()
     await page.screenshot({ path: `artifacts/r16-plan-${info.project.name}.png` })
-    await f.login(client, f.client, `${f.base}/trainee/nutrition`)
+    await f.login(client, f.client, `${f.base}/nutrition`)
     await client.getByRole('button', { name: 'Example meal plan', exact: true }).click()
     await client.getByRole('button', { name: 'Record this food', exact: true }).click()
     await client.getByRole('spinbutton', { name: 'Amount eaten', exact: true }).fill('75')
@@ -140,7 +142,7 @@ test('organization plan publication flows through trainee portions, consent, cor
       .getByRole('button', { name: 'Changes', exact: true })
       .click()
     await expect(client.locator('.org-sharing').last()).toContainText('Removed')
-    const exported = await f.call(f.client, '/v1/account/organizations')
+    const exported = await f.call(f.client, '/v1/account/institution')
     expect(exported.nutritionMeals[0].organization_meal_history).toHaveLength(3)
     await page.getByRole('button', { name: 'Plan history', exact: true }).click()
     await page.locator('.org-plan-history summary').click()
@@ -285,12 +287,19 @@ test('organization nutrition entry, editor and diary stay readable in both langu
 
 test('trainee food draft survives date changes and an uncertain save without duplicate consumption', async ({
   page,
-}) => {
+}, info) => {
+  test.setTimeout(90000)
   const f = await fixture()
   try {
-    await f.login(page, f.client, `${f.base}/trainee/nutrition`)
+    await f.login(page, f.client, `${f.base}/nutrition`)
     await page.getByRole('button', { name: 'Food diary', exact: true }).click()
     await page.getByRole('button', { name: 'Record food', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: 'Record food', exact: true })).toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Find a food', exact: true })).toBeVisible()
+    await page.screenshot({
+      path: `artifacts/founder-food-dialog-${info.project.name}.png`,
+      fullPage: true,
+    })
     await page.getByLabel('Food name', { exact: true }).fill('Home lunch')
     await page.getByLabel('Amount eaten', { exact: true }).fill('2')
     await expect(

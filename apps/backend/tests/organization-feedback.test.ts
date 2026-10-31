@@ -8,7 +8,7 @@ import {
   call,
   operation,
 } from "./organization-fixture.ts";
-import { organizationAccountData } from "../server/account-data.ts";
+import { institutionAccountData } from "../server/account-data.ts";
 after(() => db.$disconnect());
 const ok = (r: any) => {
   assert.equal(r.status, 200, JSON.stringify(r));
@@ -21,14 +21,14 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
       trainer = await f.person(),
       client = await f.person(),
       peer = await f.person(),
-      workspace = await f.create(admin),
-      staff = await f.join(admin, workspace, trainer, ["trainer"]),
-      member = await f.join(admin, workspace, client, ["trainee"]),
-      other = await f.join(admin, workspace, peer, ["trainer"]);
+      institution = await f.create(admin),
+      staff = await f.join(admin, institution, trainer, ["trainer"]),
+      member = await f.join(admin, institution, client, ["trainee"]);
+    await f.join(admin, institution, peer, ["trainer"]);
     ok(
       await call(
         admin,
-        `/v1/workspaces/${workspace}`,
+        `/v1/institution`,
         operation("assign-trainer", {
           id: member.id,
           revision: 1,
@@ -36,13 +36,13 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
         }),
       ),
     );
-    const endpoint = `/v1/workspaces/${workspace}/feedback`,
-      calendar = `/v1/workspaces/${workspace}/calendar`,
+    const endpoint = `/v1/institution/feedback`,
+      calendar = `/v1/institution/calendar`,
       day = new Date(Date.now() + 86400000).toISOString().slice(0, 10),
       today = new Date().toISOString().slice(0, 10),
       month = today.slice(0, 7) + "-01";
     assert.equal(
-      (await call(admin, `/v1/workspaces/${workspace}/packages`, {})).status,
+      (await call(admin, `/v1/institution/packages`, {})).status,
       404,
       "retired session package API is not exposed",
     );
@@ -73,7 +73,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
       revision: 0,
     });
     assert.equal((await call(client, endpoint, input)).status, 403);
-    await db.organization_events.update({
+    await db.institution_events.update({
       where: { id: e.id },
       data: {
         starts_at: new Date(Date.now() - 7200000),
@@ -109,23 +109,6 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     assert.equal(list.items[0].revision, 0);
     ok(await call(client, endpoint, input));
     ok(await call(client, endpoint, input));
-    const foreign = await f.create(admin);
-    await f.join(admin, foreign, client, ["trainee"]);
-    assert.equal(
-      (
-        await call(client, `/v1/workspaces/${foreign}/feedback`, {
-          ...input,
-          operation: randomUUID(),
-        })
-      ).status,
-      403,
-    );
-    assert.deepEqual(
-      ok(await call(client, `/v1/workspaces/${foreign}/feedback?view=trainee`))
-        .items,
-      [],
-    );
-
     assert.equal(
       (
         await call(client, endpoint, {
@@ -176,7 +159,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     const analytics = (person: any, view: string) =>
       call(
         person,
-        `/v1/workspaces/${workspace}/analytics?view=${view}&from=${month}&to=${today}`,
+        `/v1/institution/analytics?view=${view}&from=${month}&to=${today}`,
       );
     const report = ok(await analytics(admin, "admin")).experience;
     const performance = ok(await analytics(admin, "admin")).performance;
@@ -206,7 +189,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     const published = ok(
       await call(
         trainer,
-        `/v1/workspaces/${workspace}/programs`,
+        `/v1/institution/programs`,
         operation("publish", {
           view: "trainer",
           id: randomUUID(),
@@ -219,7 +202,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     const delivery = ok(
       await call(
         trainer,
-        `/v1/workspaces/${workspace}/delivery`,
+        `/v1/institution/delivery`,
         operation("assign", {
           view: "trainer",
           version_id: published.version.id,
@@ -233,7 +216,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
       started = ok(
         await call(
           client,
-          `/v1/workspaces/${workspace}/sessions`,
+          `/v1/institution/sessions`,
           operation("start", {
             view: "trainee",
             id: session,
@@ -253,7 +236,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     ok(
       await call(
         client,
-        `/v1/workspaces/${workspace}/sessions`,
+        `/v1/institution/sessions`,
         operation("save", {
           view: "trainee",
           id: session,
@@ -271,7 +254,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
       ).score,
       3,
     );
-    const exported = await organizationAccountData({ id: client.id } as any);
+    const exported = await institutionAccountData({ id: client.id } as any);
     assert.equal((exported.sessionFeedback as any[]).length, 2);
     assert.equal((exported.workplaceFeedback as any[]).length, 0);
     // Attendance corrections exclude an ineligible source; no phantom neutral replacement.
@@ -299,7 +282,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     ok(
       await call(
         admin,
-        `/v1/workspaces/${workspace}`,
+        `/v1/institution`,
         operation("member", {
           id: staff.id,
           revision: staff.revision,

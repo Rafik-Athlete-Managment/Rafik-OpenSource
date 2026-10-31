@@ -2,12 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage } from '../../lib/i18n'
-import { useCommand } from '../teams/commands'
-import CommandStatus from '../teams/CommandStatus.vue'
+import { useCommand } from '../../lib/commands'
+import CommandStatus from '../../components/CommandStatus.vue'
 import PageState from '../../components/PageState.vue'
-const categories = ['messages', 'feedback', 'checkins', 'calendar'] as const
+const categories = ['messages', 'feedback', 'calendar'] as const
 type Pref = {
-  categories: Record<(typeof categories)[number], { in_app: boolean; email: boolean }>
+  categories: Record<(typeof categories)[number] | 'checkins', { in_app: boolean; email: boolean }>
   quiet_start: number
   quiet_end: number
   revision: number
@@ -20,7 +20,6 @@ const name = (key: string) =>
   ({
     messages: l('Messages', 'الرسائل'),
     feedback: l('Feedback and results', 'الملاحظات والنتائج'),
-    checkins: l('Due check-ins', 'المتابعات المستحقة'),
     calendar: l('Calendar changes and reminders', 'تغييرات التقويم والتذكيرات'),
   })[key] || key
 async function load() {
@@ -53,7 +52,7 @@ onMounted(load)
       {{
         l(
           'Account access uses your password. These controls only affect optional coaching updates.',
-          'رموز الدخول منفصلة. هذه الإعدادات تخص تحديثات التدريب الاختيارية فقط.',
+          'يستخدم الدخول كلمة المرور. هذه الإعدادات تخص تحديثات التدريب الاختيارية فقط.',
         )
       }}
     </p>

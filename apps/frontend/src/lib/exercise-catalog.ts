@@ -101,7 +101,7 @@ const starterAreas: Record<string, string> = {
   'low-step-up': 'upper legs',
 }
 export const exerciseArea = (e: Exercise) =>
-  e.body_part || e.category || (!e.owner_id && !e.workspace_id ? starterAreas[e.id] : '') || ''
+  e.body_part || e.category || (!e.owner_id && !e.institution_id ? starterAreas[e.id] : '') || ''
 export const exerciseAreas = (e: Exercise) =>
   e.body_parts?.length ? e.body_parts : [exerciseArea(e)].filter(Boolean)
 export function categoryLabel(value: string) {

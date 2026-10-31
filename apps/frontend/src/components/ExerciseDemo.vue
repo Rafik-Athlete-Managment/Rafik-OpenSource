@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import OrganizationAsset from './OrganizationAsset.vue'
+import ResourceAsset from './ResourceAsset.vue'
 import ExerciseVideo from './ExerciseVideo.vue'
-import { videoForExercise } from '../lib/exercise-media'
+import { videoForExercise, illustrationsForExercise } from '../lib/exercise-media'
 import credits from '../content/exercise-credits.json'
 import { language as l, locale } from '../lib/i18n'
 import type { Exercise } from '../lib/domain'
@@ -15,19 +15,11 @@ const props = defineProps<{
 const sourceRef = computed(
   () =>
     props.exercise?.source_ref ||
-    (!props.exercise?.owner_id && !props.exercise?.workspace_id ? props.exercise?.id : undefined),
+    (!props.exercise?.owner_id && !props.exercise?.institution_id ? props.exercise?.id : undefined),
 )
 const credit = computed(() => credits[sourceRef.value as keyof typeof credits])
 const motion = computed(() => videoForExercise(props.exercise))
-const pack = computed(() => {
-  const e = props.exercise
-  if (!e || e.media_url) return undefined
-  return media.items.find((item) =>
-    e.media_ref
-      ? item.id === e.media_ref
-      : !e.owner_id && !e.workspace_id && item.exerciseId === e.id,
-  )
-})
+const pack = computed(() => illustrationsForExercise(props.exercise))
 const failedFrames = ref<string[]>([])
 watch(
   () => props.exercise?.id,
@@ -40,7 +32,7 @@ const name = computed(() =>
 )
 </script>
 <template>
-  <OrganizationAsset
+  <ResourceAsset
     v-if="exercise?.media_asset"
     :id="exercise.media_asset"
     :name="name"
@@ -140,7 +132,7 @@ const name = computed(() =>
   aspect-ratio: 1;
   object-fit: contain;
   border-radius: 10px;
-  background: #1c2924;
+  background: var(--exercise-media-backdrop, #1c2924);
   padding: 8px;
 }
 .demo-positions figcaption {

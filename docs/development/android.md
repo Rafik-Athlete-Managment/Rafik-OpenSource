@@ -1,5 +1,15 @@
 # Android coach field development
 
+## Individual workout source flow — unreleased beta.3
+
+Schedule and Individual workouts remain separate mounted views. Download an authorized plan workout before disconnecting, then open its saved copy. Device starts/results are provisional until the existing server session commands acknowledge them. Enter the actual load/reps, seconds or metres, mark sets Done and choose Save progress for sync or Finish workout for sync. Acknowledged completion becomes a read-only summary. Failed/unknown sync retains the exact request and draft; explicit recovery sharing warns about private contents. Only clean copies can be removed locally, without changing server history.
+
+Use the [canonical administrator/coach/athlete validation](../testing/instance-validation.md#native-individual-workouts--unreleased-beta3) rather than maintaining another manual procedure here. Group recording remains in the web dashboard. This source slice has no native dependency/configuration change; it does not establish rendered Android, encryption or physical offline acceptance.
+
+## Unreleased beta.3 compatibility check
+
+The source app's schedule has a collapsed **Server compatibility** disclosure after the event list. It reports native support for attendance, assessments, event completion and individual workout recording, with a separate **Check again** action. Group recording and day-only appointments in the attendance calendar remain unavailable; individual packages support their own date-only plan work. A missing discovery endpoint requests a version check; offline/denied/invalid responses retain their own error. Saved events and pending work remain reviewable. This does not require a native dependency change or establish APK/device acceptance. Use the [canonical instance walkthrough](../testing/instance-validation.md) for manual checks.
+
 **Status, 20 October 2026:** the coach Android beta.1 is published and accepted for beta evaluation. Attendance, assessment drafts/results, event completion, online correction history, recovery comparison/sharing and English/Arabic UI are implemented. Focused API and Android emulator checks passed, including queued score replay after app restart and recovery share cancellation. A signed emulator build also passed cold offline startup and controlled current-format versionCode upgrade preservation. The founder reports the S20+ standalone field/offline walkthrough passed on 20 October; broader device/accessibility and security/recovery coverage remain open; see [verification](../verification/README.md). Instance URL scanning remains open.
 
 ## Start a development instance and native build
@@ -50,7 +60,7 @@ For API exploration on your computer, open the backend's `/v1/docs` (default `ht
 
 1. Sign in using the institution API URL and a trainer account. Select the institution workspace if more than one is available.
 2. Refresh the schedule. It requests a 14-day local-date window in the device's timezone. **Load more events** follows the server's pagination; the list is not a season-wide download.
-3. Open an event online. The app saves event identity/timing/state, event participant names/duties/active flags, attendance and revisions. Assessment packages also include the event's metric definitions/units/limits and current results, revisions and assessor notes. It excludes correction history, session notes, files, conversations and injury records from the device cache.
+3. Open an event online. The app saves event identity/timing/state, event participant names/duties/active flags, attendance and revisions. Assessment packages also include the event's metric definitions/units/limits and current results, revisions and assessor notes. Attendance/assessment packages exclude workout notes, files, conversations and injury records. The separate individual workout package explicitly includes that workout’s training note; it still excludes clinical records, files and correction history.
 4. After the event starts, choose **Present**, **Absent** or **Excused** for each athlete. The display acknowledges device saving only after the local transaction completes. One athlete's next edit waits for acknowledgment of their previous change; other athletes can be captured while a request is in progress.
 5. Keep the app active to send saved attendance. Retry runs on foreground/resume, an explicit sync action and a 30-second timer while active. A network request times out after 20 seconds. There is no background-sync promise.
 6. Reopen a saved event after an app restart or while disconnected. Saved events remain listed even when their dates are outside the current schedule window. A new event requires an online download.

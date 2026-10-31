@@ -6,12 +6,12 @@ import {
   dispatchNotifications,
   localSink,
   defaultCategories,
+  notificationTarget,
 } from "../server/notifications.ts";
 import {
   organizationFixture,
   call,
   operation,
-  dockerCompose,
 } from "./organization-fixture.ts";
 after(() => db.$disconnect());
 test("notification intent, scoped inbox, preferences, quiet hours, retry and local interception are distinct from message reads", async () => {
@@ -22,15 +22,15 @@ test("notification intent, scoped inbox, preferences, quiet hours, retry and loc
       other = await f.person(),
       id = await f.create(admin),
       trainee = await f.join(admin, id, client, ["trainee"]),
-      self = await db.workspace_members.findUniqueOrThrow({
+      self = await db.institution_members.findUniqueOrThrow({
         where: {
-          workspace_id_user_id: { workspace_id: id, user_id: admin.id },
+          institution_id_user_id: { institution_id: id, user_id: admin.id },
         },
       }),
       channel = randomUUID();
     await call(
       admin,
-      `/v1/workspaces/${id}/communication`,
+      `/v1/institution/communication`,
       operation("create", {
         id: channel,
         view: "admin",
@@ -46,18 +46,35 @@ test("notification intent, scoped inbox, preferences, quiet hours, retry and loc
       body: "Private assessment detail must never enter an email preview.",
     });
     assert.equal(
-      (await call(admin, `/v1/workspaces/${id}/communication`, send)).status,
+      (await call(admin, `/v1/institution/communication`, send)).status,
       200,
     );
-    await call(admin, `/v1/workspaces/${id}/communication`, send);
+    await call(admin, `/v1/institution/communication`, send);
     let rows = await db.notification_events.findMany({
-      where: { user_id: client.id },
+      where: { user_id: client.id, institution_id: id },
     });
     assert.equal(rows.length, 1, "domain retry captures one intent");
     const notification = rows[0];
+    // Retired sources must not consume the first page and hide a valid institution update.
+    await db.notification_events.createMany({
+      data: Array.from({ length: 26 }, () => ({
+        user_id: client.id,
+        institution_id: null,
+        category: "messages",
+        source_kind: "message",
+        source_id: randomUUID(),
+        source_group: randomUUID(),
+        event_key: randomUUID(),
+      })),
+    });
     const inbox = await call(client, "/v1/notifications");
     assert.equal(inbox.status, 200, JSON.stringify(inbox));
     assert.equal(inbox.data.items.length, 1);
+    assert.equal(
+      inbox.data.next,
+      null,
+      "retired rows never consume institution inbox pages",
+    );
     assert.match(inbox.data.items[0].href, new RegExp(channel));
     assert.equal(
       (await call(other, "/v1/notifications?id=" + notification.id)).status,
@@ -133,7 +150,7 @@ test("notification intent, scoped inbox, preferences, quiet hours, retry and loc
       message: randomUUID(),
       body: "A quiet-hours update",
     };
-    await call(admin, `/v1/workspaces/${id}/communication`, second);
+    await call(admin, `/v1/institution/communication`, second);
     await dispatchNotifications();
     const quiet = await db.notification_events.findFirstOrThrow({
       where: { source_id: second.message },
@@ -185,10 +202,10 @@ test("notification intent, scoped inbox, preferences, quiet hours, retry and loc
       message: randomUUID(),
       body: "An update before removal",
     };
-    await call(admin, `/v1/workspaces/${id}/communication`, third);
+    await call(admin, `/v1/institution/communication`, third);
     await call(
       admin,
-      `/v1/workspaces/${id}`,
+      `/v1/institution`,
       operation("member", {
         id: trainee.id,
         revision: 1,
@@ -214,218 +231,23 @@ test("notification intent, scoped inbox, preferences, quiet hours, retry and loc
   }
 });
 
-test("independent reminders suppress answered forms and cancelled appointments; message bursts coalesce and failed delivery is bounded", async () => {
-  const f = await organizationFixture();
-  let practice = "";
-  try {
-    const coach = await f.person(),
-      client = await f.person(),
-      rel = randomUUID();
-    practice = randomUUID();
-    assert.equal(
-      (
-        await call(coach, "/v1/workspaces", {
-          id: practice,
-          kind: "independent",
-          name: "Notification test practice",
-        })
-      ).status,
-      200,
-    );
-    dockerCompose(
-      [
-        "exec",
-        "-T",
-        "db",
-        "psql",
-        "-U",
-        "rafik_migrate",
-        "-d",
-        "rafik",
-        "-v",
-        "ON_ERROR_STOP=1",
-      ],
+test("retired independent notifications never publish unsupported browser targets", async () => {
+  for (const source_kind of [
+    "message",
+    "workout",
+    "checkin_due",
+    "form_feedback",
+    "appointment_change",
+    "appointment_reminder",
+  ]) {
+    const target = await notificationTarget(
+      {} as any,
       {
-        input: `insert into public.coach_clients(id,coach_id,client_id) values('${rel}','${coach.id}','${client.id}');`,
-        stdio: ["pipe", "pipe", "pipe"],
-      },
+        source_kind,
+        institution_id: null,
+        expires_at: new Date(Date.now() + 60_000),
+      } as any,
     );
-    const cmd = async (
-      p: typeof coach,
-      name: string,
-      args: Record<string, unknown>,
-    ) => {
-      const r = await call(p, "/v1/commands/" + name, args);
-      assert.equal(r.status, 200, JSON.stringify(r));
-      return r.data;
-    };
-    const categories = defaultCategories();
-    for (const k of Object.keys(categories) as (keyof typeof categories)[])
-      categories[k].email = true;
-    assert.equal(
-      (
-        await call(client, "/v1/notifications/preferences", {
-          categories,
-          quiet_start: 0,
-          quiet_end: 0,
-          revision: 0,
-        })
-      ).status,
-      200,
-    );
-    const form = randomUUID();
-    await cmd(coach, "save_coaching_form", {
-      p_id: form,
-      p_title: "Weekly reflection",
-      p_kind: "checkin",
-      p_fields: [
-        { id: "note", label: "How did it go?", type: "text", required: true },
-      ],
-      p_revision: 0,
-    });
-    const requests = await cmd(coach, "assign_coaching_form", {
-      p_series: randomUUID(),
-      p_relationship: rel,
-      p_form: form,
-      p_revision: 1,
-      p_due: new Date().toISOString().slice(0, 10),
-      p_count: 1,
-      p_interval: 7,
-    });
-    const local = new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 16),
-      slots = await cmd(coach, "publish_availability", {
-        p_series: randomUUID(),
-        p_local: local,
-        p_zone: "UTC",
-        p_minutes: 30,
-        p_count: 1,
-        p_every: 7,
-        p_title: "Technique review",
-        p_location: "Local fixture",
-      });
-    const appointment = await cmd(client, "book_appointment", {
-      p_id: randomUUID(),
-      p_relationship: rel,
-      p_slot: slots[0].id,
-    });
-    // Capture due intents while quiet; then make their source obsolete before delivery.
-    const hour = new Date().getUTCHours();
-    await call(client, "/v1/notifications/preferences", {
-      categories,
-      quiet_start: hour,
-      quiet_end: (hour + 1) % 24,
-      revision: 1,
-    });
-    await dispatchNotifications();
-    const due = await db.notification_events.findFirstOrThrow({
-        where: { user_id: client.id, source_kind: "checkin_due" },
-      }),
-      reminder = await db.notification_events.findFirstOrThrow({
-        where: { user_id: client.id, source_kind: "appointment_reminder" },
-      });
-    await cmd(client, "save_coaching_response", {
-      p_id: requests[0].id,
-      p_answers: { note: "Good" },
-      p_revision: 1,
-      p_submit: true,
-    });
-    await cmd(client, "change_appointment", {
-      p_id: appointment.id,
-      p_revision: 1,
-      p_action: "cancelled",
-    });
-    await db.notification_events.updateMany({
-      where: { id: { in: [due.id, reminder.id] } },
-      data: { not_before: new Date(0) },
-    });
-    await dispatchNotifications();
-    assert.equal(
-      (
-        await db.notification_events.findUniqueOrThrow({
-          where: { id: due.id },
-        })
-      ).reason,
-      "obsolete",
-    );
-    assert.equal(
-      (
-        await db.notification_events.findUniqueOrThrow({
-          where: { id: reminder.id },
-        })
-      ).reason,
-      "obsolete",
-    );
-    await call(client, "/v1/notifications/preferences", {
-      categories,
-      quiet_start: 0,
-      quiet_end: 0,
-      revision: 2,
-    });
-    const first = randomUUID(),
-      second = randomUUID();
-    await cmd(coach, "send_message", {
-      p_id: first,
-      p_relationship: rel,
-      p_body: "First useful update",
-    });
-    await cmd(coach, "send_message", {
-      p_id: second,
-      p_relationship: rel,
-      p_body: "Second useful update",
-    });
-    assert.equal(
-      (await call(client, "/v1/notifications")).data.items.filter(
-        (x: any) => x.category === "messages",
-      ).length,
-      1,
-    );
-    await dispatchNotifications({
-      async accept(tx, n) {
-        if (n.source_id === second) throw Error("provider unavailable");
-        await localSink.accept(tx, n);
-      },
-    });
-    assert.equal(
-      (
-        await db.notification_events.findFirstOrThrow({
-          where: { source_id: first },
-        })
-      ).reason,
-      "coalesced",
-    );
-    const latest = await db.notification_events.findFirstOrThrow({
-      where: { source_id: second },
-    });
-    for (let i = 1; i < 5; i++) {
-      await db.notification_events.update({
-        where: { id: latest.id },
-        data: { not_before: new Date(0) },
-      });
-      await dispatchNotifications({
-        async accept(tx, n) {
-          if (n.id === latest.id) throw Error("provider unavailable");
-          await localSink.accept(tx, n);
-        },
-      });
-    }
-    const failed = await db.notification_events.findUniqueOrThrow({
-      where: { id: latest.id },
-    });
-    assert.equal(failed.state, "failed");
-    assert.equal(failed.attempts, 5);
-    assert.equal(
-      (await call(client, "/v1/conversations/" + rel)).data.length,
-      2,
-      "notification failure never removes messages",
-    );
-    const inbox = await call(client, "/v1/notifications");
-    assert.ok(
-      inbox.data.items.some(
-        (n: any) => n.id === failed.id && n.state === "failed",
-      ),
-    );
-  } finally {
-    if (practice) await db.workspaces.deleteMany({ where: { id: practice } });
-    await f.cleanup();
+    assert.equal(target, null, source_kind);
   }
 });

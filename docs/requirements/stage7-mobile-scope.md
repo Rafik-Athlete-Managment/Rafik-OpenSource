@@ -72,3 +72,7 @@ The mobile app uses the existing organization APIs; the server remains the sole 
 8. Replay each exact command in order. A lost acknowledgement retries the identical UUID and payload. A changed payload gets a new operation only after the prior result is known. On 403/409, stop dependent commands, refresh authorized event data when allowed, and show the exact correction/revocation state; never force-merge assessment values.
 
 The API has actor-scoped transactional operation receipts and current role/assignment checks. The Android bearer-session flow and supported OpenAPI subset are implemented locally; browser cookie/origin behavior is retained. Native/auth/API integration checks passed; physical and broader native rendering evidence remain required before extending device claims. The field package now includes assessment definitions and current results. Correction-history UI is implemented; broader native/API acceptance remains open.
+
+## Future tablet direction — founder decision, 26 October 2026
+
+Field launch is the intended focus for the later tablet experience: fast Resume/Start/Attendance actions with compact athlete-status context for field work. The web uses the balanced Coaching desk. This is a design direction for a subsequent tablet slice, not an implemented navigation change, a new APK or proof of offline workout capture.

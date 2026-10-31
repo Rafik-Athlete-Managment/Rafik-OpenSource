@@ -1,0 +1,255 @@
+# Instance validation walkthrough
+
+## Native individual workouts — unreleased beta.3
+
+Prerequisites: matching release-branch backend and an installed native development client using this source (`npm run mobile:start`); separate synthetic administrator, coach and athlete accounts; no database reset or reseed. The published beta.2 APK does not contain this source update. Use clearly named test records and existing signing/encryption identities. Rendered/native acceptance is still pending; Node/API evidence is separate.
+
+### Administrator preparation
+
+1. Create or reuse a clearly named program containing a strength exercise, a timed exercise and a distance exercise. Assign it to a synthetic athlete with the correct primary/supporting coach scope. Schedule its next workout for today using the normal web flow; include a future start time for the timing check. Prepare a second independent plan or athlete for the scope/regression check.
+2. Keep the existing Schedule/People/plan detail available for review. Administrators may schedule/review, but must not gain native coach recording access. An athlete account must not receive trainer field packages. Group recording and assessment flows remain unchanged by this individual slice.
+
+### Coach download and capture
+
+1. Sign into the matching native source app as the assigned coach. Open Individual workouts, search the athlete and download the workout. Expect workout name first, program/athlete second, a device-save acknowledgment and no repeated download card for the saved record. With sufficient fixtures, page saved and online results past ten and return/search again; select the later-page record without losing it.
+2. Before its scheduled instant/date, expect Start disabled and the booking-time explanation. Download the first workout online, then disconnect Wi-Fi/mobile data **and USB forwarding** before testing actual offline behavior. Open the saved copy without waiting for a network response. Date-only plan work uses its source timezone/date; it must not invent a midnight appointment.
+3. Once eligible, choose Start on this device. Expect a provisional, unconfirmed start. Enter zero load with positive reps for bodyweight work, an actual positive duration and fractional distance. Prescribed targets stay separate from actuals; timed/distance fields require actual entry on a new start. Mark each set Done. Invalid values must not be marked complete or submitted; an unfinished set must prevent Finish. Decimal input must retain the decimal point while typing.
+4. Leave and reopen the saved workout after device-save feedback. Expect entries/note retained. Choose Save progress or Finish for sync while disconnected, then restart the app. Expect the same owner/workout/request and a provisional completion, not a server-confirmed summary. Open a previously downloaded attendance/assessment event and switch views: its editor/drafts must remain intact.
+
+### Coach reconnect and recovery
+
+1. Reconnect and use Sync saved workouts (or foreground retry). Expect the original start to be acknowledged before result dispatch. Confirmed completion becomes read-only. Reload/sign in to the same account: the saved summary stays available; another account or institution URL must not adopt it. Do not require a replacement workout or clearing device data.
+2. In a controlled test, disconnect after dispatch before acknowledgment, then retry. Expect the same operation/payload and one server workout/completion. A later edit during a progress save must remain a separate unsynced draft rather than being marked acknowledged with the earlier request.
+3. For a separate synthetic record, change permissions/training restriction or modify results on web before sync. Expect denial/conflict with all local actuals retained. Retry exact saved request performs a fresh access check and never invents a replacement start. Share recovery only with authorized staff; cancel sharing once. For a definitively rejected save, review the current server version, cancel replacement once, then explicitly replace only when willing to discard that draft. Unknown starts cannot use this shortcut.
+4. Restore authorized access on an unchanged record and use Recheck workout access; expect the draft retained. If the server revision changed, require review rather than overwriting it. Remove only a clean downloaded copy and verify server history remains. Unsupported/downgraded server capability must pause workout replay without clearing attendance, assessment or workout queues. Simulate downgrade only in an owned test environment.
+
+### Athlete and administrator review
+
+1. As the athlete on web, open the completed workout. Expect the actual zero load/duration/distance, note and coach attribution. The plan advances once; other independent plans do not advance. Native coach recording must not become athlete self-recording.
+2. As administrator, review the same history/plan/calendar. Expect one occurrence/workout, retained prior history and no duplicate progression. Existing athlete-started unfinished work may still be finished by an authorized coach under ADR 0031; completed self-logged actuals retain their protection.
+
+Report app/backend revisions, role, workout/occurrence ID, expected/actual behavior, connection/USB state and exact message. Do not include passwords, tokens or signing material. Group workout capture, media download, native alternative selection, full historical reconciliation and physical upgrade packaging remain outside this slice.
+
+## Android compatibility foundation — unreleased beta.3
+
+Prerequisite: a matching source development app already installed, the updated backend and a synthetic coach account. This slice does not require a new native dependency or prove a release APK upgrade. Administrators can inspect the authenticated API contract, while the field UI remains coach-only; athletes gain no new recording access.
+
+1. As the coach, open the schedule and expand **Server compatibility** below its event list. Expect attendance, assessment results, event completion and individual workout recording supported. Group recording and day-only appointments in the attendance calendar remain unavailable; Individual workouts handles its own date-only plan packages. Collapse the details: normal event selection remains unchanged.
+2. Open a previously downloaded synthetic event, save an attendance change while offline and return to the schedule. Expand compatibility and choose **Check again**: expect a connection message, not a version or permission claim. The saved event/change must remain present. Returning to its editor must retain the pending work.
+3. Reconnect and check again. Expect current capabilities without clearing separate permission/session warnings. Open the saved event and use the existing sync/review flow; capability discovery itself must not send or discard its command.
+4. For a developer-controlled older or mocked server returning `404 not_found`, expect the version-check explanation, with saved work retained. A denied/revoked session must show its own authentication/access explanation rather than reporting a legacy server. Do not change a real institution's server merely to simulate this condition.
+
+Record app/backend revision, account role, connection state and exact failure text if these checks fail. Rendered Android acceptance remains pending; Node parser/API tests are separate evidence. Use the individual workout section above for the subsequent capture implementation; group recording remains the next slice.
+
+This is the single source of truth for manual administrator, coach and athlete validation walkthroughs, for founder acceptance and institution owners checking their own installation. Update the relevant steps here when implemented workflows change; other guides and landing link here rather than copying the procedures. Automated evidence belongs in [verification](../verification/README.md), not in a parallel walkthrough.
+
+**Version scope:** current unreleased beta.3 release branch. These steps include changes not present in published beta.2. Use the document from the same release tag or source commit as your installation; passing this checklist does not establish whole-release acceptance or institutional live-data approval.
+
+Use synthetic records and separate browser profiles for administrator, coach and athlete. Keep existing data; do not reset or seed the instance. On a hosted installation, open your instance URL and skip the local startup commands below. Record the deployed version/commit, browser/device, language/theme and each checked result as passed, failed or not checked. Only run sections implemented in that version.
+
+## Start the local app
+
+From the repository root, with Docker running, start the local database and apply pending migrations:
+
+```sh
+npm run backend:start
+npm run web-env
+```
+
+Start the API and web app in separate terminals:
+
+```sh
+npm run start:api
+```
+
+```sh
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. A fresh database opens the first-run super-admin setup form; complete it with synthetic details. A database seeded with sample accounts opens sign-in instead. The first-run journey can be exercised safely with `npm run test:e2e --workspace @rafik/frontend -- onboarding.e2e.ts --empty-database`; the isolated runner creates and removes its own database. Do not run `npm run seed:local` against a database that already contains data. The [development guide](../development/README.md) covers setup and troubleshooting.
+
+## Prepare accounts and access
+
+Use an empty synthetic institution or your existing local demo; do not reset another dataset. In **People & access**, invite a coach and at least two athletes using separate synthetic email identifiers. Redeem each single-use link and set passwords. Assign the coach responsibility for the athletes. Each membership has one role; use separate accounts to review different dashboards.
+
+### Preferred timezone and navigation clock — unreleased web change
+
+1. For each synthetic administrator, coach and athlete account, save a timezone different from the device's zone in personal Settings. Expect the desktop clock and zone label to change after acknowledgment; on a phone open the navigation menu to find the clock. The clock links back to Settings. Reload and sign out/in: the preference must persist for that account without carrying another account's preference across sign-in.
+2. Open the same clearly named timed event/workout before and after changing zones. Its displayed time/date should change consistently in its summary, calendar and history, while the stored booking and prescription stay the same. Use an event near midnight to check which calendar day contains it. Messages, notifications and activity dates/times should follow the same preference.
+3. Date-only workouts and plan/nutrition dates must retain their original date. In a booking/recurrence editor, verify the explicit authoring zone and local time remain unchanged until deliberately edited.
+4. Check English/Arabic, light/dark, desktop/phone, keyboard access to the clock and compact footer links. This does not validate Android or change training eligibility.
+
+## Sign-in and calendar feedback — unreleased beta.3
+
+Use the synthetic accounts prepared above; no reset is needed.
+
+1. Sign out and sign in again. While the request/account loading is pending, expect a spinner, Signing in text and a disabled submit button. A slow response must not look like idle input. With reduced motion the busy label remains useful without continuous rotation. If sign-in fails, expect the error and an enabled retry button, with no duplicate submission from pressing Enter repeatedly.
+2. As administrator or designated coach, finish a synthetic individual workout, resolve/finish a group event and finish an assessment through their existing flows. Open Schedule in month and list views: completed items should have a distinct completion border/check marker and a Completed tag on booked cards. An unfinished event remains Scheduled even if its appointment is in the past. A group is completed only after explicit event finish, not just because one participant finished.
+3. On a phone, expect completion counts in month cells and readable status badges on booked cards. Check English/Arabic, both themes and keyboard access; the status must be understandable without color.
+
+Automatic three-day sealing is **not implemented in beta.3**. Its [next-release specification](../requirements/record-sealing.md) is planned work; do not expect lock/unseal controls during current validation.
+
+## Administrator
+
+### Workout templates and group workouts — unreleased beta.3
+
+Prerequisites: one administrator, one coach assigned to two synthetic athletes, and a second coach who is not staffed on the test event. Use names such as **Validation — Field strength**. Apply the matching forward migrations using the startup procedure above; do not reset existing records.
+
+1. As administrator, open **Workout templates** and create a template. Before adding exercises, expect one empty card containing Add exercise. Add one strength and one timed/distance exercise, set their prescribed targets, then save. Expect consistent label/control gaps, full-width Add exercise below the list, Save/Cancel in a separated footer and a clear saved preview. On a phone, name fields stack and actions remain reachable. Reload: the saved template remains. Edit/archive/restore it; use the directory’s **Active / Archived** tabs above search/pagination to find it, confirm each tab lists only its status and switching tabs resets pagination. Existing program copies must be unchanged. Staff can browse shared templates, but another coach cannot edit the creator’s template.
+2. Choose **Use in a new program**, or import from the program/athlete-plan editor. Expect an independent workout copy with its own identity. Change the copy and save/publish through the existing flow; reopen the template and verify it is unchanged. Import into a later cycle slot as well as an empty program. Existing plan policies and already scheduled prescriptions must remain unchanged.
+3. Open **Schedule an event → Group workout**, select the template, choose the two athletes (or an authorized group's members) and designate a coach. Review the dates/roster and create. Expect the event in the calendar/list. Later group membership changes must not change its roster. Edit/archive the original template: the event retains the original baseline.
+4. Open the event before its start. Expect a time explanation, no recording action and no ability to finish without attendance/results. Administrators can review and manage the event but cannot record athlete actuals.
+
+As the designated coach, once the scheduled start time arrives:
+
+1. Open the group event: expect **Attendance** at the top with marked/total counts. Mark all present, adjust one athlete if needed and save once. Open **Workout recording**. On desktop select the first athlete from the searchable roster; on a phone use the searchable athlete selector. Expect one shared workout preview, collapsed by default, containing its description and media. Open or close it, switch athletes and reload: your choice must remain; selecting an athlete must never reopen it. On desktop scroll a long recording sheet: the athlete roster must remain reachable, with search and pagination fixed around its scrollable names. Check keyboard scrolling on a short window. Adapt the selected athlete before **Start recording**; the shared baseline and second athlete must remain unchanged.
+2. Record actual reps/load/seconds/metres and use explicit set-completion checks; zero load is valid. Enter a note without submitting, select another athlete and return, then reload: the draft and selected athlete must remain. Save progress and confirm acknowledged values persist. Finish: expect review within the group event, with roster/selector still available. Save optional feedback, choose **Record next athlete** and record the other participant without returning through history. Revisit Attendance and return without losing the selected sheet. Inspect coach attribution/history. An individual plan cursor must not advance. If a local draft is older than the server revision, expect a warning rather than its silent application; test only with synthetic records. Pending/uncertain writes must prevent athlete switching until resolved.
+3. Try finishing the event while the other present athlete has no result. Expect a clear completion requirement. Complete their workout or **Skip with reason**; do not put health details in the reason. If a workout was already started, skipping must retain its partial history. Finish the event once all required outcomes are resolved.
+4. Check an applicable cannot-train status prevents starting, an absent athlete cannot start, and an inactive athlete's existing history remains available. A newly staffed coach can continue authorized work; removing the original coach must block their reads/writes and old-command replay. Keep current role/staff boundaries when reviewing completed work.
+5. In a disposable test account, interrupt a start/save response after server acknowledgment. Reload and retry the saved exact command. Expect one participant record/history version, the acknowledged revision and a working subsequent save; do not discard pending work. A separate competing start should require refreshing the existing record rather than silently replacing its prescription.
+
+As each athlete:
+
+1. Open the event and **View workout**. Expect the shared prescription and only your own result/skip status. No participant editor, coach feedback form or recording action should appear. Opening another athlete's result URL must be refused.
+2. Verify own individual workout start/history still works independently, and the group record cannot be edited through the athlete workout route. An unrelated coach must not gain access merely by knowing the event/result URL.
+
+Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Native offline workout entry, group plans and workout sections are deferred; the current phone app can keep attendance/assessment work, but unresolved group workout completion must be resolved on the web.
+
+### Shared exercise cards — administrators and coaches
+
+Prerequisites: use the saved synthetic template and program from the checks above.
+
+For the shared exercise editor, also validate:
+
+1. As the template creator or administrator, choose a primary exercise, add three same-type alternatives through search and confirm the visible list. A fourth choice, duplicates, the primary movement and incompatible recording types must not be offered. Remove one alternative and add it again; changing the main exercise clears its old alternatives. Keep zero load valid and verify timed/distance units.
+2. Save/reload the template and import it into a program. Expect the same exercise cards, alternatives and notes; save/reload that program and verify its independent copy. Check reordering, pairing/group labels and per-set targets remain available.
+3. For a movement with media, expect a compact thumbnail beside its identity on large screens and a labelled preview action on a phone. Open the media dialog, inspect source credits, close with Escape and verify focus returns. Repeat from template/program previews and participant adaptation; closing media must leave the participant editor open. Missing media must not produce an invented thumbnail.
+
+### Institution overview
+
+1. Open Dashboard: expect Institution overview with the reporting-period control and Open full analytics beside the Participation and activity heading, then period metrics before administrative detail. Switch 7/28/90 days; wait for the returned dates to match. No records should show honest chart empty states, not example data.
+2. Compare completed workouts with recorded completions in the selected period. Participation counts distinct currently active athletes with a completion, over the active roster now; it is not attendance or compliance. Attendance counts athlete-event entries for started non-cancelled events, including unknown/unmarked entries.
+3. Follow coverage links to People and coaches. The Administration panel lists People & access, Athlete plans, Institution settings and Activity; check each opens. Invite people and the persistent invitation link remain reachable. Admins must not gain coach recording or injury-detail access.
+4. Interrupt a report refresh: expect an error and retained results with their original dates. Retry and confirm recovery. Inspect phone/desktop, Arabic/English and both themes.
+5. In People & access, each person's name opens their profile; each row has a Message icon and a labelled Manage button that opens the Manage tab.
+6. Open Activity: changes are grouped by day with a time, a plain description (for example Attendance recorded or Workout scheduled), the affected member where there is one and "by" the member who acted. Show earlier activity loads older entries.
+7. In Institution settings, add a sport: choose Sport or Coaching specialty first, then type the name; the button reads Add sport or Add specialty.
+
+### Prepare an assigned program
+
+Create an empty program, add real exercises and prescriptions, review and publish it. Choose Assign this program for a synthetic athlete with an assigned coach. Confirm the published version is fixed and assignment is explicit. The assigned coach should find it in Athlete plans; an unrelated coach must not acquire assignment or recording authority. Use this record for the scheduling and recording checks below.
+
+### Assigned-plan presentation
+
+Open Athlete plans, search/page the directory and select a plan. Expect a dedicated page with labelled icon actions. Choose Adapt athlete plan: its editor has Plan name and one Apply changes to athlete plan action, without library Publish/Assign controls. Edit the prescription, reload and confirm draft recovery, then apply. Expect the same assignment ID, a Personalized plan revision label and the updated future prescription; no new library program/version. Already scheduled/started workouts keep their original prescription. Leave an acknowledgment uncertain, reload and retry the exact saved request; expect one adaptation. In Programs, regular Save draft/Edit retains its program ID; only an explicit copy action creates another program. End plan and cancellation/removal actions remain red.
+
+### Individual workout scheduling
+
+For the unreleased scheduling-entry slice, use a clearly named active synthetic assignment with no scheduled or unfinished workout. As an administrator, open Schedule → Schedule an event: expect Workout from a plan selected, athlete-name search and at most 10 planning rows per page. Search a nonexistent name, then the athlete's name; clear it and check paging when enough assignments exist. Choose Schedule workout, set date/time, timezone and duration, then save. Expect the calendar and exactly one occurrence attached to that same assignment/day after reload, with no second event-name prompt. Return to creation: the newly scheduled assignment must leave the planning queue. Find it in Athlete plans to reschedule or skip. Administrators must still have no coach recording privilege.
+
+Repeat as the assigned coach; an unrelated or out-of-sport supporting coach must not gain access. Interrupt a scheduling acknowledgment after submission, reload and retry its saved command: expect one occurrence, no duplicate or lost recovery. Navigate away while acknowledgment is delayed: the write may complete, but it must not pull you back. Switch to Custom event and expect the existing named attendance flow; choose Assessor-led assessment and expect the template/people/review flow. Reload an existing custom draft or follow a makeup link: expect it restored. Athletes keep their existing authorized schedule view and must not gain the staff creation page. Check the choice cards, search, side panel and actions in English/Arabic, both themes and phone/desktop layouts. Group workout results and Android workout capture are outside this slice.
+
+Use an active synthetic athlete with a published assigned plan and primary coach. Open Athlete plans and select the assignment (or follow Manage workouts from the athlete profile). In Next workouts, choose Schedule workout, set the date/time, timezone and duration, then save. Expect one scheduled occurrence after reload. Reschedule it before recording and confirm the same workout remains selected. Skip with a reason: expect the next plan workout to become available for scheduling; the skipped occurrence remains historical. Administrators should not see Start workout or acquire delegated coach privileges.
+
+1. In People, invite a coach or athlete. After success, the large form should close and the single-use invitation link should remain visible and selectable.
+2. Open an athlete's Manage tab. Select or clear the primary coach; wait for acknowledgment, reload and confirm the selection. No second save is required.
+3. In Supporting coaches, browse coaches without choosing a sport first. Optional filtering sits under Filter coaches. Select a coach with one eligible specialty: it saves immediately. For several eligible scopes, explicitly choose Access scope; that choice saves. A coach without eligible coverage explains why it cannot be added. The chosen coach stays checked and enabled in the same list; no second selected-coach list appears. Uncheck the coach to remove its linked scopes and reload. Primary and supporting selectors share this in-list convention. A sport scope still limits access and must not be silently broadened.
+4. Create a group with athletes and coaches. On medium/large widths, the two selectors should sit side by side; on a phone they should stack. Sign in as the assigned coach to verify visibility.
+5. In Messages, Chats lists existing conversations and Contacts lists groups and people. Type in the search box without pressing Enter and confirm the current tab narrows as you type. From Contacts, open a person: the chat opens and Chats is selected. Open the same person again from Contacts (now marked Open chat) and confirm it reopens the same conversation rather than creating another. On a computer, opening a chat or contact puts the cursor in the message box so you can type immediately. In the open chat, confirm the attach buttons, privacy note and Send sit on one row and there is no empty space below the composer on a tall window. For an administrator, switch Include institution conversations on: discoverable unjoined channels appear alongside joined conversations, with Join and no preview/unread count until joining. Joined conversation previews remain available. Check tab keyboard navigation in English and Arabic and preserve the inbox when selecting a thread.
+6. Add exercises to a program. Available videos should have a video-camera indicator; still illustrations must not receive that indicator.
+
+## Coach
+
+### Dashboard, scheduling and completion controls
+
+Open the dashboard with an assigned plan awaiting scheduling and one due workout. Expect a greeting, assigned-athlete count and plan/analytics links in the header; Today’s work and Athlete health sit side by side on desktop and stack on phones. Workouts to record combines due and unfinished workouts, with Start/Resume actions; today’s group/assessment events remain separate. Needs scheduling appears below. Primary-roster follow-up uses compact expandable rows. Awaiting-schedule work must be discoverable without picking an athlete. Verify that a workout appears once, either in Workouts to record or Needs scheduling, including later pages. Schedule work for now: it must leave planning and appear in Workouts to record without reloading the page. Start it, return to the desk and confirm one Resume card. An outdated or unconfirmed backend response must show an update/restart message, not populate both lists. Existing pending commands remain retryable. Open a follow-up row and verify its action and count. A coach with supporting sport assignments but no primary roster must still see the authorized work without a misleading empty-roster prompt. Schedule it from its card; check date/time, timezone and duration alignment on desktop and stacked phone layout. Future scheduled work leaves the action list but remains in plan details. Workout cards use the workout/day name as the main heading and the program title beneath it, including when several workouts share one program. Status tags retain readable text and distinct light/dark colors. The Athlete status column exposes only the existing shared primary-roster participation status/effective date: modified, unavailable or unknown, never clinical detail or an invented readiness score. A failed status refresh must show an error rather than clearance; revoked access must remove retained status. Check Arabic/dark and narrow layouts.
+
+Open the coach recorder. Enter actual values and use each set’s check button, including keyboard activation; prescribed placeholders alone must not complete sets. Invalid/missing timed or distance results must keep the check off with an explanation. Save partial progress and reload. Finish the workout: after server acknowledgment, expect the workout review page for that same record. A failed/uncertain save must remain recoverable; navigating away during a delayed acknowledgment must not pull you back. Reopen its recorder/history to inspect attribution. Save/review a program or workout: expect one action-specific toast and no duplicate success card. Invitation/reset links and pending/error recovery remain visible because they require action.
+
+### Weekly and automatic individual preparation
+
+1. In a program create/edit page, enable Default to automatic daily preparation and publish. Assign that version: expect Automatic daily preparation preselected, a required end date within 366 days and an explicit timezone. Turn it off to assign manually. Confirm assignment, then edit/publish the program default: the existing plan policy must remain unchanged. Open an active manually scheduled Athlete plan. Under Plan scheduling, expect Manual scheduling until you explicitly choose Set up scheduling. Select Weekly appointments, bounded dates, weekdays, timezone, local time and duration; save. Expect a rule-saved toast, then a separately prepared next workout. Refresh workouts after preparation; only one unresolved workout may appear for this plan.
+2. Leave that workout unresolved through another selected weekday. Expect the original work to remain, with a waiting diagnostic rather than a replacement or cursor advancement. Another athlete plan should still operate independently.
+3. Choose Stop future scheduling. Expect the current workout to remain. Reschedule it individually or explicitly skip with a reason; stopping the policy must not mark it complete. Re-enable/edit a future rule and check history remains.
+4. Choose Automatic daily preparation and set dates/timezone. Expect a workout on an eligible current non-rest cycle day with No fixed time, not a midnight appointment. On a recovery/missing cycle day expect the recovery diagnostic. Completed/skipped or existing work on the same plan/date must not create an extra automatic workout. Work that passed while no occurrence existed is not backfilled.
+5. Check an effective cannot-train restriction, lost scheduling authority and a timed collision using synthetic accounts. Expect general diagnostics and no new work. Resolve the issue and confirm a later poll recovers; do not delete positions or edit cursors. A DST repeated/missing clock must ask for a different time rather than shift it.
+6. Open the calendar and list, then the day-only event. Expect the correct date, No fixed time and Open plan workouts. Switch English/Arabic and light/dark; check weekday labels and date/timezone controls on phone/desktop. Existing timed attendance/assessment flows should still work. Native offline workouts are not included in this slice.
+
+### Events, assessments and attachments
+
+Create a scheduled assessment or group training event with synthetic participants. For an assessment, select a template and event staff, verify timezone/start time, then open it after its start. Record attendance and applicable results with units, correct a result and inspect its history; confirm unassigned coaches remain denied. Complete only after required entries are confirmed. In Messages, send several harmless image/document attachments: inspect pending previews, send, confirm they clear and downloads work; interrupted retries must not duplicate the conversation or attachment set. These are current per-person saves, not the deferred bulk attendance flow.
+
+### Finish athlete-started work and review bodyweight results
+
+Have a synthetic athlete start a scheduled workout and leave it unfinished. As its authorized coach, open the plan's Resume workout action, or open the history review and choose Continue workout for athlete. Record an actual completed strength set with zero external load and positive reps, then Finish session. Expect the same workout ID, the athlete retained as original starter, and the coach identified in completion/history. Open Review workout, leave optional feedback empty and save: review should succeed without changing the actuals. Reopen as the athlete and check the coach completion notice. A stale athlete/device write must conflict rather than overwrite the coach's save. Unlinked coaches must remain denied, and new coach edits to completed self-logged actuals remain blocked.
+
+### Due workouts and recording
+
+1. Schedule one workout for today and another plan for tomorrow. Open your dashboard: today's workout appears under Today and overdue without selecting an athlete. Tomorrow's remains visible from its assignment details. Supporting coaches must see only their linked sports' plans.
+2. Start today's workout. Expect the existing attributed coach recorder, with the scheduled plan day. Save a partial result, return to the dashboard and use Resume workout; it must reopen the same record.
+3. Complete it, then reopen the plan: the next day is available for scheduling. A correction to completed actuals must not advance the plan again. Let a different occurrence become overdue: it remains actionable and does not silently skip.
+4. Try an athlete with participation marked unavailable: expect a general restriction, no start action and no clinical details. Ending a started assignment must preserve its paused work for staff disposition.
+
+5. Open Groups. A group assigned by the administrator should appear even when you did not create it. You can open its conversation; membership alone should not expose an Edit button.
+6. Open Messages, choose a new authorized athlete and type. No saved-draft message should move the composer. Shift+Enter inserts a newline; Enter sends once. Repeat while a send is pending and confirm it does not create duplicates. Reload an unsent draft to verify persistence still works.
+7. Open Athlete health from navigation. Coaches see limited shared participation status; they do not acquire clinical details or athlete status-editing rights.
+
+## Athlete
+
+### My day
+
+1. Open Dashboard: expect My day with workout cards first, Start/Resume visible without hover, upcoming events and compact food/coach panels. Workouts remain independently scoped per plan.
+2. Choose Log food: expect the Food diary tab directly. Record only actual intake; guidance/example meals are separate. Return to Dashboard.
+3. Choose Message beside an assigned coach: expect the existing private conversation or a single newly initiated one. Supporting coaches appear when assigned and returned by the authorized communication-contact read. Without a coach, expect a clear contact-your-administrator message.
+4. Open All my workouts and Workout history, then return. Check empty data and long coach/workout names, phone/desktop, Arabic/English and both themes; athletes must not acquire staff reporting or directory access.
+
+### Scheduled workout access
+
+The athlete training screen should have one Your workouts heading, an outlined Workout history button with an icon-only Refresh workouts button beside it, and distinct preview cards with readable exercise names. Start/Resume stays visible without hover on phones and when using a keyboard. A copied staff `/training/:assignment` link must return the athlete to their dashboard before displaying staff detail.
+
+Open Your workouts with one future scheduled plan and one actionable plan. The future card explains that recording opens at the scheduled start time and has no Start button. Start the actionable workout, leave and resume the same record; unfinished work in another plan must not block it. An unscheduled plan explains that a coach must schedule it. Device records with pending edits remain linked under Work saved on this device even if the server read fails. Reload after acknowledged completion and confirm progression changed once. Weekly automatic scheduling, group exercise results and Android workout capture are outside this validation slice.
+
+1. Open Programs. Only assigned programs should appear, without staff library/draft tags. Copy an unassigned program URL from staff and open it as the athlete: it must be rejected. Assigned program details should say Program details, not Edit program.
+2. Open `/people`, `/analytics`, `/groups` and `/plans/new` directly. These staff-only screens should return you to the dashboard before rendering. Server authorization must still reject staff requests.
+3. In Messages, select the Contacts tab and choose your assigned coach. Send a message. Ask the coach to open your contact too; both should reach the same private conversation. Unrelated athletes must not be available as contacts.
+4. Open an existing in-progress workout. Start a rest timer and switch exercises: the previous timer should clear. Try navigating away and cancel the warning; you should remain in the workout. Accept it, reopen the workout and confirm saved progress remains.
+5. Record food. A dialog should open with the reference library available first for a blank entry; manual entry remains available. Save breakfast and lunch entries: each meal should have one section heading. Correct an entry, close/reopen its draft and confirm its values remain.
+6. Open Athlete health. Complete consent prerequisites where enabled, report participation status, correct it and close it. Download my records sits after the record list.
+7. Open My feedback: each session shows Rated or Not rated yet. Open Notifications: unread updates show a dot and bold title, the count appears above the list, Mark all read clears them, and selecting an update opens its linked page. Staff roles retain their existing distinct permissions; this is not a clinical injury record.
+
+## Optional participation-status walkthrough
+
+Use a synthetic institution and athlete records. The first-run form creates the initial institution and super admin; subsequent users are added by an administrator through one-time invitation links.
+
+1. Sign in and confirm the institution and active role.
+2. As an administrator, open **Athlete health**. Needs setup lists athletes without a consent setup; All athletes shows everyone with Adult/Minor and assent tags. Choose the age group on the athlete's own row (Minor shows the guardian checkbox on that row only and keeps Save disabled until checked), then save: the athlete leaves Needs setup. For a minor, use only the guardian-authorization attestation; do not enter guardian documents or real personal data. Confirm the administrator cannot see injury status.
+3. Sign out. Sign in as that athlete, review the consent and assent prompt, and record a synthetic participation status. Then try reviewing, correcting, closing, withdrawing consent, and exporting the record. Note confusing wording, lost input, or unclear confirmation.
+4. Sign out and sign in as the athlete’s designated coach. Open **Athlete health** and verify that only the current participation status and effective date are visible. Confirm that unassigned athletes, prior history, and health details are not exposed, and that the coach cannot create or change the record.
+5. Return to the athlete account, correct or withdraw the record, then refresh the coach view. Confirm the change is reflected and withdrawn status is hidden.
+6. Note any blocked step, confusing wording, unexpected access, lost data, or unclear confirmation. Include the active role, screen, and steps that led to it.
+
+Do not try to simulate the 12-month deletion by changing clocks or editing the database. Retention scheduling and database recovery are operational checks documented in the [verification record](../verification/README.md), not part of this manual UI walkthrough.
+
+## What this walkthrough does not establish
+
+- Completing it does not establish university privacy/security approval or authorize real athlete data.
+- Invitation links are not delivered by email and do not verify an email address; share them only with their intended users.
+- It does not test production deployment, retention alerts, physical devices, or an unaided external user.
+- Seeded or manually created synthetic records are not evidence of real-world use.
+
+Record observations without names, contact details, or health information. Send the steps and issue you observed back for review; automated tests and this walkthrough do not substitute for university policy or security review.
+
+## Deferred work and boundaries
+
+| Founder observation                                                        | Disposition                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Automatic group scheduling                                                 | Subsequent beta.3 group/workout slice. Additional training remains the default; group plan progression stays deferred.                                                                                                                                  |
+| Coach workout launch is hard to find                                       | The fixed-time individual agenda now exposes Start/Resume from the dashboard and plan details. Recurrence, automatic/group preparation and native capture remain pending.                                                                               |
+| Athlete can start arbitrary days or parallel work                          | Fixed-time individual UI now starts only the bound next workout and resumes its record. Historical unlinked reconciliation and automatic preparation remain pending; independent plans do not acquire a global lock.                                    |
+| Attendance in one pass, then results for attendees, revisitable attendance | Subsequent event workflow slice. Requires atomic revision/receipt behavior and correction rules across web and offline Android. Current per-person saves remain until that replacement is complete.                                                     |
+| Exercise redundancy and food-library breadth                               | Content-curation follow-up. Preserve published exercise keys/snapshots. Food already uses a USDA-derived starter list; no live USDA API or broad coverage is claimed. Review provenance, aliases, nutrition units and media rights before expanding it. |
+| Supporting-coach visual polish by Sami/Claude                              | Current picker/autosave corrections are implemented. Further visual refinement can use the approved design system; the required access scope cannot become merely a visual filter.                                                                      |
+
+## Reporting
+
+Include role, page URL, action, expected/actual result and the failed request's response text, without passwords or tokens. Stop if unrelated private data is exposed or acknowledged changes disappear after reload. Report existing-data failures separately from synthetic-record failures.

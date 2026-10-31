@@ -1,50 +1,48 @@
-import type { ApiErrorBody } from "@rafik/shared/contracts";
-import { feedback, feedbackCommand } from "./organization-feedback.ts";
-import { tasks, taskCommand, followUp } from "./organization-tasks.ts";
-import { injuries, injuryCommand } from "./organization-injuries.ts";
-import { startInjuryRetention } from "./organization-injury-retention.ts";
+import { workoutAgenda } from "./workout-agenda.ts";
 import {
-  putOrganizationAsset,
-  getOrganizationAsset,
-  organizationAssets,
+  workoutRules,
+  workoutRuleCommand,
+  startWorkoutScheduler,
+} from "./workout-scheduler.ts";
+import { institutionRoute, responseTransport } from "./institution-routing.ts";
+import type { ApiErrorBody, FieldCapabilities } from "@rafik/shared/contracts";
+import { feedback, feedbackCommand } from "./feedback.ts";
+import { followUp } from "./follow-up.ts";
+import { injuries, injuryCommand } from "./injuries.ts";
+import { startInjuryRetention } from "./injury-retention.ts";
+import {
+  putInstitutionAsset,
+  getInstitutionAsset,
+  institutionAssets,
   assetCommand,
-} from "./organization-assets.ts";
-import { nutrition, nutritionCommand } from "./organization-nutrition.ts";
+} from "./assets.ts";
+import { nutrition, nutritionCommand } from "./nutrition.ts";
 import {
-  organizationPeople,
-  organizationMemberProfile,
-  organizationRecipients,
-  independentRecipients,
+  institutionPeople,
+  institutionMemberProfile,
+  institutionRecipients,
 } from "./people.ts";
-import {
-  organizationSports,
-  organizationSportsCommand,
-} from "./organization-sports.ts";
+import { institutionSports, institutionSportsCommand } from "./sports.ts";
 import { platformRead, platformCommand } from "./platform.ts";
 import {
   notificationPreferences,
   notificationInbox,
   readNotification,
 } from "./notifications.ts";
+import { communication, communicationCommand } from "./communication.ts";
+import { serviceCatalog, serviceCatalogCommand } from "./service-catalog.ts";
 import {
-  communication,
-  communicationCommand,
-} from "./organization-communication.ts";
-import {
-  serviceCatalog,
-  serviceCatalogCommand,
-} from "./organization-catalog.ts";
+  workoutTemplates,
+  workoutTemplateCommand,
+} from "./workout-templates.ts";
+import { groupWorkouts, groupWorkoutCommand } from "./group-workouts.ts";
 import {
   calendar,
   scheduledEvents,
   calendarPreview,
   calendarCommand,
-} from "./organization-calendar.ts";
-import {
-  organizationAnalytics,
-  independentAnalytics,
-  assessmentHistory,
-} from "./analytics.ts";
+} from "./calendar.ts";
+import { institutionAnalytics, assessmentHistory } from "./analytics.ts";
 import {
   createServer,
   type IncomingMessage,
@@ -55,36 +53,29 @@ import { athletePlans } from "./athlete-plans.ts";
 import { nutritionPlanIndex } from "./nutrition-plan-index.ts";
 import { db, ApiError, requireActor } from "./db.ts";
 import { identify, authRoute, mobileAuthRoute } from "./auth.ts";
-import {
-  command,
-  query,
-  loadContracts,
-  messages,
-  upcoming,
-} from "./commands.ts";
-import { fileOperation } from "./files.ts";
+import { accountProfile, accountExport, accountDeletion } from "./account.ts";
+import { supportCases, supportCommand } from "./support.ts";
 import {
   contexts,
-  createWorkspace,
-  workspaceView,
-  workspaceCommand,
+  institutionView,
+  institutionCommand,
   invitation,
-  requirePractice,
-} from "./workspaces.ts";
+} from "./institution.ts";
 import {
   programs,
   programCommand,
   catalog,
   delivery,
   deliveryCommand,
-  organizationSession,
-  organizationSessionHistory,
+  workoutSchedulingCommand,
+  institutionSession,
+  institutionSessionHistory,
   sessionCommand,
-  previousOrganizationPerformance,
+  previousInstitutionPerformance,
   role,
 } from "./programming.ts";
-import { scoped } from "./workspaces.ts";
-import { organizationAccountData } from "./account-data.ts";
+import { scoped } from "./institution.ts";
+import { institutionAccountData } from "./account-data.ts";
 import { getProgramMedia, putProgramMedia } from "./program-media.ts";
 import {
   readBranding,
@@ -122,7 +113,9 @@ function send(res: ServerResponse, status: number, value: unknown) {
     "X-Content-Type-Options": "nosniff",
   });
   res.end(
-    JSON.stringify(value, (_, v) => (typeof v === "bigint" ? Number(v) : v)),
+    JSON.stringify(responseTransport(res, value), (_, v) =>
+      typeof v === "bigint" ? Number(v) : v,
+    ),
   );
 }
 async function body(req: IncomingMessage, limit: number) {
@@ -135,7 +128,6 @@ async function body(req: IncomingMessage, limit: number) {
   }
   return Buffer.concat(chunks);
 }
-await loadContracts();
 const server = createServer(async (req, res) => {
   try {
     const origin = req.headers.origin;
@@ -161,7 +153,7 @@ const server = createServer(async (req, res) => {
     )
       throw new ApiError(403, "client_header_required");
     const url = new URL(req.url || "/", "http://127.0.0.1"),
-      path = url.pathname.replace(/^\/api/, "");
+      path = await institutionRoute(url, res);
     if (await serveApiDocs(req, res)) return;
     if (path.startsWith("/v1/mobile/auth/")) {
       const route = path.slice("/v1/mobile/auth/".length),
@@ -282,8 +274,25 @@ const server = createServer(async (req, res) => {
       return;
     }
     const actor = await identify(req);
+    if (path === "/v1/mobile/capabilities") {
+      requireActor(actor);
+      if (req.method !== "GET") throw new ApiError(405, "method_not_allowed");
+      // Describe native contracts, not web functionality or account permissions.
+      send(res, 200, {
+        protocol: 1,
+        features: {
+          attendance: true,
+          assessments: true,
+          event_completion: true,
+          individual_workout_recording: true,
+          group_workout_recording: false,
+          day_only_calendar: false,
+        },
+      } satisfies FieldCapabilities);
+      return;
+    }
     const scheduledMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/scheduled-events$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/scheduled-events$/,
     );
     if (scheduledMatch && req.method === "GET") {
       send(
@@ -298,7 +307,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     const nutritionIndexMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/nutrition-plans$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/nutrition-plans$/,
     );
     if (nutritionIndexMatch && req.method === "GET") {
       send(
@@ -313,7 +322,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     const athletePlansMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/athlete-plans$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/athlete-plans$/,
     );
     if (athletePlansMatch && req.method === "GET") {
       send(
@@ -328,12 +337,16 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (req.method === "GET" && path === "/v1/instance/branding/can-manage") {
-      const workspaceId = url.searchParams.get("workspace") || "";
-      send(res, 200, await canManageBranding(requireActor(actor), workspaceId));
+      const institutionId = url.searchParams.get("institution") || "";
+      send(
+        res,
+        200,
+        await canManageBranding(requireActor(actor), institutionId),
+      );
       return;
     }
     const brandingMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/branding$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/branding$/,
     );
     if (brandingMatch && req.method === "POST") {
       send(
@@ -394,13 +407,13 @@ const server = createServer(async (req, res) => {
     }
 
     const recipientMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]+)\/recipients$/,
+      /^\/v1\/institutions\/([a-f0-9-]+)\/recipients$/,
     );
     if (recipientMatch && req.method === "GET") {
       send(
         res,
         200,
-        await organizationRecipients(
+        await institutionRecipients(
           requireActor(actor),
           recipientMatch[1],
           url.searchParams,
@@ -408,22 +421,14 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
-    if (path === "/v1/coach/recipients" && req.method === "GET") {
-      send(
-        res,
-        200,
-        await independentRecipients(requireActor(actor), url.searchParams),
-      );
-      return;
-    }
     const memberProfileMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]+)\/people\/([a-f0-9-]+)$/,
+      /^\/v1\/institutions\/([a-f0-9-]+)\/people\/([a-f0-9-]+)$/,
     );
     if (memberProfileMatch && req.method === "GET") {
       send(
         res,
         200,
-        await organizationMemberProfile(
+        await institutionMemberProfile(
           requireActor(actor),
           memberProfileMatch[1],
           memberProfileMatch[2],
@@ -432,12 +437,14 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
-    const peopleMatch = path.match(/^\/v1\/workspaces\/([a-f0-9-]+)\/people$/);
+    const peopleMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]+)\/people$/,
+    );
     if (peopleMatch && req.method === "GET") {
       send(
         res,
         200,
-        await organizationPeople(
+        await institutionPeople(
           requireActor(actor),
           peopleMatch[1],
           url.searchParams,
@@ -446,7 +453,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     const conversationMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]+)\/communication$/,
+      /^\/v1\/institutions\/([a-f0-9-]+)\/communication$/,
     );
     if (conversationMatch && ["GET", "POST"].includes(req.method || "")) {
       const who = requireActor(actor);
@@ -464,32 +471,14 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    if (path.startsWith("/v1/conversations/") && req.method === "GET") {
-      send(
-        res,
-        200,
-        await messages(actor, path.slice(18), url.searchParams.get("before")),
-      );
-      return;
-    }
-    if (path === "/v1/appointments/upcoming" && req.method === "GET") {
-      send(
-        res,
-        200,
-        await upcoming(actor, url.searchParams.get("coach") === "true"),
-      );
-      return;
-    }
-    const assetMatch = path.match(
-      /^\/v1\/organization-assets\/([a-f0-9-]{36})$/,
-    );
+    const assetMatch = path.match(/^\/v1\/assets\/([a-f0-9-]{36})$/);
     if (assetMatch && req.method === "PUT") {
       send(
         res,
         200,
-        await putOrganizationAsset(
+        await putInstitutionAsset(
           requireActor(actor),
-          url.searchParams.get("workspace") || "",
+          url.searchParams.get("institution") || "",
           assetMatch[1],
           url.searchParams,
           await body(req, 26214400),
@@ -499,7 +488,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (assetMatch && req.method === "GET") {
-      const file = await getOrganizationAsset(
+      const file = await getInstitutionAsset(
         requireActor(actor),
         assetMatch[1],
       );
@@ -528,12 +517,14 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
-    const assetList = path.match(/^\/v1\/workspaces\/([a-f0-9-]{36})\/assets$/);
+    const assetList = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/assets$/,
+    );
     if (assetList && req.method === "GET") {
       send(
         res,
         200,
-        await organizationAssets(
+        await institutionAssets(
           requireActor(actor),
           assetList[1],
           url.searchParams,
@@ -549,7 +540,7 @@ const server = createServer(async (req, res) => {
           200,
           await putProgramMedia(
             requireActor(actor),
-            url.searchParams.get("workspace") || "",
+            url.searchParams.get("institution") || "",
             mediaMatch[1],
             await body(req, 2097152),
             String(req.headers["content-type"] || ""),
@@ -569,31 +560,8 @@ const server = createServer(async (req, res) => {
         return;
       }
     }
-    if (path.startsWith("/v1/files/")) {
-      const result = await fileOperation(
-        requireActor(actor),
-        req.method || "",
-        decodeURIComponent(path.slice(10)),
-        await body(req, 10485760),
-        String(req.headers["content-type"] || ""),
-      );
-      if ("bytes" in result) {
-        res.writeHead(200, {
-          "Content-Type": result.type,
-          "Cache-Control": "no-store",
-          "X-Content-Type-Options": "nosniff",
-          "Content-Disposition": "attachment",
-        });
-        res.end(result.bytes);
-      } else send(res, 200, result);
-      return;
-    }
-    if (path.startsWith("/v1/queries/") && req.method === "GET") {
-      send(res, 200, await query(actor, path.slice(12), url.searchParams));
-      return;
-    }
     let input: Record<string, unknown> = {};
-    if (req.method === "POST") {
+    if (req.method === "POST" || req.method === "PUT") {
       try {
         input = JSON.parse((await body(req, 1048576)).toString() || "{}");
       } catch (e) {
@@ -603,42 +571,65 @@ const server = createServer(async (req, res) => {
       if (!input || Array.isArray(input) || typeof input !== "object")
         throw new ApiError(400, "invalid_request");
     }
-    if (path === "/v1/account/organizations" && req.method === "GET") {
-      send(res, 200, await organizationAccountData(requireActor(actor)));
+    if (path === "/v1/account/profile" && req.method === "POST") {
+      send(res, 200, await accountProfile(requireActor(actor), input));
+      return;
+    }
+    if (path === "/v1/account/profile" && req.method === "PUT") {
+      send(res, 200, await accountProfile(requireActor(actor), input, true));
+      return;
+    }
+    if (path === "/v1/account/export" && req.method === "GET") {
+      send(res, 200, await accountExport(requireActor(actor)));
+      return;
+    }
+    if (
+      path === "/v1/account/deletion" &&
+      ["GET", "POST"].includes(req.method || "")
+    ) {
+      send(
+        res,
+        200,
+        await accountDeletion(requireActor(actor), input, req.method === "GET"),
+      );
+      return;
+    }
+    if (path === "/v1/support" && ["GET", "POST"].includes(req.method || "")) {
+      const who = requireActor(actor);
+      send(
+        res,
+        200,
+        req.method === "GET"
+          ? await supportCases(who, url.searchParams)
+          : await supportCommand(who, input),
+      );
+      return;
+    }
+    if (path === "/v1/account/institution" && req.method === "GET") {
+      send(res, 200, await institutionAccountData(requireActor(actor)));
       return;
     }
     const previousMatch = path.match(
-      /^\/v1\/organization-sessions\/([a-f0-9-]{36})\/previous$/,
+      /^\/v1\/workouts\/([a-f0-9-]{36})\/previous$/,
     );
     if (previousMatch && req.method === "GET") {
       send(
         res,
         200,
-        await previousOrganizationPerformance(
+        await previousInstitutionPerformance(
           requireActor(actor),
           previousMatch[1],
         ),
       );
       return;
     }
-    if (path === "/v1/contexts" && req.method === "GET") {
+    if (path === "/v1/institution/context" && req.method === "GET") {
       send(res, 200, await contexts(requireActor(actor)));
       return;
     }
-    if (path === "/v1/workspaces" && req.method === "POST") {
-      send(res, 200, await createWorkspace(requireActor(actor), input));
-      return;
-    }
-    if (path === "/v1/coach/analytics" && req.method === "GET") {
-      send(
-        res,
-        200,
-        await independentAnalytics(requireActor(actor), url.searchParams),
-      );
-      return;
-    }
+
     const injuryMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/injuries$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/injuries$/,
     );
     if (injuryMatch) {
       const who = requireActor(actor),
@@ -651,20 +642,20 @@ const server = createServer(async (req, res) => {
       return;
     }
     const sportsMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/sports$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/sports$/,
     );
     if (sportsMatch) {
       const who = requireActor(actor),
         id = sportsMatch[1];
       if (req.method === "GET")
-        send(res, 200, await organizationSports(who, id, url.searchParams));
+        send(res, 200, await institutionSports(who, id, url.searchParams));
       else if (req.method === "POST")
-        send(res, 200, await organizationSportsCommand(who, id, input));
+        send(res, 200, await institutionSportsCommand(who, id, input));
       else throw new ApiError(405, "method_not_allowed");
       return;
     }
     const feedbackMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/feedback$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/feedback$/,
     );
     if (feedbackMatch) {
       const who = requireActor(actor),
@@ -676,27 +667,20 @@ const server = createServer(async (req, res) => {
       else throw new ApiError(405, "method_not_allowed");
       return;
     }
-    const taskMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/(tasks|follow-up)$/,
+    const followUpMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/follow-up$/,
     );
-    if (taskMatch) {
-      const who = requireActor(actor),
-        id = taskMatch[1];
-      if (req.method === "GET")
-        send(
-          res,
-          200,
-          await (taskMatch[2] === "tasks"
-            ? tasks(who, id, url.searchParams)
-            : followUp(who, id, url.searchParams)),
-        );
-      else if (req.method === "POST" && taskMatch[2] === "tasks")
-        send(res, 200, await taskCommand(who, id, input));
-      else throw new ApiError(405, "method_not_allowed");
+    if (followUpMatch) {
+      if (req.method !== "GET") throw new ApiError(405, "method_not_allowed");
+      send(
+        res,
+        200,
+        await followUp(requireActor(actor), followUpMatch[1], url.searchParams),
+      );
       return;
     }
     const nutritionMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/nutrition$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/nutrition$/,
     );
     if (nutritionMatch) {
       const who = requireActor(actor),
@@ -708,8 +692,51 @@ const server = createServer(async (req, res) => {
       else throw new ApiError(405, "method_not_allowed");
       return;
     }
+    const groupWorkoutMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/group-workouts$/,
+    );
+    if (groupWorkoutMatch) {
+      const who = requireActor(actor),
+        institution = groupWorkoutMatch[1];
+      if (req.method === "GET")
+        send(res, 200, await groupWorkouts(who, institution, url.searchParams));
+      else if (req.method === "POST")
+        send(res, 200, await groupWorkoutCommand(who, institution, input));
+      else throw new ApiError(405, "method_not_allowed");
+      return;
+    }
+    const templateMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/workout-templates$/,
+    );
+    if (templateMatch) {
+      const who = requireActor(actor),
+        institution = templateMatch[1];
+      if (req.method === "GET")
+        send(
+          res,
+          200,
+          await workoutTemplates(who, institution, url.searchParams),
+        );
+      else if (req.method === "POST")
+        send(res, 200, await workoutTemplateCommand(who, institution, input));
+      else throw new ApiError(405, "method_not_allowed");
+      return;
+    }
+    const ruleMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/workout-rules$/,
+    );
+    if (ruleMatch) {
+      const who = requireActor(actor),
+        id = ruleMatch[1];
+      if (req.method === "GET")
+        send(res, 200, await workoutRules(who, id, url.searchParams));
+      else if (req.method === "POST")
+        send(res, 200, await workoutRuleCommand(who, id, input));
+      else throw new ApiError(405, "method_not_allowed");
+      return;
+    }
     const serviceMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/(services|calendar|calendar-preview|analytics|assessment-history)$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/(services|calendar|calendar-preview|analytics|assessment-history)$/,
     );
     if (serviceMatch) {
       const who = requireActor(actor),
@@ -722,7 +749,7 @@ const server = createServer(async (req, res) => {
             : domain === "calendar"
               ? await calendar(who, id, url.searchParams)
               : domain === "analytics"
-                ? await organizationAnalytics(who, id, url.searchParams)
+                ? await institutionAnalytics(who, id, url.searchParams)
                 : domain === "assessment-history"
                   ? await assessmentHistory(who, id, url.searchParams)
                   : null;
@@ -748,7 +775,7 @@ const server = createServer(async (req, res) => {
       throw new ApiError(405, "method_not_allowed");
     }
     const programMatch = path.match(
-      /^\/v1\/workspaces\/([a-f0-9-]{36})\/(programs|catalog|delivery|sessions)$/,
+      /^\/v1\/institutions\/([a-f0-9-]{36})\/(programs|catalog|delivery|sessions|workout-scheduling)$/,
     );
     if (programMatch) {
       const who = requireActor(actor),
@@ -772,7 +799,9 @@ const server = createServer(async (req, res) => {
                     [role(url.searchParams.get("view"))],
                     (tx, self) => catalog(tx, id, self),
                   )
-                : null;
+                : domain === "workout-scheduling"
+                  ? await workoutAgenda(who, id, url.searchParams)
+                  : null;
         if (value === null) throw new ApiError(405, "method_not_allowed");
         send(res, 200, value);
         return;
@@ -785,19 +814,21 @@ const server = createServer(async (req, res) => {
             ? programCommand(who, id, input)
             : domain === "delivery"
               ? deliveryCommand(who, id, input)
-              : sessionCommand(who, id, input)),
+              : domain === "workout-scheduling"
+                ? workoutSchedulingCommand(who, id, input)
+                : sessionCommand(who, id, input)),
         );
         return;
       }
     }
     const sessionHistory = path.match(
-      /^\/v1\/organization-sessions\/([a-f0-9-]{36})\/history$/,
+      /^\/v1\/workouts\/([a-f0-9-]{36})\/history$/,
     );
     if (sessionHistory && req.method === "GET") {
       send(
         res,
         200,
-        await organizationSessionHistory(
+        await institutionSessionHistory(
           requireActor(actor),
           sessionHistory[1],
           role(url.searchParams.get("view") || "trainee"),
@@ -805,14 +836,12 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
-    const orgSession = path.match(
-      /^\/v1\/organization-sessions\/([a-f0-9-]{36})$/,
-    );
+    const orgSession = path.match(/^\/v1\/workouts\/([a-f0-9-]{36})$/);
     if (orgSession && req.method === "GET") {
       send(
         res,
         200,
-        await organizationSession(
+        await institutionSession(
           requireActor(actor),
           orgSession[1],
           role(url.searchParams.get("view") || "trainee"),
@@ -820,15 +849,17 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
-    const workspaceMatch = path.match(/^\/v1\/workspaces\/([a-f0-9-]{36})$/);
-    if (workspaceMatch) {
+    const institutionMatch = path.match(
+      /^\/v1\/institutions\/([a-f0-9-]{36})$/,
+    );
+    if (institutionMatch) {
       if (req.method === "GET") {
         send(
           res,
           200,
-          await workspaceView(
+          await institutionView(
             requireActor(actor),
-            workspaceMatch[1],
+            institutionMatch[1],
             url.searchParams.get("view") || "admin",
             url.searchParams,
           ),
@@ -839,18 +870,26 @@ const server = createServer(async (req, res) => {
         send(
           res,
           200,
-          await workspaceCommand(requireActor(actor), workspaceMatch[1], input),
+          await institutionCommand(
+            requireActor(actor),
+            institutionMatch[1],
+            input,
+          ),
         );
         return;
       }
     }
-    if (path.startsWith("/v1/organization-invitations/")) {
+    if (path.startsWith("/v1/invitations/")) {
       if (!["GET", "POST"].includes(req.method || ""))
         throw new ApiError(405, "method_not_allowed");
       send(
         res,
         200,
-        await invitation(path.slice(29), actor, req.method === "POST"),
+        await invitation(
+          path.slice("/v1/invitations/".length),
+          actor,
+          req.method === "POST",
+        ),
       );
       return;
     }
@@ -869,23 +908,6 @@ const server = createServer(async (req, res) => {
         200,
         await assetCommand(requireActor(actor), assetList[1], input),
       );
-      return;
-    }
-    if (path.startsWith("/v1/commands/") && req.method === "POST") {
-      if (
-        [
-          "save_plan",
-          "deliver_plan",
-          "publish_plan",
-          "save_exercise",
-          "create_invitation",
-          "create_team",
-          "save_coaching_form",
-          "publish_availability",
-        ].includes(path.slice(13))
-      )
-        await requirePractice(actor);
-      send(res, 200, await command(actor, path.slice(13), input));
       return;
     }
     throw new ApiError(404, "not_found");
@@ -943,7 +965,15 @@ server.listen(
     ),
 );
 startInjuryRetention();
+const stopWorkoutScheduler =
+  process.env.RAFIK_DISABLE_WORKOUT_SCHEDULER === "true"
+    ? () => {}
+    : startWorkoutScheduler();
 for (const signal of ["SIGINT", "SIGTERM"] as const)
-  process.on(signal, () =>
-    server.close(() => void db.$disconnect().then(() => process.exit(0))),
+  process.on(
+    signal,
+    () => (
+      stopWorkoutScheduler(),
+      server.close(() => void db.$disconnect().then(() => process.exit(0)))
+    ),
   );

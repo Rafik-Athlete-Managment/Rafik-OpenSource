@@ -11,13 +11,13 @@ import {
   ComboboxRoot,
   ComboboxTrigger,
 } from 'reka-ui'
-import { PhCaretDown, PhCheck } from '@phosphor-icons/vue'
+import { PhCaretDown, PhCheck, PhVideoCamera } from '@phosphor-icons/vue'
+import { videoForExercise } from '../lib/exercise-media'
 import type { Exercise, ExerciseKind } from '../lib/domain'
 import {
   categoryLabel,
   equipmentCategories,
   equipmentLabel,
-  exerciseArea,
   exerciseAreas,
 } from '../lib/exercise-catalog'
 import { language, locale } from '../lib/i18n'
@@ -341,6 +341,12 @@ function select(value: unknown) {
                 >
                   <span class="exercise-picker-copy">
                     <strong dir="auto">{{ exerciseName(exercise) }}</strong>
+                    <span
+                      v-if="videoForExercise(exercise) || exercise.media_type?.startsWith('video/')"
+                      :title="language('Video available', 'يتوفر فيديو')"
+                      :aria-label="language('Video available', 'يتوفر فيديو')"
+                      ><PhVideoCamera :size="18" aria-hidden="true"
+                    /></span>
                     <small>
                       {{ equipmentName(exercise) || language('No equipment', 'بدون معدات') }} ·
                       {{ kindName(exercise.kind) }}
@@ -373,15 +379,17 @@ function select(value: unknown) {
   align-items: center;
   min-width: 0;
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--field);
+  box-shadow: var(--shadow-xs);
 }
 .exercise-picker-anchor:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 .exercise-picker-anchor input {
+  box-shadow: none;
   width: 100%;
   min-width: 0;
   margin: 0;
@@ -391,7 +399,9 @@ function select(value: unknown) {
   font-weight: 600;
   text-overflow: ellipsis;
 }
-.exercise-picker-anchor input:focus {
+.exercise-picker-anchor input:focus,
+.exercise-picker-anchor input:focus-visible {
+  box-shadow: none;
   outline: 0;
 }
 .exercise-picker-anchor button {
@@ -404,7 +414,7 @@ function select(value: unknown) {
   color: var(--muted);
 }
 .exercise-picker-options {
-  z-index: 65;
+  z-index: 120;
   width: var(--reka-combobox-trigger-width);
   min-width: min(340px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
@@ -413,7 +423,7 @@ function select(value: unknown) {
   border-radius: 12px;
   background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 14px 36px #0002;
+  box-shadow: var(--shadow);
 }
 .exercise-picker-scroll {
   width: 100%;

@@ -19,9 +19,9 @@ export type {
   FieldResult,
   FieldCommand,
 }
-export type Owner = { instance: string; user: string; workspace: string }
+export type Owner = { instance: string; user: string; institution: string }
 export const ownerKey = (owner: Owner) =>
-  JSON.stringify([owner.instance, owner.user, owner.workspace])
+  JSON.stringify([owner.instance, owner.user, owner.institution])
 export type CommandState =
   'queued' | 'sending' | 'uncertain' | 'acknowledged' | 'needs_attention' | 'blocked'
 export type Command = {
@@ -66,8 +66,25 @@ export function failureText(error: unknown): string {
       invalid_mobile_session:
         'Sign in again to the same account and institution to send saved work.',
       event_not_started: 'The event has not started or was cancelled. Review the server event.',
+      group_workout_results_required:
+        'Complete or explicitly skip participant workouts in the web app before finishing this group event.',
       results_required: 'Assessment results are required. Complete this correction in the web app.',
       attendance_required: 'Confirm attendance before saving scores or completing this event.',
+      participation_unavailable:
+        'Training is currently restricted. Keep the recording and ask authorized staff to review it.',
+      workout_not_actionable:
+        'This workout is no longer actionable. Keep saved work and review its current status online.',
+      workout_not_started_yet:
+        'This workout has not reached its scheduled start. Keep saved work and check the booking time.',
+      sequence_conflict:
+        'The plan sequence changed. Keep this recording and review the current workout online.',
+      assignment_unavailable:
+        'This athlete plan is no longer available for recording. Keep saved work for review.',
+      previous_workout_unresolved:
+        'Finish or explicitly resolve the previous workout in this plan first.',
+      invalid_session: 'Check the workout results and completion checks before sending again.',
+      native_workout_upgrade_required:
+        'Individual workout capture needs a matching app and server update. Saved work is retained.',
       invalid_results: 'Check every assessment value and its limits before correcting this record.',
     }
     return (

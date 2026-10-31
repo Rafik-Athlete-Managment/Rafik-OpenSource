@@ -1,3 +1,4 @@
+import { testDatabase } from "./test-target.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -22,7 +23,7 @@ test("platform grant, audited operational lifecycle, exact replay and identity r
         "-U",
         "rafik_migrate",
         "-d",
-        "rafik",
+        testDatabase,
         "-v",
         "ON_ERROR_STOP=1",
       ],
@@ -54,10 +55,7 @@ test("platform grant, audited operational lifecycle, exact replay and identity r
       (await call(operator, "/v1/platform", close)).data,
       r.data,
     );
-    assert.equal(
-      (await call(admin, `/v1/workspaces/${id}?view=admin`)).status,
-      403,
-    );
+    assert.equal((await call(admin, `/v1/institution?view=admin`)).status, 403);
     assert.equal(
       (await call(operator, "/v1/platform", { ...close, value: false })).status,
       409,
@@ -73,10 +71,7 @@ test("platform grant, audited operational lifecycle, exact replay and identity r
       }),
     );
     assert.equal(r.status, 200, JSON.stringify(r));
-    assert.equal(
-      (await call(admin, `/v1/workspaces/${id}?view=admin`)).status,
-      200,
-    );
+    assert.equal((await call(admin, `/v1/institution?view=admin`)).status, 200);
     const suspend = operation("identity_state", {
       id: person.id,
       revision: 0,
@@ -84,7 +79,7 @@ test("platform grant, audited operational lifecycle, exact replay and identity r
       reason: "Local suspension test only",
     });
     assert.equal((await call(operator, "/v1/platform", suspend)).status, 200);
-    assert.equal((await call(person, "/v1/contexts")).status, 401);
+    assert.equal((await call(person, "/v1/institution/context")).status, 401);
     assert.equal(
       (
         await call(
@@ -116,15 +111,17 @@ test("platform grant, audited operational lifecycle, exact replay and identity r
       200,
     );
     assert.equal(
-      (await call(person, "/v1/contexts")).status,
+      (await call(person, "/v1/institution/context")).status,
       401,
       "old cookie stays revoked",
     );
-    const support = await call(admin, "/v1/commands/create_support_case", {
-      p_id: randomUUID(),
-      p_team: null,
-      p_subject: "Local operator case",
-      p_detail: "Please inspect this local test case.",
+    const support = await call(admin, "/v1/support", {
+      action: "create_support_case",
+      args: {
+        p_id: randomUUID(),
+        p_subject: "Local operator case",
+        p_detail: "Please inspect this local test case.",
+      },
     });
     assert.equal(support.status, 200, JSON.stringify(support));
     r = await call(operator, "/v1/platform?section=support");

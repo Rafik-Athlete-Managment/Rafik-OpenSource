@@ -1,3 +1,4 @@
+import { apiOrigin } from "./test-target.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
@@ -39,7 +40,7 @@ test("curated nutrition preserves source energy, macro units, portions and prove
       .kcal,
     884,
   );
-  const response = await fetch("http://127.0.0.1:55331/v1/catalog/foods");
+  const response = await fetch(apiOrigin + "/v1/catalog/foods");
   assert.equal(response.status, 200);
   assert.equal((await response.json()).version, data.version);
 });
@@ -228,9 +229,7 @@ test("all reviewed illustrations have immutable URLs, safe vectors, hashes and r
   assert.ok(total < 1000000);
   await assert.rejects(exerciseMediaAsset("../private", "1"));
   await assert.rejects(exerciseMediaAsset(manifest.items[0].id, "4"));
-  const response = await fetch(
-    "http://127.0.0.1:55331" + manifest.items[0].frames[0].path,
-  );
+  const response = await fetch(apiOrigin + manifest.items[0].frames[0].path);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("content-type"), "image/svg+xml");
   assert.match(response.headers.get("cache-control")!, /immutable/);

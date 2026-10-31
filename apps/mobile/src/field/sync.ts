@@ -41,10 +41,7 @@ export class AttendanceSync {
           await this.store.setState(this.owner, command, command.state, command.error)
           return
         }
-        const result = await this.send(
-          `/workspaces/${this.owner.workspace}/calendar`,
-          JSON.stringify(command.payload),
-        )
+        const result = await this.send(`/institution/calendar`, JSON.stringify(command.payload))
         // Persist an in-flight acknowledgment for its original owner even if the screen closes.
         const completed = await this.store.acknowledge(this.owner, command, result)
         changed(completed)

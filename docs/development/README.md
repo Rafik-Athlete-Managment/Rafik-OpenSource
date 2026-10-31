@@ -1,5 +1,7 @@
 # Development
 
+Root installation applies guarded Expo tooling security patches automatically. If you use `npm ci --ignore-scripts`, run `npm run security:patch`, then `npm run security:check` before starting Expo. Unexpected dependency versions/content require review, not bypassing the guard. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md).
+
 The Android workspace lives at `apps/mobile/`. Install dependencies once from the repository root, then use `npm run mobile:start` to start Metro or `npm run mobile:android` to build/run the native Android development client. The app uses SQLCipher and therefore needs a native build rather than Expo Go. Follow the [Android attendance guide](android.md) for setup, capture/retry and recovery limits. Its Swagger-compatible OpenAPI subset is linked from the [API reference](../reference/api.md).
 
 This page is the local development entry point. It covers setup, common changes and troubleshooting. For deployment, secrets, backups and recovery, use [operations](../operations/README.md). For check commands and their limits, use [testing](../testing/README.md).
@@ -43,6 +45,8 @@ To test the first-run screen and invitation journey without touching local previ
 
 ## Common workflows
 
+After setup, follow the [full instance walkthrough](../testing/instance-validation.md) to validate administrator, coach and athlete accounts, workflows, permissions and recovery. This is the single maintained manual checklist; use its copy from your installed release tag or source commit.
+
 | Change                             | Workflow                                                                                                                                                                                |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frontend or API behavior           | Keep the vertical workflow in its owning feature/module; derive visible actions from server capabilities and enforce authority in the API.                                              |
@@ -54,6 +58,10 @@ To test the first-run screen and invitation journey without touching local previ
 The [maintainer guide](maintainer-guide.md) has the repository map and change recipes. The [ledger](ledger.md) is a short current-status record; old phase history and superseded reviews are in the archive.
 
 ## Troubleshooting
+
+### API port already in use
+
+`EADDRINUSE` on `127.0.0.1:55331` means another process already owns the API port. Check `http://127.0.0.1:55331/health`: a healthy Rafik response includes `ok: true` and `runtime: prisma-postgresql`. That response proves the listener is alive, not that it loaded the current source. Reuse it only when it matches the running checkout; new routes returning 404 after a pull are a reason to restart the old process. To load backend code changes, stop its original terminal with Ctrl+C and run `npm run start:api` once. Do not reset the database or kill every Node process. On Windows, `netstat -ano | findstr :55331` identifies the listener PID; on Unix, use `lsof -nP -iTCP:55331 -sTCP:LISTEN`. If it belongs to another application, resolve that specific conflict or configure matching API/frontend URLs deliberately.
 
 - If the API cannot reach PostgreSQL, confirm the local Compose database is healthy with `docker compose ps`; then use `npm run backend:start` to apply pending migrations and regenerate Prisma.
 - If an API contract/type change fails frontend checks, regenerate the shared database types from the Prisma schema and update the shared API contract before retrying the relevant workspace checks.

@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { testDatabase } from './local-config'
 import { layoutIssues } from './layout-contract'
 test('optional session and workplace feedback recover and appear as separate source-labelled charts', async ({
@@ -12,16 +12,16 @@ test('optional session and workplace feedback recover and appear as separate sou
   browser,
 }, info) => {
   test.setTimeout(180000)
-  const f = await teamFixture(),
-    workspace = randomUUID(),
+  const f = await institutionFixture(),
+    institution = randomUUID(),
     trainerContext = await browser.newContext(),
     trainer = await trainerContext.newPage(),
     clientContext = await browser.newContext(),
     client = await clientContext.newPage()
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Madar experience',
     })
     for (const [person, roles] of [
@@ -29,7 +29,7 @@ test('optional session and workplace feedback recover and appear as separate sou
       [f.client, ['trainee']],
     ] as const) {
       const token = randomBytes(32).toString('hex')
-      await f.call(f.owner, `/v1/workspaces/${workspace}`, {
+      await f.call(f.owner, `/v1/institution`, {
         operation: randomUUID(),
         action: 'invite',
         id: randomUUID(),
@@ -37,22 +37,22 @@ test('optional session and workplace feedback recover and appear as separate sou
         roles,
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
-    const people = await f.call(f.owner, `/v1/workspaces/${workspace}?view=admin`),
+    const people = await f.call(f.owner, `/v1/institution?view=admin`),
       member = people.members.find((m: any) => m.user_id === f.client.id),
       staff = people.members.find((m: any) => m.user_id === f.coach.id)
-    await f.call(f.owner, `/v1/workspaces/${workspace}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'assign-trainer',
       id: member.id,
       revision: member.revision,
       trainer: staff.id,
     })
-    const endpoint = `/v1/workspaces/${workspace}`,
+    const endpoint = `/v1/institution`,
       id = randomUUID(),
       tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
-    await f.call(f.coach, endpoint + '/calendar', {
+    await f.call(f.coach, endpoint + '/schedule', {
       operation: randomUUID(),
       action: 'create',
       id,
@@ -84,11 +84,11 @@ test('optional session and workplace feedback recover and appear as separate sou
       ],
       {
         cwd: resolve(import.meta.dirname, '../../backend'),
-        input: `update public.organization_events set starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour' where id='${id}' and workspace_id='${workspace}';`,
+        input: `update public.institution_events set starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour' where id='${id}' and institution_id='${institution}';`,
         stdio: ['pipe', 'pipe', 'pipe'],
       },
     )
-    await f.call(f.coach, endpoint + '/calendar', {
+    await f.call(f.coach, endpoint + '/schedule', {
       operation: randomUUID(),
       action: 'attendance',
       id,
@@ -97,15 +97,15 @@ test('optional session and workplace feedback recover and appear as separate sou
       revision: 1,
       attendance: 'present',
     })
-    await f.call(f.coach, endpoint + '/calendar', {
+    await f.call(f.coach, endpoint + '/schedule', {
       operation: randomUUID(),
       action: 'finish',
       id,
       view: 'trainer',
       revision: 1,
     })
-    const base = `/organization/${workspace}`
-    await f.login(client, f.client, base + '/trainee/calendar/' + id)
+    const base = ''
+    await f.login(client, f.client, base + '/schedule/' + id)
     await client.getByRole('link', { name: 'Rate your session (optional)', exact: true }).click()
     await expect(client.locator('input[type=radio]:checked')).toHaveCount(0)
     await client.getByRole('radio', { name: '4 Satisfied', exact: true }).check()
@@ -310,14 +310,14 @@ test('optional session and workplace feedback recover and appear as separate sou
 
 test('a completed institution workout links to the athlete feedback form', async ({ page }) => {
   test.setTimeout(120000)
-  const f = await teamFixture(),
-    workspace = randomUUID(),
-    endpoint = `/v1/workspaces/${workspace}`,
+  const f = await institutionFixture(),
+    institution = randomUUID(),
+    endpoint = `/v1/institution`,
     today = new Date().toISOString().slice(0, 10)
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Madar workout feedback',
     })
     for (const [person, roles] of [
@@ -333,7 +333,7 @@ test('a completed institution workout links to the athlete feedback form', async
         roles,
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
     let people = await f.call(f.owner, `${endpoint}?view=admin`)
     const staff = people.members.find((m: any) => m.user_id === f.coach.id)
@@ -387,9 +387,9 @@ test('a completed institution workout links to the athlete feedback form', async
       note: '',
       complete: true,
     })
-    await f.login(page, f.client, `/workout/${session}?workspace=${workspace}`)
+    await f.login(page, f.client, `/workout/${session}?institution=${institution}`)
     await page.getByRole('link', { name: 'Rate your session (optional)', exact: true }).click()
-    await expect(page).toHaveURL(new RegExp(`/organization/${workspace}/trainee/feedback$`))
+    await expect(page).toHaveURL(new RegExp(`/feedback$`))
     await expect(page.getByRole('radio', { name: '4 Satisfied', exact: true })).toBeVisible()
   } finally {
     await f.cleanup()

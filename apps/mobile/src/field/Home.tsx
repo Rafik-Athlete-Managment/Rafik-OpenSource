@@ -13,10 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { NativeClient, privateStore, type CoachContext } from './native'
 import { ConnectionFailure, failureText } from './model'
-import { selectedWorkspace } from './access'
+import { selectedInstitution } from './access'
 import type { FieldStore } from './store'
 import { Button, makeStyles, type Styles } from './ui'
-import { WorkspaceScreen } from './WorkspaceScreen'
+import { InstitutionScreen } from './InstitutionScreen'
 
 type Runtime = { client: NativeClient; store: FieldStore }
 export default function Home() {
@@ -177,8 +177,8 @@ function SignedIn({
 }) {
   const { t, l } = useLanguage()
   const [contexts, setContexts] = useState<CoachContext[]>(client.contexts)
-  const [savedWorkspaces, setSavedWorkspaces] = useState<string[]>([])
-  const [workspace, setWorkspace] = useState(client.contexts[0]?.workspace_id || '')
+  const [savedInstitutions, setSavedInstitutions] = useState<string[]>([])
+  const [institution, setInstitution] = useState(client.contexts[0]?.institution_id || '')
   const [message, setMessage] = useState('')
   const [closing, setClosing] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -194,24 +194,25 @@ function SignedIn({
     loadingRef.current = true
     if (!background) setLoading(true)
     try {
-      const saved = await store.workspaces(client.instance, client.user.id)
+      const saved = await store.institutions(client.instance, client.user.id)
       if (!alive.current) return
-      setSavedWorkspaces(saved)
-      setWorkspace((current) => selectedWorkspace(current, client.contexts, saved))
+      setSavedInstitutions(saved)
+      setInstitution((current) => selectedInstitution(current, client.contexts, saved))
       // Previously opened work must not wait for a network timeout on cold offline startup.
       if (saved.length || client.contexts.length) setLoading(false)
       const available = await client.refreshContexts()
       // Downloads may finish during the access request; include those device packages too.
-      const retained = await store.workspaces(client.instance, client.user.id)
-      for (const id of retained.filter((id) => !available.some((c) => c.workspace_id === id))) {
-        const scope = { instance: client.instance, user: client.user.id, workspace: id }
+      const retained = await store.institutions(client.instance, client.user.id)
+      for (const id of retained.filter((id) => !available.some((c) => c.institution_id === id))) {
+        const scope = { instance: client.instance, user: client.user.id, institution: id }
         for (const roster of await store.list(scope)) await store.block(scope, roster.event.id)
+        await store.workouts.block(scope)
       }
       if (!alive.current) return
       setContexts(available)
-      setSavedWorkspaces(retained)
+      setSavedInstitutions(retained)
       accessOffline.current = false
-      setWorkspace((current) => selectedWorkspace(current, available, retained))
+      setInstitution((current) => selectedInstitution(current, available, retained))
       setMessage(
         available.length
           ? ''
@@ -258,7 +259,7 @@ function SignedIn({
       }
     }
   }
-  const options = [...new Set([...contexts.map((c) => c.workspace_id), ...savedWorkspaces])]
+  const options = [...new Set([...contexts.map((c) => c.institution_id), ...savedInstitutions])]
   return (
     <SafeAreaView style={styles.safe}>
       <LanguageControl styles={styles} />
@@ -292,21 +293,21 @@ function SignedIn({
           {options.map((id) => (
             <Button
               key={id}
-              title={`${contexts.find((c) => c.workspace_id === id)?.name || t('Saved workspace')}${workspace === id ? l(' · selected', ' · محددة') : ''}`}
+              title={`${contexts.find((c) => c.institution_id === id)?.name || t('Saved institution')}${institution === id ? l(' · selected', ' · محددة') : ''}`}
               disabled={closing || loading || fieldBusy}
-              onPress={() => setWorkspace(id)}
+              onPress={() => setInstitution(id)}
               styles={styles}
-              primary={workspace === id}
+              primary={institution === id}
             />
           ))}
         </View>
       ) : null}
-      {workspace && !loading ? (
-        <WorkspaceScreen
-          key={workspace}
+      {institution && !loading ? (
+        <InstitutionScreen
+          key={institution}
           client={client}
           store={store}
-          workspace={workspace}
+          institution={institution}
           styles={styles}
           closing={closing}
           onPersisting={setFieldBusy}
@@ -317,7 +318,7 @@ function SignedIn({
             <ActivityIndicator accessibilityLabel={t('Checking coach access')} />
           ) : (
             <>
-              <Text style={styles.title}>{t('No coach workspace')}</Text>
+              <Text style={styles.title}>{t('No coach institution')}</Text>
               <Button title="Refresh access" onPress={() => void refreshAccess()} styles={styles} />
             </>
           )}

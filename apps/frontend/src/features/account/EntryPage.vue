@@ -14,7 +14,7 @@ async function openEntry() {
     await ready()
     if (user.value) {
       await refreshContexts()
-      await router.replace(contexts.value[0]?.path || '/workspaces')
+      await router.replace(contexts.value[0]?.path || '/access')
       return
     }
     const status = await request<{ initialized: boolean }>('/v1/auth/setup-status')

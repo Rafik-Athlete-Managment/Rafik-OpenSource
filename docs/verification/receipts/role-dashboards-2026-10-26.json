@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-26",
+  "checks": {
+    "frontend_types": "passed",
+    "changed_source_format": "passed",
+    "frontend_inventory": "passed: 91 Vue files, 47 screens, 45 routes",
+    "chromium_desktop": "passed dedicated role journey; later change isolates RTL fraction only",
+    "webkit_phone": "passed final isolated-profile role journey",
+    "docs": "passed: 1989 local links, 613 heading links"
+  },
+  "coverage": [
+    "Administrator real zero-completion and unmarked attendance",
+    "Synthetic populated charts and period selection",
+    "Failed refresh retains previous report and retry recovers",
+    "Athlete bound workout, authorized coach contacts, direct private conversation and food diary",
+    "English/light and Arabic/dark layout and Axe checks"
+  ],
+  "limits": [
+    "Synthetic chart counts do not establish new analytics-query correctness",
+    "No new backend/native/security acceptance",
+    "No fresh 320px, landscape, no-coach or supporting-only usability acceptance",
+    "Former administrator exact-command recovery retained; stored legacy-command replay not freshly exercised"
+  ],
+  "sha256": {
+    "apps/frontend/src/features/institution/AdminOverview.vue": "1d54772de9a6e3952d3c8a3b4f4488b1c5b87466ead91b3f2eac67599bc15c9e",
+    "apps/frontend/src/features/institution/AthleteDay.vue": "7c9149a754cd7bf1ee509e42460490f2a1f01ab8f81dfbe041acc10cccb87b4d",
+    "apps/frontend/src/features/institution/role-dashboard.css": "59f8f34e375691f50b4a242857074f87213634cf238306dd707d675c373e94a2",
+    "apps/frontend/src/features/institution/DashboardPage.vue": "60f5fabbe6e85f6f69ec9c55aa7af20aae65b09219cfa1669691e330355d9f7b",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "faada10a910c7ff4e6197e18434bfee456a5ff3c179d5b272583c7f4d073272a",
+    "apps/frontend/src/features/nutrition/NutritionPage.vue": "4afae141fd395bc5d9f9622e0e43e886933b3b1e9320e7850c5748d6cd538121",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "d7a043e2e285a3f73071d3f3170821dcd4fed5b628278e1605bed9474edb0173"
+  },
+  "rendered_inspection": [
+    "Desktop English/light: empty and populated admin reports, final athlete toolbar/workout/coach panels",
+    "Desktop Arabic/dark: administrator and athlete layouts",
+    "Phone WebKit English/light: populated admin report and athlete actions",
+    "Phone WebKit Arabic/dark: administrator fraction ordering and final athlete panels"
+  ]
+}

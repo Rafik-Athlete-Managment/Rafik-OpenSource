@@ -118,16 +118,14 @@ try {
   if (full) {
     for (const script of [
       "test:release",
+      "test:retired-domains",
       "test",
-      "test:services",
-      "test:teams",
       "test:organizations",
       "test:programming",
       "test:organization-services",
       "test:organization-nutrition",
       "test:communication",
       "test:organization-assets",
-      "test:organization-tasks",
       "test:organization-feedback",
       "test:operations",
       "content:check",
@@ -151,12 +149,8 @@ try {
       "build",
       "test:build",
       "test:e2e",
-      "test:quality:layout",
-      "test:product:layout",
-      "test:teams:layout",
       "test:operations:layout",
       "test:cohesion:layout",
-      "test:dashboard:layout",
     ])
       await step("web-" + script.replaceAll(":", "-"), web, [
         "npm",

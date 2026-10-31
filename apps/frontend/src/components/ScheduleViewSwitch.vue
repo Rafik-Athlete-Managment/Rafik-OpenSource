@@ -8,7 +8,7 @@ const route = useRoute()
 <template>
   <RouterLink
     class="button secondary schedule-view-button"
-    :to="{ path: base + (view === 'calendar' ? '/events' : '/calendar'), query: route.query }"
+    :to="{ path: base + (view === 'calendar' ? '/events' : '/schedule'), query: route.query }"
   >
     <Transition name="schedule-switch" mode="out-in" appear>
       <span :key="view" class="schedule-view-label">

@@ -1,5 +1,4 @@
 import { ref, watch } from 'vue'
-import { formatDate } from './dates'
 export const locale = ref<'en' | 'ar'>(localStorage.getItem('rafik.locale') === 'ar' ? 'ar' : 'en')
 export const language = (en: string, ar: string) => (locale.value === 'ar' ? ar : en)
 export const words = {
@@ -111,7 +110,6 @@ watch(
   },
   { immediate: true },
 )
-export const dateLabel = (value: string) => formatDate(value, locale.value)
 export function errorMessage(error: unknown): string {
   const raw =
     error instanceof Error
@@ -120,6 +118,10 @@ export function errorMessage(error: unknown): string {
         ? String(error.message)
         : String(error)
   const teamErrors: Record<string, [string, string]> = {
+    retired_workout: [
+      'This draft belongs to the retired personal workout system. Export it from Settings for reference; it cannot sync to an institution workout.',
+      'تنتمي هذه المسودة إلى نظام التمارين الشخصي المتوقف. يمكنك تصديرها من الإعدادات للرجوع إليها؛ ولا يمكن مزامنتها مع تمرين المؤسسة.',
+    ],
     invalid_credentials: [
       'The email or password is incorrect.',
       'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
@@ -149,7 +151,7 @@ export function errorMessage(error: unknown): string {
       'تم تعليق تسجيل الدخول. تواصل مع دعم المنصة.',
     ],
     conversation_unavailable: [
-      'This conversation is unavailable in this workspace. Refresh your conversations or contact an institution administrator.',
+      'This conversation is unavailable in this institution. Refresh your conversations or contact an institution administrator.',
       'هذه المحادثة غير متاحة في مساحة العمل. حدّث المحادثات أو تواصل مع مسؤول المؤسسة.',
     ],
     notification_unavailable: [
@@ -187,7 +189,7 @@ export function errorMessage(error: unknown): string {
       'قالب التقييم غير متاح. اختر قالباً نشطاً في المؤسسة.',
     ],
     program_unavailable: [
-      'This program is no longer available in this workspace. Return to the program library.',
+      'This program is no longer available in this institution. Return to the program library.',
       'لم يعد البرنامج متاحاً في هذه المساحة. عُد إلى مكتبة البرامج.',
     ],
     feedback_unavailable: [
@@ -202,10 +204,6 @@ export function errorMessage(error: unknown): string {
       'This session is not available for a makeup booking.',
       'هذه الجلسة غير متاحة لحجز تعويضي.',
     ],
-    task_unavailable: [
-      'This task is no longer available to you. Refresh the task list.',
-      'هذه المهمة لم تعد متاحة لك. حدّث قائمة المهام.',
-    ],
     trainer_unavailable: [
       'This coach is no longer available. Choose an active institution coach.',
       'هذا المدرب لم يعد متاحاً. اختر مدرباً نشطاً في المؤسسة.',
@@ -215,7 +213,7 @@ export function errorMessage(error: unknown): string {
       'لم يعد هذا الرياضي ضمن مسؤوليتك. حدّث قائمة الأشخاص قبل المتابعة.',
     ],
     invalid_program_cover: [
-      'Use a JPG, PNG or WebP image up to 2 MB from this workspace.',
+      'Use a JPG, PNG or WebP image up to 2 MB from this institution.',
       'استخدم صورة JPG أو PNG أو WebP حتى ٢ ميغابايت من هذه المساحة.',
     ],
     invalid_program_details: [
@@ -227,7 +225,7 @@ export function errorMessage(error: unknown): string {
       'اختر من ١ إلى ٥٠ شخصاً وراجع التعيين مجدداً.',
     ],
     assignment_unavailable: [
-      'This assignment is not active today. Refresh your training workspace.',
+      'This assignment is not active today. Refresh your training institution.',
       'هذا التعيين غير نشط اليوم. حدّث مساحة تدريبك.',
     ],
     not_scheduled_today: [
@@ -235,11 +233,11 @@ export function errorMessage(error: unknown): string {
       'هذه الحصة مجدولة ليوم آخر. افتح تدريب اليوم أو استأنف حصة بدأت سابقاً.',
     ],
     workspace_unavailable: [
-      'Your access to this institution or view is no longer available. Choose another workspace or contact an administrator.',
+      'Your access to this institution or view is no longer available. Choose another institution or contact an administrator.',
       'لم يعد الوصول إلى هذه المؤسسة أو هذا العرض متاحاً. اختر مساحة أخرى أو تواصل مع المسؤول.',
     ],
     coaching_not_enabled: [
-      'Set up your independent coaching workspace first.',
+      'Set up your independent coaching institution first.',
       'أعدّ مساحة التدريب المستقل أولاً.',
     ],
     last_admin: [
@@ -295,7 +293,7 @@ export function errorMessage(error: unknown): string {
       'هذا الشخص عضو نشط بالفعل. راجع عضويته الحالية.',
     ],
     practice_exists: [
-      'Your independent coaching workspace is already available in the workspace menu.',
+      'Your independent coaching institution is already available in the institution menu.',
       'مساحة تدريبك المستقل متاحة بالفعل في قائمة مساحات العمل.',
     ],
 
@@ -362,6 +360,34 @@ export function errorMessage(error: unknown): string {
     simulation_disabled: [
       'Local simulation is disabled on this backend.',
       'المحاكاة المحلية معطلة في هذا الخادم.',
+    ],
+    previous_workout_unresolved: [
+      'Finish or explicitly skip the previous workout in this plan first.',
+      'أكمل التمرين السابق في هذه الخطة أو تخطّه صراحةً أولاً.',
+    ],
+    legacy_workout_unresolved: [
+      'Resume the unfinished workout before scheduling another in this plan.',
+      'تابع التمرين غير المنجز قبل جدولة تمرين آخر في هذه الخطة.',
+    ],
+    workout_not_started_yet: [
+      'Recording opens at the scheduled start time.',
+      'يفتح التسجيل عند موعد البدء المحدد.',
+    ],
+    workout_not_actionable: [
+      'This workout is not ready to start. Open the plan to check its schedule and status.',
+      'هذا التمرين غير جاهز للبدء. افتح الخطة لمراجعة الموعد والحالة.',
+    ],
+    participation_unavailable: [
+      'Training is currently restricted. Contact your coach.',
+      'المشاركة في التدريب مقيدة حالياً. تواصل مع مدربك.',
+    ],
+    sequence_conflict: [
+      'The plan has progressed. Refresh before continuing.',
+      'تقدمت الخطة. حدّث الصفحة قبل المتابعة.',
+    ],
+    workout_already_recorded_for_date: [
+      'This workout is already recorded on that date. Choose another date.',
+      'تم تسجيل هذا التمرين في ذلك التاريخ. اختر تاريخاً آخر.',
     ],
     invalid_group_assignment: [
       'Select up to 50 of your active athletes in this group.',
@@ -481,6 +507,36 @@ export function errorMessage(error: unknown): string {
     return language(
       'Check the values and try again. Use the supported ranges for sets, results and schedule dates.',
       'تحقق من القيم وحاول مجدداً. استخدم النطاقات المسموحة للمجموعات والنتائج والتواريخ.',
+    )
+  if (raw.includes('workout_template_unavailable'))
+    return language(
+      'This workout template is unavailable. Choose an active template.',
+      'قالب التمرين غير متاح. اختر قالباً نشطاً.',
+    )
+  if (raw.includes('template_requires_shared_exercises'))
+    return language(
+      'Shared workout templates require reference or institution exercises. Private exercises remain private.',
+      'تتطلب القوالب المشتركة تمارين مرجعية أو تابعة للمؤسسة. تبقى التمارين الخاصة خاصة.',
+    )
+  if (raw.includes('group_workout_already_started'))
+    return language(
+      'Another coach has already started this athlete’s workout. Your draft is preserved; refresh and open the existing record.',
+      'بدأ مدرب آخر تمرين هذا الرياضي. مسودتك محفوظة؛ حدّث وافتح السجل القائم.',
+    )
+  if (raw.includes('group_workout_results_required'))
+    return language(
+      'Complete or explicitly skip all required participant workouts before finishing this event.',
+      'أكمل أو تخطّ صراحة تمارين المشاركين المطلوبة قبل إنهاء الموعد.',
+    )
+  if (raw.includes('group_workout_read_only'))
+    return language(
+      'Your coach records group workouts. Open the scheduled event to view your results.',
+      'يسجل مدربك التمارين الجماعية. افتح الموعد المجدول لعرض نتائجك.',
+    )
+  if (raw.includes('group_workout_not_actionable'))
+    return language(
+      'Check the event start time, attendance and participation status before recording.',
+      'تحقق من موعد البدء والحضور وحالة المشاركة قبل التسجيل.',
     )
   if (raw.includes('rate') || raw.includes('too many'))
     return language(

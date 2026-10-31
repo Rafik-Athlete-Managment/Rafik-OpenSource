@@ -12,7 +12,7 @@ type Session = {
   refresh_expires_at: string
 }
 export type CoachContext = {
-  workspace_id: string
+  institution_id: string
   member_id: string
   name: string
   role: 'trainer'
@@ -104,6 +104,11 @@ export class NativeClient {
     validSession(data.session)
     if (!Array.isArray(data.contexts))
       throw Error('Saved institution access needs a fresh sign-in.')
+    // Rename cached credentials in memory; never change the v1 SQLite owner tuple or queued payload.
+    data.contexts = data.contexts.map((context) => {
+      const previous = context as CoachContext & { workspace_id?: string }
+      return { ...context, institution_id: context.institution_id || previous.workspace_id || '' }
+    })
     return new NativeClient(data)
   }
 
@@ -176,23 +181,23 @@ export class NativeClient {
   async refreshContexts() {
     const data = await this.request<{
       contexts: Array<CoachContext & { role: string; kind: string }>
-    }>('/contexts')
+    }>('/institution/context')
     if (!Array.isArray(data.contexts) || data.contexts.some((c) => !c || typeof c !== 'object'))
       throw Error(
         'The server returned invalid institution access. Check the API URL and server version.',
       )
     const contexts = data.contexts
-      .filter((c) => c.role === 'trainer' && c.kind === 'organization' && c.workspace_id)
-      .map(({ workspace_id, member_id, name }) => {
+      .filter((c) => c.role === 'trainer' && c.kind === 'institution' && c.institution_id)
+      .map(({ institution_id, member_id, name }) => {
         if (
-          ![workspace_id, member_id, name].every(
+          ![institution_id, member_id, name].every(
             (value) => typeof value === 'string' && value.length,
           )
         )
           throw Error(
             'The server returned invalid institution access. Check the API URL and server version.',
           )
-        return { workspace_id, member_id, name, role: 'trainer' as const }
+        return { institution_id, member_id, name, role: 'trainer' as const }
       })
     if (this.stopped) throw Error('This sign-in session is closed.')
     this.credentials = { ...this.credentials, contexts }

@@ -1,5 +1,30 @@
 # Known issues and release gaps
 
+## Code quality audit — 31 October 2026
+
+The [monorepo audit](code-quality-audit.md) records typing, duplication, unused-code, styling and dependency findings, safe changes and intentionally deferred work. The formatter and unused-code baselines are closed by the follow-up; the audit distinguishes completed source checks from device acceptance.
+
+## Dependency review — 29 October 2026
+
+Updated compatible lockfile resolutions from node-forge 1.4.0 to 1.4.2 and fast-uri 3.1.8 to 3.1.9. The [Forge release notes](https://github.com/digitalbazaar/forge/blob/v1.4.2/CHANGELOG.md) confirm the RSA verification fix; the [fast-uri advisory](https://github.com/advisories/GHSA-w74x-v6f9-j3xg) identifies 3.1.9 as patched. Earlier dated counts below are historical checkpoints.
+
+**Upstream alerts remain; identified Expo call paths locally patched:** Zod 3.25.76 ([collection memory exhaustion](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), high) and deepmerge 4.3.1 ([prototype poisoning](https://github.com/advisories/GHSA-gcqx-w48m-w2h4), low), through Expo CLI/config tooling. The live after-audit reports 8 affected-package entries: 3 high and 5 low, propagated from these two underlying advisories. The registry has no patched Zod 3 or deepmerge release at review time. Latest Expo CLI 58.1.17 still requires Zod ^3.25.76. Forcing Zod 4 or npm's proposed Expo SDK 51 downgrade is not a compatible fix.
+
+Both production workspace audits (backend/frontend, omit development dependencies) report zero findings. Source inspection places the remaining calls in development plugin/MCP-schema validation and local Expo configuration merging, not Rafik HTTP handlers. Guarded local backports now reject unsafe deepmerge keys and stop oversized bounded Zod3 collections before child parsing; Expo plugin/output limits cover its formerly unbounded arrays. See [ADR 0035](../decisions/ADR-0035-expo-tooling-security-backports.md). Unused bundled Zod v4 paths are not patched or approved for use. These focused fixes do not prove arbitrary plugin code or schemas safe. Keep project/plugins trusted and Metro/dev tools private; reassess compatible upstream fixes before native release. Npm prod/dev flags alone do not identify tooling pulled in by Expo. Version-based npm/GitHub alerts remain even after these local patches and must not be dismissed as upstream-fixed. Main is unchanged pending release approval. See [verification](../verification/README.md#dependency-patches--29-october-2026) and the [live report](../verification/receipts/2026-10-29-dependency-audit-after.json).
+
+## Coach UX revamp follow-up — 27 October 2026
+
+The [coach dashboard UX revamp plan](ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026) is approved for phased implementation; nothing is implemented yet. Open items:
+
+- **Terminology (deferred by founder):** one record type is labelled "Workout history" in navigation, "Session history" on Athlete plans and "recorded sessions" in its empty state. The founder has not chosen names for these; do not rename them until a decision is recorded. Resolved 28 October 2026: the consent-gated participation-status feature, formerly "Injury status", "Athlete status" and "Participation", is now "Athlete health" everywhere in the web app.
+- **Groups observation (resolved, intended scoping):** coaches see groups they created or belong to; the seeded group was created by an administrator without the coach as a member. The coach empty state now says so.
+- **Exercises layout (fixed in phase 4):** the sort control keeps its caret padding and the list pagination has its own padded footer.
+- **Event time display (rendered, cause unconfirmed):** a seeded event showed "GMT+0" in an Asia/Dubai institution. Check whether this is the stored event timezone or a display defect.
+
+## Founder walkthrough follow-up — 25 October 2026
+
+The current correction slice addresses athlete program scope, staff-route rendering, assigned-group discovery, conversation initiation and typing, coach selection and food recording. Its [validation guide](../testing/instance-validation.md) records expected behavior and the remaining observations. The first fixed-time individual workout agenda/start/resume/scheduling UI is implemented on the release branch. Weekly/automatic individual preparation and group templates/results are now implemented on the release branch. Remaining beta.3 work includes historical occurrence reconciliation, Android workout capture and a bulk attendance-to-results journey with revisitable corrections. Do not treat these as delivered by the UI fixes. Exercise redundancy and starter food breadth need a source/rights-aware content-curation pass; preserve immutable exercise identities and do not claim a comprehensive or live USDA service.
+
 The [web UI/UX audit](ui-ux-audit.md) records design inconsistencies, rendered/source evidence, remaining review coverage and the proposed standardization sequence. The [design system](../DESIGN_SYSTEM.md) awaits founder approval; these proposals are not release claims.
 
 Beta.1, including Android, is published and accepted for beta evaluation. This page lists remaining product limitations, follow-up coverage and per-installation operational checks; these are not all beta.1 release blockers. The [beta readiness table](../operations/release-checklist.md#project-beta-readiness-19-october-2026) distinguishes publishing actions, accepted first-user backlog and institution-specific live-data gates. A gap is not described as a reproduced defect unless a failure was observed. Historical gym-first issues are kept in the [archive](../archive/README.md), not treated as current university requirements.

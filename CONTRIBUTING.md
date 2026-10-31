@@ -14,6 +14,8 @@ This is a staged university-first revamp. Read [the requirements](docs/requireme
 - Describe each change in a `changes/<branch>.md` note (see `changes/README.md`); `npm run changes:compile` folds notes into root `CHANGELOG.md` and `docs/development/ledger.md`. Before starting and before pushing, run `npm run coord:check` and follow the [coordination guide](docs/development/coordination.md). Update README, architecture, maintainer guide, runbook, and verification records when the corresponding setup, lifecycle, or evidence changes.
 - Complete one approved stage at a time; report results and limitations, then wait for approval before starting another.
 
+For TypeScript, package-boundary and safe-refactoring rules, follow the [maintainer standards](docs/development/maintainer-guide.md#typescript-and-refactoring-standards). Current source findings and deliberately deferred work live in the [code quality audit](docs/known-issues/code-quality-audit.md).
+
 ## Local setup
 
 Use Node 22.16 or Node 24, npm, and Docker Compose. Run one `npm ci` from the repository root to install all workspaces. Follow the root [README](README.md) to start the local database, API, and web app. Seed only an empty local database. `infrastructure/compose.yaml` is the single Compose definition: default/local services support development; the `selfhost` profile provides the deployment foundation described in operations. Production containers use pinned Node 22.16 images.

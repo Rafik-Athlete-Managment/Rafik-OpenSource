@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import DashboardNav from './features/workspace/DashboardNav.vue'
+import DashboardNav from './features/navigation/DashboardNav.vue'
+import TimezoneClock from './components/TimezoneClock.vue'
 import {
   DialogRoot,
   DialogTrigger,
@@ -19,26 +20,7 @@ import { localPreview } from './lib/backend'
 import { syncPending } from './lib/training'
 import { brandingLogoUrl, instanceBranding, loadBranding, syncAccentContrast } from './lib/branding'
 const route = useRoute()
-watch(
-  () => route.path,
-  (path) => {
-    if (user.value && path.startsWith('/organization/'))
-      localStorage.setItem(
-        'rafik.workspace:' + user.value.id,
-        path.split('/').slice(0, 4).join('/'),
-      )
-  },
-)
-const currentContext = computed(
-  () =>
-    [...contexts.value]
-      .sort((a, b) => b.path.length - a.path.length)
-      .find((c) => route.path === c.path || route.path.startsWith(c.path + '/')) ||
-    contexts.value.find(
-      (c) => c.path === localStorage.getItem('rafik.workspace:' + user.value?.id),
-    ) ||
-    contexts.value[0],
-)
+const currentContext = computed(() => contexts.value.find((c) => c.kind === 'institution'))
 const messaging = computed(
   () =>
     /^\/messages(\/|$)/.test(route.path) ||
@@ -49,21 +31,17 @@ const entryScreen = computed(() => ['/', '/setup', '/login'].includes(route.path
 const product = computed(
   () =>
     user.value &&
-    !['/', '/login', '/routine', '/privacy', '/help', '/local-preview'].includes(route.path) &&
-    !route.path.startsWith('/invite/') &&
-    !route.path.startsWith('/team-invite/') &&
-    !route.path.startsWith('/organization-invite/'),
+    !['/', '/login', '/privacy', '/help', '/local-preview'].includes(route.path) &&
+    !route.path.startsWith('/invitation/'),
 )
 const dashboard = computed(
   () =>
     product.value &&
     !focused.value &&
-    ((route.path.startsWith('/organization/') && currentContext.value?.kind === 'organization') ||
-      (['/settings', '/notifications', '/support'].includes(route.path) &&
-        currentContext.value?.kind === 'organization')) &&
-    !['/workspaces', '/platform'].includes(route.path),
+    currentContext.value?.kind === 'institution' &&
+    !['/access', '/platform'].includes(route.path),
 )
-const dashboardBase = computed(() => currentContext.value?.path || '/workspaces')
+const dashboardBase = computed(() => '')
 const menuOpen = ref(false)
 const themeReady = ref(false)
 watch(
@@ -103,7 +81,10 @@ onUnmounted(() => window.removeEventListener('online', online))
     :class="{ 'dashboard-frame': dashboard, 'conversation-frame': messaging }"
   >
     <a class="skip-link" href="#main">{{ language('Skip to content', 'انتقل إلى المحتوى') }}</a>
-    <header class="site-header" :class="{ compact: focused, 'workspace-header': user && !focused }">
+    <header
+      class="site-header"
+      :class="{ compact: focused, 'institution-header': user && !focused }"
+    >
       <div class="header-inner">
         <DialogRoot v-if="dashboard" v-model:open="menuOpen">
           <DialogTrigger
@@ -114,7 +95,7 @@ onUnmounted(() => window.removeEventListener('online', online))
           <DialogPortal
             ><DialogOverlay class="dashboard-overlay" /><DialogContent class="dashboard-drawer"
               ><div class="drawer-heading">
-                <DialogTitle>{{ language('Workspace navigation', 'تنقل مساحة العمل') }}</DialogTitle
+                <DialogTitle>{{ language('Institution navigation', 'تنقل المؤسسة') }}</DialogTitle
                 ><DialogClose
                   class="icon-button"
                   :aria-label="language('Close navigation', 'إغلاق التنقل')"
@@ -122,12 +103,10 @@ onUnmounted(() => window.removeEventListener('online', online))
                 /></DialogClose>
               </div>
               <DialogDescription class="sr-only">{{
-                language(
-                  'Choose a section in your current workspace.',
-                  'اختر قسماً في مساحة عملك الحالية.',
-                )
-              }}</DialogDescription
-              ><DashboardNav
+                language('Choose an institution section.', 'اختر قسماً في المؤسسة.')
+              }}</DialogDescription>
+              <div class="drawer-clock"><TimezoneClock @click="menuOpen = false" /></div>
+              <DashboardNav
                 :base="dashboardBase"
                 :role="currentContext?.role || 'admin'"
                 @navigate="menuOpen = false"
@@ -135,6 +114,10 @@ onUnmounted(() => window.removeEventListener('online', online))
               <div class="dashboard-utilities">
                 <RouterLink v-if="platform" to="/platform">{{
                   language('Platform operations', 'عمليات المنصة')
+                }}</RouterLink>
+                <RouterLink to="/support">{{ language('Support', 'الدعم') }}</RouterLink>
+                <RouterLink v-if="currentContext?.role === 'trainer'" to="/feedback">{{
+                  language('My feedback', 'تقييماتي')
                 }}</RouterLink>
                 <RouterLink to="/help">{{ t('help') }}</RouterLink
                 ><RouterLink to="/settings">{{ t('settings') }}</RouterLink
@@ -156,7 +139,7 @@ onUnmounted(() => window.removeEventListener('online', online))
         </DialogRoot>
         <RouterLink
           class="brand"
-          :to="user ? currentContext?.path || '/today' : '/'"
+          :to="user ? currentContext?.path || '/dashboard' : '/'"
           :aria-label="`${instanceBranding.name} home`"
           ><img
             :src="instanceBranding.logo_mime ? brandingLogoUrl() : '/brand/rafik.png'"
@@ -171,6 +154,7 @@ onUnmounted(() => window.removeEventListener('online', online))
           ></RouterLink
         >
         <div class="header-actions">
+          <TimezoneClock v-if="user && !focused" class="desktop-clock" />
           <button
             class="icon-button language-button"
             @click="locale = locale === 'en' ? 'ar' : 'en'"
@@ -206,7 +190,7 @@ onUnmounted(() => window.removeEventListener('online', online))
     <aside
       v-if="dashboard"
       class="dashboard-sidebar"
-      :aria-label="language('Workspace sidebar', 'الشريط الجانبي لمساحة العمل')"
+      :aria-label="language('Institution sidebar', 'الشريط الجانبي لمساحة العمل')"
     >
       <DashboardNav :base="dashboardBase" :role="currentContext?.role || 'admin'" />
       <div class="dashboard-utilities">
@@ -214,6 +198,9 @@ onUnmounted(() => window.removeEventListener('online', online))
           language('Platform operations', 'عمليات المنصة')
         }}</RouterLink>
         <RouterLink to="/support">{{ language('Support', 'الدعم') }}</RouterLink>
+        <RouterLink v-if="currentContext?.role === 'trainer'" to="/feedback">{{
+          language('My feedback', 'تقييماتي')
+        }}</RouterLink>
         <RouterLink to="/help">{{ t('help') }}</RouterLink
         ><RouterLink to="/settings">{{ t('settings') }}</RouterLink
         ><RouterLink v-if="localPreview" to="/local-preview">{{ t('localPreview') }}</RouterLink
@@ -231,9 +218,13 @@ onUnmounted(() => window.removeEventListener('online', online))
     <main id="main" :class="{ 'messages-main': messaging }" tabindex="-1">
       <RouterView
         :key="
+          (user?.id || '') +
+          ':' +
+          (currentContext?.id || '') +
+          ':' +
           (messaging ? route.path.replace(/(\/messages)(\/[^/]+)?$/, '$1') : route.path) +
           (route.path.endsWith('/plans/new')
-            ? JSON.stringify([route.query.source, route.query.member])
+            ? JSON.stringify([route.query.source, route.query.member, route.query.workoutTemplate])
             : '')
         "
       />

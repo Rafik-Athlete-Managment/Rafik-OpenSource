@@ -1,6 +1,56 @@
 export type Language = 'en' | 'ar'
 // English keys also translate persisted messages from earlier app builds.
 const arabic: Record<string, string> = {
+  'Resolve saved workout changes before removing this package.':
+    'عالِج تغييرات التمرين المحفوظة قبل إزالة هذه الحزمة.',
+  'Individual workout capture needs a matching app and server update. Saved work is retained.':
+    'يتطلب تسجيل التمارين الفردية تحديثاً مطابقاً للتطبيق والخادم. يبقى العمل المحفوظ محفوظاً.',
+  'Invalid workout package. Refresh it online before recording.':
+    'حزمة التمرين غير صالحة. حدّثها أثناء الاتصال قبل التسجيل.',
+  'Record an actual result before marking the set done.':
+    'سجّل نتيجة فعلية قبل تأكيد إتمام المجموعة.',
+  'Mark every set done before finishing the workout.': 'أكّد إتمام كل مجموعة قبل إنهاء التمرين.',
+  'Download this workout online first.': 'نزّل هذا التمرين أثناء الاتصال أولاً.',
+  'This workout belongs to another institution.': 'هذا التمرين يتبع مؤسسة أخرى.',
+  'Resolve saved workout changes before downloading a newer package.':
+    'عالِج تغييرات التمرين المحفوظة قبل تنزيل حزمة أحدث.',
+  'A newer workout is already saved on this device.':
+    'توجد نسخة أحدث من التمرين محفوظة على هذا الجهاز.',
+  'The server workout identity changed. Keep the recovery copy for review.':
+    'تغيرت هوية تمرين الخادم. احتفظ بنسخة الاستعادة للمراجعة.',
+  'This downloaded workout cannot be started yet. Refresh it online.':
+    'لا يمكن بدء هذا التمرين المنزّل بعد. حدّثه أثناء الاتصال.',
+  'This workout is read-only until its saved change is resolved.':
+    'هذا التمرين للقراءة فقط حتى معالجة التغيير المحفوظ.',
+  'This workout is read-only.': 'هذا التمرين للقراءة فقط.',
+  'Keep workout notes within 2000 characters.': 'اجعل ملاحظات التمرين في حدود ٢٠٠٠ حرف.',
+  'Resolve the saved workout change first.': 'عالِج تغيير التمرين المحفوظ أولاً.',
+  'The saved workout command changed.': 'تغير طلب التمرين المحفوظ.',
+  'Invalid workout acknowledgment. Saved work is retained.':
+    'تأكيد التمرين غير صالح. يبقى العمل المحفوظ محفوظاً.',
+  'Resolve or export saved workout changes before removing this package.':
+    'عالِج تغييرات التمرين المحفوظة أو صدّرها قبل إزالة الحزمة.',
+  'Wait for the saved request to settle.': 'انتظر حتى يستقر الطلب المحفوظ.',
+  'Only a rejected save can be replaced after reviewing the current server version.':
+    'لا يمكن استبدال الطلب إلا بعد رفض الحفظ ومراجعة نسخة الخادم الحالية.',
+  'Review the changed server workout before restoring this device draft.':
+    'راجع تمرين الخادم المعدّل قبل استعادة مسودة هذا الجهاز.',
+  'Training is currently restricted. Keep the recording and ask authorized staff to review it.':
+    'التدريب مقيّد حالياً. احتفظ بالتسجيل واطلب من الموظفين المخولين مراجعته.',
+  'This workout is no longer actionable. Keep saved work and review its current status online.':
+    'لم يعد هذا التمرين قابلاً للتنفيذ. احتفظ بالعمل المحفوظ وراجع حالته الحالية أثناء الاتصال.',
+  'This workout has not reached its scheduled start. Keep saved work and check the booking time.':
+    'لم يحِن وقت بدء هذا التمرين. احتفظ بالعمل المحفوظ وتحقق من وقت الموعد.',
+  'The plan sequence changed. Keep this recording and review the current workout online.':
+    'تغيّر تسلسل الخطة. احتفظ بهذا التسجيل وراجع التمرين الحالي أثناء الاتصال.',
+  'This athlete plan is no longer available for recording. Keep saved work for review.':
+    'لم تعد خطة الرياضي هذه متاحة للتسجيل. احتفظ بالعمل المحفوظ للمراجعة.',
+  'Finish or explicitly resolve the previous workout in this plan first.':
+    'أنهِ التمرين السابق في هذه الخطة أو عالجه صراحةً أولاً.',
+  'Check the workout results and completion checks before sending again.':
+    'تحقق من نتائج التمرين وعلامات الإتمام قبل إعادة الإرسال.',
+  'The server compatibility response is unsupported. Ask your institution to check the app and server versions.':
+    'استجابة توافق الخادم غير مدعومة. اطلب من مؤسستك التحقق من إصداري التطبيق والخادم.',
   'Saved event opened from this device. Refresh roster online for the latest data.':
     'فُتح الموعد المحفوظ على هذا الجهاز. حدّث القائمة أثناء الاتصال للحصول على أحدث البيانات.',
   'The server returned invalid institution access. Check the API URL and server version.':
@@ -31,9 +81,9 @@ const arabic: Record<string, string> = {
     'لا يملك هذا الحساب صلاحية مدرب حالياً. يبقى العمل المحفوظ محظور الإرسال للمراجعة.',
   'Signing out…': 'جارٍ تسجيل الخروج…',
   'Sign out': 'تسجيل الخروج',
-  'Saved workspace': 'مساحة عمل محفوظة',
+  'Saved institution': 'مساحة عمل محفوظة',
   'Checking coach access': 'جارٍ التحقق من صلاحية المدرب',
-  'No coach workspace': 'لا توجد مساحة عمل للمدرب',
+  'No coach institution': 'لا توجد مساحة عمل للمدرب',
   'Refresh access': 'تحديث الصلاحيات',
   'Event completed and confirmed by your institution. The device copy was removed.':
     'اكتمل الموعد وأكدته مؤسستك. أُزيلت نسخة الجهاز.',
@@ -166,6 +216,8 @@ const arabic: Record<string, string> = {
     'سجّل الدخول مجدداً إلى الحساب والمؤسسة نفسيهما لإرسال العمل المحفوظ.',
   'The event has not started or was cancelled. Review the server event.':
     'لم يبدأ الموعد أو أُلغي. راجع موعد الخادم.',
+  'Complete or explicitly skip participant workouts in the web app before finishing this group event.':
+    'أكمل تمارين المشاركين أو تخطّها صراحة في تطبيق الويب قبل إنهاء هذا الموعد الجماعي.',
   'Assessment results are required. Complete this correction in the web app.':
     'نتائج التقييم مطلوبة. أكمل التصحيح في تطبيق الويب.',
   'Confirm attendance before saving scores or completing this event.':

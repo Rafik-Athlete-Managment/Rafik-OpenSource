@@ -15,6 +15,17 @@
     "./database.types": {
       "types": "./src/database.types.ts",
       "default": "./src/database.types.ts"
+    },
+    "./workout-measures": {
+      "types": "./src/workout-measures.ts",
+      "default": "./src/workout-measures.ts"
+    },
+    "./workouts": {
+      "types": "./src/workouts.ts",
+      "default": "./src/workouts.ts"
     }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
   }
 }

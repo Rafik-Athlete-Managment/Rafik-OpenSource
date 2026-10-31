@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-30",
+  "scope": "Unreleased beta.3 group recording web workspace",
+  "authenticated": [
+    {
+      "project": "chromium",
+      "result": "passed",
+      "command": "node apps/frontend/scripts/isolated-browser.mjs group-workouts.e2e.ts --project=chromium --project=webkit-phone --max-failures=2",
+      "run": "1793359245091",
+      "duration": "1.5m",
+      "limit": "Chromium passed; companion resized mobile-WebKit attempt failed. This Chromium run precedes only final phone selector style/direction/search handling and preview-collapse corrections."
+    },
+    {
+      "project": "webkit-phone",
+      "result": "passed",
+      "command": "node apps/frontend/scripts/isolated-browser.mjs group-workouts.e2e.ts --project=webkit-phone --max-failures=1",
+      "run": "1793359918495",
+      "duration": "1.3m",
+      "productionBuild": "passed in 6.73s",
+      "viewport": "390px phone during recording; 1280px for final read-only review"
+    }
+  ],
+  "workflow": [
+    "attendance-first tabs and mark/save attendance",
+    "participant adaptation and cancelling skip before explicit start",
+    "zero-load completed sets",
+    "unsent note retained across selection and reload",
+    "held save prevents selection and tab switching",
+    "in-event completion/review/feedback and next athlete",
+    "phone search/selection and attendance return",
+    "administrator review without recording",
+    "athlete own-result review only",
+    "loaded-page Axe and document overflow checks"
+  ],
+  "component": {
+    "cases": [
+      {
+        "engine": "chromium",
+        "lang": "en",
+        "theme": "light",
+        "width": 390,
+        "passed": true
+      },
+      {
+        "engine": "chromium",
+        "lang": "ar",
+        "theme": "dark",
+        "width": 320,
+        "passed": true
+      },
+      {
+        "engine": "webkit",
+        "lang": "en",
+        "theme": "light",
+        "width": 390,
+        "passed": true
+      },
+      {
+        "engine": "webkit",
+        "lang": "ar",
+        "theme": "dark",
+        "width": 320,
+        "passed": true
+      },
+      {
+        "engine": "chromium",
+        "lang": "en",
+        "theme": "light",
+        "width": 1280,
+        "passed": true
+      },
+      {
+        "engine": "chromium",
+        "lang": "ar",
+        "theme": "dark",
+        "width": 1280,
+        "passed": true
+      },
+      {
+        "engine": "webkit",
+        "lang": "en",
+        "theme": "light",
+        "width": 1280,
+        "passed": true
+      },
+      {
+        "engine": "webkit",
+        "lang": "ar",
+        "theme": "dark",
+        "width": 1280,
+        "passed": true
+      }
+    ],
+    "scope": "mocked 12-person roster; final phone keyboard query/selection and direction; desktop second-page selection, child remount with preserved router, search/no matches and selected identity retention; no document overflow",
+    "limit": "synthetic component evidence, not 12 authenticated athletes"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "designControlTests": 2,
+    "frontendInventory": "passed",
+    "documentationLinks": "passed"
+  },
+  "sourceSha256": {
+    "apps/frontend/src/features/institution/GroupWorkoutPanel.vue": "53e7eb066974a2200385545f182166e9fb29391316b332cdebf3c7ee00c16e7c",
+    "apps/frontend/src/features/institution/DelegatedWorkout.vue": "6823fc64581191e4b1db7988745ffa4e6f38d1ac04a2d7bb8205ade11b1defee",
+    "apps/frontend/src/features/institution/EventDetail.vue": "6b1d4565a3a291be0645dcd431743cb5777a03cb2e51eac9c7065dadff395329",
+    "apps/frontend/src/features/coaching/ReviewPage.vue": "ad6f3d0d3c1f45aaea84bd62e979a6845c7bfeb701c5946a18e9b4ee4cc04645"
+  },
+  "limits": [
+    "not every theme/locale/breakpoint combination",
+    "no physical-device or native workout capture acceptance",
+    "no full browser suite",
+    "mobile WebKit resized to desktop had an offscreen exercise-option attempt; final authenticated run uses natural phone recording viewport",
+    "Axe scans wait for loaded records and completed toast transitions"
+  ],
+  "cleanup": "Disposable databases and private files removed by isolated runner; temporary synthetic harness/captures removed after inspection; user databases and prior unrelated artifacts retained."
+}

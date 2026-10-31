@@ -1,5 +1,15 @@
 # Rafik
 
+The unreleased beta.3 branch shares exercise cards across Programs and Workout templates, with same-type alternatives and on-demand credited media. Group events provide attendance-first tabs and recording/review without leaving the athlete roster. Use the [canonical instance walkthrough](docs/testing/instance-validation.md) to validate these workflows.
+
+Dependency installation includes guarded Expo tooling security backports. If disabling install scripts, follow the [development instructions](docs/development/README.md) before using mobile tooling.
+
+**Validate your installation:** follow the [full administrator, coach and athlete walkthroughs](docs/testing/instance-validation.md), including setup, expected results, permissions and recovery. This is the single maintained manual guide; use the copy from your installed release tag or source commit.
+
+**Breaking beta.3 cleanup:** retired personal/team/business tables and API aliases are removed. Deploy matching backend/web/Android versions together after a complete backup; see [ADR 0030](docs/decisions/ADR-0030-retire-standalone-storage-and-apis.md). This branch remains unreleased.
+
+**Upcoming release:** one institution per installation; Tasks is retired. Browser navigation uses `/dashboard`, `/people`, `/plans`, `/schedule` and `/workouts`. Account settings remain `/settings`; administration uses `/institution-settings`. See [upgrade precautions](docs/operations/README.md#next-release-cleanup-upgrade).
+
 Repository: [`Rafik-Athlete-Managment/Rafik-OpenSource`](https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource).
 
 **Preparing Squire 1.0.0-beta.2; published evaluation beta: Squire 1.0.0-beta.1.** Sports and coaching changes are merged; see the [beta.2 upgrade notes](docs/operations/README.md#beta2-upgrade-and-release-preparation). Standalone Android packaging uses `npm run mobile:release`; follow the [signing, installation and update guide](docs/operations/android-release.md). Release/device acceptance limits are tracked in [verification](docs/verification/README.md).
@@ -72,6 +82,10 @@ The Compose profile is an implemented deployment foundation, not a production-re
 
 ## Checks
 
+For inventory-analyzer changes, run `npm run test:frontend-inventory` to compare CRLF/LF generation, then `npm run frontend:inventory:check` for the maintained reference.
+
+The [code quality gates](docs/testing/README.md#code-quality-gates) cover compiler, formatter, shared projections and native component contracts before device practice validation.
+
 From the repository root:
 
 ```sh
@@ -89,6 +103,7 @@ npm run backend:test
 npm run test:api
 npm run content:check
 npm run docs:check
+npm run frontend:inventory:check
 ```
 
 Android field queue checks:
@@ -107,6 +122,7 @@ GitHub runs focused onboarding and institution checks; see [CI and dependency ma
 Web interface standardization is approved and underway. See the [design system](docs/DESIGN_SYSTEM.md) and [audit and implementation plan](docs/known-issues/ui-ux-audit.md).
 
 - [Documentation index](docs/README.md)
+- [Frontend views, components and navigation maps](docs/reference/frontend/README.md)
 - [Coach field OpenAPI contract](apps/backend/openapi.json), served per instance at `/v1/openapi.json` for Swagger UI imports.
 - [Requirements, stages, and gates](docs/requirements/README.md)
 - [Target architecture](docs/architecture/README.md)
@@ -121,3 +137,15 @@ Web interface standardization is approved and underway. See the [design system](
 - [Verification record and limitations](docs/verification/README.md)
 
 Work one approved stage at a time. Do not claim a feature, deployment, privacy compliance, or offline reliability until the corresponding acceptance evidence exists. Keep university legal/privacy requirements for confirmation by each institution; this project does not claim jurisdiction-specific compliance.
+
+### Workout migration check
+
+With the local Docker database running, run `npm run test:workout-foundation` from the repository root. It verifies the beta.3 additive migration in a disposable populated database and generates matching client/transport types. It does not modify preview records. See [testing](docs/testing/README.md#additive-workout-migration) and [upgrade guidance](docs/operations/README.md#additive-workout-foundation-upgrade).
+
+For the transactional scheduling and recording journey, run `npm run test:workout-sequence`; it uses the same disposable database/API isolation. The new web scheduling controls and Android workout capture remain pending.
+
+## Backend reference
+
+The [backend inventory](docs/reference/backend/README.md) documents every table, field and route. Run `npm run backend:inventory:check` for drift; migration changes require `npm run backend:inventory:database` with Docker.
+
+Workout template and group-result development checks: `npm run test:group-workouts`. The [canonical instance walkthrough](docs/testing/instance-validation.md#workout-templates-and-group-workouts--unreleased-beta3) covers the unreleased web flow; individual native capture is implemented in source with [role validation](docs/testing/instance-validation.md#native-individual-workouts--unreleased-beta3); group capture and native device acceptance remain pending.

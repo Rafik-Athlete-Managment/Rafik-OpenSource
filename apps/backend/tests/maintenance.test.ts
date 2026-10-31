@@ -1,3 +1,4 @@
+import { apiOrigin } from "./test-target.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
@@ -6,7 +7,7 @@ import { utimesSync, existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { db } from "../server/db.ts";
 import { writePrivate, removePrivate } from "../server/private-bytes.ts";
-import { organizationFixture, call } from "./organization-fixture.ts";
+import { organizationFixture } from "./organization-fixture.ts";
 after(() => db.$disconnect());
 test("local recovery restores private bytes with metadata; orphan cleanup honors references and grace period", async () => {
   const f = await organizationFixture(),
@@ -16,36 +17,32 @@ test("local recovery restores private bytes with metadata; orphan cleanup honors
   try {
     const user = await f.person(),
       id = randomUUID(),
-      body = "Synthetic recovery test bytes";
-    const registered = await call(user, "/v1/commands/register_resource", {
-      p_id: id,
-      p_title: "Recovery test",
-      p_filename: "recovery.txt",
-      p_type: "text/plain",
-      p_bytes: Buffer.byteLength(body),
-    });
-    assert.equal(registered.status, 200, JSON.stringify(registered));
-    path = registered.data.object_path;
+      body = "GIF89a Synthetic recovery test bytes";
+    const institution = await f.create(user);
     const uploaded = await fetch(
-      "http://127.0.0.1:55331/v1/files/" + encodeURIComponent(path),
+      apiOrigin +
+        "/v1/assets/" +
+        id +
+        "?institution=" +
+        institution +
+        "&view=admin&purpose=exercise&filename=recovery.gif",
       {
         method: "PUT",
         headers: {
           Cookie: user.cookie,
           "x-rafik-client": "web",
-          "Content-Type": "text/plain",
+          "Content-Type": "image/gif",
+          "x-filename": "recovery.txt",
         },
         body,
       },
     );
-    assert.equal(uploaded.status, 200);
-    assert.equal(
-      (await call(user, "/v1/commands/finish_resource", { p_id: id })).status,
-      200,
-    );
+    assert.equal(uploaded.status, 200, await uploaded.text());
+    path = `organization/${institution}/${id}`;
     const hash = (value: string) =>
         createHash("sha256").update(value).digest("hex"),
-      location = (value: string) => resolve(".local/files", hash(value)),
+      location = (value: string) =>
+        resolve(process.env.RAFIK_TEST_FILES || ".local/files", hash(value)),
       old = new Date(Date.now() - 2 * 86400000);
     await writePrivate(orphan, Buffer.from("old unreferenced test file"));
     await writePrivate(recent, Buffer.from("new unreferenced test file"));

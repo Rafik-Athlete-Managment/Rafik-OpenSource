@@ -18,7 +18,7 @@ defineProps<{
         )
       "
       :items="
-        items.map((x) => ({ label: x.name, value: x.completed_sessions, href: base + '/calendar' }))
+        items.map((x) => ({ label: x.name, value: x.completed_sessions, href: base + '/schedule' }))
       "
       :unit="l('sessions', 'جلسة')"
     />

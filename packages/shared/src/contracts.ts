@@ -6,6 +6,30 @@ export type ApiUser = {
 
 export type ApiErrorBody = { message: string }
 
+/** Server implementations, not grants to the signed-in account. */
+export type FieldCapabilities = {
+  protocol: 1
+  features: {
+    attendance: boolean
+    assessments: boolean
+    event_completion: boolean
+    individual_workout_recording: boolean
+    group_workout_recording: boolean
+    day_only_calendar: boolean
+  }
+}
+
+export type WorkoutTemplate = {
+  id: string
+  institution_id: string
+  title: string
+  revision: number
+  archived: boolean
+  can_edit: boolean
+  workout: import('./database.types.ts').Json
+  updated_at: string
+}
+
 /** Minimal calendar projection retained by the Android attendance client. */
 export type FieldAttendance = 'unmarked' | 'present' | 'absent' | 'excused'
 export type FieldEvent = {
@@ -80,6 +104,89 @@ export type FieldFinishCommand = {
 }
 export type FieldCommand = FieldAttendanceCommand | FieldResultCommand | FieldFinishCommand
 
+/** Server-derived sequence state; clients must not select a different plan day. */
+export type WorkoutAgendaItem = {
+  /** Explicit trainer-only opt-in; absent on ordinary dashboard reads. */
+  field_workout?: FieldWorkoutPackage | null
+  assignment_id: string
+  member_id: string
+  member_name: string
+  title: string
+  goal: string | null
+  cursor: number
+  preview?: {
+    minutes: number | null
+    exercise_count: number
+    prescribed_sets: number
+    exercises: { name: string; name_ar?: string; sets: number; kind: string }[]
+    muscle_focus: string[]
+    cover?: string
+  }
+  day: { id: string; name: string; nameAr?: string } | null
+  state: 'unscheduled' | 'scheduled' | 'ready' | 'overdue' | 'in_progress' | 'paused'
+  blocked: 'participation_unavailable' | 'assignment_unavailable' | 'no_workout_days' | null
+  occurrence: {
+    id: string
+    revision: number
+    starts_at: string | null
+    ends_at: string | null
+    timezone: string
+    training_date: string
+  } | null
+  session: { id: string; recorded_mode: string; can_record?: boolean } | null
+  can_start: boolean
+  can_schedule: boolean
+}
+
+export type FieldWorkoutEntry = {
+  exercise_id?: string | null
+  exercise_key: string
+  set_index: number
+  reps: number
+  load: number
+  unit: 'kg' | 'lb'
+  seconds: number | null
+  metres: number | null
+  effort: number | null
+  completed: boolean
+}
+/** Minimal text-only immutable prescription; no files, clinical data or correction history. */
+export type FieldWorkoutPackage = {
+  id: string
+  institution_id: string
+  assignment_id: string
+  member_id: string
+  member_name: string
+  occurrence_id: string | null
+  title: string
+  day_id: string
+  day_name: string
+  day_name_ar?: string
+  starts_at: string | null
+  training_date: string
+  timezone: string
+  allow_provisional_start: boolean
+  can_record: boolean
+  exercises: {
+    key: string
+    name: string
+    name_ar: string
+    kind: 'strength' | 'timed' | 'distance'
+    rest: number
+    note: string
+  }[]
+  targets?: FieldWorkoutEntry[]
+  entries: FieldWorkoutEntry[]
+  session: { id: string; version: number; note: string; completed_at: string | null } | null
+}
+export type WorkoutAgenda = {
+  queue?: 'recording' | 'today' | 'planning' | 'actionable' | null
+  items: WorkoutAgendaItem[]
+  total: number
+  offset: number
+  limit: number
+}
+
 export type AthletePlanStatus = 'active' | 'upcoming' | 'expired' | 'ended'
 export type AthletePlanSummary = {
   id: string
@@ -95,6 +202,14 @@ export type AthletePlanSummary = {
   goal: string | null
   sport: string | null
   revision: number
+  adaptation_revision?: number
+  /** Read-only next-workout summary for current plans (same state rule as the workout agenda); null otherwise. */
+  next_workout?: {
+    state: WorkoutAgendaItem['state']
+    starts_at: string | null
+    training_date: string | null
+    timezone: string | null
+  } | null
   version: {
     id: string
     title: string

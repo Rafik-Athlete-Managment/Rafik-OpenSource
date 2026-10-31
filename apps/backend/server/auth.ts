@@ -13,7 +13,7 @@ import {
   ensureProfileInTransaction,
   type Actor,
 } from "./db.ts";
-import { acceptInvitationSignup } from "./workspaces.ts";
+import { acceptInvitationSignup } from "./institution.ts";
 import { strongPassword } from "@rafik/shared/password";
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -202,7 +202,7 @@ function remoteKey(req: IncomingMessage) {
   return forwarded || req.socket.remoteAddress || "unknown";
 }
 async function setupStatus() {
-  const institutions = await db.workspaces.count({
+  const institutions = await db.institutions.count({
     where: { kind: "organization" },
   });
   return { initialized: institutions > 0 };
@@ -215,12 +215,12 @@ async function initialSetup(
   await rateLimit(`setup:${remoteKey(req)}`, 10, 600);
   const email = emailOf(body.email),
     name = nameOf(body.name),
-    workspaceName = institutionName(body.institution),
+    institutionLabel = institutionName(body.institution),
     password = validatePassword(body.password),
     encoded = await passwordHash(password);
   const user = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(1179406164,3)::text`;
-    if ((await tx.workspaces.count({ where: { kind: "organization" } })) > 0)
+    if ((await tx.institutions.count({ where: { kind: "organization" } })) > 0)
       throw new ApiError(409, "setup_already_complete");
     const created = await tx.users.create({
       data: {
@@ -230,29 +230,29 @@ async function initialSetup(
       },
     });
     await ensureProfileInTransaction(tx, actor(created), name);
-    const institution = await tx.workspaces.create({
+    const institution = await tx.institutions.create({
       data: {
         id: randomUUID(),
         kind: "organization",
-        name: workspaceName,
+        name: institutionLabel,
         created_by: created.id,
       },
     });
-    await tx.workspace_members.create({
+    await tx.institution_members.create({
       data: {
         id: randomUUID(),
-        workspace_id: institution.id,
+        institution_id: institution.id,
         user_id: created.id,
         roles: ["admin"],
         name,
       },
     });
-    await tx.workspace_events.create({
+    await tx.institution_audit_events.create({
       data: {
-        workspace_id: institution.id,
+        institution_id: institution.id,
         actor_id: created.id,
         kind: "organization_created",
-        detail: { name: workspaceName, setup: true },
+        detail: { name: institutionLabel, setup: true },
       },
     });
     await tx.$queryRaw`SELECT public.claim_instance_branding(${created.id}::uuid)`;
@@ -312,7 +312,7 @@ export async function authRoute(
       accepted = await acceptInvitationSignup(token, email, name, encoded);
     return {
       ...(await session(res, actor(accepted.user))),
-      workspace_id: accepted.workspace_id,
+      institution_id: accepted.institution_id,
       role: ["admin", "trainer", "trainee"].find((r) =>
         accepted.roles.includes(r),
       ),
@@ -328,34 +328,40 @@ export async function authRoute(
         {
           token_hash: string;
           user_id: string;
-          workspace_id: string;
+          institution_id: string;
           created_by: string;
           expires_at: Date;
         }[]
-      >`SELECT token_hash,user_id,workspace_id,created_by,expires_at FROM identity.password_setup_tokens WHERE token_hash=${hash(body.token as string)} FOR UPDATE`;
+      >`SELECT token_hash,user_id,institution_id,created_by,expires_at FROM identity.password_setup_tokens WHERE token_hash=${hash(body.token as string)} FOR UPDATE`;
       const link = links[0];
       if (!link || link.expires_at <= new Date())
         throw new ApiError(404, "password_setup_unavailable");
-      const [member, creator, workspace, account] = await Promise.all([
-        tx.workspace_members.findFirst({
+      const [member, creator, institution, account] = await Promise.all([
+        tx.institution_members.findFirst({
           where: {
-            workspace_id: link.workspace_id,
+            institution_id: link.institution_id,
             user_id: link.user_id,
             active: true,
           },
         }),
-        tx.workspace_members.findFirst({
+        tx.institution_members.findFirst({
           where: {
-            workspace_id: link.workspace_id,
+            institution_id: link.institution_id,
             user_id: link.created_by,
             active: true,
             roles: { has: "admin" },
           },
         }),
-        tx.workspaces.findUnique({ where: { id: link.workspace_id } }),
+        tx.institutions.findUnique({ where: { id: link.institution_id } }),
         tx.users.findUnique({ where: { id: link.user_id } }),
       ]);
-      if (!member || !creator || !workspace || workspace.archived || !account)
+      if (
+        !member ||
+        !creator ||
+        !institution ||
+        institution.archived ||
+        !account
+      )
         throw new ApiError(404, "password_setup_unavailable");
       await tx.users.update({
         where: { id: account.id },

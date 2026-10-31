@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-29",
+  "branch": "codex/single-institution-cleanup",
+  "baseline": "aed759a",
+  "checks": {
+    "group_api": "passed",
+    "delegated_regression": "passed",
+    "individual_sequence_regression": "passed in its own seeded disposable database",
+    "populated_forward_migration": "passed",
+    "copy_identity_unit": "passed",
+    "swagger": 2,
+    "landing_content": 4,
+    "browser": {
+      "chromium": "passed on final production build",
+      "webkit_phone": "passed; same product UI, final Chromium-only wait correction was test-only",
+      "states": [
+        "English/light composer and participant editor",
+        "Arabic/dark athlete review"
+      ],
+      "axe": "athlete review only",
+      "layout": "composer, participant background, athlete review"
+    },
+    "types": [
+      "frontend",
+      "backend"
+    ],
+    "inventories": {
+      "models": 58,
+      "columns": 483,
+      "routes": 69,
+      "vue_files": 102,
+      "screen_files": 49,
+      "browser_routes": 47
+    }
+  },
+  "landing": {
+    "pr": "https://github.com/KenseiEmam/rafik-landing/pull/41",
+    "commit": "0008ede"
+  },
+  "scopeLimits": [
+    "No preview reset/reseed/migration",
+    "No full browser suite or Android build",
+    "No physical/native offline upgrade acceptance",
+    "Manual founder walkthrough not accepted by automation"
+  ],
+  "sources": {
+    "apps/backend/server/group-workouts.ts": "bfaa50e19658b4ccb5a6082a2192689dd98b1e747e55720b56f50f7dee95be15",
+    "apps/backend/server/workout-templates.ts": "8c73ae24a0417a377d995f7729f42a07b298985b18164e3a7e1d62814abfb1c3",
+    "apps/backend/server/programming.ts": "0c9930b4846d57613564e4aa9b67888ac176c515f5b7b36917bde5282048bb02",
+    "apps/backend/prisma/migrations/202610290900_group_workouts/migration.sql": "74c381e0b1e12c589452fc12d5ce115409a49b27bfc5f97cc91378ef22884b0e",
+    "apps/frontend/src/features/institution/GroupWorkoutPanel.vue": "a65451f63ebcb661601a16a359c64f7d27640669a250aaf8597fd798a4ad74f3",
+    "apps/frontend/tests/group-workouts.e2e.ts": "308894d9c90a2d75dc6e1c3f8bf3fc9f6bdf657ba046b22c668b15bdde8e88fd"
+  }
+}

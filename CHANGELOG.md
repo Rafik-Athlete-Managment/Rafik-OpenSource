@@ -2,6 +2,181 @@
 
 ## Unreleased
 
+- Consolidate shared workout types and prescribed-entry projection, type active runtime JSON/SQL boundaries, separate the authorized agenda read model and controlled native exercise UI, and fix platform institution counts. Add focused component/default-entry and backend inventory portability checks to CI.
+
+- Consolidate duplicate fixture/draft/calendar helpers, remove five obsolete audit runners and five unused legacy interfaces, retain isolated browser aliases and clean duplicated testing guidance.
+
+- Normalize maintained code line endings for consistent formatter checks across local and Linux checkouts; keep formatting separate from behavior changes.
+
+- Remove verified unused code and enforce unused-local/parameter checks across all TypeScript workspaces, preserving authorization effects, fixture setup and component interfaces.
+
+- Audit all active workspaces for typing, duplication, unused code and styling debt. Share web/native workout measurement facts, type the backend field-package mapper, consolidate native entry projection and add an independent shared-package CI check without changing public contracts or stored data. Record existing formatting failures and deferred structural/CSS work.
+
+- Add source-level Android individual workout downloads and provisional offline start/result capture in the existing encrypted cache. Exact start/save replay reuses server sequence/permission checks; measurement-aware actuals, explicit completion, recovery sharing, rejected-save review and bounded saved/online lists are included. Group recording, rendered/physical Android acceptance and release packaging remain pending; no new APK is published.
+
+- Add authenticated, read-only native capability discovery and an English/Arabic Server compatibility disclosure in the Android schedule. Missing contracts, denied sessions and connection failures remain distinct without changing saved work. The subsequent individual capture slice is listed above; group capture and day-only attendance calendar remain unavailable. No release APK is produced here.
+
+- Distinguish completed sessions and assessments in the calendar and booked cards with semantic markers/tags. Show active sign-in feedback and block duplicate submissions. Record sealing is specified for the release after beta.3 and is not enabled here.
+
+- Keep the shared group-workout preview collapsed by default and preserve its explicit open/closed choice when selecting another athlete or reloading. Keep the desktop athlete roster sticky while the recording sheet scrolls.
+
+- Make generated frontend navigation references identical across CRLF and LF source checkouts, with a cross-platform generator regression in web CI. Register the workout-template copy regression with Vitest, matching the frontend test runner. Align onboarding acceptance with the approved collapsible sidebar.
+
+- Group events open with attendance at the top. Recording uses a searchable desktop athlete roster or phone selector, one shared workout preview and the existing recorder/review in place. Athlete selection, roster search and review mode survive reload; account-scoped local recording drafts retain unsent values without claiming server acknowledgment. Participant adaptations, explicit completion and skip requirements remain unchanged.
+
+- Share the exercise-authoring card between Workout templates and Programs, with searchable/removable same-type alternatives, grouping/ordering, per-set targets and coaching notes. Show available media in a credited dialog; compact desktop thumbnails align with exercise identity in editors and shared template/program previews. Phones retain the preview action.
+
+- Align the new workout-template editor, preview, picker and group-results screens with existing type/spacing tokens. Use People’s tabs-then-search layout, keep Programs-style full-width Add exercise, place its first-use action inside the empty card, and separate save actions in the existing editor footer. Improve phone form layout and exercise-picker label spacing.
+
+- Replace the workout template archive checkbox with the shared Active/Archived tabs, reset pagination on status changes and hide stale rows while the other collection loads.
+
+- Backport fixes for Expo tooling prototype poisoning and bounded-collection allocation, with explicit plugin/output budgets. Install-time version/hash guards and focused regressions preserve the existing SDK; upstream version-based audit alerts remain visible.
+
+- Update transitive node-forge to 1.4.2 and fast-uri to 3.1.9 for published security fixes. Keep the existing Expo SDK and platform lock metadata; document remaining upstream Zod/deepmerge tooling advisories separately from clean web/API production audits.
+
+- Unreleased beta.3: Workout templates library with dedicated authoring/preview and independent imports into programs or athlete plans. Group events freeze a template/roster; designated coaches adapt and record separate participant results, with explicit skips, attributed history and athlete-own read-only review. Attendance and individual plan progression stay separate. Native offline workout capture and workout sections remain later scope.
+
+- Coach analytics: the Experience tab keeps the summary cards and shows its ratings as chart cards like Training activity and Delivery & capacity, instead of replacing the page layout. Each card leads with its average and response count; the "not an overall coach score" note moves to How to read these numbers.
+
+- Rename the consent-gated participation-status feature to "Athlete health" everywhere in the web app: navigation, page title, the coach overview panel and its link, the athlete profile tab, Help, activity-log entries and coach-scope descriptions. Routes, APIs and stored data are unchanged.
+
+- Link the canonical full-role instance walkthrough directly from setup and deployment guidance so developers and institution owners can validate their installation.
+
+- Web timestamps now follow the account timezone across workout/event summaries, history, activity, messages and notifications. Add a timezone-labelled digital clock linking to account settings in the desktop header and phone menu. Keep date-only values and explicit booking/recurrence zones unchanged. Tighten the vertical utility footer spacing.
+
+- Fix timezone options opening behind scheduling side panels. The shared picker now uses the overlay-popup layer above modal backdrops and panels.
+
+- Schedule an event now separates plan workouts, custom attendance events and assessments. Plan workouts reuse the authorized planning queue and exact scheduling command, without a second event name or duplicate workout. Existing custom drafts and makeup links remain recoverable.
+
+- Restore single-open collapsible sidebar sections, automatically opening the active route's section. Keep desktop utility commands outside the navigation scroller in a vertical column; retain scrolling for short windows and reduced-motion support.
+
+- CI fixes (also red on the base branch): the retired-domain migration check now compares only columns that existed before retirement, so later additive columns with defaults (for example `timing_mode`, `adaptation`) no longer fail it. Overview pages show the institution name above the heading, and the empty-database onboarding spec reopens Invite people for its second invitation, as the form closes after success.
+- Coach overview: Today's work, Needs scheduling and Follow-up are cards with bordered row lists, refresh buttons at the heading's end, a clear empty-queue state and time-led event rows (shared with the athlete and admin dashboards). Exercises filters fit two rows (search and sort, then five filters with the count). Plan scheduling is a card with a status line, method cards, aligned date fields and weekday chips; Program preview sessions are collapsible cards with numbered exercises. Opening a chat or contact focuses the message box (not on touch devices). Training groups are compact single rows with member summary, a message icon and Edit.
+- Administrator and athlete UX revamp. Admin Overview: period control and Open full analytics beside the heading, stat cards, and one Administration shortcut panel. People & access: name opens the profile, with Message and a labelled Manage button (duplicate profile icon removed). Activity: plain-language entries for every recorded change, grouped by day, with time, affected member and who acted (names resolved by the server). Institution settings: choose sport or specialty before naming it. Injury-status consent setup: per-athlete age group and guardian attestation on each row, status tags and a Needs setup filter. Unique sidebar icons, with Programs under Library for admins. Athletes: icon-only Refresh workouts, readable exercise names for older snapshots, athlete-appropriate Programs copy without staff tags, Rated/Not rated yet on feedback, and compact Notifications with unread dots and Mark all read.
+- Theme revamp: cards, dialogs and menus now sit on brighter layers than the page with quiet borders and small tokenized shadows, in the style of shadcn-vue. Text fields get their own field fill, a clearer control border and an accent focus ring. Selected tiles and chips use the accent tint, and Overview counts that need action are raised while empty ones stay flat. Layers derive from institution branding, so custom palettes keep the hierarchy in light and dark.
+- Messages follows the common chat-app pattern: a Chats tab for existing conversations and a Contacts tab for groups and people. Search filters the current tab as you type (no Enter needed) while the server search refines in the background. Opening a contact reopens its existing private chat and returns to Chats. The composer puts attach, privacy note and Send on one row, and the message history now fills tall windows instead of leaving empty space below the composer.
+- Coach UX revamp, phase 5: Messages, Nutrition plans and the Analytics athlete finder search as you type; the empty conversation pane offers Start a conversation and `?tab=` opens a directory tab. Coach Injury status lists shared statuses as rows with profile links, status tags, formatted dates and the unknown-is-not-cleared rule. Nutrition plans open athlete choice from `?create=1`.
+
+- Coach UX revamp, phase 4: read-only program pages use the program name as the title, put Make an editable copy and Assign in the action bar and show compact reference positions. Exercises fixes the clipped sort control and overflowing pagination. Resources moves upload into a dialog from the header (an empty library keeps the inline dropzone) and takes filters out of the boxed panel. Groups and assessment templates search as you type and explain their empty states, including that coaches see groups they created or belong to.
+
+- Coach UX revamp, phase 3: the Schedule calendar keeps its original controls and layout; calendar chips show start time and an event-type colour; the event list searches as you type. Event creation starts with Training/Assessment choice cards and shows a live summary; template search is live. Event detail puts status and Reschedule/Complete in the header, moves Reassign and Cancel (with confirmation) into a menu, opens rescheduling and staffing in side panels, and records attendance with per-athlete choices, Mark everyone present and one Save that sends each changed athlete's exact command.
+
+- Coach UX revamp, phase 2: Athlete plans are compact rows with each plan's next-workout state (a read-only `next_workout` summary computed by the same rule as the workout agenda) and a Schedule shortcut that opens the plan's scheduling panel. The assigned plan separates navigation links from actions, moves End plan into a menu behind a confirmation dialog, and adds a plan summary. People links names to profiles, hides the single-role tab for coaches and adds Assign/Schedule/Nutrition actions. Athlete profiles open on a summary of plans, recent workouts, assessments, nutrition and participation, with Assign a program starting an athlete-first flow through Programs into the existing assignment wizard.
+
+- Coach UX revamp, phases 0–1: flat always-visible navigation sections (My feedback moves to the sidebar footer links); shared overflow menu, side panel, record-row, attention-strip and filter-chip patterns; search-as-you-type with Enter to submit. Coach Overview leads with separate clickable counts, compact workout rows with one primary action and a menu, scheduling/skip in a side panel, a New menu, and one tabbed follow-up panel that shows only non-empty queues. Workout history gains server-side status filters (awaiting review, in progress, reviewed). Recording gets a sticky progress/save bar and history panel; Review shows status, keeps feedback in view and offers Next to review. No permission, command or schema change.
+
+- Record the coach dashboard UX audit and phased revamp plan, founder decisions on search and Schedule views, and deferred terminology as a known issue. Documentation only; no behavior changes.
+
+- Keep supporting/primary coach selections in one checked list; add messaging directory tabs and per-row institution discovery; fix athlete-plan adaptation to update its existing assignment rather than publishing a library copy, preserving scheduled snapshots, cursor, policy, audit and exact recovery.
+
+- Separate light-theme cards from the page using a seven-percent ink tint and derive supporting text from the institution ink/canvas pair. Dark-theme surface tokens are unchanged.
+
+- Simplify assessment-event template selection to one visible server search and a selectable list with test counts, retain the selected template through no-match searches, and add bilingual event-name examples.
+
+- Add versioned program defaults for automatic daily preparation, editable during creation and editing, with explicit per-assignment opt-out, bounded dates/timezone and atomic policy creation. Existing plan policies remain unchanged by program edits.
+
+- Add opt-in per-plan weekly scheduling and automatic day-only workout preparation, exact policy save/stop, current-authority checks, DST diagnostics, bounded worker retries and no duplicate unresolved work. Extend web plan/calendar/list/detail reads for explicit day-only events while default attendance calendar reads remain timed-only. No group progression or Android workout capture is enabled.
+
+- Refined role dashboards: athlete My day prioritizes workouts, events, food diary and coach messaging; administrator Institution overview leads with existing period-scoped workout/attendance reports before coverage and administrative actions. No new metric, permission or clinical projection.
+
+- Consolidate due and unfinished workouts into one Workouts to record list, separate from Needs scheduling. Refresh sibling queues after acknowledged changes without remounting active recorders, preserve prior pending-command scopes, and reject unconfirmed queue responses from outdated backends.
+
+- Lead every shared workout card with the workout/day name and show the program title beneath it, so different workouts from one program are distinguishable.
+
+- Introduce the approved Coaching desk: unfinished recordings, due workouts and today’s events lead; a limited athlete-status column retains unknown/consent boundaries. Awaiting-schedule work and compact primary-roster follow-up are separate. Add scoped, disjoint server queues before pagination and preserve recovery of the prior dashboard’s pending commands.
+
+- Redirect acknowledged coach workout completion to its review with delayed-navigation guards; separate review continuation controls from exercise content. Record a balanced coach-dashboard redesign proposal for founder review, without enabling speculative readiness metrics.
+
+- Consolidate dashboard workout discovery and follow-up under coaching priorities, including work awaiting scheduling. Add greeting/header actions, shared semantic status colors, clear staff workout cards and aligned scheduling fields. Use athlete-style explicit set checks in coach recording and remove duplicate success cards while retaining recovery and generated invitation/reset links.
+
+- Consolidate manual role walkthroughs into one version-scoped instance validation guide; contributor handoffs and landing refer to it rather than duplicating steps.
+
+- Let authorized coaches finish unfinished athlete-started workouts with preserved origin, completion attribution and exact retry. Allow empty optional review feedback, including reviews of valid zero-load/bodyweight results. Add exercise, duration, prescribed-set and declared muscle-focus previews to athlete workout cards.
+
+- Move assigned-plan review to dedicated pages with icon actions and an embedded adaptation editor based on the assigned version. Replace the athlete workout list with preview cards and a single heading/action toolbar. Standardize cancellation, removal and deletion controls in accessible red styling.
+
+- Connect individual workout progression to the web dashboard and athlete plans: discover due/overdue work, schedule/reschedule or skip with a reason, and start or resume the occurrence-bound workout. Athletes see the scheduled-time explanation instead of an arbitrary day chooser. Weekly recurrence, worker scheduling and group/native workout capture remain pending.
+
+- Restrict athlete program browsing to assigned immutable versions; block staff-only web routes before rendering.
+- Restore assigned coach group visibility and athlete-to-coach conversation initiation; show unstarted group conversations alongside new contacts without duplicating existing group channels.
+- Save primary/supporting coach selection without a second save button, collapse successful invitations, label exercise video availability, and expose participation-status navigation to staff.
+- Stabilize message typing, support Enter to send and Shift+Enter for newlines, reset exercise rest timers on exercise changes, and warn before leaving unfinished workouts.
+- Move food recording into an accessible dialog, start new entries with the food library, group diary entries by meal, and use two columns for group participant selection where space allows.
+
+- Standardize founder-validation handoffs with scoped role-based walkthroughs, expected results and failure-report guidance.
+
+### Breaking retirement
+
+- Remove 37 retired personal/team/business/file-store tables and exclusive SQL functions through a forward migration; preserve current institution data, histories and receipts.
+- Remove generic commands/queries/files, published-client aliases and old browser redirects. Replace current profile, support and account lifecycle dependencies with explicit endpoints.
+- Require coordinated backend/web/Android upgrade for beta.3; published beta.2 clients are unsupported. Keep the signing key and encrypted institutional queue identities.
+
+- Fix disposable backend SQL rehearsals to translate historical role/coaching migration identifiers into the current institution schema without changing deployed migrations.
+
+### Institution naming migration
+
+- Rename physical institution tables/columns and SQL/ORM metadata with a forward preservation migration.
+- Add disposable preservation/API CI guards and keep generated fixture sources aligned.
+- Adopt canonical instance-resolved institution APIs across web and Android; isolate published-client aliases. Preserve owner keys, pending commands, documents, receipts and private-file paths.
+
+### Backend audit and cleanup
+
+- Catalogue 94 tables, 761 columns and 65 routes with reviewed purposes and drift checks.
+- Remove four unused standalone reads; explicitly allowlist 11 compatibility commands and 33 query projections.
+- Retire billing simulation through a forward migration while preserving historical records. Add missing own workout-history/sequence exports, correct Prisma metadata and rename ten internal modules by domain.
+
+### Individual workout progression API
+
+- Add staff-authorized fixed-time individual scheduling, rescheduling and reasoned skips with exact command receipts. Scheduling binds a cycle position without advancing it; completion/skip advances once per assignment.
+- Connect bound workout start/save to participant occurrences, prevent early starts and arbitrary-day bypass, and preserve corrections without rewinding progress.
+- Ending/replacing assignments cancels unstarted bound work, pauses started work and cancels recurrence rules without deleting results. Generic calendar actions cannot bypass workout resolution.
+- Document the unreleased commands in OpenAPI. Web controls, recurring/day-only scheduling, group workouts and Android queue upgrades remain pending.
+
+### Beta.3 workout storage foundation
+
+- Add assignment sequence cursors, bounded weekly recurrence storage and unique per-assignment positions with attributed resolution fields.
+- Add scoped occurrence/participant links, timed event local dates and historical workout source snapshots without changing existing documents, IDs or receipts.
+- Preserve required assignment/timestamp contracts. Day-only events, additional group workout writes, worker progression and new web/Android recording remain subsequent slices.
+
+### Brand alignment
+
+- Adopt campaign round7 identity into the existing product design system, keeping operational controls, accessibility and institution theming.
+- Record source provenance, web alignment and native palette/type/logo follow-up for beta.3; no runtime redesign or APK change in this audit.
+
+### Beta.3 planning
+
+- Confirm correction/history and ended-assignment lifecycle policies; inventory the ten currently required generic command operations and historical export dependencies before API retirement.
+
+- Confirm repeating the published workout cycle while its assignment remains active; no automatic prescription progression.
+
+- Add a concrete technical review of event/participant storage, cycle/correction policies, explicit API allowlists and native queue migration; recommendations remain pending approval.
+
+- Record accepted individual session progression, bounded weekly scheduling and group additional-training rules.
+- Include offline individual/group workout recording in Android scope; propose cache/queue migration, coordinated API retirement and historical-data reconciliation before implementation.
+
+### Frontend source audit
+
+- Document all local Vue components, routed/embedded views, access boundaries and incoming/outgoing navigation with Mermaid maps and a repeatable inventory check.
+- Remove duplicated hidden per-page navigation, broken history/clients links and guest recorder/adoption UI; require institutional sign-in and owner scope for recording.
+- Highlight profile and delegated recording navigation consistently; suppress notifications into retired independent screens without deleting historical source data.
+- Retire the obsolete guest/standalone browser spec; keep focused institutional recorder coverage and document remaining acceptance limits.
+
+### Institution cleanup
+
+- Consolidate supported screens under plain feature names; remove 20 obsolete/duplicate Vue implementations and restore Resources/Nutrition routing.
+- Move shared commands out of retired feature folders; remove independent review/analytics/program API fallbacks.
+- Add a frontend view-graph guard against orphaned Vue files and missing supported routes.
+
+- Remove retired-feature routes outright; use the normal missing-page state, with no Tasks retirement page or workspace-chooser redirect.
+- Rename frontend institution/navigation folders, all institution-specific UI components/types, and associated styles; preserve database, asset and Android API compatibility identifiers.
+- Fix local recovery and orphan cleanup to use the API’s validated database/file target, including isolated tests.
+
+- Retire Tasks, its API and data through a guarded forward migration.
+- Remove workspace selection and additional-institution creation; retain institution permissions and native API compatibility.
+- Introduce flat role-derived browser routes, authorized legacy redirects and separate account/institution settings.
+
+### Previously recorded changes
+
 - Updated application repository, release, issue/PR and cloud-template links to Rafik-Athlete-Managment/Rafik-OpenSource following the GitHub organization transfer. Landing remains under KenseiEmam.
 
 - Rebuilt and verified the signed beta.2 Android bundle with the existing update key and new launcher artwork; publication-ready English/Arabic landing release and installation guidance accompanies it.

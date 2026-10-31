@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test'
 import { randomUUID, randomBytes } from 'node:crypto'
 import { resolve } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 test('platform operator has a separate audited account workflow and private deep links return through sign-in', async ({
   page,
 }, info) => {
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     restoreReason = `Restore isolated account ${randomUUID()}`
   try {
     await page.goto('/notifications?event=' + randomUUID())
@@ -17,6 +17,9 @@ test('platform operator has a separate audited account workflow and private deep
     await page.goto('/local-preview')
     await page.getByRole('button', { name: /Amina/ }).click()
     await expect(page).toHaveURL('/platform')
+    await expect(page.locator('.platform-row').first()).toContainText(
+      /(?:Open|Closed) · \d+ members/,
+    )
     await page.getByRole('combobox', { name: 'Area', exact: true }).selectOption('users')
     await page.getByRole('searchbox', { name: 'Search', exact: true }).fill(f.client.email)
     await page.getByRole('button', { name: 'Refresh results', exact: true }).click()
@@ -49,17 +52,17 @@ test('platform operator has a separate audited account workflow and private deep
 test('organization coach starts a private conversation with their assigned athlete from People and stays a participant', async ({
   page,
 }) => {
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     id = randomUUID()
   try {
-    await f.call(f.owner, '/v1/workspaces', {
+    await f.call(f.owner, '/v1/institutions', {
       id,
-      kind: 'organization',
+      kind: 'institution',
       name: 'Scoped communication',
     })
     const join = async (who: typeof f.coach, roles: string[]) => {
       const token = randomBytes(32).toString('hex')
-      await f.call(f.owner, `/v1/workspaces/${id}`, {
+      await f.call(f.owner, `/v1/institution`, {
         operation: randomUUID(),
         action: 'invite',
         id: randomUUID(),
@@ -67,25 +70,26 @@ test('organization coach starts a private conversation with their assigned athle
         roles,
         token,
       })
-      await f.call(who, `/v1/organization-invitations/${token}`, {})
+      await f.call(who, `/v1/invitations/${token}`, {})
     }
     await join(f.coach, ['trainer'])
     await join(f.client, ['trainee'])
-    const org = await f.call(f.owner, `/v1/workspaces/${id}?view=admin`),
+    const org = await f.call(f.owner, `/v1/institution?view=admin`),
       coach = org.members.find((m: any) => m.user_id === f.coach.id),
       client = org.members.find((m: any) => m.user_id === f.client.id)
-    await f.call(f.owner, `/v1/workspaces/${id}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'assign-trainer',
       id: client.id,
       revision: client.revision,
       trainer: coach.id,
     })
-    await f.login(page, f.coach, `/organization/${id}/trainer/messages`)
+    await f.login(page, f.coach, `/messages`)
     await page.setViewportSize({ width: 320, height: 568 })
-    // Conversations start from the People directory; the coach is always one of the two participants.
+    // Chats start from Contacts; the coach is always one of the two participants.
+    await page.getByRole('tab', { name: 'Contacts', exact: true }).click()
     await page
-      .getByRole('region', { name: 'People', exact: true })
+      .locator('.conversation-contacts')
       .getByRole('button', { name: /R4 Athlete/ })
       .click()
     await expect(page).toHaveURL(/messages\/[a-f0-9-]{36}$/)
@@ -110,12 +114,12 @@ test('organization coach starts a private conversation with their assigned athle
 test('large member selection searches the full roster and keeps reviewed choices across pages and reload', async ({
   page,
 }, info) => {
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     id = randomUUID()
   try {
-    await f.call(f.owner, '/v1/workspaces', {
+    await f.call(f.owner, '/v1/institutions', {
       id,
-      kind: 'organization',
+      kind: 'institution',
       name: 'Roster selection test',
     })
     const { execFileSync } = await import('node:child_process'),
@@ -143,11 +147,11 @@ test('large member selection searches the full roster and keeps reviewed choices
       ],
       {
         cwd: resolve(import.meta.dirname, '../../backend'),
-        input: `insert into public.workspace_members(id,workspace_id,name,roles) values ${people.map((p) => `('${p.id}','${id}','${p.name}',ARRAY['trainee'])`).join(',')};`,
+        input: `insert into public.institution_members(id,institution_id,name,roles) values ${people.map((p) => `('${p.id}','${id}','${p.name}',ARRAY['trainee'])`).join(',')};`,
         stdio: 'pipe',
       },
     )
-    await f.login(page, f.owner, `/organization/${id}/admin/groups`)
+    await f.login(page, f.owner, `/groups`)
     await page.getByRole('button', { name: 'New group', exact: true }).click()
     await page.getByLabel('Name', { exact: true }).fill('Reviewed roster selection')
     const picker = page.locator('.member-picker').first()

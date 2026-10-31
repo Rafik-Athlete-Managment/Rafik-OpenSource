@@ -2,13 +2,13 @@
 import { notifySuccess } from '../../lib/feedback'
 import PageHeading from '../../components/PageHeading.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'
+import { timestampLabel } from '../../lib/display-time'
 import AppUpdates from '../../components/AppUpdates.vue'
 import { onMounted, ref } from 'vue'
-import { cleanupAccountResources } from '../resources/files'
 import { useRouter } from 'vue-router'
 import { user, profile, refreshProfile, logout } from '../../app/auth'
-import { rpc, rows, request } from '../../lib/backend'
-import type { Session, Profile, Unit } from '../../lib/domain'
+import { request } from '../../lib/backend'
+import type { Profile, Unit } from '../../lib/domain'
 import { localSessions, diagnosticEvents, removeAccountLocalData } from '../../lib/storage'
 import { language, locale, t, errorMessage } from '../../lib/i18n'
 const router = useRouter()
@@ -19,19 +19,21 @@ const busy = ref(false),
   deleting = ref(false),
   confirmLogout = ref(false)
 const confirmation = ref(''),
-  error = ref(''),
-  message = ref('')
+  error = ref('')
 const pending = ref(0)
 const diagnostics = ref<{ name: string; at: string }[]>([])
 async function save() {
   busy.value = true
   error.value = ''
   try {
-    await rpc<Profile>('update_profile', {
-      p_name: name.value,
-      p_locale: locale.value,
-      p_units: units.value,
-      p_timezone: zone.value,
+    await request<Profile>('/v1/account/profile', {
+      method: 'PUT',
+      body: JSON.stringify({
+        p_name: name.value,
+        p_locale: locale.value,
+        p_units: units.value,
+        p_timezone: zone.value,
+      }),
     })
     await refreshProfile()
     notifySuccess(language('Account settings saved.', 'تم حفظ إعدادات الحساب.'))
@@ -54,47 +56,10 @@ function download(value: unknown, filename: string) {
 async function exportData() {
   busy.value = true
   try {
-    const sessions = await rows<Session>('sessions', 'client_id', user.value!.id)
-    const records = await Promise.all(
-      sessions.map((s) => rpc<Session>('session_document', { p_id: s.id })),
-    )
     download(
       {
-        organizations: await request('/v1/account/organizations'),
-        exportedAt: new Date().toISOString(),
-        profile: profile.value,
-        sessions: records,
+        ...(await request<Record<string, unknown>>('/v1/account/export')),
         localDrafts: await localSessions(user.value!.id),
-        plans: await rows('plans', 'coach_id', user.value!.id),
-        exercises: await rows('exercises', 'owner_id', user.value!.id),
-        coachingContext: await rows('client_context'),
-        relationships: await rows('coach_clients'),
-        assignments: await rows('assignments'),
-        scheduleExceptions: await rows('schedule_exceptions'),
-        coachingForms: await rows('coaching_forms'),
-        coachingRequests: await rows('coaching_requests'),
-        measurements: await rows('measurements'),
-        messages: await rows('messages'),
-        conversationReads: await rows('conversation_reads'),
-        nutritionGuidance: await rows('nutrition_guidance'),
-        savedFoods: await rows('saved_foods'),
-        mealEntries: await rows('meal_entries'),
-        appointmentSlots: await rows('appointment_slots'),
-        appointments: await rows('appointments'),
-        resources: await rows('resources'),
-        resourceShares: await rows('resource_shares'),
-        teams: await rows('teams'),
-        teamMembers: await rows('team_members'),
-        teamClients: await rows('team_clients'),
-        teamGroups: await rows('team_groups'),
-        teamGroupMembers: await rows('team_group_members'),
-        teamPlans: await rows('team_plans'),
-        teamResourceShares: await rows('team_resource_shares'),
-        teamAssignments: await rows('team_assignments'),
-        teamActivity: await rows('team_activity'),
-        businessAccounts: await rows('business_accounts'),
-        businessEvents: await rows('business_events'),
-        supportCases: await rows('support_cases'),
       },
       'rafik-data.json',
     )
@@ -122,9 +87,11 @@ async function deleteAccount() {
   error.value = ''
   const id = user.value!.id
   try {
-    await rpc('account_deletion_ready')
-    await cleanupAccountResources(id)
-    await rpc('delete_my_account', { p_confirmation: confirmation.value })
+    await request('/v1/account/deletion')
+    await request('/v1/account/deletion', {
+      method: 'POST',
+      body: JSON.stringify({ confirmation: confirmation.value }),
+    })
     await removeAccountLocalData(id)
     await logout()
     await router.replace('/')
@@ -186,7 +153,12 @@ function cancelDelete() {
         </p>
         <TimezonePicker id="timezone" v-model="zone" :label="t('timezone')" :disabled="busy" />
         <p class="small-print">
-          {{ language('Used to keep workout dates consistent.', 'لتوحيد تواريخ حصصك.') }}
+          {{
+            language(
+              'Times and the navigation clock use this timezone. Booking timezones and date-only workouts keep their original meaning.',
+              'تستخدم الأوقات وساعة التنقل هذه المنطقة الزمنية. تبقى مناطق الحجز وتواريخ التمارين دون وقت ثابت كما حُددت.',
+            )
+          }}
         </p>
         <button class="button" :disabled="busy">{{ busy ? t('saving') : t('save') }}</button>
       </form>
@@ -224,8 +196,11 @@ function cancelDelete() {
               )
             }}
           </p>
-          <RouterLink class="text-link" to="/history">{{
-            language('Open history to retry a save', 'افتح السجل لإعادة محاولة الحفظ')
+          <RouterLink class="text-link" to="/training">{{
+            language(
+              'Open training to retry a workout save',
+              'افتح التدريب لإعادة محاولة حفظ التمرين',
+            )
           }}</RouterLink>
           <p class="small-print">
             {{
@@ -238,7 +213,7 @@ function cancelDelete() {
           <ul class="event-list">
             <li v-for="(e, i) in diagnostics" :key="i">
               <code>{{ e.name }}</code
-              ><time>{{ new Date(e.at).toLocaleString() }}</time>
+              ><time>{{ timestampLabel(e.at) }}</time>
             </li>
           </ul>
           <button
@@ -258,7 +233,7 @@ function cancelDelete() {
               )
             }}
           </p>
-          <button v-if="!deleting" class="text-link danger" @click="deleting = true">
+          <button v-if="!deleting" class="text-link danger danger-action" @click="deleting = true">
             {{ t('deleteAccount') }}
           </button>
           <form v-else @submit.prevent="deleteAccount">
@@ -271,9 +246,12 @@ function cancelDelete() {
               autocomplete="off"
               pattern="DELETE"
               required
-            /><button class="button danger-button" :disabled="busy || confirmation !== 'DELETE'">
+            /><button
+              class="button danger-button danger-action"
+              :disabled="busy || confirmation !== 'DELETE'"
+            >
               {{ language('Permanently delete', 'حذف نهائي') }}</button
-            ><button class="text-link" type="button" @click="cancelDelete">
+            ><button class="text-link danger-action" type="button" @click="cancelDelete">
               {{ t('cancel') }}
             </button>
           </form>

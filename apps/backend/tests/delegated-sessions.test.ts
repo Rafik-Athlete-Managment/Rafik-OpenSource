@@ -1,85 +1,22 @@
+import {
+  institutionTestHelpers,
+  type Person,
+} from "./institution-test-helpers.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID, randomBytes, createHash } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { db } from "../server/db.ts";
-const base = "http://127.0.0.1:55331",
-  people: string[] = [],
+const people: string[] = [],
   spaces: string[] = [];
-type Person = { id: string; email: string; cookie: string };
+
+const { person, call, operation, institution, join, member } =
+  institutionTestHelpers(people, spaces, "delegated");
 after(async () => {
-  await db.workspaces.deleteMany({ where: { id: { in: spaces } } });
+  await db.institutions.deleteMany({ where: { id: { in: spaces } } });
   await db.users.deleteMany({ where: { id: { in: people } } });
   await db.$disconnect();
 });
-async function person(name: string): Promise<Person> {
-  const id = randomUUID(),
-    email = `delegated-${id}@rafik.test`,
-    token = randomBytes(32).toString("hex");
-  people.push(id);
-  await db.users.create({
-    data: { id, email, email_confirmed_at: new Date() },
-  });
-  await db.identity_sessions.create({
-    data: {
-      token_hash: createHash("sha256").update(token).digest("hex"),
-      user_id: id,
-      expires_at: new Date(Date.now() + 3600000),
-    },
-  });
-  const p = { id, email, cookie: "rafik_session=" + token };
-  await call(p, "/v1/commands/ensure_profile", { p_name: name });
-  return p;
-}
-async function call(p: Person, path: string, input?: unknown) {
-  const r = await fetch(base + path, {
-    method: input === undefined ? "GET" : "POST",
-    headers: {
-      Cookie: p.cookie,
-      "x-rafik-client": "web",
-      "Content-Type": "application/json",
-    },
-    body: input === undefined ? undefined : JSON.stringify(input),
-  });
-  return { status: r.status, data: await r.json() };
-}
-const operation = (action: string, args: object = {}) => ({
-  operation: randomUUID(),
-  action,
-  ...args,
-});
-async function institution(admin: Person, name: string) {
-  const id = randomUUID();
-  spaces.push(id);
-  assert.equal(
-    (await call(admin, "/v1/workspaces", { id, kind: "organization", name }))
-      .status,
-    200,
-  );
-  return id;
-}
-async function join(admin: Person, id: string, p: Person, role: string) {
-  const token = randomBytes(32).toString("hex");
-  const r = await call(
-    admin,
-    "/v1/workspaces/" + id,
-    operation("invite", {
-      id: randomUUID(),
-      email: p.email,
-      roles: [role],
-      token,
-    }),
-  );
-  assert.equal(r.status, 200, JSON.stringify(r));
-  assert.equal(
-    (await call(p, "/v1/organization-invitations/" + token, {})).status,
-    200,
-  );
-}
-async function member(admin: Person, id: string, p: Person) {
-  const r = await call(admin, `/v1/workspaces/${id}?view=admin`);
-  return r.data.members.find((m: { user_id: string }) => m.user_id === p.id);
-}
 const sport = (id: string, name: string, kind = "sport") =>
   operation("sport", {
     view: "admin",
@@ -97,7 +34,7 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     outsider = await person("Delegated Outsider"),
     athlete = await person("Delegated Athlete"),
     id = await institution(admin, "Delegated logging institution"),
-    ws = `/v1/workspaces/${id}`;
+    ws = `/v1/institution`;
   for (const [p, role] of [
     [primary, "trainer"],
     [support, "trainer"],
@@ -251,7 +188,7 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     (await call(primary, ws + "/sessions", save)).data,
     saved.data,
   );
-  const receipt = await db.workspace_operations.findUnique({
+  const receipt = await db.institution_operations.findUnique({
     where: { id: save.operation },
   });
   assert.equal(
@@ -260,25 +197,101 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     "receipts carry the coach, not the athlete",
   );
 
-  // A coach cannot edit a session the athlete logged themself.
+  // A coach may finish an athlete-started workout, preserving origin and exact retry.
   const own = await start(athlete, "trainee", footballPlan, plan.days[1].id);
   assert.equal(own.status, 200, JSON.stringify(own));
+  const finishOwn = operation("save", {
+    view: "trainer",
+    id: own.data.id,
+    revision: 1,
+    entries: own.data.entries.map((e: any) => ({
+      ...e,
+      load: 0,
+      reps: 10,
+      completed: true,
+    })),
+    note: "Coach finished athlete-started work",
+    complete: true,
+  });
+  const finishedOwn = await call(primary, ws + "/sessions", finishOwn);
+  assert.equal(finishedOwn.status, 200, JSON.stringify(finishedOwn));
+  assert.equal(finishedOwn.data.recorded_mode, "self");
+  assert.equal(finishedOwn.data.completed_by_role, "trainer");
+  assert.equal(finishedOwn.data.completed_by, p.id);
+  assert.deepEqual(
+    (await call(primary, ws + "/sessions", finishOwn)).data,
+    finishedOwn.data,
+  );
+  assert.equal(
+    (
+      await call(primary, ws + "/sessions", {
+        ...finishOwn,
+        operation: randomUUID(),
+        revision: 2,
+      })
+    ).status,
+    403,
+    "new coach corrections to completed self-logged actuals remain protected",
+  );
+  const reviewZero = operation("review", {
+    view: "trainer",
+    id: own.data.id,
+    revision: 2,
+    note: "",
+  });
+  const reviewedZero = await call(support, ws + "/sessions", reviewZero);
+  assert.equal(reviewedZero.status, 200, JSON.stringify(reviewedZero));
+  assert.ok(reviewedZero.data.reviewed_at);
+  assert.equal(reviewedZero.data.coach_note, "");
+  assert.equal(
+    reviewedZero.data.entries[0].load,
+    0,
+    "zero load is valid for bodyweight work",
+  );
+  assert.deepEqual(
+    (await call(support, ws + "/sessions", reviewZero)).data,
+    reviewedZero.data,
+  );
+  // History status filters apply before counting/paging and use the follow-up review rule.
+  const filtered = async (status: string) => {
+    const r = await call(
+      primary,
+      `${ws}/delivery?view=trainer&history=true&status=${status}&limit=50`,
+    );
+    assert.equal(r.status, 200, JSON.stringify(r));
+    assert.equal(r.data.total, r.data.sessions.length);
+    return r.data.sessions.map((x: any) => x.id as string);
+  };
+  const awaiting = await filtered("awaiting_review"),
+    reviewed = await filtered("reviewed"),
+    unfinished = await filtered("in_progress");
+  assert.ok(
+    awaiting.includes(delegated.data.id) && !awaiting.includes(own.data.id),
+  );
+  assert.ok(
+    reviewed.includes(own.data.id) && !reviewed.includes(delegated.data.id),
+  );
+  assert.ok(
+    unfinished.includes(supported.data.id) &&
+      !unfinished.includes(own.data.id) &&
+      !unfinished.includes(delegated.data.id),
+  );
   assert.equal(
     (
       await call(
         primary,
-        ws + "/sessions",
-        operation("save", {
-          view: "trainer",
-          id: own.data.id,
-          revision: 1,
-          entries: own.data.entries,
-          note: "",
-          complete: false,
-        }),
+        `${ws}/delivery?view=trainer&history=true&status=unknown`,
       )
     ).status,
-    403,
+    400,
+  );
+  const ownHistory = await call(
+    athlete,
+    "/v1/workouts/" + own.data.id + "/history?view=trainee",
+  );
+  assert.deepEqual(
+    ownHistory.data.items.map((h: any) => h.by),
+    ["athlete", "coach"],
   );
 
   // The athlete corrects the delegated record; every version stays attributed.
@@ -299,7 +312,7 @@ test("delegated workout logging: coach attribution, athlete correction, history,
   assert.equal(corrected.status, 200, JSON.stringify(corrected));
   const history = await call(
     athlete,
-    `/v1/organization-sessions/${delegated.data.id}/history?view=trainee`,
+    `/v1/workouts/${delegated.data.id}/history?view=trainee`,
   );
   assert.equal(history.status, 200, JSON.stringify(history));
   assert.deepEqual(
@@ -316,7 +329,7 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     (
       await call(
         support,
-        `/v1/organization-sessions/${delegated.data.id}/history?view=trainer`,
+        `/v1/workouts/${delegated.data.id}/history?view=trainer`,
       )
     ).status,
     403,
@@ -325,7 +338,7 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     (
       await call(
         support,
-        `/v1/organization-sessions/${supported.data.id}/history?view=trainer`,
+        `/v1/workouts/${supported.data.id}/history?view=trainer`,
       )
     ).status,
     200,
@@ -334,7 +347,7 @@ test("delegated workout logging: coach attribution, athlete correction, history,
     (
       await call(
         outsider,
-        `/v1/organization-sessions/${delegated.data.id}/history?view=trainer`,
+        `/v1/workouts/${delegated.data.id}/history?view=trainer`,
       )
     ).status,
     403,

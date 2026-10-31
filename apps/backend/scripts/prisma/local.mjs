@@ -52,7 +52,9 @@ else if (command === "seed") {
       "ON_ERROR_STOP=1",
     ],
     {
-      input: readFileSync(resolve(root, "prisma/seed.sql")),
+      input:
+        readFileSync(resolve(root, "prisma/seed.sql"), "utf8") +
+        "\nDELETE FROM public.institutions WHERE id='12000000-0000-4000-8000-000000000002';",
       stdio: ["pipe", "inherit", "inherit"],
     },
   );

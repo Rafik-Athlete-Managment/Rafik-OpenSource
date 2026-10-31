@@ -1,100 +1,370 @@
 <script setup lang="ts">
+import { institutionContext } from '../../app/institution'
+
+import { PhTray } from '@phosphor-icons/vue'
 import PageHeading from '../../components/PageHeading.vue'
-import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from 'reka-ui'
+import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { user, profile } from '../../app/auth'
-import { rows, rpc } from '../../lib/backend'
-import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
-import { language as l, locale, errorMessage, dateLabel } from '../../lib/i18n'
+import { request } from '../../lib/backend'
+import { language as l, errorMessage, locale } from '../../lib/i18n'
+import { dateLabel } from '../../lib/display-time'
 import { localDate } from '../../lib/dates'
-import type { Relationship, Profile } from '../../lib/domain'
-import {
-  nutrientKeys,
-  nutrientTotals,
-  type Food,
-  type Meal,
-  type Guidance,
-  type Nutrients,
-  type PlannedFood,
-  type CatalogFood,
-} from './model'
-import NutrientFields from './NutrientFields.vue'
+import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
+import { useCommand } from '../../lib/commands'
+import CommandStatus from '../../components/CommandStatus.vue'
+import MemberPicker from '../institution/MemberPicker.vue'
+import PageState from '../../components/PageState.vue'
 import MacroPlanner from './MacroPlanner.vue'
 import MealPlanEditor from './MealPlanEditor.vue'
-import FoodPicker from './FoodPicker.vue'
-import { useCommand } from '../teams/commands'
-import CommandStatus from '../teams/CommandStatus.vue'
-import PageState from '../../components/PageState.vue'
-const router = useRouter(),
-  route = useRoute(),
-  coach = route.path.startsWith('/coach')
-const baseKey = `nutrition:${user.value!.id}:${coach ? 'coach' : 'client'}`
-const scope = ref(String(route.query.client || '')),
-  date = ref(localDate(profile.value?.timezone || 'UTC'))
-const relationships = ref<Relationship[]>([]),
-  people = ref<Profile[]>([]),
-  guides = ref<Guidance[]>([]),
-  foods = ref<Food[]>([]),
-  meals = ref<Meal[]>([])
-const loading = ref(true),
-  selecting = ref(false),
+import MealFields from './MealFields.vue'
+import { nutrientKeys, nutrientTotals, type Nutrients, type PlannedFood } from './model'
+import './institution-nutrition.css'
+type Plan = {
+  id: string
+  revision: number
+  effective_on: string
+  expires_on: string | null
+  targets: Nutrients
+  meals: PlannedFood[]
+  guidance: string
+  author_id: string
+  created_at: string
+}
+type Meal = {
+  id: string
+  revision: number
+  logged_on: string
+  food: PlannedFood
+  note: string
+  removed: boolean
+}
+type Data = {
+  member: { id: string; name: string; active: boolean; roles: string[] } | null
+  today: string
+  date: string
+  sharing: { enabled: boolean; revision: number }
+  canReadDiary: boolean
+  current: Plan | null
+  latestRevision: number
+  plans: Plan[]
+  total: number
+  next: number | null
+  authors: { id: string; name: string }[]
+  removed: Meal[]
+  removedNext: number | null
+  meals: Meal[]
+  corrections: { id: string; revision: number; document: Meal; recorded_at: string }[]
+  correctionsNext: number | null
+}
+const route = useRoute(),
+  router = useRouter(),
+  institution = institutionContext().institution,
+  view = institutionContext().view,
+  trainee = view === 'trainee'
+const endpoint = `/v1/institution/nutrition`
+
+const selected = ref(String(route.query.member || '')),
+  date = ref(localDate(profile.value?.timezone || 'UTC')),
+  section = ref(route.query.plan ? 'history' : route.query.section === 'diary' ? 'diary' : 'plan'),
+  choosing = ref(!selected.value)
+const data = ref<Data>(),
+  loading = ref(false),
   error = ref(''),
-  notice = ref(''),
-  editing = ref(false),
-  confirmRemove = ref(''),
-  restored = ref(false)
-const plannedMeals = ref<PlannedFood[]>([]),
-  view = ref(coach ? 'plan' : 'record'),
-  showFoodLibrary = ref(false),
-  selectedCatalogFood = ref<CatalogFood>()
-const guidance = ref(''),
-  targets = ref<Nutrients>({}),
-  effective = ref(date.value),
-  copyFrom = ref(''),
-  selectedFood = ref('')
-const entry = ref(fresh()),
-  guidanceId = ref(crypto.randomUUID() as string),
-  guidanceRevision = ref(0)
+  editor = ref(false),
+  mealEditor = ref(false),
+  // Which tab hosts the plan editor: full targets (Plan) or only the example meals (Example).
+  editFocus = ref<'plan' | 'meals'>('plan'),
+  restored = ref(false),
+  savingDraft = ref(false),
+  draftError = ref(''),
+  review = ref(false),
+  removeId = ref(''),
+  historyMeal = ref('')
+const initialFood = (): PlannedFood => ({
+  name: '',
+  meal: 'breakfast',
+  quantity: 1,
+  basis: 1,
+  unit: 'serving',
+  nutrients: {},
+  source: l('Manual entry', 'إدخال يدوي'),
+})
+const plan = ref({
+  revision: 0,
+  effective_on: date.value,
+  expires_on: '',
+  targets: {} as Nutrients,
+  meals: [] as PlannedFood[],
+  guidance: '',
+})
+const meal = ref({ id: crypto.randomUUID() as string, revision: 0, food: initialFood(), note: '' })
+const hasPlanDraft = ref(false),
+  hasMealDraft = ref(false),
+  includeRemoved = ref(false)
+const keyFor = (member = selected.value, day = date.value) =>
+  `organization-nutrition:${user.value!.id}:${institution}:${view}:${member}:${day}`
 let disposed = false,
-  ready = false,
   generation = 0,
-  draftWrite = Promise.resolve(),
-  selectionGeneration = 0
-function fresh() {
+  draftGeneration = 0,
+  ready = false,
+  draftWrite = Promise.resolve()
+const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+function snapshot() {
+  return clone({
+    hasPlanDraft: hasPlanDraft.value,
+    hasMealDraft: hasMealDraft.value,
+    plan: plan.value,
+    meal: meal.value,
+    editor: editor.value,
+    editFocus: editFocus.value,
+    mealEditor: mealEditor.value,
+  })
+}
+watch(
+  [plan, meal, editor, editFocus, mealEditor, hasPlanDraft, hasMealDraft],
+  () => {
+    if (!ready) return
+    const key = keyFor(),
+      value = snapshot()
+    const draftStamp = ++draftGeneration
+    savingDraft.value = true
+    draftWrite = draftWrite
+      .then(() => storeDraft(key, value))
+      .then(() => {
+        if (!disposed && draftStamp === draftGeneration) {
+          savingDraft.value = false
+          draftError.value = ''
+        }
+      })
+      .catch(() => {
+        if (!disposed && draftStamp === draftGeneration) {
+          savingDraft.value = false
+          draftError.value = l(
+            'Could not keep a device draft. Keep this page open.',
+            'تعذر حفظ مسودة الجهاز. أبقِ الصفحة مفتوحة.',
+          )
+        }
+      })
+  },
+  { deep: true, flush: 'sync' },
+)
+function freshPlan(source = data.value?.current) {
   return {
-    id: crypto.randomUUID() as string,
-    name: '',
-    quantity: 1,
-    basis: 1,
-    unit: 'serving',
-    nutrients: {} as Nutrients,
-    source: l('Manual entry', 'إدخال يدوي'),
-    note: '',
-    meal: 'breakfast',
-    food_id: null as string | null,
-    revision: 0,
+    revision: data.value?.latestRevision || 0,
+    effective_on: data.value?.today || date.value,
+    expires_on: '',
+    targets: clone(source?.targets || {}),
+    meals: clone(source?.meals || []),
+    guidance: source?.guidance || '',
   }
 }
-const relevant = computed(() =>
-  guides.value
-    .filter((g) => g.relationship_id === scope.value)
-    .sort((a, b) => b.effective_on.localeCompare(a.effective_on) || b.revision - a.revision),
+async function load(reset = false, offset = 0, historyOffset = 0, removedOffset = 0) {
+  const stamp = ++generation
+  loading.value = true
+  error.value = ''
+  if (reset) {
+    ready = false
+    data.value = undefined
+    review.value = false
+    historyMeal.value = ''
+    removeId.value = ''
+  }
+  try {
+    await draftWrite
+    const q = new URLSearchParams({
+      view,
+      date: date.value,
+      offset: String(offset),
+      historyOffset: String(historyOffset),
+      removed: String(includeRemoved.value),
+      removedOffset: String(removedOffset),
+    })
+    if (selected.value) q.set('member', selected.value)
+    if (route.query.plan && reset) q.set('plan', String(route.query.plan))
+    if (historyMeal.value) q.set('meal', historyMeal.value)
+    const result = await request<Data>(`${endpoint}?${q}`)
+    if (disposed || stamp !== generation) return
+    data.value = result
+    if (trainee && result.member) selected.value = result.member.id
+    if (reset) {
+      hasPlanDraft.value = false
+      hasMealDraft.value = false
+      plan.value = freshPlan()
+      meal.value = { id: crypto.randomUUID(), revision: 0, food: initialFood(), note: '' }
+      editor.value = false
+      editFocus.value = 'plan'
+      mealEditor.value = false
+      restored.value = false
+      const draft = result.member ? await getDraft<ReturnType<typeof snapshot>>(keyFor()) : null
+      if (disposed || stamp !== generation) return
+      if (draft) {
+        hasPlanDraft.value = !!draft.hasPlanDraft
+        hasMealDraft.value = !!draft.hasMealDraft
+        plan.value = draft.plan
+        meal.value = draft.meal
+        editor.value = draft.editor
+        editFocus.value = draft.editFocus || 'plan'
+        mealEditor.value = draft.mealEditor
+        if (mealEditor.value) section.value = 'diary'
+        restored.value = true
+      }
+    }
+  } catch (e) {
+    if (!disposed && stamp === generation) {
+      data.value = undefined
+      error.value = errorMessage(e)
+    }
+  } finally {
+    if (!disposed && stamp === generation) {
+      loading.value = false
+      ready = true
+    }
+  }
+}
+async function choose(ids: string[]) {
+  if (locked.value) return
+  await draftWrite
+  selected.value = ids[0] || ''
+  choosing.value = !selected.value
+  await router.replace({ query: selected.value ? { member: selected.value } : {} })
+  if (!disposed) await load(true)
+}
+async function changeDate() {
+  await load(true)
+}
+const command = useCommand<string>(
+  `organization-nutrition:${institution}:${view}`,
+  async (_name, _result, args) => {
+    await draftWrite
+    if (args.action === 'publish' || args.action === 'meal')
+      await removeDraft(keyFor(String(args.member), String(args.draftDate)))
+    if (disposed || args.member !== selected.value || args.draftDate !== date.value) return
+    ready = false
+    if (args.action === 'publish') {
+      hasPlanDraft.value = false
+      editor.value = false
+      review.value = false
+    }
+    if (args.action === 'meal') {
+      hasMealDraft.value = false
+      mealEditor.value = false
+      meal.value = { id: crypto.randomUUID(), revision: 0, food: initialFood(), note: '' }
+    }
+    removeId.value = ''
+    restored.value = false
+    await load(false)
+  },
+  (_name, args) => request(endpoint, { method: 'POST', body: JSON.stringify(args) }),
+  {
+    // Action-specific confirmation once the server acknowledges the change.
+    successMessage: (name) =>
+      name === 'publish'
+        ? l('Nutrition plan published.', 'تم نشر خطة التغذية.')
+        : name === 'meal'
+          ? l('Food entry saved.', 'تم حفظ مدخل الطعام.')
+          : name === 'remove'
+            ? l('Food entry removed.', 'تمت إزالة مدخل الطعام.')
+            : name === 'sharing'
+              ? l('Diary sharing updated.', 'تم تحديث مشاركة السجل.')
+              : false,
+  },
 )
-const current = computed(() => relevant.value.find((g) => g.effective_on <= date.value))
-const dayMeals = computed(() =>
-  meals.value
-    .filter((m) => m.logged_on === date.value && (m.relationship_id || '') === scope.value)
-    .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+const locked = computed(
+  () => !command.state.ready || command.state.busy || !!command.state.pending || loading.value,
 )
-const totals = computed(() => nutrientTotals(dayMeals.value))
-const scopeName = (r?: Relationship) =>
-  people.value.find((p) => p.id === (coach ? r?.client_id : r?.coach_id))?.display_name || ''
+const canWrite = computed(
+  () => data.value?.member?.active && data.value.member.roles.includes('trainee'),
+)
+function send(action: string, args: Record<string, unknown>) {
+  if (locked.value || !data.value?.member) return
+  return command.run(action, {
+    ...args,
+    operation: crypto.randomUUID(),
+    action,
+    view,
+    member: data.value.member.id,
+    draftDate: date.value,
+  })
+}
+function closePlanEditor() {
+  editor.value = false
+  review.value = false
+}
+function showChanges(id: string) {
+  historyMeal.value = id
+  return load()
+}
+function reusePlan(value: Plan) {
+  hasPlanDraft.value = false
+  editPlan(value)
+  section.value = 'plan'
+}
+function revealInvalid(event: Event) {
+  const target = event.target as HTMLElement
+  const details = target.closest('details')
+  if (details) details.open = true
+}
+async function discardPlan() {
+  await load(false)
+  if (error.value || !data.value?.member) return
+  plan.value = freshPlan()
+  hasPlanDraft.value = false
+  editor.value = false
+  review.value = false
+}
+function publish() {
+  return send('publish', { ...plan.value, id: crypto.randomUUID() })
+}
+watch(
+  plan,
+  () => {
+    review.value = false
+  },
+  { deep: true, flush: 'sync' },
+)
+function editPlan(source = data.value?.current, focus: 'plan' | 'meals' = 'plan') {
+  if (!hasPlanDraft.value) plan.value = freshPlan(source)
+  hasPlanDraft.value = true
+  editor.value = true
+  editFocus.value = focus
+  section.value = focus === 'meals' ? 'example' : 'plan'
+  review.value = false
+}
+const editorSection = computed(() => (editFocus.value === 'meals' ? 'example' : 'plan'))
+async function editMeal(item?: Meal, food?: PlannedFood) {
+  if (item || food || !hasMealDraft.value)
+    meal.value = item
+      ? { id: item.id, revision: item.revision, food: clone(item.food), note: item.note }
+      : { id: crypto.randomUUID(), revision: 0, food: food ? clone(food) : initialFood(), note: '' }
+  hasMealDraft.value = true
+  mealEditor.value = true
+  section.value = 'diary'
+  await nextTick()
+  document
+    .querySelector<HTMLInputElement>(
+      !meal.value.food.name ? '.org-meal-editor .food-picker input' : '.org-meal-editor input',
+    )
+    ?.focus()
+}
+const totals = computed(() => nutrientTotals((data.value?.meals || []).map((m) => m.food)))
+const planTotals = computed(() => nutrientTotals(data.value?.current?.meals || []))
 const labels = {
   kcal: ['Energy', 'الطاقة'],
   protein_g: ['Protein', 'البروتين'],
   carb_g: ['Carbohydrate', 'الكربوهيدرات'],
   fat_g: ['Fat', 'الدهون'],
 }
+const label = (key: (typeof nutrientKeys)[number]) => l(labels[key][0]!, labels[key][1]!)
+const unit = (key: string) => (key === 'kcal' ? l('kcal', 'سعرة') : l('g', 'غ'))
 const mealLabel = (v: string) =>
   ({
     breakfast: l('Breakfast', 'الفطور'),
@@ -102,768 +372,674 @@ const mealLabel = (v: string) =>
     dinner: l('Dinner', 'العشاء'),
     snack: l('Snack', 'وجبة خفيفة'),
   })[v]
-const keyFor = (selected = scope.value, day = date.value) =>
-  `${baseKey}:${selected || 'private'}${coach ? '' : ':' + day}`
-function snapshot() {
-  return JSON.parse(
-    JSON.stringify({
-      entry: entry.value,
-      guidance: guidance.value,
-      targets: targets.value,
-      plannedMeals: plannedMeals.value,
-      effective: effective.value,
-      guidanceId: guidanceId.value,
-      guidanceRevision: guidanceRevision.value,
-      editing: editing.value,
-    }),
-  )
-}
-function persist() {
-  const key = keyFor(),
-    value = snapshot()
-  draftWrite = draftWrite
-    .then(() => storeDraft(key, value))
-    .catch(() => {
-      error.value = l(
-        'Could not keep a device draft. Keep this page open.',
-        'تعذر حفظ مسودة الجهاز. أبقِ هذه الصفحة مفتوحة.',
-      )
-    })
-  return draftWrite
-}
-watch(
-  [entry, guidance, targets, plannedMeals, effective, guidanceId, guidanceRevision, editing],
-  () => {
-    if (ready) void persist()
-  },
-  { deep: true, flush: 'sync' },
+const mealsByType = computed(() =>
+  ['breakfast', 'lunch', 'dinner', 'snack']
+    .map((kind) => ({
+      kind,
+      items: data.value?.meals.filter((item) => item.food.meal === kind) || [],
+    }))
+    .filter((group) => group.items.length),
 )
-async function loadRecords() {
-  if (disposed) return
-  const stamp = ++generation
-  const [rels, persons, gs, ms, fs] = await Promise.all([
-    rows<Relationship>('coach_clients', coach ? 'coach_id' : 'client_id', user.value!.id),
-    rows<Profile>('profiles'),
-    rows<Guidance>('nutrition_guidance'),
-    coach ? rows<Meal>('meal_entries') : rows<Meal>('meal_entries', 'client_id', user.value!.id),
-    coach ? Promise.resolve([]) : rows<Food>('saved_foods', 'owner_id', user.value!.id),
-  ])
-  if (disposed || stamp !== generation) return
-  const ids = new Set(rels.map((r) => r.id))
-  relationships.value = rels
-  people.value = persons
-  guides.value = gs.filter((g) => ids.has(g.relationship_id))
-  meals.value = coach ? ms.filter((m) => m.relationship_id && ids.has(m.relationship_id)) : ms
-  foods.value = fs
-}
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
-    await loadRecords()
-  } catch (e) {
-    error.value = errorMessage(e)
-  } finally {
-    loading.value = false
-  }
-}
-function resetEditor() {
-  selectedFood.value = ''
-  selectedCatalogFood.value = undefined
-  copyFrom.value = ''
-  restored.value = false
-  if (coach) {
-    targets.value = { ...current.value?.targets }
-    plannedMeals.value = JSON.parse(JSON.stringify(current.value?.meals || []))
-    guidance.value = current.value?.guidance || ''
-    guidanceRevision.value = Math.max(0, ...relevant.value.map((g) => g.revision))
-    guidanceId.value = crypto.randomUUID()
-    effective.value = localDate(
-      people.value.find(
-        (p) => p.id === relationships.value.find((r) => r.id === scope.value)?.client_id,
-      )?.timezone ||
-        profile.value?.timezone ||
-        'UTC',
-    )
-  } else {
-    entry.value = fresh()
-    editing.value = false
-  }
-}
-async function selectScope() {
-  if (disposed) return
-  const stamp = ++selectionGeneration
-  selecting.value = true
-  ready = false
-  notice.value = ''
-  try {
-    await draftWrite
-    if (disposed) return
-    await router.replace({ query: { ...route.query, client: scope.value || undefined } })
-    if (disposed) return
-    resetEditor()
-    const d = await getDraft<ReturnType<typeof snapshot>>(keyFor())
-    if (disposed || stamp !== selectionGeneration) return
-    if (d) {
-      entry.value = d.entry
-      guidance.value = d.guidance
-      targets.value = d.targets
-      plannedMeals.value = d.plannedMeals || []
-      effective.value = d.effective
-      guidanceId.value = d.guidanceId
-      guidanceRevision.value = d.guidanceRevision
-      editing.value = d.editing
-      restored.value = true
-    }
-  } catch (e) {
-    error.value = errorMessage(e)
-  } finally {
-    if (!disposed && stamp === selectionGeneration) {
-      ready = true
-      selecting.value = false
-    }
-  }
-}
-function copyGuide() {
-  const g = guides.value.find((g) => g.id === copyFrom.value)
-  if (g) {
-    guidance.value = g.guidance
-    targets.value = { ...g.targets }
-    plannedMeals.value = JSON.parse(JSON.stringify(g.meals || []))
-  }
-}
-function changeUnit() {
-  entry.value.basis = entry.value.unit === 'serving' ? 1 : 100
-  entry.value.quantity = entry.value.basis
-  entry.value.nutrients = {}
-  entry.value.source = l('Manual entry', 'إدخال يدوي')
-  entry.value.food_id = null
-  selectedFood.value = ''
-  selectedCatalogFood.value = undefined
-  notice.value = l(
-    'The unit changed. Enter nutrition values for the new portion basis.',
-    'تغيرت الوحدة. أدخل القيم الغذائية وفق الكمية الجديدة.',
-  )
-}
-function pickFood() {
-  selectedCatalogFood.value = undefined
-  const f = foods.value.find((f) => f.id === selectedFood.value)
-  if (f)
-    entry.value = {
-      ...entry.value,
-      name: f.name,
-      quantity: f.basis,
-      basis: f.basis,
-      unit: f.unit,
-      nutrients: { ...f.nutrients },
-      source: f.source,
-      food_id: f.id,
-    }
-}
-function chooseCatalogFood(food: CatalogFood) {
-  selectedFood.value = ''
-  selectedCatalogFood.value = food
-  entry.value = {
-    ...entry.value,
-    name: locale.value === 'ar' ? food.name_ar : food.name,
-    quantity: 100,
-    basis: 100,
-    unit: 'g',
-    nutrients: { ...food.nutrients },
-    source: food.source,
-    food_id: null,
-  }
-  showFoodLibrary.value = false
-}
-function useSuggestedFood(food: PlannedFood) {
-  selectedFood.value = ''
-  selectedCatalogFood.value = undefined
-  entry.value = { ...fresh(), ...JSON.parse(JSON.stringify(food)) }
-  editing.value = false
-  document.querySelector('#meal-editor')?.scrollIntoView({ behavior: 'smooth' })
-}
-type Write = 'save_nutrition_guidance' | 'save_meal' | 'save_food' | 'remove_meal' | 'archive_food'
-const guidanceCommand = useCommand<Write>(
-  baseKey + ':write',
-  async (name, result, args) => {
-    ready = false
-    await draftWrite
-    const oldKey = keyFor(String(args.scope), String(args.date))
-    scope.value = String(args.scope)
-    date.value = String(args.date)
-    await loadRecords()
-    if (name === 'save_food') {
-      entry.value.food_id = (result as Food).id
-      await persist()
-    } else if (name === 'save_nutrition_guidance' || name === 'save_meal') {
-      await removeDraft(oldKey)
-      resetEditor()
-      restored.value = false
-    }
-    if (name === 'remove_meal') {
-      confirmRemove.value = ''
-      if (entry.value.id === (args.payload as { p_id: string }).p_id) {
-        await removeDraft(oldKey)
-        resetEditor()
-      }
-    }
-    // Acknowledgement may finish after the user leaves; do not alter their destination.
-    if (!disposed)
-      await router.replace({ query: { ...route.query, client: scope.value || undefined } })
-    ready = true
-    notice.value =
-      name === 'save_nutrition_guidance'
-        ? l(
-            'Guidance saved. Earlier versions remain in history.',
-            'حُفظت الإرشادات. تبقى النسخ السابقة في السجل.',
-          )
-        : name === 'save_meal'
-          ? l('Meal saved.', 'حُفظت الوجبة.')
-          : name === 'save_food'
-            ? l(
-                'Saved to your foods. Existing meals keep their recorded values.',
-                'حُفظ في أطعمتك. تحتفظ الوجبات السابقة بقيمها المسجلة.',
-              )
-            : l('Updated.', 'تم التحديث.')
-  },
-  (name, args) => rpc(name, args.payload as Record<string, unknown>),
+const exampleMealsByType = computed(() =>
+  ['breakfast', 'lunch', 'dinner', 'snack']
+    .map((kind) => ({
+      kind,
+      items: data.value?.current?.meals.filter((food) => food.meal === kind) || [],
+    }))
+    .filter((group) => group.items.length),
 )
-const busy = computed(
-  () =>
-    selecting.value ||
-    guidanceCommand.state.busy ||
-    !!guidanceCommand.state.pending ||
-    !guidanceCommand.state.ready,
-)
-async function write(name: Write, payload: Record<string, unknown>) {
-  error.value = ''
-  notice.value = ''
-  await draftWrite
-  await guidanceCommand.run(name, { scope: scope.value, date: date.value, payload })
-}
-async function saveGuidance() {
-  await write('save_nutrition_guidance', {
-    p_id: guidanceId.value,
-    p_relationship: scope.value,
-    p_revision: guidanceRevision.value,
-    p_effective: effective.value,
-    p_targets: targets.value,
-    p_guidance: guidance.value,
-    p_meals: plannedMeals.value,
-  })
-}
-async function saveMeal() {
-  await write('save_meal', {
-    p_id: entry.value.id,
-    p_relationship: scope.value || null,
-    p_date: date.value,
-    p_meal: entry.value.meal,
-    p_data: entry.value,
-    p_revision: entry.value.revision,
-  })
-}
-async function saveFood() {
-  await write('save_food', {
-    p_id: entry.value.food_id || entry.value.id,
-    p_name: entry.value.name,
-    p_basis: entry.value.basis,
-    p_unit: entry.value.unit,
-    p_nutrients: entry.value.nutrients,
-    p_source: entry.value.source,
-    p_revision: foods.value.find((f) => f.id === entry.value.food_id)?.revision || 0,
-  })
-}
-function edit(m: Meal) {
-  entry.value = JSON.parse(JSON.stringify(m))
-  selectedCatalogFood.value = undefined
-  editing.value = true
-  notice.value = ''
-  document.querySelector('#meal-editor')?.scrollIntoView({ behavior: 'smooth' })
-}
-async function remove(m: Meal) {
-  await write('remove_meal', { p_id: m.id, p_revision: m.revision })
-}
-async function retire(f: Food) {
-  await write('archive_food', { p_id: f.id, p_revision: f.revision })
-}
-async function discard() {
-  if (busy.value) return
-  ready = false
-  await draftWrite
-  await removeDraft(keyFor())
-  await load()
-  await selectScope()
-}
-onMounted(async () => {
-  await load()
-  if (disposed) return
-  if (scope.value && !relationships.value.some((r) => r.id === scope.value)) scope.value = ''
-  const pending = guidanceCommand.state.pending
-  if (pending) {
-    scope.value = String(pending.args.scope)
-    date.value = String(pending.args.date)
-  }
-  await selectScope()
-})
+const shortDate = (value: string) => dateLabel(value.slice(0, 10))
+const author = (id: string) =>
+  data.value?.authors.find((a) => a.id === id)?.name || l('Former member', 'عضو سابق')
+onMounted(() => load(true))
 onBeforeUnmount(() => {
   disposed = true
   ready = false
   generation++
-  selectionGeneration++
 })
 </script>
 <template>
-  <div class="container page nutrition-workspace">
-    <RouterLink class="back-link" :to="coach ? '/coach/more' : '/more'"
-      >← {{ l('More tools', 'أدوات إضافية') }}</RouterLink
-    >
-    <PageHeading class="page-heading"
-      ><div>
-        <p class="overline">{{ l('Optional support', 'دعم اختياري') }}</p>
-        <h1>
-          {{ coach ? l('Nutrition', 'التغذية') : l('Nutrition', 'التغذية') }}
-        </h1>
-        <p>
+  <section
+    class="container page org-nutrition nutrition-institution"
+    :class="{ 'with-member': data?.member && !choosing }"
+  >
+    <RouterLink v-if="!trainee" class="back-link" :to="'/nutrition'">{{
+      l('All nutrition plans', 'جميع خطط التغذية')
+    }}</RouterLink>
+    <PageHeading class="page-heading">
+      <div>
+        <h1>{{ l('Nutrition', 'التغذية') }}</h1>
+        <p class="subtle">
           {{
-            coach
-              ? l(
-                  'Set clear daily targets, turn them into meal ideas, and review shared food records.',
-                  'حدد أهدافاً يومية واضحة وحوّلها إلى مقترحات وجبات وراجع سجلات الطعام المشاركة.',
-                )
-              : l(
-                  'Keep a simple food record, with as much detail as you find useful.',
-                  'احتفظ بسجل طعام بسيط، بالتفاصيل التي تفيدك.',
-                )
+            l(
+              'Clear targets, practical meals, and shared follow-up.',
+              'أهداف واضحة ووجبات عملية ومتابعة مشتركة.',
+            )
           }}
         </p>
-        <a v-if="!coach" class="button small secondary" href="#meal-editor">{{
-          l('Record a meal', 'تسجيل وجبة')
-        }}</a>
-      </div></PageHeading
-    >
-    <PageState :loading="loading" :error="''" @retry="load"
-      ><p v-if="error" class="notice error" role="alert">
-        {{ error }}
-        <button class="text-link" @click="discard" :disabled="busy">
-          {{ l('Discard draft and reload', 'تجاهل المسودة وأعد التحميل') }}
-        </button>
-      </p>
-      <p
-        v-if="notice && !guidanceCommand.state.busy && !guidanceCommand.state.pending"
-        class="notice success"
-        role="status"
-      >
-        {{ notice }}
-      </p>
-      <p v-if="restored" class="notice">
-        {{ l('Your device draft is restored.', 'استُعيدت مسودة جهازك.') }}
-      </p>
-      <CommandStatus :command="guidanceCommand" :show-notice="false" />
-      <fieldset class="progress-filters" :disabled="busy">
-        <label
-          >{{ coach ? l('Athlete', 'الرياضي') : l('Record visibility', 'ظهور السجل')
-          }}<select v-model="scope" @change="selectScope">
-            <option value="">
-              {{ coach ? l('Choose an athlete', 'اختر رياضياً') : l('Only me', 'أنا فقط') }}
-            </option>
-            <option v-for="r in relationships" :key="r.id" :value="r.id">
-              {{ scopeName(r) }}{{ r.state === 'archived' ? l(' · archived', ' · مؤرشف') : '' }}
-            </option>
-          </select></label
-        ><label v-if="!coach || view === 'record'"
-          >{{ l('Date', 'التاريخ')
-          }}<input v-model="date" type="date" @change="!coach && selectScope()"
-        /></label>
-      </fieldset>
-      <p v-if="scope && !coach" class="notice">
-        {{
-          l(
-            'Meals recorded here are shared with this coach. Choose Only me for a private record.',
-            'تُشارك الوجبات المسجلة هنا مع هذا المدرب. اختر «أنا فقط» لسجل خاص.',
-          )
-        }}
-      </p>
-      <div v-if="!coach || (scope && view === 'record')" class="nutrition-totals">
-        <div v-for="key in nutrientKeys" :key="key">
-          <span>{{ l(labels[key][0]!, labels[key][1]!) }}</span
-          ><strong
-            >{{ totals[key].value ?? '—' }}
-            <small>{{ key === 'kcal' ? 'kcal' : 'g' }}</small></strong
-          ><small v-if="current?.targets[key] != null"
-            >{{ l('Daily target', 'الهدف اليومي') }} {{ current.targets[key] }}</small
-          ><small v-else>{{ l('No target set', 'لم يُحدد هدف') }}</small>
-          <progress
-            v-if="current?.targets[key] && totals[key].value !== null"
-            :value="Math.min(totals[key].value!, current.targets[key]!)"
-            :max="current.targets[key]!"
-            :aria-label="
-              l(labels[key][0]!, labels[key][1]!) + l(' logged toward target', ' المسجل من الهدف')
-            "
-          />
-          <small
-            v-if="
-              current?.targets[key] != null && totals[key].value !== null && !totals[key].missing
-            "
-            >{{ Math.abs(Math.round((current.targets[key]! - totals[key].value!) * 10) / 10) }}
-            {{ key === 'kcal' ? 'kcal' : 'g' }}
-            {{
-              totals[key].value! > current.targets[key]!
-                ? l('above target', 'فوق الهدف')
-                : l('remaining to target', 'متبقية للهدف')
-            }}</small
-          >
-          <small v-if="totals[key].value === null">{{
-            l('Nothing logged for this nutrient', 'لا يوجد تسجيل لهذا العنصر')
-          }}</small>
-          <small v-if="totals[key].missing"
-            >{{ totals[key].missing }}
-            {{ l('entries without this value', 'سجلات دون هذه القيمة') }}</small
-          >
-        </div>
       </div>
-      <p v-if="coach && !scope" class="notice">
-        {{
-          l(
-            'Choose an athlete to view their shared food record or add guidance.',
-            'اختر رياضياً لعرض سجل طعامه المشارك أو إضافة إرشادات.',
-          )
-        }}
-      </p>
-      <div v-else>
-        <div
-          v-if="coach"
-          class="segmented nutrition-tabs"
-          :aria-label="l('Nutrition view', 'عرض التغذية')"
+      <button class="button small secondary" :disabled="locked" @click="load()">
+        {{ l('Refresh', 'تحديث') }}
+      </button>
+    </PageHeading>
+    <CommandStatus v-if="!loading && !mealEditor" :command="command" />
+    <p v-if="!draftError && (hasPlanDraft || hasMealDraft)" class="small-print" role="status">
+      {{
+        savingDraft
+          ? l('Saving draft…', 'جارٍ حفظ المسودة…')
+          : l('Draft saved on this device.', 'المسودة محفوظة على هذا الجهاز.')
+      }}
+    </p>
+    <p v-if="draftError" class="notice error" role="alert">{{ draftError }}</p>
+    <div v-if="!trainee" class="org-nutrition-person">
+      <div v-if="data?.member" class="section-header">
+        <strong dir="auto">{{ data.member.name }}</strong
+        ><button
+          class="text-link"
+          :disabled="locked"
+          :aria-expanded="choosing"
+          @click="choosing = !choosing"
         >
-          <button
-            :aria-pressed="view === 'plan'"
-            :class="{ selected: view === 'plan' }"
-            @click="view = 'plan'"
+          {{ l('Change athlete', 'تغيير الرياضي') }}
+        </button>
+      </div>
+      <div v-if="choosing">
+        <h2>{{ l('Choose an athlete', 'اختر رياضياً') }}</h2>
+        <p class="subtle">
+          {{
+            view === 'admin'
+              ? l('Choose anyone in this institution.', 'اختر من رياضيي هذه المؤسسة.')
+              : l('Your assigned athletes appear here.', 'يظهر هنا الرياضيون المسندون إليك.')
+          }}
+        </p>
+        <MemberPicker
+          :institution="institution"
+          :view="view"
+          role="trainee"
+          :single="true"
+          :model-value="selected ? [selected] : []"
+          :disabled="locked"
+          @update:model-value="choose"
+        />
+      </div>
+    </div>
+    <PageState :loading="loading" :error="error" @retry="load(true)">
+      <template v-if="data?.member">
+        <p v-if="!canWrite" class="notice">
+          {{
+            l(
+              'This membership is inactive. History is read-only.',
+              'هذه العضوية غير نشطة. السجل للقراءة فقط.',
+            )
+          }}
+        </p>
+        <div class="org-nutrition-toolbar">
+          <div
+            class="org-nutrition-sections"
+            role="group"
+            :aria-label="l('Nutrition views', 'عرض التغذية')"
           >
-            {{ l('Edit nutrition plan', 'تعديل خطة التغذية') }}
-          </button>
-          <button
-            :aria-pressed="view === 'record'"
-            :class="{ selected: view === 'record' }"
-            @click="view = 'record'"
-          >
-            {{ l('Food record & history', 'سجل الطعام والإرشادات') }}
-          </button>
+            <button
+              v-for="item in [
+                ['plan', l('Plan', 'الخطة')],
+                ['example', l('Example meal plan', 'مثال لخطة وجبات')],
+                ['diary', l('Food diary', 'سجل الطعام')],
+                ['history', l('Plan history', 'سجل الخطط')],
+              ]"
+              :key="item[0]"
+              :aria-pressed="section === item[0]"
+              @click="section = item[0]!"
+            >
+              {{ item[1] }}
+            </button>
+          </div>
+          <label
+            >{{ l('Viewing date', 'تاريخ العرض')
+            }}<input
+              v-model="date"
+              type="date"
+              required
+              :disabled="locked || editor || mealEditor"
+              @change="changeDate"
+          /></label>
         </div>
-        <div class="ongoing-layout" :class="{ 'nutrition-coach': coach }">
-          <section v-if="!coach || view === 'record'" class="form-stack">
-            <article v-if="current" class="panel">
-              <p class="overline">
-                {{ l('Coach guidance', 'إرشادات المدرب') }} · {{ dateLabel(current.effective_on) }}
-              </p>
-              <h2>{{ l('A plan for your day', 'خطة ليومك') }}</h2>
-              <p class="preserve-lines">
-                {{
-                  current.guidance ||
-                  l('Your coach has set optional targets.', 'حدد مدربك أهدافاً اختيارية.')
-                }}
-              </p>
-            </article>
-            <section v-if="current?.meals?.length" class="panel form-stack">
-              <h2>{{ l('Suggested meals', 'وجبات مقترحة') }}</h2>
+        <p v-if="restored && (editor || mealEditor)" class="small-print" role="status">
+          {{ l('Draft restored from this device.', 'استُعيدت المسودة من هذا الجهاز.') }}
+        </p>
+        <div class="org-nutrition-panel">
+          <form
+            v-if="editor && !trainee && section === editorSection"
+            class="form-stack org-plan-editor"
+            @submit.prevent="review = true"
+            @invalid.capture="revealInvalid"
+          >
+            <fieldset :disabled="locked">
+              <legend class="sr-only">{{ l('Nutrition plan', 'خطة التغذية') }}</legend>
+              <div class="section-header">
+                <h2>
+                  {{
+                    editFocus === 'meals'
+                      ? l('Edit example meal plan', 'تعديل مثال خطة الوجبات')
+                      : l('Update nutrition plan', 'تحديث خطة التغذية')
+                  }}
+                </h2>
+                <button class="text-link" type="button" @click="closePlanEditor">
+                  {{ l('Close editor', 'إغلاق المحرر') }}
+                </button>
+              </div>
               <p class="subtle">
                 {{
                   l(
-                    'An example day from your coach. Adjust portions to what you actually eat before saving a meal.',
-                    'مثال ليوم غذائي من مدربك. عدّل الكميات لما تناولته فعلياً قبل حفظ الوجبة.',
+                    'Publishing creates a new version for this athlete. Earlier versions stay in history.',
+                    'ينشئ النشر نسخة جديدة لهذا الرياضي. تبقى النسخ السابقة في السجل.',
                   )
                 }}
               </p>
-              <article v-for="(food, index) in current.meals" :key="index" class="planned-food-row">
-                <div>
-                  <small>{{ mealLabel(food.meal) }}</small
-                  ><strong>{{ food.name }}</strong
-                  ><span
-                    >{{ food.quantity }} {{ food.unit }} ·
-                    {{ nutrientTotals([food]).kcal.value ?? '—' }} kcal</span
+              <div class="org-nutrition-fields">
+                <label
+                  >{{ l('Starts on', 'يبدأ في')
+                  }}<input
+                    v-model="plan.effective_on"
+                    type="date"
+                    :min="data.today"
+                    required
+                    @input="review = false" /></label
+                ><label
+                  >{{ l('Ends on (optional)', 'ينتهي في (اختياري)')
+                  }}<input
+                    v-model="plan.expires_on"
+                    type="date"
+                    :min="plan.effective_on"
+                    @input="review = false"
+                /></label>
+              </div>
+              <MacroPlanner v-if="editFocus === 'plan'" v-model="plan.targets" />
+              <MealPlanEditor v-model="plan.meals" />
+              <label v-if="editFocus === 'plan'"
+                >{{ l('Guidance', 'إرشادات')
+                }}<textarea v-model="plan.guidance" rows="3" maxlength="4000" />
+              </label>
+              <div v-if="review" class="notice">
+                <strong
+                  >{{ l('Ready to publish for', 'جاهز للنشر إلى') }} {{ data.member.name }}</strong
+                >
+                <p>
+                  {{ shortDate(plan.effective_on)
+                  }}<template v-if="plan.expires_on"> — {{ shortDate(plan.expires_on) }}</template>
+                  · {{ plan.meals.length }} {{ l('suggested foods', 'أطعمة مقترحة') }}
+                </p>
+                <p>
+                  {{
+                    l(
+                      'Visible to this athlete, institution admins and their assigned coach.',
+                      'مرئية لهذا الرياضي ومسؤولي المؤسسة والمدرب المسند إليه.',
+                    )
+                  }}
+                </p>
+                <button type="button" class="button" @click="publish">
+                  {{ l('Publish plan', 'نشر الخطة') }}
+                </button>
+              </div>
+              <button v-else class="button" type="submit">
+                {{ l('Review plan', 'مراجعة الخطة') }}
+              </button>
+              <button type="button" class="text-link danger-action" @click="discardPlan">
+                {{ l('Discard draft and load latest plan', 'تجاهل المسودة وتحميل أحدث خطة') }}
+              </button>
+            </fieldset>
+          </form>
+          <template v-else-if="section === 'plan'">
+            <div class="section-header">
+              <h2>{{ l('Daily targets', 'الأهداف اليومية') }}</h2>
+              <button
+                v-if="!trainee && canWrite"
+                class="button small"
+                :disabled="locked"
+                @click="editPlan()"
+              >
+                {{
+                  hasPlanDraft
+                    ? l('Continue draft', 'متابعة المسودة')
+                    : data.current
+                      ? l('Update plan', 'تحديث الخطة')
+                      : l('Create plan', 'إنشاء خطة')
+                }}
+              </button>
+            </div>
+            <template v-if="data.current"
+              ><p class="subtle">
+                {{ l('Version', 'النسخة') }} {{ data.current.revision }} · {{ l('From', 'من') }}
+                {{ shortDate(data.current.effective_on)
+                }}<template v-if="data.current.expires_on">
+                  · {{ l('Through', 'حتى') }} {{ shortDate(data.current.expires_on) }}</template
+                >
+              </p>
+              <div class="nutrition-totals">
+                <div v-for="key in nutrientKeys" :key="key">
+                  <span>{{ label(key) }}</span
+                  ><strong
+                    >{{ data.current.targets[key] ?? '—' }} <small>{{ unit(key) }}</small></strong
                   >
                 </div>
-                <button
-                  v-if="!coach"
-                  type="button"
-                  class="text-link"
-                  :disabled="busy"
-                  @click="useSuggestedFood(food)"
-                >
-                  {{ l('Use for meal entry', 'استخدام لتسجيل وجبة') }}
-                </button>
-              </article>
-            </section>
-            <section class="panel">
-              <h2>{{ l('Food record', 'سجل الطعام') }}</h2>
-              <p v-if="!dayMeals.length">
+              </div>
+              <p class="org-guidance" v-if="data.current.guidance">{{ data.current.guidance }}</p>
+              <button class="text-link" @click="section = 'example'">
+                {{ l('View example meal plan', 'عرض مثال لخطة الوجبات') }}
+              </button></template
+            >
+            <div v-else class="empty-state empty-state--compact">
+              <PhTray :size="28" aria-hidden="true" />
+              <h3>{{ l('No plan for this date', 'لا توجد خطة لهذا التاريخ') }}</h3>
+              <p>
                 {{
-                  coach
+                  trainee
                     ? l(
-                        'No meals shared by this athlete for this date.',
-                        'لم يشارك هذا الرياضي وجبات لهذا التاريخ.',
+                        'Your institution can publish daily targets and meal ideas here.',
+                        'يمكن لمؤسستك نشر أهداف يومية ومقترحات وجبات هنا.',
                       )
                     : l(
-                        'No meals recorded for this date. An empty log does not mean you ate nothing.',
-                        'لا توجد وجبات مسجلة لهذا التاريخ. السجل الفارغ لا يعني أنك لم تأكل.',
+                        'Set daily targets and practical food suggestions for this athlete. Scheduled and past plans are in Plan history.',
+                        'حدّد أهدافاً يومية ومقترحات طعام عملية لهذا الرياضي. الخطط المجدولة والسابقة في سجل الخطط.',
                       )
                 }}
               </p>
-              <article v-for="m in dayMeals" :key="m.id" class="meal-row">
-                <div>
-                  <span class="overline">{{ mealLabel(m.meal) }}</span>
-                  <h3>{{ m.name }}</h3>
-                  <p>{{ m.quantity }} {{ m.unit }} · {{ m.source }}</p>
-                  <p v-if="m.note">{{ m.note }}</p>
-                  <div class="meal-numbers">
-                    <span v-for="k in nutrientKeys" :key="k"
-                      >{{ l(labels[k][0]!, labels[k][1]!) }}:
-                      {{ nutrientTotals([m])[k].value ?? '—' }}
-                      {{ k === 'kcal' ? 'kcal' : 'g' }}</span
-                    >
-                  </div>
-                </div>
-                <div v-if="!coach" class="actions">
-                  <button class="text-link" @click="edit(m)" :disabled="busy">
-                    {{ l('Edit meal', 'تعديل الوجبة') }}</button
-                  ><button
-                    v-if="confirmRemove !== m.id"
-                    class="text-link"
-                    @click="confirmRemove = m.id"
-                    :disabled="busy"
-                  >
-                    {{ l('Remove', 'حذف') }}</button
-                  ><button v-else class="text-link" :disabled="busy" @click="remove(m)">
-                    {{ l('Confirm removal', 'تأكيد الحذف') }}
-                  </button>
-                </div>
-              </article>
-            </section>
-            <details v-if="relevant.length" class="panel">
-              <summary>{{ l('Guidance history', 'سجل الإرشادات') }}</summary>
-              <article v-for="g in relevant" :key="g.id" class="meal-row">
-                <h3>{{ dateLabel(g.effective_on) }} · v{{ g.revision }}</h3>
-                <p class="preserve-lines">{{ g.guidance }}</p>
-                <p v-for="(food, index) in g.meals || []" :key="index">
-                  {{ mealLabel(food.meal) }} · {{ food.name }} · {{ food.quantity }}
-                  {{ food.unit }} · {{ nutrientTotals([food]).kcal.value ?? '—' }} kcal
-                </p>
-                <p v-for="k in nutrientKeys.filter((k) => g.targets[k] != null)" :key="k">
-                  {{ l(labels[k][0]!, labels[k][1]!) }}: {{ g.targets[k] }}
-                  {{ k === 'kcal' ? 'kcal' : 'g' }}
-                </p>
-              </article>
-            </details>
-          </section>
-          <aside v-if="!coach || view === 'plan'" class="form-stack">
-            <form v-if="coach && scope" class="panel form-stack" @submit.prevent="saveGuidance">
-              <div class="section-heading">
-                <h2>{{ l('Daily nutrition plan', 'خطة التغذية اليومية') }}</h2>
-                <button
-                  class="button"
-                  :disabled="busy || relationships.find((r) => r.id === scope)?.state !== 'active'"
-                >
-                  {{ l('Save nutrition plan', 'حفظ خطة التغذية') }}
-                </button>
-              </div>
-              <fieldset class="form-stack nutrition-plan-fields" :disabled="busy">
-                <MacroPlanner v-model="targets" />
-                <MealPlanEditor v-model="plannedMeals" />
-                <label
-                  >{{ l('Reuse your guidance', 'إعادة استخدام إرشاداتك')
-                  }}<select v-model="copyFrom" @change="copyGuide">
-                    <option value="">{{ l('Start here', 'ابدأ هنا') }}</option>
-                    <option v-for="g in guides" :key="g.id" :value="g.id">
-                      {{ scopeName(relationships.find((r) => r.id === g.relationship_id)!) }} ·
-                      {{ dateLabel(g.effective_on) }} · v{{ g.revision }}
-                    </option>
-                  </select></label
-                ><label
-                  >{{ l('Meal guidance', 'إرشادات الوجبات')
-                  }}<textarea v-model="guidance" rows="5" maxlength="4000"></textarea>
-                </label>
-                <label
-                  >{{ l('Effective from', 'بدءاً من')
-                  }}<input type="date" v-model="effective" required
-                /></label>
-              </fieldset>
-              <p class="subtle">
+            </div>
+          </template>
+          <template v-else-if="section === 'example'">
+            <div class="section-header">
+              <h2>{{ l('Example meal plan', 'مثال لخطة وجبات') }}</h2>
+              <button
+                v-if="!trainee && canWrite"
+                class="button small"
+                :disabled="locked"
+                @click="editPlan(undefined, 'meals')"
+              >
+                {{ l('Edit meal plan', 'تعديل خطة الوجبات') }}
+              </button>
+            </div>
+            <template v-if="data.current?.meals.length">
+              <h3 v-if="data.current.meals.length">{{ l('Example day', 'مثال ليوم غذائي') }}</h3>
+              <p v-if="data.current.meals.length" class="subtle">
                 {{
                   l(
-                    'These are coach-entered targets, not an automated recommendation.',
-                    'هذه أهداف يدخلها المدرب وليست توصية آلية.',
+                    'Suggestions only. Record what was actually eaten, adjusting portions as needed.',
+                    'مقترحات فقط. سجّل ما تم تناوله فعلياً مع تعديل الكميات عند الحاجة.',
                   )
                 }}
               </p>
-            </form>
-            <form
-              v-if="!coach"
-              id="meal-editor"
-              class="panel form-stack"
-              @submit.prevent="saveMeal"
-            >
-              <h2>
-                {{ editing ? l('Correct a meal', 'تصحيح وجبة') : l('Record a meal', 'تسجيل وجبة') }}
-              </h2>
-              <fieldset class="form-stack" :disabled="busy">
-                <button
-                  type="button"
-                  class="button secondary"
-                  :aria-expanded="showFoodLibrary"
-                  @click="showFoodLibrary = !showFoodLibrary"
-                >
-                  {{
-                    showFoodLibrary
-                      ? l('Close food library', 'إغلاق مكتبة الطعام')
-                      : l('Choose from food library', 'اختر من مكتبة الطعام')
-                  }}
-                </button>
-                <FoodPicker v-if="showFoodLibrary" @select="chooseCatalogFood" />
-                <p
-                  v-if="Object.values(entry.nutrients).some((v) => typeof v === 'number')"
-                  class="notice"
-                >
-                  {{ l('For this amount', 'لهذه الكمية') }}:
-                  {{ nutrientTotals([entry]).kcal.value ?? '—' }} kcal ·
-                  {{ l('Protein', 'بروتين') }}
-                  {{ nutrientTotals([entry]).protein_g.value ?? '—' }} g ·
-                  {{ l('Carbs', 'كربوهيدرات') }} {{ nutrientTotals([entry]).carb_g.value ?? '—' }} g
-                  · {{ l('Fat', 'دهون') }} {{ nutrientTotals([entry]).fat_g.value ?? '—' }} g
-                </p>
-                <label v-if="foods.some((f) => !f.archived)"
-                  >{{ l('Use a saved food', 'استخدام طعام محفوظ')
-                  }}<select v-model="selectedFood" @change="pickFood">
-                    <option value="">{{ l('Enter manually', 'إدخال يدوي') }}</option>
-                    <option v-for="f in foods.filter((f) => !f.archived)" :key="f.id" :value="f.id">
-                      {{ f.name }}
-                    </option>
-                  </select></label
-                >
-                <label
-                  >{{ l('Meal', 'الوجبة')
-                  }}<select v-model="entry.meal">
-                    <option
-                      v-for="m in ['breakfast', 'lunch', 'dinner', 'snack']"
-                      :key="m"
-                      :value="m"
+              <section
+                v-for="group in exampleMealsByType"
+                :key="group.kind"
+                :aria-label="mealLabel(group.kind)"
+              >
+                <h3>{{ mealLabel(group.kind) }}</h3>
+                <article v-for="(food, i) in group.items" :key="i" class="org-food-row">
+                  <div>
+                    <strong dir="auto">{{ food.name }}</strong
+                    ><span
+                      >{{ food.quantity }} {{ food.unit }} ·
+                      {{
+                        food.nutrients.kcal == null
+                          ? l('Energy unknown', 'الطاقة غير معروفة')
+                          : Math.round((food.nutrients.kcal * food.quantity) / food.basis) +
+                            ' ' +
+                            unit('kcal')
+                      }}</span
                     >
-                      {{ mealLabel(m) }}
-                    </option>
-                  </select></label
-                ><label
-                  >{{ l('Food or meal name', 'اسم الطعام أو الوجبة')
-                  }}<input v-model="entry.name" required maxlength="120"
-                /></label>
-                <div v-if="selectedCatalogFood && entry.unit === 'g'" class="actions">
+                  </div>
                   <button
-                    v-for="portion in selectedCatalogFood.portions"
-                    :key="portion.name"
-                    type="button"
-                    class="button small secondary"
-                    @click="entry.quantity = portion.grams"
+                    v-if="trainee && canWrite"
+                    class="text-link"
+                    :disabled="locked"
+                    @click="editMeal(undefined, food)"
                   >
-                    {{ locale === 'ar' ? portion.name_ar || portion.name : portion.name }} ·
-                    {{ portion.grams }} g
+                    {{ l('Record this food', 'تسجيل هذا الطعام') }}
                   </button>
-                </div>
-                <div class="field-pair">
-                  <label
-                    >{{ l('Amount eaten', 'الكمية المتناولة')
-                    }}<input
-                      v-model.number="entry.quantity"
-                      type="number"
-                      min="0.01"
-                      max="10000"
-                      step="0.01"
-                      required /></label
-                  ><label
-                    >{{ l('Portion unit', 'وحدة الكمية')
-                    }}<select v-model="entry.unit" @change="changeUnit">
-                      <option value="serving">{{ l('Serving', 'حصة') }}</option>
-                      <option value="g">g</option>
-                      <option value="ml">ml</option>
-                    </select></label
-                  >
-                </div>
-                <details class="nutrition-details">
-                  <summary>
-                    {{ l('Nutrition details (optional)', 'تفاصيل التغذية (اختياري)') }}
-                  </summary>
-                  <label
-                    >{{ l('Values below are per', 'القيم أدناه لكل') }} ({{ entry.unit }})<input
-                      v-model.number="entry.basis"
-                      type="number"
-                      min="0.01"
-                      max="10000"
-                      step="0.01"
-                      required /></label
-                  ><NutrientFields v-model="entry.nutrients" />
-                  <p class="subtle">
-                    {{
-                      l(
-                        'Leave unknown values blank. Enter 0 only when the value is known to be zero.',
-                        'اترك القيم المجهولة فارغة. أدخل ٠ فقط عندما تكون القيمة صفراً بالفعل.',
+                </article>
+              </section>
+              <p v-if="data.current.meals.length" class="small-print">
+                {{ l('Example day energy', 'طاقة المثال اليومي') }}:
+                {{ planTotals.kcal.value ?? '—' }} {{ unit('kcal') }}
+                {{ planTotals.kcal.missing ? l('(incomplete values)', '(قيم غير مكتملة)') : '' }}
+              </p></template
+            >
+            <p v-else class="notice">
+              {{
+                l(
+                  'No example meals for this date. Your plan’s targets remain available in Plan.',
+                  'لا توجد وجبات مقترحة لهذا التاريخ. الأهداف متاحة في الخطة.',
+                )
+              }}
+            </p>
+          </template>
+          <template v-else-if="section === 'diary'">
+            <div class="section-header">
+              <h2>{{ l('Food diary', 'سجل الطعام') }}</h2>
+              <button
+                v-if="trainee && canWrite && !mealEditor"
+                class="button small"
+                :disabled="locked"
+                @click="editMeal()"
+              >
+                {{
+                  hasMealDraft
+                    ? l('Continue food entry', 'متابعة مدخل الطعام')
+                    : l('Record food', 'تسجيل طعام')
+                }}
+              </button>
+            </div>
+            <div class="org-sharing">
+              <p>
+                <strong>{{
+                  data.sharing.enabled
+                    ? l('Shared with your institution', 'مشترك مع مؤسستك')
+                    : l('Food records are not shared', 'سجلات الطعام غير مشتركة')
+                }}</strong>
+              </p>
+              <p class="subtle">
+                {{
+                  trainee
+                    ? l(
+                        'Sharing lets institution admins and your currently assigned coach read all entries and corrections in this diary. Personal nutrition elsewhere stays separate.',
+                        'تسمح المشاركة لمسؤولي المؤسسة ومدربك الحالي بقراءة جميع المدخلات والتصحيحات في هذا السجل. تبقى تغذيتك الشخصية منفصلة.',
                       )
-                    }}
-                  </p>
-                </details>
-                <label
-                  >{{ l('Value source', 'مصدر القيم')
-                  }}<input v-model="entry.source" required maxlength="200" /></label
-                ><label
-                  >{{ l('Meal note (optional)', 'ملاحظة الوجبة (اختياري)')
-                  }}<textarea v-model="entry.note" maxlength="2000" rows="2"></textarea>
-                </label>
-                <div class="actions">
-                  <button
-                    class="button"
-                    :disabled="
-                      busy ||
-                      (!!scope && relationships.find((r) => r.id === scope)?.state !== 'active')
+                    : l(
+                        'Only the athlete can change sharing or record food. No entries is not proof that no food was eaten.',
+                        'الرياضي وحده يغيّر المشاركة أو يسجل الطعام. عدم وجود سجلات لا يعني عدم تناول الطعام.',
+                      )
+                }}
+              </p>
+              <button
+                v-if="trainee && canWrite"
+                type="button"
+                class="button small secondary"
+                :disabled="locked"
+                @click="
+                  send('sharing', {
+                    enabled: !data.sharing.enabled,
+                    revision: data.sharing.revision,
+                  })
+                "
+              >
+                {{
+                  data.sharing.enabled
+                    ? l('Stop sharing diary', 'إيقاف مشاركة السجل')
+                    : l('Share diary with institution', 'مشاركة السجل مع المؤسسة')
+                }}
+              </button>
+              <p v-if="trainee && data.sharing.enabled" class="small-print">
+                {{
+                  l(
+                    'Stopping sharing hides all entries from staff; it cannot recall copies they already viewed.',
+                    'يخفي إيقاف المشاركة جميع المدخلات عن الموظفين، لكنه لا يسترجع النسخ التي سبق عرضها.',
+                  )
+                }}
+              </p>
+            </div>
+            <template v-if="data.canReadDiary">
+              <div class="nutrition-totals">
+                <div v-for="key in nutrientKeys" :key="key">
+                  <span>{{ label(key) }}</span
+                  ><strong
+                    >{{ totals[key].value ?? '—' }} <small>{{ unit(key) }}</small></strong
+                  ><span v-if="data.current?.targets[key] != null"
+                    >{{ l('Target', 'الهدف') }} {{ data.current.targets[key] }}
+                    {{ unit(key) }}</span
+                  ><progress
+                    v-if="data.current?.targets[key] && totals[key].value != null"
+                    :value="totals[key].value!"
+                    :max="Math.max(data.current.targets[key]!, totals[key].value!)"
+                    :aria-label="
+                      label(key) + ' ' + l('recorded against target', 'المسجل مقابل الهدف')
                     "
-                  >
-                    {{
-                      editing ? l('Save correction', 'حفظ التصحيح') : l('Save meal', 'حفظ الوجبة')
-                    }}</button
-                  ><button
-                    type="button"
-                    class="text-link"
-                    :disabled="busy || !entry.name"
-                    @click="saveFood"
-                  >
-                    {{
-                      entry.food_id
-                        ? l('Update saved food', 'تحديث الطعام المحفوظ')
-                        : l('Keep as saved food', 'حفظ الطعام للاستخدام لاحقاً')
-                    }}</button
-                  ><button
-                    v-if="editing"
-                    type="button"
-                    class="text-link"
-                    @click="
-                      () => {
-                        entry = fresh()
-                        editing = false
-                      }
-                    "
-                  >
-                    {{ l('Cancel edit', 'إلغاء التعديل') }}
-                  </button>
+                  /><small v-if="totals[key].missing">{{
+                    l('Some values are unknown', 'بعض القيم غير معروفة')
+                  }}</small>
                 </div>
-              </fieldset>
-            </form>
-            <details v-if="!coach && foods.length" class="panel">
-              <summary>{{ l('Manage saved foods', 'إدارة الأطعمة المحفوظة') }}</summary>
-              <div v-for="f in foods.filter((f) => !f.archived)" :key="f.id" class="meal-row">
-                <strong>{{ f.name }}</strong
-                ><button class="text-link" :disabled="busy" @click="retire(f)">
-                  {{ l('Retire saved food', 'إيقاف الطعام المحفوظ') }}
+              </div>
+              <DialogRoot v-if="trainee" v-model:open="mealEditor"
+                ><DialogPortal
+                  ><DialogOverlay class="ui-dialog-overlay" /><DialogContent
+                    class="ui-dialog"
+                    :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+                    @interact-outside="locked && $event.preventDefault()"
+                    @escape-key-down="locked && $event.preventDefault()"
+                  >
+                    <DialogTitle>{{
+                      meal.revision
+                        ? l('Correct food entry', 'تصحيح مدخل الطعام')
+                        : l('Record food', 'تسجيل طعام')
+                    }}</DialogTitle>
+                    <DialogDescription>{{
+                      l(
+                        'Choose a reference food or enter your own, then record the amount eaten.',
+                        'اختر طعاماً مرجعياً أو أدخله يدوياً، ثم سجّل الكمية المتناولة.',
+                      )
+                    }}</DialogDescription>
+                    <CommandStatus :command="command" />
+                    <p v-if="draftError" role="alert" class="notice error">{{ draftError }}</p>
+                    <p v-else-if="hasMealDraft" role="status" class="small-print">
+                      {{
+                        savingDraft
+                          ? l('Saving draft…', 'جارٍ حفظ المسودة…')
+                          : l('Draft saved on this device.', 'المسودة محفوظة على هذا الجهاز.')
+                      }}
+                    </p>
+                    <form
+                      class="form-stack org-meal-editor"
+                      @invalid.capture="revealInvalid"
+                      @submit.prevent="send('meal', { ...meal, logged_on: date })"
+                    >
+                      <fieldset :disabled="locked">
+                        <legend class="sr-only">
+                          <h3>
+                            {{
+                              meal.revision
+                                ? l('Correct food entry', 'تصحيح مدخل الطعام')
+                                : l('Record food', 'تسجيل طعام')
+                            }}
+                          </h3>
+                        </legend>
+                        <MealFields v-model="meal.food" /><label
+                          >{{ l('Note (optional)', 'ملاحظة (اختياري)')
+                          }}<textarea v-model="meal.note" rows="2" maxlength="2000" />
+                        </label>
+                        <div class="button-row">
+                          <button type="submit" class="button">
+                            {{ l('Save food entry', 'حفظ مدخل الطعام') }}</button
+                          ><button
+                            type="button"
+                            class="button secondary"
+                            @click="mealEditor = false"
+                          >
+                            {{ l('Close editor', 'إغلاق المحرر') }}
+                          </button>
+                        </div>
+                      </fieldset>
+                    </form>
+                  </DialogContent></DialogPortal
+                ></DialogRoot
+              >
+              <p v-if="!data.meals.length" class="empty-state-note">
+                {{ l('No food recorded for this date.', 'لم يُسجل طعام لهذا التاريخ.') }}
+              </p>
+              <section
+                v-for="group in mealsByType"
+                :key="group.kind"
+                :aria-label="mealLabel(group.kind)"
+              >
+                <h3>{{ mealLabel(group.kind) }}</h3>
+                <article v-for="item in group.items" :key="item.id" class="org-food-row">
+                  <div>
+                    <strong dir="auto">{{ item.food.name }}</strong
+                    ><span
+                      >{{ item.food.quantity }} {{ item.food.unit }} ·
+                      {{
+                        item.food.nutrients.kcal == null
+                          ? l('Energy unknown', 'الطاقة غير معروفة')
+                          : Math.round(
+                              (item.food.nutrients.kcal * item.food.quantity) / item.food.basis,
+                            ) +
+                            ' ' +
+                            unit('kcal')
+                      }}</span
+                    >
+                    <p v-if="item.note" dir="auto">{{ item.note }}</p>
+                    <small>{{ item.food.source }}</small>
+                  </div>
+                  <div class="org-food-actions">
+                    <button
+                      v-if="trainee && canWrite"
+                      class="text-link"
+                      :disabled="locked"
+                      @click="editMeal(item)"
+                    >
+                      {{ l('Correct', 'تصحيح') }}</button
+                    ><button class="text-link" :disabled="locked" @click="showChanges(item.id)">
+                      {{ l('Changes', 'التغييرات') }}</button
+                    ><button
+                      v-if="trainee && canWrite"
+                      class="text-link danger-action"
+                      :disabled="locked"
+                      @click="removeId = item.id"
+                    >
+                      {{ l('Remove', 'إزالة') }}</button
+                    ><template v-if="removeId === item.id"
+                      ><span>{{ l('Remove this entry?', 'إزالة هذا المدخل؟') }}</span
+                      ><button
+                        class="button small secondary danger-action"
+                        :disabled="locked"
+                        @click="send('remove', { id: item.id, revision: item.revision })"
+                      >
+                        {{ l('Confirm removal', 'تأكيد الإزالة') }}</button
+                      ><button class="text-link danger-action" @click="removeId = ''">
+                        {{ l('Cancel', 'إلغاء') }}
+                      </button></template
+                    >
+                  </div>
+                </article>
+              </section>
+              <label class="check-label"
+                ><input
+                  type="checkbox"
+                  v-model="includeRemoved"
+                  :disabled="locked"
+                  @change="load()"
+                />{{ l('Show removed entries', 'عرض المدخلات المُزالة') }}</label
+              >
+              <div v-if="includeRemoved" class="org-removed">
+                <p v-if="!data.removed.length" class="small-print">
+                  {{ l('No removed entries for this date.', 'لا مدخلات مُزالة لهذا التاريخ.') }}
+                </p>
+                <article v-for="item in data.removed" :key="item.id" class="org-food-row">
+                  <div>
+                    <strong dir="auto">{{ item.food.name }}</strong
+                    ><small>{{
+                      l('Removed — excluded from totals', 'مُزال — غير محتسب في الإجمالي')
+                    }}</small>
+                  </div>
+                  <button class="text-link" :disabled="locked" @click="showChanges(item.id)">
+                    {{ l('Changes', 'التغييرات') }}
+                  </button>
+                </article>
+                <button
+                  v-if="data.removedNext !== null"
+                  class="text-link"
+                  :disabled="locked"
+                  @click="load(false, 0, 0, data.removedNext)"
+                >
+                  {{ l('Older removed entries', 'مدخلات مُزالة أقدم') }}
                 </button>
               </div>
+              <section v-if="historyMeal" class="org-sharing">
+                <div class="section-header">
+                  <h3>{{ l('Entry changes', 'تغييرات المدخل') }}</h3>
+                  <button class="text-link" @click="historyMeal = ''">
+                    {{ l('Close', 'إغلاق') }}
+                  </button>
+                </div>
+                <p v-for="change in data.corrections" :key="change.id">
+                  {{ l('Revision', 'المراجعة') }} {{ change.revision }} ·
+                  {{ change.document.food.name }} · {{ change.document.food.quantity }}
+                  {{ change.document.food.unit }}
+                  {{ change.document.removed ? l('Removed', 'مُزال') : '' }}
+                </p>
+                <button
+                  v-if="data.correctionsNext !== null"
+                  class="text-link"
+                  :disabled="locked"
+                  @click="load(false, 0, data.correctionsNext)"
+                >
+                  {{ l('Earlier changes', 'تغييرات أقدم') }}
+                </button>
+              </section>
+            </template>
+          </template>
+          <template v-else>
+            <h2>{{ l('Plan history', 'سجل الخطط') }}</h2>
+            <p class="subtle">
+              {{
+                l(
+                  'Published versions are kept unchanged, including after coach reassignment.',
+                  'تبقى النسخ المنشورة دون تغيير، حتى عند إعادة تعيين المدرب.',
+                )
+              }}
+            </p>
+            <p v-if="!data.plans.length" class="empty-state-note">
+              {{ l('No published plans yet.', 'لا توجد خطط منشورة بعد.') }}
+            </p>
+            <details
+              v-for="p in data.plans"
+              :key="p.id"
+              :open="route.query.plan === p.id"
+              class="org-plan-history"
+            >
+              <summary>
+                {{ l('Version', 'النسخة') }} {{ p.revision }} · {{ shortDate(p.effective_on) }} ·
+                {{ author(p.author_id) }}
+              </summary>
+              <p v-if="p.expires_on">{{ l('Ends', 'تنتهي') }} {{ shortDate(p.expires_on) }}</p>
+              <div class="nutrition-totals">
+                <div v-for="key in nutrientKeys" :key="key">
+                  <span>{{ label(key) }}</span
+                  ><strong
+                    >{{ p.targets[key] ?? '—' }} <small>{{ unit(key) }}</small></strong
+                  >
+                </div>
+              </div>
+              <p class="org-guidance">{{ p.guidance }}</p>
+              <p v-for="(food, i) in p.meals" :key="i">
+                {{ mealLabel(food.meal) }} · {{ food.name }} · {{ food.quantity }} {{ food.unit }}
+              </p>
+              <button
+                v-if="!trainee && canWrite"
+                class="text-link"
+                :disabled="locked"
+                @click="reusePlan(p)"
+              >
+                {{ l('Use as a new plan', 'استخدام كخطة جديدة') }}
+              </button>
             </details>
-          </aside>
+            <div class="button-row">
+              <button
+                v-if="data.next !== null"
+                class="text-link"
+                :disabled="locked"
+                @click="load(false, data.next)"
+              >
+                {{ l('Older plans', 'خطط أقدم') }}</button
+              ><button
+                v-if="data.plans.length && data.plans[0]!.revision < data.latestRevision"
+                class="text-link"
+                :disabled="locked"
+                @click="load()"
+              >
+                {{ l('Latest plans', 'أحدث الخطط') }}
+              </button>
+            </div>
+          </template>
         </div>
-      </div></PageState
-    >
-  </div>
+      </template>
+    </PageState>
+  </section>
 </template>

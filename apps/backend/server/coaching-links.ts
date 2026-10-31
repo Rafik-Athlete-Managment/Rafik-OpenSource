@@ -1,22 +1,22 @@
 import { randomUUID } from "node:crypto";
 import { ApiError, type Actor } from "./db.ts";
-import { event, uuid, type Tx } from "./workspaces.ts";
+import { event, uuid, type Tx } from "./institution.ts";
 
 /**
  * Coaching team lifecycle. trainer_id mirrors the active primary link; the database trigger
- * workspace_members_end_coaching_links ends links when membership, roles or trainer_id are cleared.
+ * institution_members_end_coaching_links ends links when membership, roles or trainer_id are cleared.
  */
 export async function setPrimary(
   tx: Tx,
-  workspace: string,
+  institution: string,
   athlete: string,
   coach: string | null,
   actor: string,
 ) {
   const now = new Date();
-  await tx.organization_coaching_links.updateMany({
+  await tx.institution_coaching_links.updateMany({
     where: {
-      workspace_id: workspace,
+      institution_id: institution,
       athlete_member_id: athlete,
       kind: "primary",
       ended_at: null,
@@ -26,9 +26,9 @@ export async function setPrimary(
   });
   if (!coach) return;
   if (
-    await tx.organization_coaching_links.findFirst({
+    await tx.institution_coaching_links.findFirst({
       where: {
-        workspace_id: workspace,
+        institution_id: institution,
         athlete_member_id: athlete,
         coach_member_id: coach,
         kind: "primary",
@@ -38,19 +38,19 @@ export async function setPrimary(
   )
     return;
   // A supporting coach who becomes primary keeps one active link with the athlete.
-  await tx.organization_coaching_links.updateMany({
+  await tx.institution_coaching_links.updateMany({
     where: {
-      workspace_id: workspace,
+      institution_id: institution,
       athlete_member_id: athlete,
       coach_member_id: coach,
       ended_at: null,
     },
     data: { ended_at: now, ended_by: actor, revision: { increment: 1 } },
   });
-  await tx.organization_coaching_links.create({
+  await tx.institution_coaching_links.create({
     data: {
       id: randomUUID(),
-      workspace_id: workspace,
+      institution_id: institution,
       athlete_member_id: athlete,
       coach_member_id: coach,
       kind: "primary",
@@ -62,26 +62,30 @@ export async function setPrimary(
 export async function linkSupportingCoach(
   tx: Tx,
   actor: Actor,
-  workspace: string,
+  institution: string,
   self: string,
   input: Record<string, unknown>,
 ) {
   const id = uuid(input.id),
     [athlete, coach, sport] = await Promise.all([
-      tx.workspace_members.findFirst({
+      tx.institution_members.findFirst({
         where: {
           id: uuid(input.athlete),
-          workspace_id: workspace,
+          institution_id: institution,
           active: true,
         },
       }),
-      tx.workspace_members.findFirst({
-        where: { id: uuid(input.coach), workspace_id: workspace, active: true },
+      tx.institution_members.findFirst({
+        where: {
+          id: uuid(input.coach),
+          institution_id: institution,
+          active: true,
+        },
       }),
-      tx.organization_sports.findFirst({
+      tx.institution_sports.findFirst({
         where: {
           id: uuid(input.sport),
-          workspace_id: workspace,
+          institution_id: institution,
           archived: false,
         },
       }),
@@ -93,7 +97,7 @@ export async function linkSupportingCoach(
   if (!sport) throw new ApiError(400, "invalid_sport");
   if (athlete.trainer_id === coach.id)
     throw new ApiError(409, "already_primary");
-  const covered = await tx.organization_member_sports.findMany({
+  const covered = await tx.institution_member_sports.findMany({
     where: {
       sport_id: sport.id,
       member_id: { in: [athlete.id, coach.id] },
@@ -107,9 +111,9 @@ export async function linkSupportingCoach(
   )
     throw new ApiError(400, "sport_not_covered");
   if (
-    await tx.organization_coaching_links.findFirst({
+    await tx.institution_coaching_links.findFirst({
       where: {
-        workspace_id: workspace,
+        institution_id: institution,
         athlete_member_id: athlete.id,
         coach_member_id: coach.id,
         ended_at: null,
@@ -117,10 +121,10 @@ export async function linkSupportingCoach(
     })
   )
     throw new ApiError(409, "already_linked");
-  const result = await tx.organization_coaching_links.create({
+  const result = await tx.institution_coaching_links.create({
     data: {
       id,
-      workspace_id: workspace,
+      institution_id: institution,
       athlete_member_id: athlete.id,
       coach_member_id: coach.id,
       kind: "supporting",
@@ -128,7 +132,7 @@ export async function linkSupportingCoach(
       created_by: self,
     },
   });
-  await event(tx, actor, workspace, "coach_linked", athlete.id, {
+  await event(tx, actor, institution, "coach_linked", athlete.id, {
     coach: coach.id,
     kind: "supporting",
     sport: sport.id,
@@ -139,27 +143,27 @@ export async function linkSupportingCoach(
 export async function endSupportingCoach(
   tx: Tx,
   actor: Actor,
-  workspace: string,
+  institution: string,
   self: string,
   input: Record<string, unknown>,
 ) {
-  const link = await tx.organization_coaching_links.findUnique({
+  const link = await tx.institution_coaching_links.findUnique({
     where: { id: uuid(input.id) },
   });
-  if (!link || link.workspace_id !== workspace)
+  if (!link || link.institution_id !== institution)
     throw new ApiError(404, "not_found");
   // Primary responsibility changes through assign-trainer so trainer_id stays mirrored.
   if (link.kind !== "supporting") throw new ApiError(400, "invalid_request");
   if (link.ended_at || link.revision !== input.revision)
     throw new ApiError(409, "conflict");
-  const result = await tx.organization_coaching_links.update({
+  const result = await tx.institution_coaching_links.update({
     where: { id: link.id },
     data: { ended_at: new Date(), ended_by: self, revision: { increment: 1 } },
   });
   await event(
     tx,
     actor,
-    workspace,
+    institution,
     "coach_link_ended",
     link.athlete_member_id,
     {
@@ -173,15 +177,15 @@ export async function endSupportingCoach(
 /** Removing a sport from either side ends supporting links that depended on it. */
 export async function endLinksForRemovedSports(
   tx: Tx,
-  workspace: string,
+  institution: string,
   member: string,
   removed: string[],
   self: string,
 ) {
   if (!removed.length) return;
-  await tx.organization_coaching_links.updateMany({
+  await tx.institution_coaching_links.updateMany({
     where: {
-      workspace_id: workspace,
+      institution_id: institution,
       kind: "supporting",
       ended_at: null,
       sport_id: { in: removed },

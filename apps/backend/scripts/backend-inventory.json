@@ -1,0 +1,926 @@
+{
+  "models": {
+    "password_setup_tokens": {
+      "purpose": "Hashed, expiring one-time password setup tokens issued by administrators.",
+      "domain": "Identity and access",
+      "disposition": "retain-current"
+    },
+    "rate_limits": {
+      "purpose": "Authentication request counters and time windows.",
+      "domain": "Identity and access",
+      "disposition": "retain-current"
+    },
+    "identity_sessions": {
+      "purpose": "Hashed browser session tokens and expiration.",
+      "domain": "Identity and access",
+      "disposition": "retain-current"
+    },
+    "mobile_sessions": {
+      "purpose": "Rotating native access/refresh token hashes, device identity and revocation.",
+      "domain": "Identity and access",
+      "disposition": "retain-current"
+    },
+    "users": {
+      "purpose": "Account identity, password hash and creation metadata; email is an unverified identifier.",
+      "domain": "Identity and access",
+      "disposition": "retain-current"
+    },
+    "profiles": {
+      "purpose": "Own account display name, locale, measurement units and timezone; identity bridge for historical subject data.",
+      "domain": "Identity and access",
+      "disposition": "retain-current"
+    },
+    "instance_branding": {
+      "purpose": "One installation branding configuration: name, colors, logo metadata and revision.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "support_cases": {
+      "purpose": "Locally owned support reports and replies; legacy team scope is retained only for existing cases.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "platform_grants": {
+      "purpose": "Explicit operator authority; institution administration does not imply this grant.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_audit_events": {
+      "purpose": "Institution-scoped attributed audit events for supported commands.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_invitations": {
+      "purpose": "Seven-day single-use institution invitation hashes, roles and sport metadata.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_members": {
+      "purpose": "Institution membership, one role, active/revoked state, primary-coach mirror and revision.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_operations": {
+      "purpose": "Exact actor/institution-scoped command payload and response receipts.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institutions": {
+      "purpose": "Persistent institution identity and historical scope keys; one institution is supported per installation.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_assignments": {
+      "purpose": "Athlete assignment to an immutable program version, date range, goal/sport and independent sequence cursor.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_exercises": {
+      "purpose": "Institution-authored exercise metadata and visibility to authorized staff.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_programs": {
+      "purpose": "Editable institution program drafts, publication/library state and revision.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_sessions": {
+      "purpose": "Athlete workout document, prescription/actual results, recorder attribution and optional scoped occurrence link.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_versions": {
+      "purpose": "Immutable published institution program snapshots referenced by assignments and history.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "program_media": {
+      "purpose": "Institution program artwork metadata and private-byte identity.",
+      "domain": "Files and media",
+      "disposition": "retain-current"
+    },
+    "assessment_result_history": {
+      "purpose": "Attributed previous versions of participant assessment scores.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "assessment_results": {
+      "purpose": "Current per-participant assessment scores and notes, separate from attendance/workout actuals.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "assessment_templates": {
+      "purpose": "Reusable assessment definitions, units, bounds and version.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_event_people": {
+      "purpose": "Frozen event roster, staff/athlete duty, attendance and participant revision.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_events": {
+      "purpose": "Timed institution training/assessment occurrences and explicit day-only individual workouts, frozen prescription, staff/athlete roster and local training date.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_group_members": {
+      "purpose": "Current institution group membership; does not rewrite historical event rosters.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_groups": {
+      "purpose": "Institution groups used to select participants and coaches.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_sports": {
+      "purpose": "Institution sports and coaching specialties, ordered and archived explicitly.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_coaching_links": {
+      "purpose": "Primary/supporting coach relationships with sport scope and attribution/history.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_session_history": {
+      "purpose": "Attributed workout actual-result versions; corrections retain history.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_member_sports": {
+      "purpose": "Membership-to-sport/specialty assignments.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_channel_members": {
+      "purpose": "Private/group channel authority and membership snapshots.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "institution_channel_reads": {
+      "purpose": "Per-member message read position.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "institution_channels": {
+      "purpose": "Institution direct-pair/group conversation identity with distinct access rules.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "institution_messages": {
+      "purpose": "Institution message body, sender and attachment compatibility reference.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "institution_message_assets": {
+      "purpose": "Ordered many-attachment links for institution messages.",
+      "domain": "Files and media",
+      "disposition": "retain-current"
+    },
+    "notification_events": {
+      "purpose": "Per-user notification inbox and delivery checkpoints; not proof of external delivery.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "notification_intercepts": {
+      "purpose": "Local delivery-adapter interception evidence, not a production email service.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "notification_preferences": {
+      "purpose": "Explicit user category/channel preferences and quiet hours.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "platform_identity_state": {
+      "purpose": "Operator-managed account suspension state independent from institution role.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "platform_operations": {
+      "purpose": "Exact operator write receipts and actor attribution.",
+      "domain": "Institution and operations",
+      "disposition": "retain-current"
+    },
+    "institution_meal_history": {
+      "purpose": "Attributed previous versions of actual nutrition entries.",
+      "domain": "Nutrition",
+      "disposition": "retain-current"
+    },
+    "institution_meals": {
+      "purpose": "Athlete actual consumption entries, kept separate from suggested meal plans.",
+      "domain": "Nutrition",
+      "disposition": "retain-current"
+    },
+    "institution_nutrition_plans": {
+      "purpose": "Institution nutrition guidance snapshots assigned to an athlete.",
+      "domain": "Nutrition",
+      "disposition": "retain-current"
+    },
+    "institution_nutrition_sharing": {
+      "purpose": "Athlete authorization and revision for coach visibility of actual nutrition records.",
+      "domain": "Nutrition",
+      "disposition": "retain-current"
+    },
+    "institution_assets": {
+      "purpose": "Institution file ownership, scope/purpose, channel boundary and byte lifecycle.",
+      "domain": "Files and media",
+      "disposition": "retain-current"
+    },
+    "institution_session_feedback": {
+      "purpose": "Explicit athlete ratings tied to a workout or event; missing feedback is unknown.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "institution_workplace_feedback": {
+      "purpose": "Explicit monthly coach workplace feedback; distinct from athlete experience.",
+      "domain": "Communication and feedback",
+      "disposition": "retain-current"
+    },
+    "institution_injury_permissions": {
+      "purpose": "Product consent/assent prerequisites and withdrawal checkpoints for participation-status sharing.",
+      "domain": "Health and privacy",
+      "disposition": "retain-current"
+    },
+    "institution_injury_records": {
+      "purpose": "Athlete-authored non-diagnostic participation restrictions; not general administrator-visible medical records.",
+      "domain": "Health and privacy",
+      "disposition": "retain-current"
+    },
+    "institution_injury_history": {
+      "purpose": "Attributed historical versions of participation restrictions.",
+      "domain": "Health and privacy",
+      "disposition": "retain-current"
+    },
+    "institution_injury_access_log": {
+      "purpose": "Audited permitted participation-status access/actions.",
+      "domain": "Health and privacy",
+      "disposition": "retain-current"
+    },
+    "institution_injury_operations": {
+      "purpose": "Hash-only exact health-write acknowledgments; sensitive request content is not copied into receipts.",
+      "domain": "Health and privacy",
+      "disposition": "retain-current"
+    },
+    "institution_injury_retention_checkpoint": {
+      "purpose": "Non-identifying aggregate checkpoints for closed-record retention cleanup.",
+      "domain": "Health and privacy",
+      "disposition": "retain-current"
+    },
+    "institution_workout_positions": {
+      "purpose": "Assignment sequence position/cycle, occurrence/workout links and attributed once-only resolution.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "institution_workout_recurrences": {
+      "purpose": "Opt-in bounded weekly/today-only preparation policies with current authority, poll checkpoints, last materialized day and general scheduling diagnostics.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    },
+    "reference_exercises": {
+      "purpose": "Canonical shared exercise reference metadata; institution-authored exercises are separate.",
+      "domain": "Reference library",
+      "disposition": "retain-reference"
+    },
+    "institution_workout_templates": {
+      "purpose": "Versioned institution-shared single-workout prescriptions. Scheduled group and program imports own frozen copies; archive does not delete history.",
+      "domain": "Training and scheduling",
+      "disposition": "retain-current"
+    }
+  },
+  "routes": [
+    {
+      "anchor": "/health",
+      "path": "/health",
+      "methods": ["GET"],
+      "handlers": [],
+      "purpose": "Database liveness only",
+      "access": "Public liveness",
+      "clients": "Compose/local operator"
+    },
+    {
+      "anchor": "/v1/instance/branding",
+      "path": "/v1/instance/branding",
+      "methods": ["GET"],
+      "handlers": ["readBranding"],
+      "purpose": "Instance name and theme",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web entry/theme/settings; Android branding"
+    },
+    {
+      "anchor": "/v1/instance/branding/logo",
+      "path": "/v1/instance/branding/logo",
+      "methods": ["GET"],
+      "handlers": ["readBrandingLogo"],
+      "purpose": "Default/custom installation logo",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web entry/theme/settings; Android branding"
+    },
+    {
+      "anchor": "/v1/instance/branding/can-manage",
+      "path": "/v1/instance/branding/can-manage",
+      "methods": ["GET"],
+      "handlers": ["canManageBranding"],
+      "purpose": "Check founder branding authority",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web entry/theme/settings; Android branding"
+    },
+    {
+      "anchor": "/v1/catalog/foods",
+      "path": "/v1/catalog/foods",
+      "methods": ["GET"],
+      "handlers": ["foodCatalog"],
+      "purpose": "Versioned reference content and provenance",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise/nutrition discovery"
+    },
+    {
+      "anchor": "/v1/catalog/exercises",
+      "path": "/v1/catalog/exercises",
+      "methods": ["GET"],
+      "handlers": ["exerciseDatasetCatalog"],
+      "purpose": "Versioned reference content and provenance",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise/nutrition discovery"
+    },
+    {
+      "anchor": "/v1/catalog/wger-exercises",
+      "path": "/v1/catalog/wger-exercises",
+      "methods": ["GET"],
+      "handlers": ["wgerExerciseCatalog"],
+      "purpose": "Versioned reference content and provenance",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise/nutrition discovery"
+    },
+    {
+      "anchor": "/v1/catalog/exercise-media",
+      "path": "/v1/catalog/exercise-media",
+      "methods": ["GET"],
+      "handlers": ["exerciseMediaCatalog"],
+      "purpose": "Versioned reference content and provenance",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise/nutrition discovery"
+    },
+    {
+      "anchor": "/v1/catalog/exercise-videos",
+      "path": "/v1/catalog/exercise-videos",
+      "methods": ["GET"],
+      "handlers": ["exerciseVideoCatalog"],
+      "purpose": "Versioned reference content and provenance",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise/nutrition discovery"
+    },
+    {
+      "anchor": "exerciseAsset",
+      "path": "/v1/catalog/exercise-media/{asset}/{frame}.svg",
+      "methods": ["GET"],
+      "handlers": ["exerciseMediaAsset"],
+      "purpose": "Pinned reference illustration bytes",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise media"
+    },
+    {
+      "anchor": "exerciseVideo",
+      "path": "/v1/catalog/exercise-videos/{asset}.{mp4|webp}",
+      "methods": ["GET", "HEAD"],
+      "handlers": ["exerciseVideoAsset"],
+      "purpose": "Pinned video/poster bytes with byte ranges",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Web exercise previews"
+    },
+    {
+      "anchor": "scheduledMatch",
+      "path": "/v1/institution/scheduled-events",
+      "methods": ["GET"],
+      "handlers": ["scheduledEvents"],
+      "purpose": "Paged timed training/assessment index",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web Schedule list"
+    },
+    {
+      "anchor": "nutritionIndexMatch",
+      "path": "/v1/institution/nutrition-plans",
+      "methods": ["GET"],
+      "handlers": ["nutritionPlanIndex"],
+      "purpose": "Paged athlete nutrition assignments",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web nutrition directory"
+    },
+    {
+      "anchor": "athletePlansMatch",
+      "path": "/v1/institution/athlete-plans",
+      "methods": ["GET"],
+      "handlers": ["athletePlans"],
+      "purpose": "Paged active/expired athlete program assignments",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web athlete plans"
+    },
+    {
+      "anchor": "recipientMatch",
+      "path": "/v1/institution/recipients",
+      "methods": ["GET"],
+      "handlers": ["institutionRecipients"],
+      "purpose": "Bounded authorized athlete selector",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web delivery/nutrition/groups"
+    },
+    {
+      "anchor": "peopleMatch",
+      "path": "/v1/institution/people",
+      "methods": ["GET"],
+      "handlers": ["institutionPeople"],
+      "purpose": "Role-aware institution directory",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web People"
+    },
+    {
+      "anchor": "memberProfileMatch",
+      "path": "/v1/institution/people/{member}",
+      "methods": ["GET"],
+      "handlers": ["institutionMemberProfile"],
+      "purpose": "Authorized athlete/coach profile and administrator staff analytics",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web profile pages"
+    },
+    {
+      "anchor": "brandingMatch",
+      "path": "/v1/institution/branding",
+      "methods": ["POST"],
+      "handlers": ["updateBranding"],
+      "purpose": "Update instance theme/logo",
+      "access": "Founder super admin only",
+      "clients": "Web institution settings"
+    },
+    {
+      "anchor": "/v1/platform",
+      "path": "/v1/platform",
+      "methods": ["GET", "POST"],
+      "handlers": ["platformRead", "platformCommand"],
+      "purpose": "Local operator account/suspension/support control",
+      "access": "Separate explicit platform grant",
+      "clients": "Web platform operations"
+    },
+    {
+      "anchor": "/v1/notifications/preferences",
+      "path": "/v1/notifications/preferences",
+      "methods": ["GET", "POST"],
+      "handlers": ["notificationPreferences"],
+      "purpose": "Own notification channel/quiet-time preferences",
+      "access": "Own account",
+      "clients": "Web notification settings"
+    },
+    {
+      "anchor": "/v1/notifications",
+      "path": "/v1/notifications",
+      "methods": ["GET", "POST"],
+      "handlers": ["notificationInbox", "readNotification"],
+      "purpose": "Own bounded notification inbox and read checkpoints",
+      "access": "Own account",
+      "clients": "Web inbox/bell"
+    },
+    {
+      "anchor": "conversationMatch",
+      "path": "/v1/institution/communication",
+      "methods": ["GET", "POST"],
+      "handlers": ["communication", "communicationCommand"],
+      "purpose": "Institution direct/group conversations, reads and messages",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web messaging/groups"
+    },
+    {
+      "anchor": "assetList",
+      "path": "/v1/institution/assets",
+      "methods": ["GET", "POST"],
+      "handlers": ["institutionAssets", "assetCommand"],
+      "purpose": "Institution resource and attachment metadata lifecycle",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web resources/messages/exercises"
+    },
+    {
+      "anchor": "injuryMatch",
+      "path": "/v1/institution/injuries",
+      "methods": ["GET", "POST"],
+      "handlers": ["injuries", "injuryCommand"],
+      "purpose": "Athlete-authored participation status and consent/history",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web athlete status; limited coach view"
+    },
+    {
+      "anchor": "sportsMatch",
+      "path": "/v1/institution/sports",
+      "methods": ["GET", "POST"],
+      "handlers": ["institutionSports", "institutionSportsCommand"],
+      "purpose": "Sports, specialties and membership coverage",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web invites/People/institution settings"
+    },
+    {
+      "anchor": "feedbackMatch",
+      "path": "/v1/institution/feedback",
+      "methods": ["GET", "POST"],
+      "handlers": ["feedback", "feedbackCommand"],
+      "purpose": "Explicit athlete/session and coach workplace feedback",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web feedback/reports"
+    },
+    {
+      "anchor": "followUpMatch",
+      "path": "/v1/institution/follow-up",
+      "methods": ["GET"],
+      "handlers": ["followUp"],
+      "purpose": "Outstanding review/attendance/result follow-up, not retired Tasks",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web dashboard"
+    },
+    {
+      "anchor": "nutritionMatch",
+      "path": "/v1/institution/nutrition",
+      "methods": ["GET", "POST"],
+      "handlers": ["nutrition", "nutritionCommand"],
+      "purpose": "Nutrition guidance, actuals, sharing and corrections",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web nutrition/athlete diary"
+    },
+    {
+      "anchor": "institutionMatch",
+      "path": "/v1/institution",
+      "methods": ["GET", "POST"],
+      "handlers": ["institutionView", "institutionCommand"],
+      "purpose": "One-institution roster/invitations/settings/role administration",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web institution/People/admin"
+    },
+    {
+      "anchor": "serviceMatch",
+      "path": "/v1/institution/services",
+      "methods": ["GET", "POST"],
+      "handlers": ["serviceCatalog", "serviceCatalogCommand"],
+      "purpose": "Groups and reusable assessment templates",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web institution workflows; Android calendar attendance/assessment (calendar only)"
+    },
+    {
+      "anchor": "serviceMatch",
+      "path": "/v1/institution/calendar",
+      "methods": ["GET", "POST"],
+      "handlers": ["calendar", "calendarCommand"],
+      "purpose": "Timed roster/attendance/assessment records and correction history",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web institution workflows; Android calendar attendance/assessment (calendar only)"
+    },
+    {
+      "anchor": "serviceMatch",
+      "path": "/v1/institution/calendar-preview",
+      "methods": ["POST"],
+      "handlers": ["calendarPreview"],
+      "purpose": "Validate fixed-time series and collisions before creation",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web institution workflows; Android calendar attendance/assessment (calendar only)"
+    },
+    {
+      "anchor": "serviceMatch",
+      "path": "/v1/institution/analytics",
+      "methods": ["GET"],
+      "handlers": ["institutionAnalytics"],
+      "purpose": "Source-labelled institution/coach aggregate reports",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web institution workflows; Android calendar attendance/assessment (calendar only)"
+    },
+    {
+      "anchor": "serviceMatch",
+      "path": "/v1/institution/assessment-history",
+      "methods": ["GET"],
+      "handlers": ["assessmentHistory"],
+      "purpose": "Subject-scoped assessment history and current staffing boundary",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web institution workflows; Android calendar attendance/assessment (calendar only)"
+    },
+    {
+      "anchor": "programMatch",
+      "path": "/v1/institution/programs",
+      "methods": ["GET", "POST"],
+      "handlers": ["programs", "programCommand"],
+      "purpose": "Institution drafts, immutable publication and library",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web program/athlete recording; future Android workout capture"
+    },
+    {
+      "anchor": "programMatch",
+      "path": "/v1/institution/catalog",
+      "methods": ["GET", "POST"],
+      "handlers": ["catalog", "programCommand"],
+      "purpose": "Institution exercise catalog and edits",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web program/athlete recording; future Android workout capture"
+    },
+    {
+      "anchor": "programMatch",
+      "path": "/v1/institution/delivery",
+      "methods": ["GET", "POST"],
+      "handlers": ["delivery", "deliveryCommand"],
+      "purpose": "Independent goal-specific plan assignments, assignment-local adaptation and end/replacement",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web program/athlete recording; future Android workout capture"
+    },
+    {
+      "anchor": "programMatch",
+      "path": "/v1/institution/sessions",
+      "methods": ["POST"],
+      "handlers": ["sessionCommand"],
+      "purpose": "Athlete self/delegated actual logging with exact history/retry",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web program/athlete recording; future Android workout capture"
+    },
+    {
+      "anchor": "programMatch",
+      "path": "/v1/institution/workout-scheduling",
+      "methods": ["GET", "POST"],
+      "handlers": ["workoutAgenda", "workoutSchedulingCommand"],
+      "purpose": "Scoped next-workout projection and fixed-time sequence binding/reschedule/skip; trainer-only text field packages support provisional native individual recording",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web coach dashboard, athlete plans and athlete training; future Android capture; matching Android individual workout source"
+    },
+    {
+      "anchor": "previousMatch",
+      "path": "/v1/workouts/{id}/previous",
+      "methods": ["GET"],
+      "handlers": ["previousInstitutionPerformance"],
+      "purpose": "Own prior exercise actuals",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web athlete logger and coach review; compatibility path retained"
+    },
+    {
+      "anchor": "sessionHistory",
+      "path": "/v1/workouts/{id}/history",
+      "methods": ["GET"],
+      "handlers": ["institutionSessionHistory"],
+      "purpose": "Authorized attributed correction versions",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web athlete logger and coach review; compatibility path retained"
+    },
+    {
+      "anchor": "orgSession",
+      "path": "/v1/workouts/{id}",
+      "methods": ["GET"],
+      "handlers": ["institutionSession"],
+      "purpose": "Authorized immutable prescription/actual workout document",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web athlete logger and coach review; compatibility path retained"
+    },
+    {
+      "anchor": "assetMatch",
+      "path": "/v1/assets/{id}",
+      "methods": ["GET", "PUT"],
+      "handlers": ["getInstitutionAsset", "putInstitutionAsset"],
+      "purpose": "Scoped institution private bytes with authorized range reads",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web files/attachments/resources"
+    },
+    {
+      "anchor": "mediaMatch",
+      "path": "/v1/program-media/{id}",
+      "methods": ["GET", "PUT"],
+      "handlers": ["getProgramMedia", "putProgramMedia"],
+      "purpose": "Private institution program artwork",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web program create/preview"
+    },
+    {
+      "anchor": "/v1/account/institution",
+      "path": "/v1/account/institution",
+      "methods": ["GET"],
+      "handlers": ["institutionAccountData"],
+      "purpose": "Own institution data export, including former memberships",
+      "access": "Own account/subject, not arbitrary institution admin",
+      "clients": "Web account export"
+    },
+    {
+      "anchor": "/v1/institution/context",
+      "path": "/v1/institution/context",
+      "methods": ["GET"],
+      "handlers": ["contexts"],
+      "purpose": "Current membership role identifiers and flat dashboard target",
+      "access": "Current signed-in institution membership; handler enforces its role/subject scope",
+      "clients": "Web sign-in routing; Android owner/workspace identity"
+    },
+    {
+      "anchor": "/v1/invitations/",
+      "path": "/v1/invitations/{token}",
+      "methods": ["GET", "POST"],
+      "handlers": ["invitation"],
+      "purpose": "Preview or accept current single-use invitation",
+      "access": "Valid expiring token; existing signed-in account when accepting",
+      "clients": "Web invitation entry"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/session",
+      "methods": ["GET", "POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: session",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/setup-status",
+      "methods": ["GET", "POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: setup-status",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/setup",
+      "methods": ["POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: setup",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/logout",
+      "methods": ["POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: logout",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/password-login",
+      "methods": ["POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: password-login",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/accept-invitation",
+      "methods": ["POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: accept-invitation",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/complete-password-setup",
+      "methods": ["POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: complete-password-setup",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/auth/",
+      "path": "/v1/auth/local-preview",
+      "methods": ["POST"],
+      "handlers": ["authRoute"],
+      "purpose": "Browser identity operation: local-preview",
+      "access": "Public setup/sign-in or current own session; local-preview is development-only",
+      "clients": "Web first-run/invite/sign-in/settings"
+    },
+    {
+      "anchor": "/v1/mobile/auth/",
+      "path": "/v1/mobile/auth/session",
+      "methods": ["GET"],
+      "handlers": ["mobileAuthRoute"],
+      "purpose": "Native identity operation: session",
+      "access": "Android marker, opaque bearer/rotating refresh; authentication/rate limits",
+      "clients": "Android field sign-in/access check"
+    },
+    {
+      "anchor": "/v1/mobile/auth/",
+      "path": "/v1/mobile/auth/login",
+      "methods": ["POST"],
+      "handlers": ["mobileAuthRoute"],
+      "purpose": "Native identity operation: login",
+      "access": "Android marker, opaque bearer/rotating refresh; authentication/rate limits",
+      "clients": "Android field sign-in/access check"
+    },
+    {
+      "anchor": "/v1/mobile/auth/",
+      "path": "/v1/mobile/auth/refresh",
+      "methods": ["POST"],
+      "handlers": ["mobileAuthRoute"],
+      "purpose": "Native identity operation: refresh",
+      "access": "Android marker, opaque bearer/rotating refresh; authentication/rate limits",
+      "clients": "Android field sign-in/access check"
+    },
+    {
+      "anchor": "/v1/mobile/auth/",
+      "path": "/v1/mobile/auth/logout",
+      "methods": ["POST"],
+      "handlers": ["mobileAuthRoute"],
+      "purpose": "Native identity operation: logout",
+      "access": "Android marker, opaque bearer/rotating refresh; authentication/rate limits",
+      "clients": "Android field sign-in/access check"
+    },
+    {
+      "anchor": "serveApiDocs",
+      "path": "/v1/openapi.json",
+      "methods": ["GET", "HEAD"],
+      "handlers": ["serveApiDocs"],
+      "purpose": "Bundled canonical contract/viewer assets; production reference-only",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Operator/developer API reference"
+    },
+    {
+      "anchor": "serveApiDocs",
+      "path": "/v1/docs",
+      "methods": ["GET", "HEAD"],
+      "handlers": ["serveApiDocs"],
+      "purpose": "Bundled canonical contract/viewer assets; production reference-only",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Operator/developer API reference"
+    },
+    {
+      "anchor": "serveApiDocs",
+      "path": "/v1/docs/assets/{asset}",
+      "methods": ["GET", "HEAD"],
+      "handlers": ["serveApiDocs"],
+      "purpose": "Bundled canonical contract/viewer assets; production reference-only",
+      "access": "Public reference; no account or athlete rows",
+      "clients": "Operator/developer API reference"
+    },
+    {
+      "anchor": "/v1/account/profile",
+      "path": "/v1/account/profile",
+      "methods": ["POST", "PUT"],
+      "handlers": ["accountProfile"],
+      "purpose": "Initialize or edit own profile",
+      "access": "Authenticated own account",
+      "clients": "Web account settings and support"
+    },
+    {
+      "anchor": "/v1/account/export",
+      "path": "/v1/account/export",
+      "methods": ["GET"],
+      "handlers": ["accountExport"],
+      "purpose": "Complete current own-account export",
+      "access": "Authenticated own account",
+      "clients": "Web account settings and support"
+    },
+    {
+      "anchor": "/v1/account/deletion",
+      "path": "/v1/account/deletion",
+      "methods": ["GET", "POST"],
+      "handlers": ["accountDeletion"],
+      "purpose": "Last-admin guarded own-account deletion",
+      "access": "Authenticated own account",
+      "clients": "Web account settings and support"
+    },
+    {
+      "anchor": "/v1/support",
+      "path": "/v1/support",
+      "methods": ["GET", "POST"],
+      "handlers": ["supportCases", "supportCommand"],
+      "purpose": "Own paginated support reports and exact create/update retries",
+      "access": "Authenticated own account",
+      "clients": "Web account settings and support"
+    },
+    {
+      "anchor": "ruleMatch",
+      "path": "/v1/institution/workout-rules",
+      "methods": ["GET", "POST"],
+      "handlers": ["workoutRules", "workoutRuleCommand"],
+      "purpose": "Authorized per-plan weekly/automatic policy, exact save/stop receipts and worker diagnostics",
+      "access": "Administrator or primary/sport-scoped supporting coach; current authority rechecked before replay and preparation",
+      "clients": "Web assigned-plan scheduling; new native workout UI remains a later slice"
+    },
+    {
+      "anchor": "templateMatch",
+      "path": "/v1/institution/workout-templates",
+      "methods": ["GET", "POST"],
+      "handlers": ["workoutTemplates", "workoutTemplateCommand"],
+      "purpose": "Paginated shared workout library and revision-checked save/archive commands",
+      "access": "Active staff read; creator or administrator edits; current authority before receipt replay",
+      "clients": "Web workout library, program import and group event composer"
+    },
+    {
+      "anchor": "groupWorkoutMatch",
+      "path": "/v1/institution/group-workouts",
+      "methods": ["GET", "POST"],
+      "handlers": ["groupWorkouts", "groupWorkoutCommand"],
+      "purpose": "Frozen group prescription and separate participant results; exact start/adapt/skip commands",
+      "access": "Designated event coaches record; administrators review; athletes read only their own participant/results",
+      "clients": "Web event detail and shared coach recorder; native offline capture remains a later slice"
+    },
+    {
+      "anchor": "/v1/mobile/capabilities",
+      "path": "/v1/mobile/capabilities",
+      "methods": ["GET"],
+      "handlers": [],
+      "purpose": "Native field implementation capability discovery without modifying records or queues",
+      "access": "Authenticated account; feature support is not a membership grant",
+      "clients": "Android field compatibility check; canonical OpenAPI"
+    }
+  ]
+}

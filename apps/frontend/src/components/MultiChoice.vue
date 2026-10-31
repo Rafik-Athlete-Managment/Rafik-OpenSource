@@ -20,7 +20,7 @@ const visible = computed(() =>
         v-for="value in model"
         :key="value"
         type="button"
-        class="choice-chip"
+        class="choice-chip danger-action"
         @click="model = model.filter((v) => v !== value)"
         :aria-label="
           l('Remove ', 'إزالة ') + (options.find((o) => o.value === value)?.label || value)

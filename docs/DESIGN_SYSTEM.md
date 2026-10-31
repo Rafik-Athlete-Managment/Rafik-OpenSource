@@ -2,11 +2,85 @@
 
 **Status: founder approved, implementation underway, 21 October 2026.** This is the single visual and interaction specification for the web dashboard. It distinguishes the existing foundation, implemented shared controls and remaining migrations. A guideline does not establish acceptance of every consumer. Android is a follow-up audit; this document does not establish native acceptance. The [audit and rollout plan](known-issues/ui-ux-audit.md) records findings, evidence and priorities.
 
+## Group recording workspace
+
+Group events lead with Attendance / Workout recording tabs. Attendance opens first on a fresh visit, remains revisitable and shows marked/total counts. Keep one shared workout preview, collapsed by default and controlled independently of athlete selection, with its explanatory description and exercise/media details; do not repeat that baseline in every recording sheet. Individual adaptations are labelled as exceptions; collapse the shared preview while adapting to keep the editor and selection popup reachable.
+
+On desktop place a sticky searchable, ten-row paginated athlete roster beside the wider recording sheet, using names plus semantic status tags and a clear current selection. Keep search and pagination outside its bounded, keyboard-focusable names scroller. The recording sheet uses natural page scrolling; do not introduce a second full-height recording scroller. At tablet/phone widths replace that roster with a searchable selector above the sheet. Selection opens the sheet directly; Start recording remains an explicit command. Finish opens review within the group, retaining selection and a deliberate Record next athlete action. Never auto-advance or discard local work when selecting another athlete. Pending/uncertain commands block switching; local persistence is not a server save. Preserve keyboard/RTL controls and existing shared spacing, media and measurement components.
+
+## Completion and sign-in feedback
+
+Use the authoritative event lifecycle for calendar completion, not elapsed time or inferred participant progress. Completed slots have a semantic green marker plus a check icon; larger booked cards retain a visible Completed status tag alongside the activity kind. Phone month cells expose a completion count and accessible label. Keep the completed accent stable on hover and in RTL. Sealing, when implemented in its later release, remains a separate lock indicator and does not replace completion.
+
+Sign-in retains the existing request/profile/navigation flow. While pending, show an inline spinner and explicit busy text, disable the action and reject duplicate submission. Keep a polite status announcement outside the busy form, and stop rotation under reduced-motion preferences. Errors restore retry; do not imply success or invent progress while a request is unresolved.
+
 ## Purpose and boundaries
+
+Exercise identity and media belong together. Use a compact 72px reference thumbnail beside the selected exercise name/control on large screens, with an image/video glyph identifying the preview action. Do not reserve a separate media column beside sets/reps fields. Shared read-only previews use the same name-aligned media treatment. On phones retain the labelled action without fetching desktop poster images. Full demonstrations open in the existing dialog system, with source credits, Escape/focus return and reduced-motion-aware playback; private uploads keep their authorized viewer. White-line reference illustrations retain their dedicated dark media-backdrop token in both themes.
+
+Design research, 30 October: [Trainerize’s builder](https://help.trainerize.com/hc/en-us/articles/208689086-How-to-Create-a-Workout-in-the-Master-Workout-Library) shows compact identity thumbnails; [TrainHeroic’s prescriptions example](https://www.trainheroic.com/create/) separates exercise/media context from the target table; [WorkoutLabs’ builder as pictured by Hevy Coach](https://hevycoach.com/compare/workoutlabs/) uses gallery-led discovery. Selected the compact identity treatment for Rafik’s forms, keeping its existing branding and controls. These are layout references, not product assets or copied styling.
+
+Founder reference, 30 October: use People as the directory layout reference. Tabs occupy their own row, followed by labelled search/filters and pagination aligned along their control baseline. Use the existing list-controls/list-toolbar and ui-tabs patterns; do not squeeze tabs into the search row. Reset the page when changing active/archived collections and hide prior-collection rows during loading. Archived empty states explain preview/restoration.
+
+Use Programs as the workout-authoring reference: Add exercise remains full width. Before the first exercise, place the icon, explanation and Add exercise action together inside one shared empty-state card. After exercises exist, show Add exercise below the list. Keep save/cancel in the existing separated editor-footer pattern. Spacing belongs to one grid/stack owner: reset inherited margins within the new editor rather than adding grid gap and legacy form-label margins together. Use 8px label/control spacing, 16px related-field gaps, 24px section separation, shared 24/16px card padding and the established type tokens. Phone identity fields stack; compact prescription fields can use two columns with wrapping labels.
+
+Read-only timestamps use the account's preferred display timezone consistently, including their date labels and calendar grouping. Show a clear zone label in schedules and the navigation clock. Date-only workouts and calendar dates never move between days. Booking and recurring-rule editors retain an explicit authoring zone; do not silently rewrite appointments when changing a display preference. The compact digital clock appears in the desktop header and phone drawer, links to Settings and does not announce every tick to assistive technology. Utility footer links remain one column with 2px gaps, compact 32px desktop rows and at least 44px phone targets.
+
+Portaled selection menus must use the popup layer above modal backdrops and panels (currently popup 120, backdrop 100, panel 101). Check the actual positioned wrapper as well as the content, since Popper copies the content layer when mounting. Verify pointer and keyboard selection inside the dialog; DOM presence alone does not establish visibility.
+
+Scheduling creation presents explicit plan-workout, custom-event and assessment choices. Plan workouts use the shared paginated agenda and athlete-name search, with no duplicate event-name field. Existing scheduled/unfinished work links back to Athlete plans. Custom events and assessments keep their established details/people/review flow. Keep durable recovery visible and prevent switching choices while a write is active or uncertain.
+
+Sidebar navigation uses one expanded section at a time; opening another closes the previous section. Route changes reveal the current section. Disclosure headings are keyboard-operable buttons with expanded state and restrained, reduced-motion-aware transitions. On desktop, utility links and appearance controls sit outside the navigation scroll area in a compact footer. Keep overflow reachable in short windows rather than hiding scrollbars or clipping commands.
+
+The coach desk has one Workouts to record collection for due and unfinished work, with status-specific Start/Resume actions, and a separate Needs scheduling collection. Do not render recording and due as duplicate panels. State changes refresh related collections in place after acknowledgment; preserve open command/recovery state. Require matching server queue identity instead of treating an older unfiltered response as valid scoped results.
+
+Workout cards lead with the localized workout/day name; the program title belongs beneath it as context. Keep athlete identity as a separate overline in staff directories. Do not repeat a program title as every workout heading.
+
+Coaching desk (approved 26 October): put Today’s work and a narrower Athlete health panel beside each other on desktop, stacked on phones. Keep unfinished recordings first, due workouts and group/assessment events clearly labelled, and planning below. Avoid combined task totals across overlapping record types. Compact native details/summary rows disclose primary-roster follow-up; zero queues do not consume large empty cards. Status data is factual and permission-scoped; absent shared status is unknown. Field launch is a future tablet direction, not a second web dashboard.
+
+Status tags use `data-status` with the machine status, never translated-text inference. Green: active/completed/reviewed/resolved/published. Blue: scheduled/upcoming/in-progress/open. Amber: unscheduled/awaiting-review/pending. Yellow: draft/paused. Red: overdue/cancelled/expired/ended/replaced/unavailable. Archived, inactive and descriptive labels remain neutral. Always retain a visible text label so color is supplementary. Shared CSS adapts ink, background and border to light/dark themes.
+
+Routine acknowledged success uses one action-specific toast; never render a duplicate success card. Keep pending/conflict/error recovery and actionable generated links visible. Staff workout summaries use bordered prescription cards; scheduling controls share aligned labels and 44px controls and stack on phones. Coach recording uses explicit athlete-style check buttons with pressed state and an accessible label; input alone must not claim a set was performed. Dashboard priorities combine workout action discovery and review/attendance follow-up, with greeting and roster/navigation controls in the page header.
+
+Workout preview content: show real prescribed duration, exercise count, prescribed set count, bounded exercise examples and declared muscle focus. Do not invent calorie estimates, physiological load, muscle percentages or progress from missing actuals. Prefer authorized existing program covers; use a branded icon treatment when none is available. Larger cards can show examples and focus side by side. Phone layouts shorten the example list and prioritize Start/Resume before secondary details.
+
+Assigned-plan refinement (25 October 2026): directories contain filters and result cards; substantial assigned-plan review belongs on its dedicated detail route. Adapt within that page using the shared editor and the assigned immutable snapshot. Do not silently replace an active assignment. Use one page title on athlete training, one adjacent primary/secondary toolbar and workout preview cards. Start/Resume must remain visible on touch and keyboard; hover may emphasize it but must not be the only discovery mechanism. Assigned-plan actions use consistent labelled SVG icon buttons. Cancellation uses red outlined/text controls; deletion/removal uses the shared danger treatment. Red ink adapts to light/dark surfaces; filled danger buttons retain white text. Do not color status labels or ordinary navigation as destructive actions.
+
+Founder-validation refinements (25 October 2026): simple coach selections save on toggle with existing durable command/recovery handling; do not add a second save button. Optional coach filters stay collapsed, while permission scope remains explicit when ambiguous. New conversation contacts/groups share one collapsible directory, with a short start hint and no success toast merely for opening a conversation. Message draft persistence must not shift the composer; Enter sends and Shift+Enter inserts a newline, respecting IME composition. Food recording uses the shared bounded Reka dialog, retains recovery controls inside the dialog, starts blank entries with the food library, and groups recorded foods under meal headings. Group athlete/coach pickers use a two-column layout where space allows and stack on phones.
 
 Rafik should feel like one university sports workspace: calm, legible, practical and recognizably Rafik. Preserve the logo, green identity, existing fonts, English/Arabic support, theme customization and role-specific navigation. Improve consistency rather than introducing a different visual identity.
 
 Visual work must preserve API contracts, routes, permissions, one-role memberships, exact commands, revision checks, recoverable drafts, immutable program versions and offline/acknowledgment distinctions. Do not move business rules into reusable form controls. No new component library, font family or global store is required.
+
+## Campaign identity alignment — adopted 23 October 2026
+
+The founder supplied `rafik-campaign-round7.zip` (brand guidelines v1.0, approved 22 October) and directed future product design to align with it. The campaign explicitly leaves application controls under this document. This section is the product translation of that identity; social export geometry and publishing instructions do not become application requirements.
+
+### Shared identity
+
+- Name: **Rafik / رفيق**. Use sentence case, plain task-specific language, athletes/coaches/institution, and accurate saved-on-device versus synced-to-institution wording. The campaign's British English “programme” does not require renaming API fields, routes or existing localization keys.
+- Keep the supplied original logo artwork, its existing outline, proportions and full opacity. Never mirror, recolor, redraw or add another decorative box/outline/shadow. Use a dark mark on a light surface and the supplied light mark on a dark surface. Preserve institution-owned branding; do not replace an institution logo with campaign artwork.
+- Shared default product accent: Rafik green `#285943`. Light page: ivory `#f8f8f3`; product dark page: `#171e1a`. Campaign forest `#10291f` is a related identity color, not an instruction to replace the product's accepted dark canvas. Keep instance-configurable colors and accessible derived foregrounds.
+- Supporting campaign references: ink `#18392b`, moss `#5d6c5a`, sage `#6f8a5c`, line `#d7ded2`, mist `#edf4e9`, lime `#c7dc9d`, fern grey `#b7c9b9`, pine `#17382a`. These are identity references, not a second runtime token system. Sage is unsuitable for ordinary small text on ivory; check actual text/surface contrast. Semantic errors/warnings and truthful chart categories retain their distinct meanings.
+- English uses locally loaded Manrope; Arabic uses locally loaded Noto Sans Arabic with real supplied weights. Product web 400/600 Arabic is valid; campaign 400/700 does not mandate synthetic bold or advertising-size typography. Arabic tracking stays zero; URLs, emails, identifiers and mixed-language names retain appropriate direction isolation.
+- Prefer warm matte surfaces, restrained green emphasis, deliberate whitespace and rounded controls. No new decorative glassmorphism, glossy/multicolor gradients, glows, noise, emoji decoration, invented dashboards or generated athlete imagery. Use the existing Phosphor SVG family for interface icons. Functional overlays retain necessary scrims, contrast, focus and opaque fallbacks.
+
+### Product-specific requirements remain
+
+Keep the operational type scale, 44–48px touch targets, real status badges, accessible focus/validation, pagination, disclosure and reduced-motion behavior defined below. Campaign 1080px artboards, 28px image frames, logo minimums, separate-language social posts, headline weights and “one accent per artboard” do not override adaptive product layout or semantic controls. A product page can contain bilingual user-entered names and warning/error states. Published screenshots must depict the actual product, never a repaint of these guidelines.
+
+For beta.3 Android work, align the default palette to the product identity above, bundle the real Latin/Arabic fonts with licenses and use the original surface-appropriate logo if a logo is shown. Keep device accessibility settings, tested logical-start Android RTL treatment, offline recovery and user-selected themes. Do not copy web CSS direction assumptions into native text alignment. Verify actual phone/tablet rendering before calling the native application aligned; the source gaps and acceptance checklist are in the [audit](known-issues/ui-ux-audit.md#campaign-and-native-brand-alignment--23-october-2026).
+
+### Source and reconciliation
+
+| Source            | Identity / limit                                                                                                                                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supplied archive  | `rafik-campaign-round7.zip`, SHA-256 `563dded3168ac510758e9f9fc038bbebd815a9e920433382bbb7032a9d05ff06`                                                                                                                                                    |
+| Visual source     | `round7/Rafik-Brand-Guidelines-v1.0.pdf`, 26 pages; SHA-256 `d86b31debd23e89265a3295984a1c2de3e19933d904259e95c7ad917600e3fbb`. PDF takes precedence over its campaign companion.                                                                          |
+| Written companion | `round7/BRAND-GUIDELINES-FOR-AGENTS.md`, SHA-256 `3f94639414e9e1222cfca0d14498fcaf50c5c5e7917a72e34538c3bafc8efcb9`                                                                                                                                        |
+| Existing app logo | `public/brand/rafik.png` is byte-identical to the handoff's `assets/rafik.png`; SHA-256 `d7544e73ec55d0233362d19dc180a3f8f1bf93bbfb92fdeba27519739c2d2c9d`. Larger dark and light marks in the handoff are approved variants, not newly generated artwork. |
+
+The source bundle's old `KenseiEmam/Rafik-OpenSource` owner and release/capture references are historical. Use the canonical Rafik-Athlete-Managment repository and the actual reviewed/published revision. Future beta.3 capabilities must not be presented as already released. The campaign's photography credits point into a separate round6 folder that is absent from this handoff; inspected example photos are not imported as product assets or assumed to have a complete redistributable provenance record. Keep campaign strategy/materials in their owning project; this repository maintains product rules and the source fingerprint above.
 
 ## Existing foundation
 
@@ -23,20 +97,33 @@ Paths in this table are relative to `apps/frontend/` unless the full path is giv
 
 ## Color and surfaces
 
-### Existing tokens
+### Surface layers and tokens
 
-| Token                         | Meaning                         | Rule                                                      |
-| ----------------------------- | ------------------------------- | --------------------------------------------------------- |
-| `--page`                      | Application canvas              | Keep instance-configured light/dark background            |
-| `--surface`                   | Raised work surface             | Forms, dialogs and meaningful grouped panels              |
-| `--surface-soft`              | Subtle grouping/selection       | Restrained row emphasis, chips, secondary sections        |
-| `--ink`                       | Primary content                 | Headings, field values and essential text                 |
-| `--muted`                     | Secondary content               | Descriptions, timestamps and helper text; still readable  |
-| `--line`                      | Borders and dividers            | One-pixel separation; not a substitute for spacing        |
-| `--accent` / `--accent-hover` | Primary and selected actions    | Theme-derived Rafik green treatment                       |
-| `--on-accent`                 | Text/icons on accent            | Always pair with accent backgrounds; never hardcode white |
-| `--error` / `--error-bg`      | Error text/surface              | Validation and operational errors                         |
-| `--radius` / `--shadow`       | Current surface shape/elevation | Consolidate usage rather than copying values              |
+Revised 28 October 2026 at founder direction, after cards and their fields looked muddy in both themes. The model follows the semantic-token layering used by shadcn-vue (background → card → field, quiet borders, small elevation) while keeping Rafik's colours and institution branding. Each layer is derived from the institution canvas, ink and accent, so any configured palette keeps the same hierarchy.
+
+| Layer / token                                 | Meaning                                      | Light                                      | Dark                                    |
+| --------------------------------------------- | -------------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `--page`                                      | Application canvas                           | Institution light background (`#f8f8f3`)   | Institution dark background (`#171e1a`) |
+| `--surface`                                   | Card, popover, dialog                        | 30% canvas, 70% white (brighter than page) | 95% canvas, 5% white (one step up)      |
+| `--surface-soft`                              | Muted fill: chips, hover, header rows, wells | 95.5% canvas, 4.5% ink                     | 90% canvas, 10% white                   |
+| `--field`                                     | Text control background                      | Same as `--surface`                        | 92% canvas, 8% white (above the card)   |
+| `--line`                                      | Card edges and dividers                      | 87% canvas, 13% ink (quiet)                | 87% canvas, 13% white                   |
+| `--control-border`                            | Inputs, selects, outline buttons             | 68% canvas, 32% ink                        | 76% canvas, 24% white                   |
+| `--ink` / `--muted`                           | Primary / secondary text                     | Contrast-selected ink; muted 66% ink       | Contrast-selected ink; muted 68% ink    |
+| `--accent` / `--accent-hover` / `--on-accent` | Primary and selected actions                 | Contrast-adjusted institution accent       | Same derivation against the dark canvas |
+| `--tint`                                      | Selected tile/chip fill                      | 90% canvas, 10% accent                     | 90% canvas, 10% accent                  |
+| `--ring`                                      | Focus ring on text controls                  | Accent at 40% alpha, 3px                   | Accent at 45% alpha, 3px                |
+| `--shadow-xs` / `--shadow-sm` / `--shadow`    | Control / card / floating elevation          | Ink-tinted, 5–16% alpha                    | Black, 20–55% alpha                     |
+| `--error` / `--error-bg`                      | Error text/surface                           | Unchanged                                  | Unchanged                               |
+
+Rules:
+
+- Hierarchy comes from layer, not from heavier borders: page → card (`--surface`, `--line`, `--shadow-sm`) → floating overlay (`--shadow`). Never place a card background darker than the canvas.
+- Text controls use `--field`, `--control-border` and `--shadow-xs`; focus shows an accent border plus the `--ring` halo. Wrappers that embed an input (search fields, comboboxes) carry the control styling and remove it from the inner input.
+- Inside a card, group with spacing, dividers or a `--surface-soft` well; selectable tiles use `--field` with `--line`, and the selected tile uses an accent border with `--tint`.
+- Counts or items that need action may be raised (`--shadow-sm`, accent number); empty or inactive peers stay flat and muted.
+- Secondary buttons are outline controls on `--field`; primary buttons keep the accent fill. Danger and status colours keep their semantic tokens.
+- Contrast evidence (default palette): muted text 5.8:1 on cards and 5.0:1 on soft fills in light; 6.4:1 and 5.4:1 in dark. Control borders are 2.1:1 (light) and 1.75:1 (dark) against their fields, up from the previous 1.6:1. Text, focus ring and accent border carry meaning; dividers are decorative.
 
 The original default accent is `#285943`; default page colors are `#f8f8f3` and `#171e1a`. Runtime colors can differ because installation branding and accessible theme derivation are supported. Do not replace them with fixed brand swatches throughout components.
 
@@ -44,7 +131,7 @@ The original default accent is `#285943`; default page colors are `#f8f8f3` and 
 
 Shared success, warning, information and danger-action colors now live in `styles/design-system.css` (`--success`, `--success-bg`, `--warning`, `--warning-bg`, `--info`, `--info-bg`, `--danger-action`, `--on-danger`). Wider consumer migration and customized-palette validation remain follow-up work. Success can use the green family; warning uses restrained amber, information a muted blue, danger a readable red. Meaning must also appear as text or an icon.
 
-Use ordinary opaque surfaces for most content. Use a subtle gradient only for a small header, selected emphasis or onboarding highlight. Glass treatment is optional for floating shell elements/overlays, with an opaque fallback and verified contrast. Never blur a form, table, athlete record or primary reading surface.
+Use ordinary opaque surfaces for most content. Use a subtle gradient only for a small header, selected emphasis or onboarding highlight. Prefer opaque floating shell elements/overlays. Existing functional translucency needs an opaque fallback and verified contrast; do not introduce decorative glass treatment. Never blur a form, table, athlete record or primary reading surface.
 
 ## Typography
 
@@ -76,7 +163,7 @@ For **Primary coach**, keep the heading, short responsibility explanation and se
 
 Approved spacing scale: **4, 8, 12, 16, 20, 24, 32, 48, 64px**. Use 24px panel padding on desktop, 16px on phone; 16px nested section spacing; 24–32px between independent sections. Dense rows can use 12px vertical and 16px inline padding.
 
-Approved radii: 8px controls, 12px panels/dialogs, full pill only for compact tags/toggles where the shape helps recognition. Border thickness is normally 1px. Reserve stronger borders for selection, focus or an explicit warning. Use at most one restrained shadow on a floating/raised element; routine data panels do not each need a shadow.
+Approved radii: 8px controls, 12px panels/dialogs, full pill only for compact tags/toggles where the shape helps recognition. Border thickness is normally 1px. Reserve stronger borders for selection, focus or an explicit warning. Elevation is tokenized: `--shadow-xs` for controls, `--shadow-sm` for cards and panels, `--shadow` for menus, popovers, dialogs, side panels and toasts. Do not hand-write other shadow values.
 
 Implementation should introduce named spacing, typography, radius, control-size, motion and elevation tokens in the existing style foundation. The implemented token names are in `styles/design-system.css`; the scale includes only the values currently consumed. Do not publish a second parallel theme system.
 
@@ -127,7 +214,7 @@ Keep native text/date/time inputs unless a real interaction problem justifies an
 
 Person selections must search the entire authorized roster, resolve names across pages and retain selections through filtering/reload. Show sports/specialties and primary/supporting responsibility where relevant. Filtered out is not deselected. Clear unavailable selections explicitly; never silently submit hidden IDs.
 
-Search behavior must be explicit: a labelled Search action/Enter when results are server submitted; no mix of delayed and submit-only behavior without a reason. New search/filter resets list page; opening/returning from a record preserves the previous query and page. Preserve previous results during refresh with a clear busy state; accept only the latest response.
+Search behavior must be explicit: a labelled Search action/Enter when results are server submitted; no mix of delayed and submit-only behavior without a reason. New search/filter resets list page; opening/returning from a record preserves the previous query and page. Preserve previous results during refresh with a clear busy state; accept only the latest response. **Approved change, 27 October 2026 (not yet implemented):** list searches will run as the person types, after a short debounce, and Enter submits immediately; explicit Search buttons are removed as each list migrates to the shared filter toolbar. The page-reset, preserved-results and latest-response rules above still apply. See the [coach UX revamp plan](known-issues/ui-ux-audit.md#coach-dashboard-ux-revamp--27-october-2026).
 
 ### Password visibility
 
@@ -202,7 +289,7 @@ Nutrition plans and athlete programs use the same AthleteSearch control and athl
 
 Schedule is one navigation destination, represented by the existing calendar SVG. Calendar and list are alternate views selected by one navigation-style button labelled with the destination view and its SVG icon; legacy event URLs remain valid and highlight Schedule. Both group sessions and assessments share the list. Calendar opens on today’s institution-timezone date and displays at most four booking cards, with the shared previous/next controls when needed. Selecting another date or changing the period resets card pagination. Read all pages of the displayed calendar period before reporting its counts; do not silently omit today’s bookings behind an API page. Existing date/view/filter query values survive view switching.
 
-The Schedule view button changes its label and icon to the destination view. Use a restrained 160ms opacity/3px transition for the label and standard hover transitions; reduced-motion preferences remove movement. Do not add a separate segmented navigation bar for these two views.
+The Schedule view button changes its label and icon to the destination view. Use a restrained 160ms opacity/3px transition for the label and standard hover transitions; reduced-motion preferences remove movement. Do not add a separate segmented navigation bar for these two views. **27 October 2026:** a Month/Week/List tab row was tried and reverted at founder request; the view select, period input and List view button remain.
 
 Calendar and list filter toolbars are unboxed wrapping flex layouts. Controls align at their lower edge; labels remain attached to inputs. Do not place a card background or border around ordinary filter/pagination controls. On narrow screens allow whole controls to wrap without shrinking touch targets.
 
@@ -220,7 +307,7 @@ The Schedule list uses the same unboxed search/filter/pagination toolbar and 44p
 
 Groups and assessment templates follow the shared search/pagination toolbar with their archive checkbox visible inline. Use contextual labels (Search groups/Search templates), not a generic library label.
 
-People keeps role tabs above its search/membership/sport toolbar; pagination aligns beside those controls. Shared pagination has zero external block margin so it cannot sit above search fields in Programs or other lists. Tasks need no additional visual polish in this handoff; the founder may remove the feature later.
+People keeps role tabs above its search/membership/sport toolbar; pagination aligns beside those controls. Shared pagination has zero external block margin so it cannot sit above search fields in Programs or other lists. Tasks is retired in the upcoming release; its historical audit evidence is retained.
 
 Assessment templates use an adaptive card grid because each item has a short title and drill count; place the edit action consistently at the bottom. Use 24 records by default and the shared grid-size options. Groups remain rows because membership details need horizontal room. Cards stack naturally on phones.
 
@@ -239,3 +326,17 @@ Assessment templates use an adaptive card grid because each item has a short tit
 - Long editors keep their save/publish actions in one top action bar, pinned below the 64px dashboard header from 601px up. Do not duplicate the same named action elsewhere on the page. Put view/copy tools (preview, Duplicate) at the start as icon + label secondary buttons, and the save/assign/publish flow at the end; never render a toolbar action as a bare text link.
 - Multi-step pickers (for example program assignment) use numbered raised cards: settings first, then search and the selected list side by side (stacked below 980px), with a sticky bar for the next step. Search results are compact name cards that act on click with a plus icon; consequential per-item choices such as replacing a plan open a dialog instead of an inline dropdown.
 - People pickers fetch only the 5 closest matches (never a whole roster or Load more). A short, focused choice that starts a flow (for example choosing the athlete for a new nutrition plan) opens in a shared `.ui-dialog`. Editing panels grow with their content; use a minimum height, never a fixed height with an inner scroller.
+
+## Role-specific dashboard priorities
+
+Approved 26 October: athlete My day places actionable workouts first, then upcoming appointments, with compact food-diary and coach-contact panels. Start/Resume remains visible without hover. Administrator Institution overview leads with period-labelled participation and activity, then current coach coverage, upcoming activity and administrative actions. Avoid clinical status or invented assessment/readiness scores. Report values retain their own date labels during refresh/errors; current roster counts are clearly current. Reuse MetricChart with accessible text/table equivalents, shared tokens and logical borders; two-column contexts stack on narrow layouts. Do not duplicate a metric as several competing action cards.
+
+Assessment event template selection uses one visible library search and a radio list with template names/test counts. Avoid a separate search accordion plus another selection dropdown. Preserve and identify the current selection even when it is outside search results; no-match results must not silently clear it. Fetch five results per request and offer More templates, with create-in-new-tab and refresh as secondary actions. Use bilingual task-specific examples for event names.
+
+Administrator and athlete pages (28 October 2026): stat values use the shared stat-card treatment (label, value, caption) rather than accent side bars; a link is never styled as a metric. Shortcut lists to other sections use one compact panel of icon, title and description rows instead of several call-to-action cards. Logs and notification feeds are compact rows inside one card with a category icon, a plain-language title, muted metadata and a right-aligned time; unread state uses a dot plus bold text and an accessible Unread prefix. Per-record settings sit on the record's own row; never let a page-level control silently apply to whichever row is saved. Utilities such as Refresh are icon-only secondary buttons; reserve filled buttons for the page's primary action. Navigation icons are unique within a role's sidebar.
+
+Superseded 28 October 2026: light-theme cards are no longer tinted darker than the canvas; see [Surface layers and tokens](#surface-layers-and-tokens). Validate text contrast on rendered surfaces when changing any layer token; a different background color alone is not acceptance.
+
+Coach selectors keep checked primary/supporting coaches in the same result list rather than moving them to chips or a second list. Selected rows remain enabled for removal; retain selected identities outside a later search/page. Supporting sport/specialty scope remains explicit when several scopes are eligible.
+
+Messaging uses two tabs, as in common chat apps: Chats (existing conversations) and Contacts (groups and people to start or reopen a chat with). Search filters the current tab as the user types; Enter is never required. Opening a contact reopens the existing private chat (pair creation is idempotent) and returns to Chats. The composer keeps attach, privacy note and Send on one row, and the message history fills the remaining thread height. On Chats, an administrator's institution-inclusion switch interleaves discoverable channels with joined channels; joining remains explicit and previews stay private before membership. Preserve the inbox shell/scroll when selecting a thread. Athlete-plan adaptation has its own Apply action and personalized-revision label; library Save/Publish and explicit copy actions are distinct.

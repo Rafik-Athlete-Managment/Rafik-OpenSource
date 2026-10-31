@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
+import TimezonePicker from '../../components/TimezonePicker.vue'
+import { addDays } from '../../lib/dates'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { user, profile } from '../../app/auth'
-import { request, rows, rpc } from '../../lib/backend'
-import type { PlanVersion, Relationship, Profile, Assignment } from '../../lib/domain'
+import { request } from '../../lib/backend'
+import type { PlanVersion } from '../../lib/domain'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { programContext } from './program-context'
-import { useCommand } from '../teams/commands'
-import CommandStatus from '../teams/CommandStatus.vue'
-import OrganizationNav from '../organizations/OrganizationNav.vue'
+import { useCommand } from '../../lib/commands'
+import CommandStatus from '../../components/CommandStatus.vue'
 import PageState from '../../components/PageState.vue'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
 import { PhCheck, PhMagnifyingGlass, PhPlus, PhSwap, PhX } from '@phosphor-icons/vue'
@@ -44,7 +45,7 @@ type Recipient = {
   current?: string
   /** Administrators only: account email to tell same-named athletes apart. */
   email?: string | null
-  /** Institution recipients list every active plan; independent coaching keeps one. */
+  /** Recipients list every active plan. */
   plans?: ActivePlan[]
 }
 type Overlap = { title: string; goal: string | null; start_date: string; end_date: string | null }
@@ -77,13 +78,15 @@ const start = ref(
     }).format(new Date()),
   ),
   end = ref(''),
-  mode = ref('flexible')
+  mode = ref('flexible'),
+  automatic = ref(false),
+  timezone = ref(profile.value?.timezone || 'UTC')
 const key = `delivery:${user.value!.id}:${context.key}:${versionId}`
 /** Large institutions: search returns only the top matches; the selection lives below. */
 const MATCHES = 5,
   MAX_RECIPIENTS = 50
 const visible = computed(() => pagePeople.value.slice(0, MATCHES))
-const emailSearch = computed(() => !!context.workspace && context.view === 'admin')
+const emailSearch = computed(() => context.view === 'admin')
 const currentPlans = (person: Recipient) =>
   person.plans
     ? person.plans.map(planLabel).join('، ') || l('No active plan', 'لا توجد خطة نشطة')
@@ -168,38 +171,22 @@ function clearAll() {
 }
 const recipients = computed(() => people.value.filter((p) => selected.value.includes(p.id)))
 let initialized = false
-watch(
-  [selected, start, end, mode],
-  () => {
-    if (initialized)
-      void storeDraft(key, {
-        selected: [...selected.value],
-        start: start.value,
-        end: end.value,
-        mode: mode.value,
-        replace: { ...replace.value },
-        goal: goal.value,
-        sport: sport.value,
-      }).catch((e) => (error.value = errorMessage(e)))
-  },
-  { deep: true },
-)
-watch(
-  [replace, goal, sport],
-  () => {
-    if (initialized)
-      void storeDraft(key, {
-        selected: [...selected.value],
-        start: start.value,
-        end: end.value,
-        mode: mode.value,
-        replace: { ...replace.value },
-        goal: goal.value,
-        sport: sport.value,
-      }).catch((e) => (error.value = errorMessage(e)))
-  },
-  { deep: true },
-)
+function persistDraft() {
+  if (initialized)
+    void storeDraft(key, {
+      selected: [...selected.value],
+      start: start.value,
+      end: end.value,
+      mode: mode.value,
+      automatic: automatic.value,
+      timezone: timezone.value,
+      replace: { ...replace.value },
+      goal: goal.value,
+      sport: sport.value,
+    }).catch((e) => (error.value = errorMessage(e)))
+}
+watch([selected, start, end, mode, automatic, timezone], persistDraft, { deep: true })
+watch([replace, goal, sport], persistDraft, { deep: true })
 const planLabel = (plan: ActivePlan) =>
   [plan.title, plan.goal, sports.value.find((s) => s.id === plan.sport)?.name]
     .filter(Boolean)
@@ -224,13 +211,7 @@ async function loadRoster() {
       items: Recipient[]
       selected: Recipient[]
       next: number | null
-    }>(
-      (context.workspace
-        ? `/v1/workspaces/${context.workspace}/recipients`
-        : '/v1/coach/recipients') +
-        '?' +
-        q,
-    )
+    }>(`/v1/institution/recipients` + '?' + q)
     if (current !== rosterGeneration) return
     // Nothing is listed until someone types; selected athletes always resolve.
     pagePeople.value = query ? result.items.slice(0, MATCHES) : []
@@ -257,19 +238,19 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    version.value = context.workspace
-      ? (
-          await request<{ version: PlanVersion }>(
-            `/v1/workspaces/${context.workspace}/programs?view=${context.view}&version=${versionId}`,
-          )
-        ).version
-      : (await rows<PlanVersion>('plan_versions', 'id', versionId))[0]
+    version.value = (
+      await request<{ version: PlanVersion }>(
+        `/v1/institution/programs?view=${context.view}&version=${versionId}`,
+      )
+    ).version
     if (!version.value) throw Error('program_unavailable')
     const local = await getDraft<{
       selected: string[]
       start: string
       end: string
       mode: string
+      automatic?: boolean
+      timezone?: string
       replace?: Record<string, string>
       goal?: string
       sport?: string
@@ -279,17 +260,21 @@ async function load() {
       start.value = local.start
       end.value = local.end
       mode.value = local.mode
+      automatic.value = local.automatic ?? false
+      timezone.value = local.timezone || profile.value?.timezone || 'UTC'
       replace.value = local.replace || {}
       goal.value = local.goal || ''
       sport.value = local.sport || ''
-    } else if (route.query.member) selected.value = [String(route.query.member)]
+    } else {
+      automatic.value = version.value.prescription.automaticPreparation === true
+      if (route.query.member) selected.value = [String(route.query.member)]
+    }
     const preselected = !local && !!route.query.member
-    if (context.workspace)
-      sports.value = (
-        await request<{ items: Sport[] }>(
-          `/v1/workspaces/${context.workspace}/sports?view=${context.view}`,
-        ).catch(() => ({ items: [] as Sport[] }))
-      ).items.filter((s) => !s.archived)
+    sports.value = (
+      await request<{ items: Sport[] }>(`/v1/institution/sports?view=${context.view}`).catch(
+        () => ({ items: [] as Sport[] }),
+      )
+    ).items.filter((s) => !s.archived)
     await loadRoster()
     if (preselected) selected.value.forEach(preferUpdate)
     initialized = true
@@ -315,19 +300,10 @@ const command = useCommand<'deliver'>(
     await removeDraft(key)
   },
   (_, args) =>
-    context.workspace
-      ? request(`/v1/workspaces/${context.workspace}/delivery`, {
-          method: 'POST',
-          body: JSON.stringify(args),
-        })
-      : rpc('deliver_plan', {
-          p_operation: args.operation,
-          p_version: args.version_id,
-          p_recipients: args.members,
-          p_start: args.start_date,
-          p_end: args.end_date,
-          p_mode: args.schedule_mode,
-        }),
+    request(`/v1/institution/delivery`, {
+      method: 'POST',
+      body: JSON.stringify(args),
+    }),
   {
     successMessage: l(
       'Program assigned to the selected athletes.',
@@ -342,31 +318,24 @@ function deliver() {
     action: 'assign',
     view: context.view,
     version_id: versionId,
-    members: recipients.value.map((p) =>
-      context.workspace
-        ? {
-            id: p.id,
-            revision: p.revision,
-            replaces: replacedPlan(p)?.id || null,
-            replaces_revision: replacedPlan(p)?.revision ?? null,
-          }
-        : {
-            id: p.id,
-            revision: p.revision,
-            assignment_id: p.assignment_id,
-            assignment_revision: p.assignment_revision,
-          },
-    ),
+    members: recipients.value.map((p) => ({
+      id: p.id,
+      revision: p.revision,
+      replaces: replacedPlan(p)?.id || null,
+      replaces_revision: replacedPlan(p)?.revision ?? null,
+    })),
     start_date: start.value,
     end_date: end.value || null,
     schedule_mode: mode.value,
-    ...(context.workspace ? { goal: goal.value.trim() || null, sport: sport.value || null } : {}),
+    automatic_preparation: automatic.value,
+    timezone: timezone.value,
+    goal: goal.value.trim() || null,
+    sport: sport.value || null,
   })
 }
 onMounted(load)
 </script>
 <template>
-  <OrganizationNav v-if="context.workspace" />
   <div class="container page delivery-page">
     <RouterLink class="back-link" :to="context.base + '/plans'">{{
       l('Back to programs', 'العودة للبرامج')
@@ -384,7 +353,7 @@ onMounted(load)
           }}
         </p>
       </div>
-      <span v-if="version?.revision" class="tag success delivery-version">{{
+      <span v-if="version?.revision" class="tag delivery-version" data-status="published">{{
         l(`Version ${version.revision}`, `النسخة ${version.revision}`)
       }}</span>
     </PageHeading>
@@ -417,11 +386,9 @@ onMounted(load)
             </li>
           </ul>
         </section>
-        <RouterLink
-          class="button"
-          :to="context.base + (context.workspace ? '/training' : '/clients')"
-          >{{ l('Open training workspace', 'فتح مساحة التدريب') }}</RouterLink
-        >
+        <RouterLink class="button" :to="context.base + '/training'">{{
+          l('Open training institution', 'فتح مساحة التدريب')
+        }}</RouterLink>
       </section>
       <form v-else @submit.prevent="review ? deliver() : (review = true)">
         <fieldset class="form-fields" :disabled="locked">
@@ -435,14 +402,23 @@ onMounted(load)
                   <p>
                     {{
                       l(
-                        'Dates follow each athlete’s timezone. Cycle day 1 is the start date; unfilled days are recovery days.',
-                        'التواريخ بحسب المنطقة الزمنية للرياضي. اليوم الأول هو تاريخ البداية والأيام الفارغة للتعافي.',
+                        'Cycle day 1 is the start date; unfilled days are recovery days. Automatic preparation uses the timezone selected below and requires an end date within 366 days.',
+                        'اليوم الأول هو تاريخ البداية والأيام الفارغة للتعافي. يستخدم التحضير التلقائي المنطقة الزمنية المحددة أدناه ويتطلب نهاية خلال ٣٦٦ يوماً.',
                       )
                     }}
                   </p>
                 </div>
               </header>
               <div class="run-fields">
+                <label class="checkbox-row">
+                  <input v-model="automatic" type="checkbox" />
+                  {{ l('Automatic daily preparation', 'التحضير اليومي التلقائي') }}
+                </label>
+                <TimezonePicker
+                  v-if="automatic"
+                  v-model="timezone"
+                  :label="l('Preparation timezone', 'المنطقة الزمنية للتحضير')"
+                />
                 <label
                   >{{ l('Schedule', 'الجدول')
                   }}<select v-model="mode">
@@ -457,9 +433,21 @@ onMounted(load)
                   >{{ l('Start date', 'تاريخ البداية')
                   }}<input v-model="start" type="date" required /></label
                 ><label
-                  >{{ l('End date (optional)', 'تاريخ النهاية (اختياري)')
-                  }}<input v-model="end" type="date" :min="start" /></label
-                ><template v-if="context.workspace"
+                  >{{
+                    automatic
+                      ? l('Preparation ends on', 'نهاية التحضير')
+                      : l('End date (optional)', 'تاريخ النهاية (اختياري)')
+                  }}<input
+                    v-model="end"
+                    type="date"
+                    :min="start"
+                    :max="
+                      automatic && /^\d{4}-\d{2}-\d{2}$/.test(start)
+                        ? addDays(start, 366)
+                        : undefined
+                    "
+                    :required="automatic" /></label
+                ><template
                   ><label
                     >{{ l('Goal (optional)', 'الهدف (اختياري)')
                     }}<input
@@ -475,7 +463,7 @@ onMounted(load)
                   ></template
                 >
               </div>
-              <p v-if="context.workspace && context.view === 'trainer'" class="small-print">
+              <p v-if="context.view === 'trainer'" class="small-print">
                 {{
                   l(
                     'If you support an athlete for one sport, label the plan with that sport. Primary coaches can assign any plan.',
@@ -613,7 +601,7 @@ onMounted(load)
                   <button
                     v-if="selected.length > 1 && !confirmClear"
                     type="button"
-                    class="text-link selected-clear"
+                    class="text-link selected-clear danger-action"
                     @click="confirmClear = true"
                   >
                     {{ l('Remove all', 'إزالة الكل') }}
@@ -626,7 +614,7 @@ onMounted(load)
                       `إزالة جميع الرياضيين المحددين (${selected.length}) واختيارات خططهم؟`,
                     )
                   }}
-                  <button type="button" class="text-link" @click="clearAll">
+                  <button type="button" class="text-link danger-action" @click="clearAll">
                     {{ l('Remove all', 'إزالة الكل') }}</button
                   ><button type="button" class="text-link" @click="confirmClear = false">
                     {{ l('Keep them', 'الإبقاء عليهم') }}
@@ -674,17 +662,16 @@ onMounted(load)
                       <small v-if="personOf(id)">{{ currentPlans(personOf(id)!) }}</small>
                     </div>
                     <div v-if="personOf(id)" class="selected-outcome">
-                      <span class="tag" :class="{ success: !onThisVersion(personOf(id)) }">{{
-                        onThisVersion(personOf(id))
-                          ? l('Already on this program', 'على هذا البرنامج بالفعل')
-                          : outcome(personOf(id)!)
-                      }}</span
+                      <span
+                        class="tag"
+                        :data-status="!onThisVersion(personOf(id)) ? 'active' : 'published'"
+                        >{{
+                          onThisVersion(personOf(id))
+                            ? l('Already on this program', 'على هذا البرنامج بالفعل')
+                            : outcome(personOf(id)!)
+                        }}</span
                       ><button
-                        v-if="
-                          context.workspace &&
-                          personOf(id)?.plans?.length &&
-                          !onThisVersion(personOf(id))
-                        "
+                        v-if="personOf(id)?.plans?.length && !onThisVersion(personOf(id))"
                         type="button"
                         class="button secondary small"
                         :aria-label="
@@ -697,7 +684,7 @@ onMounted(load)
                     </div>
                     <button
                       type="button"
-                      class="icon-button selected-remove"
+                      class="icon-button selected-remove danger-action"
                       :aria-label="l('Remove ', 'إزالة ') + nameOf(id)"
                       @click="remove(id)"
                     >
@@ -748,15 +735,19 @@ onMounted(load)
               </div>
             </header>
             <ul class="review-list">
+              <li>
+                {{
+                  automatic
+                    ? l(
+                        `Automatic daily preparation · ${timezone} · until ${end}`,
+                        `التحضير اليومي التلقائي · ${timezone} · حتى ${end}`,
+                      )
+                    : l('Manual scheduling', 'جدولة يدوية')
+                }}
+              </li>
               <li v-for="person in recipients" :key="person.id" dir="auto">
                 {{ person.name }} —
-                {{
-                  !context.workspace
-                    ? person.assignment_id
-                      ? l('Replace future training', 'استبدال التدريب القادم')
-                      : l('First assignment', 'التعيين الأول')
-                    : outcome(person)
-                }}
+                {{ outcome(person) }}
               </li>
             </ul>
             <p class="small-print">
@@ -823,7 +814,7 @@ onMounted(load)
           </fieldset>
           <div class="ui-dialog-actions">
             <DialogClose as-child
-              ><button type="button" class="button secondary">
+              ><button type="button" class="button secondary danger-action">
                 {{ l('Cancel', 'إلغاء') }}
               </button></DialogClose
             ><button type="button" class="button" @click="applyChoice">
@@ -905,14 +896,19 @@ onMounted(load)
   gap: var(--space-2);
   min-height: 48px;
   padding-inline: var(--space-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control, 8px);
-  background: var(--page);
+  background: var(--field);
+  box-shadow: var(--shadow-xs);
   color: var(--muted);
 }
 .search-field:focus-within {
   border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.search-field input,
+.search-field input:focus-visible {
+  box-shadow: none;
 }
 .search-field input {
   flex: 1;
@@ -940,7 +936,7 @@ onMounted(load)
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-control, 8px);
-  background: var(--page);
+  background: var(--field);
   color: var(--ink);
   text-align: start;
   font: inherit;
@@ -1009,12 +1005,23 @@ onMounted(load)
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--space-4);
+  align-items: end;
 }
 .run-fields label {
   display: grid;
   gap: var(--space-2);
   margin: 0;
   min-width: 0;
+}
+.run-fields .checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  grid-column: 1 / -1;
+}
+.checkbox-row input {
+  width: auto;
+  flex: 0 0 auto;
 }
 .selected-count {
   display: inline-flex;

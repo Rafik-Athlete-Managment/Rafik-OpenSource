@@ -64,10 +64,10 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
       athlete = await f.person(),
       peer = await f.person(),
       outsider = await f.person();
-    const workspace = await f.create(admin);
-    const staff = await f.join(admin, workspace, coach, ["trainer"]);
-    const member = await f.join(admin, workspace, athlete, ["trainee"]);
-    const second = await f.join(admin, workspace, peer, ["trainee"]);
+    const institution = await f.create(admin);
+    const staff = await f.join(admin, institution, coach, ["trainer"]);
+    const member = await f.join(admin, institution, athlete, ["trainee"]);
+    const second = await f.join(admin, institution, peer, ["trainee"]);
     const password = "Field-Beta-2026!";
     await db.users.update({
       where: { id: coach.id },
@@ -142,8 +142,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
       archived: false,
     });
     assert.equal(
-      (await call(admin, `/v1/workspaces/${workspace}/services`, template))
-        .status,
+      (await call(admin, `/v1/institution/services`, template)).status,
       200,
     );
     let eventNumber = 0;
@@ -153,7 +152,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
         .slice(0, 16);
       const r = await call(
         admin,
-        `/v1/workspaces/${workspace}/calendar`,
+        `/v1/institution/calendar`,
         operation("create", {
           view: "admin",
           id: randomUUID(),
@@ -173,7 +172,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
       );
       assert.equal(r.status, 200, JSON.stringify(r));
       const created = r.data[0];
-      await db.organization_events.update({
+      await db.institution_events.update({
         where: { id: created.id },
         data: {
           starts_at: new Date(Date.now() - 300000),
@@ -183,7 +182,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
       return created;
     }
     const e = await event("API acceptance assessment");
-    const path = `/v1/workspaces/${workspace}/calendar`;
+    const path = `/v1/institution/calendar`;
     const read = await native(
       path + `?view=trainer&id=${e.id}&summary=true`,
       token,
@@ -191,7 +190,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
     assert.equal(read.status, 200);
     const roster = fieldRoster(read.data, e.id),
       person = roster.people.find((p) => p.member_id === member.id)!;
-    const owner = { instance: base, user: coach.id, workspace };
+    const owner = { instance: base, user: coach.id, institution };
     const store = new FieldStore(adapter(sqlite));
     await store.initialize();
     await store.saveRoster(owner, roster);
@@ -221,7 +220,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
     await sync.run();
     assert.equal(await store.next(owner), null);
     assert.equal(
-      await db.workspace_operations.count({
+      await db.institution_operations.count({
         where: { id: attendance.operation },
       }),
       1,
@@ -268,7 +267,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
     await sync.run();
     assert.equal(await store.snapshot(owner, e.id), null);
     assert.equal(
-      (await db.organization_events.findUniqueOrThrow({ where: { id: e.id } }))
+      (await db.institution_events.findUniqueOrThrow({ where: { id: e.id } }))
         .state,
       "completed",
     );
@@ -368,7 +367,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
     };
     await store.saveRoster(owner, fieldRoster(current.data, conflictEvent.id));
     await store.enqueue(owner, revoked);
-    await db.workspace_members.update({
+    await db.institution_members.update({
       where: { id: staff.id },
       data: { active: false },
     });
@@ -381,7 +380,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
       "even an acknowledged operation must recheck authority",
     );
     assert.deepEqual((await store.next(owner))?.payload, revoked);
-    await db.workspace_members.update({
+    await db.institution_members.update({
       where: { id: staff.id },
       data: { active: true },
     });
@@ -394,7 +393,7 @@ test("native HTTP + SQLite queue: exact retries, score/completion receipts, hist
             api: "http://10.0.2.2:55341",
             email: coach.email,
             password,
-            workspace,
+            institution,
             event: deviceEvent.id,
             member: member.id,
             drill: drill.key,

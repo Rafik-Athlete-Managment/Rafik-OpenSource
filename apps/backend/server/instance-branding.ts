@@ -1,5 +1,5 @@
 import { db, ApiError, type Actor } from "./db.ts";
-import { scoped, uuid, type Tx } from "./workspaces.ts";
+import { scoped, uuid, type Tx } from "./institution.ts";
 
 export type Branding = {
   name: string;
@@ -36,10 +36,10 @@ export async function readBrandingLogo() {
 
 export async function updateBranding(
   actor: Actor,
-  workspaceId: string,
+  institutionId: string,
   input: Record<string, unknown>,
 ) {
-  uuid(workspaceId);
+  uuid(institutionId);
   const name = typeof input.name === "string" ? input.name.trim() : "";
   const accent = typeof input.accent === "string" ? input.accent : "";
   const backgroundLight =
@@ -76,7 +76,7 @@ export async function updateBranding(
       throw new ApiError(400, "invalid_request");
     mime = detected;
   }
-  return scoped(actor, workspaceId, ["admin"], async (tx: Tx) => {
+  return scoped(actor, institutionId, ["admin"], async (tx: Tx) => {
     const result = await tx.$queryRaw<Branding[]>`
       SELECT * FROM public.update_instance_branding(
         ${actor.id}::uuid, ${name}, ${accent.toLowerCase()}, ${backgroundLight.toLowerCase()}, ${backgroundDark.toLowerCase()}, ${logo ?? null}, ${mime ?? null}, ${logo === undefined}
@@ -85,9 +85,9 @@ export async function updateBranding(
   });
 }
 
-export async function canManageBranding(actor: Actor, workspaceId: string) {
-  uuid(workspaceId);
-  return scoped(actor, workspaceId, ["admin"], async (tx: Tx) => {
+export async function canManageBranding(actor: Actor, institutionId: string) {
+  uuid(institutionId);
+  return scoped(actor, institutionId, ["admin"], async (tx: Tx) => {
     const rows = await tx.$queryRaw<{ allowed: boolean }[]>`
       SELECT public.can_manage_instance_branding(${actor.id}::uuid) allowed`;
     return { allowed: rows[0]?.allowed === true };

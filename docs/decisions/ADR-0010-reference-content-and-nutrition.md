@@ -23,6 +23,6 @@ Keep the existing Vue, explicit HTTP API, Prisma/PostgreSQL and immutable snapsh
 
 The user-suggested hasaneyldrm GIFs are excluded from that repository's MIT grant and require separate Gym visual rights. Untraceable scraped photos and runtime hotlinks are rejected. Wger, Liftosaur, OpenNutriTracker and similar apps inform interaction patterns; their application code is not imported. Barcode lookup, a larger localized food catalog, personalized calorie estimation, clinical diets and automatic progression are not added by this decision.
 
-Organization exercise authoring uses the same catalog and presentation. Nutrition continues to belong to the existing independent coach/client relationship domain; these records must not be exposed as organization records. An organization nutrition service needs its own ownership/assignment/consent lifecycle and is explicitly outstanding.
+Institution exercise authoring uses the same catalog and presentation. Nutrition continues to belong to the existing independent coach/client relationship domain; these records must not be exposed as organization records. An organization nutrition service needs its own ownership/assignment/consent lifecycle and is explicitly outstanding.
 
 See the [research synthesis](../archive/open-source-research-2026-09.md), [content maintenance guide](../reference/content-maintenance.md), [API reference](../reference/api.md) and [verification](../verification/README.md).

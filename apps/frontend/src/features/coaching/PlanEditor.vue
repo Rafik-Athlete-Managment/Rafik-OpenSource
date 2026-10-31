@@ -1,40 +1,35 @@
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
-import ExerciseDemo from '../../components/ExerciseDemo.vue'
-import ExercisePicker from '../../components/ExercisePicker.vue'
+import WorkoutTemplatePicker from './WorkoutTemplatePicker.vue'
+import SidePanel from '../../components/SidePanel.vue'
+import { copyWorkout, type WorkoutTemplate } from '../../lib/workout-templates'
+import WorkoutExerciseCard from './WorkoutExerciseCard.vue'
+import WorkoutPreview from './WorkoutPreview.vue'
+import EmptyState from '../../components/EmptyState.vue'
 import ProgramCover from './ProgramCover.vue'
 import { request } from '../../lib/backend'
-import OrganizationNav from '../organizations/OrganizationNav.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  PhArrowLeft,
-  PhPlus,
-  PhTrash,
-  PhArrowUp,
-  PhArrowDown,
-  PhEye,
-  PhX,
-  PhBarbell,
-  PhCopy,
-} from '@phosphor-icons/vue'
-import { user, contexts } from '../../app/auth'
+import { PhArrowLeft, PhPlus, PhTrash, PhEye, PhBarbell, PhCopy } from '@phosphor-icons/vue'
+import { user } from '../../app/auth'
 import { duplicateSession, duplicateWeek } from './program-structure'
 import { programContext } from './program-context'
-import { useCommand } from '../teams/commands'
-import CommandStatus from '../teams/CommandStatus.vue'
+import { useCommand } from '../../lib/commands'
+import CommandStatus from '../../components/CommandStatus.vue'
 import { clone, type Plan, type PlanVersion, type Prescription } from '../../lib/domain'
 import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
 import { language, locale, t, errorMessage } from '../../lib/i18n'
-import PrescriptionFields from './PrescriptionFields.vue'
-import { upgradePrescription, targetLabel } from '../../lib/prescriptions'
+import { upgradePrescription } from '../../lib/prescriptions'
 import type { Exercise } from '../../lib/domain'
 import PageState from '../../components/PageState.vue'
+import type { AthletePlanSummary } from '@rafik/shared/contracts'
+const props = defineProps<{ assignedPlan?: AthletePlanSummary }>()
+const emit = defineEmits<{ adapted: [] }>()
 const route = useRoute(),
   router = useRouter()
 const context = programContext(route)
 const editable = ref(context.view !== 'trainee')
-const isNew = route.params.id === 'new'
+const isNew = !!props.assignedPlan || route.params.id === 'new'
 const id = ref(isNew ? crypto.randomUUID() : String(route.params.id))
 const title = ref(language('New program', 'برنامج جديد'))
 const blankPrescription = (): Prescription => ({
@@ -68,53 +63,42 @@ const form = ref<HTMLFormElement>()
 const coverInput = ref<HTMLInputElement>()
 const coverDrag = ref(false)
 let initialized = false
-const keyFor = (id: string) =>
-  context.workspace ? `plan:${user.value!.id}:${context.key}:${id}` : `plan:${user.value!.id}:${id}`
+const keyFor = (id: string) => `plan:${user.value!.id}:${context.key}:${id}`
 const key =
-  keyFor(String(route.params.id)) +
-  (route.query.source ? `:source:${route.query.source}:member:${route.query.member || ''}` : '')
+  keyFor(
+    props.assignedPlan
+      ? `assignment:${props.assignedPlan.id}:${props.assignedPlan.version.id}`
+      : String(route.params.id),
+  ) +
+  (route.query.source ? `:source:${route.query.source}:member:${route.query.member || ''}` : '') +
+  (!props.assignedPlan && isNew && route.query.workoutTemplate
+    ? `:workout-template:${route.query.workoutTemplate}`
+    : '')
+const importingWorkout = ref(false)
+function importWorkout(template: WorkoutTemplate) {
+  const replace =
+    draft.value.days.length === 1 &&
+    !draft.value.days[0]!.exercises.length &&
+    !draft.value.days[0]!.restDay
+  const slot = replace
+    ? { week: draft.value.days[0]!.week || 1, weekday: draft.value.days[0]!.weekday || 0 }
+    : freeSlot()
+  if (!slot) {
+    error.value = language(
+      'Add a cycle week before importing another workout.',
+      'أضف أسبوعاً للدورة قبل استيراد تمرين آخر.',
+    )
+    return
+  }
+  const copied = copyWorkout(template.workout, slot)
+  if (replace) draft.value.days.splice(0, 1, copied)
+  else draft.value.days.push(copied)
+  selected.value = draft.value.days.length - 1
+  importingWorkout.value = false
+}
 const day = computed(() => draft.value.days[selected.value]!)
 const catalog = ref<Exercise[]>([])
 const activeCatalog = computed(() => catalog.value.filter((exercise) => exercise.active !== false))
-const name = (id: string) => {
-  const e =
-    catalog.value.find((e) => e.id === id) ||
-    draft.value.days
-      .flatMap((d) => d.exercises.flatMap((e) => [e, ...(e.alternatives || [])]))
-      .find((e) => e.exerciseId === id)?.info
-  return (locale.value === 'ar' ? e?.name_ar?.trim() || e?.name : e?.name) || id
-}
-function selectExercise(index: number, exerciseId: string) {
-  const ex = day.value.exercises[index]!
-  if (!exerciseId || exerciseId === ex.exerciseId) return
-  const info = catalog.value.find((e) => e.id === exerciseId)
-  if (!info || info.active === false) return
-  ex.exerciseId = exerciseId
-  ex.kind = info?.kind || 'strength'
-  ex.seconds ||= 30
-  ex.metres ||= 100
-  ex.alternatives = []
-  delete ex.info
-}
-function toggleAlternative(index: number, exerciseId: string, checked: boolean) {
-  const ex = day.value.exercises[index]!
-  const alternatives = ex.alternatives || []
-  if (!checked) {
-    ex.alternatives = alternatives.filter((alternative) => alternative.exerciseId !== exerciseId)
-    return
-  }
-  const option = catalog.value.find((exercise) => exercise.id === exerciseId)
-  if (
-    alternatives.length >= 3 ||
-    alternatives.some((alternative) => alternative.exerciseId === exerciseId) ||
-    !option ||
-    option.active === false ||
-    option.id === ex.exerciseId ||
-    (option.kind || 'strength') !== (ex.kind || 'strength')
-  )
-    return
-  ex.alternatives = [...alternatives, { exerciseId }]
-}
 function restDay() {
   if (day.value.restDay) day.value.exercises = []
 }
@@ -132,9 +116,15 @@ async function load(recover = true) {
   try {
     if (isNew) {
       catalog.value = await context.catalog()
-      if (route.query.source) {
+      if (props.assignedPlan) {
+        title.value = props.assignedPlan.version.title
+        draft.value = upgradePrescription(
+          clone(props.assignedPlan.version.prescription as Prescription),
+        )
+        version.value = null
+      } else if (route.query.source) {
         const source = await context.load(String(route.query.source))
-        title.value = source.program.title.slice(0, 85) + language(' adapted', ' معدّل')
+        title.value = source.program.title.slice(0, 85) + language(' copy', ' نسخة')
         draft.value = upgradePrescription(clone(source.program.draft))
         version.value = null
       }
@@ -161,7 +151,7 @@ async function load(recover = true) {
         draft: Prescription
         version: number | null
       }>(key)
-      if (local) {
+      if (local && (isNew || local.id === id.value)) {
         id.value = local.id
         title.value = local.title
         draft.value = upgradePrescription(local.draft)
@@ -171,6 +161,15 @@ async function load(recover = true) {
         loadedSuccessfully.value = true
         return
       }
+    }
+    if (isNew && !props.assignedPlan && route.query.workoutTemplate) {
+      const page = await request<{ items: WorkoutTemplate[] }>(
+        `/v1/institution/workout-templates?view=${context.view}&id=${encodeURIComponent(String(route.query.workoutTemplate))}`,
+        { feedback: 'none' },
+      )
+      const template = page.items[0]
+      if (!template || template.archived) throw Error('workout_template_unavailable')
+      importWorkout(template)
     }
     initialized = true
     loadedSuccessfully.value = true
@@ -200,9 +199,24 @@ watch(
   },
   { deep: true },
 )
+// Old assignment-editor commands meant library publication. Never replay them as adaptation.
+const previousCopy = props.assignedPlan
+  ? useCommand<'save' | 'publish'>(
+      `program:${key}`,
+      async () => {},
+      (action, args) => context.command(action, args),
+      { successToast: false },
+    )
+  : undefined
 const command = useCommand<'save' | 'publish'>(
-  `program:${key}`,
+  props.assignedPlan ? `athlete-plan-adaptation:${key}` : `program:${key}`,
   async (action, result) => {
+    if (props.assignedPlan) {
+      await removeDraft(key)
+      restored.value = false
+      emit('adapted')
+      return
+    }
     const value = result as { plan: Plan; version?: PlanVersion }
     version.value = value.plan.draft_version
     restored.value = false
@@ -228,19 +242,40 @@ const command = useCommand<'save' | 'publish'>(
             'حُفظت المسودة. التعيينات الحالية لم تتغير.',
           )
   },
-  (action, args) => context.command(action, args),
+  (action, args) =>
+    props.assignedPlan
+      ? request('/v1/institution/delivery', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...args,
+            action: 'adapt',
+            view: context.view,
+          }),
+        })
+      : context.command(action, args),
   {
     successMessage: (action) =>
-      action === 'publish'
+      props.assignedPlan
         ? language(
-            'Program published to the institution library.',
-            'تم نشر البرنامج في مكتبة المؤسسة.',
+            'Athlete plan updated. Existing scheduled workouts are unchanged.',
+            'تم تحديث خطة الرياضي. لم تتغير التمارين المجدولة الحالية.',
           )
-        : language('Program draft saved.', 'تم حفظ مسودة البرنامج.'),
+        : action === 'publish'
+          ? language(
+              'Program published to the institution library.',
+              'تم نشر البرنامج في مكتبة المؤسسة.',
+            )
+          : language('Program draft saved.', 'تم حفظ مسودة البرنامج.'),
   },
 )
 const busy = computed(
-  () => uploading.value || command.state.busy || !!command.state.pending || !command.state.ready,
+  () =>
+    uploading.value ||
+    command.state.busy ||
+    !!command.state.pending ||
+    !command.state.ready ||
+    !!previousCopy?.state.pending ||
+    (previousCopy ? !previousCopy.state.ready : false),
 )
 async function execute(action: 'save' | 'publish') {
   if (!editable.value || !form.value?.reportValidity()) return
@@ -252,7 +287,13 @@ async function execute(action: 'save' | 'publish') {
     id: id.value,
     title: title.value,
     draft: clone(draft.value),
-    revision: version.value,
+    revision: props.assignedPlan ? props.assignedPlan.revision : version.value,
+    ...(props.assignedPlan
+      ? {
+          assignment: props.assignedPlan.id,
+          source_version_id: props.assignedPlan.version.id,
+        }
+      : {}),
   })
   if (
     action === 'save' &&
@@ -279,9 +320,8 @@ async function uploadCoverFile(file?: File) {
     if (coverInput.value) coverInput.value.value = ''
     return
   }
-  const workspace =
-    context.workspace || contexts.value.find((c) => c.kind === 'independent')?.workspace_id
-  if (!workspace) return
+  const institution = context.institution
+  if (!institution) return
   uploading.value = true
   error.value = ''
   try {
@@ -293,7 +333,7 @@ async function uploadCoverFile(file?: File) {
     const prior = await getDraft<{ digest: string; id: string }>(key + ':cover-upload')
     const mediaId = prior?.digest === digest ? prior.id : crypto.randomUUID()
     await storeDraft(key + ':cover-upload', { digest, id: mediaId })
-    await request(`/v1/program-media/${mediaId}?workspace=${workspace}`, {
+    await request(`/v1/program-media/${mediaId}?institution=${institution}`, {
       method: 'PUT',
       body: file,
       headers: { 'Content-Type': file.type },
@@ -383,7 +423,8 @@ async function discard() {
   await removeDraft(key)
   restored.value = false
   selected.value = 0
-  if (isNew) {
+  if (props.assignedPlan) await load(false)
+  else if (isNew) {
     title.value = language('New program', 'برنامج جديد')
     draft.value = blankPrescription()
     version.value = null
@@ -433,33 +474,51 @@ function removeDay() {
 }
 </script>
 <template>
-  <OrganizationNav v-if="context.workspace" />
-  <div class="container page editor-page">
-    <RouterLink class="back-link" :to="context.base + '/plans'"
+  <div :class="assignedPlan ? 'editor-page assigned-editor' : 'container page editor-page'">
+    <RouterLink v-if="!assignedPlan" class="back-link" :to="context.base + '/plans'"
       ><PhArrowLeft :size="18" aria-hidden="true" class="directional" />{{
         language('Programs', 'البرامج')
       }}</RouterLink
     >
     <PageHeading class="page-heading heading-actions">
       <div>
-        <p class="overline">{{ language('Plan studio', 'تصميم الخطة') }}</p>
-        <h1>
+        <p class="overline">
           {{
-            isNew
-              ? language('Create a program', 'إنشاء برنامج')
-              : language('Edit program', 'تعديل البرنامج')
+            context.view === 'trainee'
+              ? language('My program', 'برنامجي')
+              : language('Plan studio', 'تصميم الخطة')
           }}
-        </h1>
+        </p>
+        <component :is="assignedPlan ? 'h2' : 'h1'">
+          {{
+            assignedPlan
+              ? language('Adapt athlete plan', 'تعديل خطة الرياضي')
+              : route.query.source
+                ? language('Create a program copy', 'إنشاء نسخة من البرنامج')
+                : isNew
+                  ? language('Create a program', 'إنشاء برنامج')
+                  : editable
+                    ? language('Edit program', 'تعديل البرنامج')
+                    : title
+          }}
+        </component>
       </div>
     </PageHeading>
     <!-- One sticky action bar keeps preview, assign, save and publish reachable while editing. -->
     <div
-      v-if="!loading && (editable || (assignableVersionId && context.view !== 'trainee'))"
+      v-if="!loading && context.view !== 'trainee' && (editable || assignableVersionId || !isNew)"
       class="editor-toolbar"
       role="toolbar"
       :aria-label="language('Program actions', 'إجراءات البرنامج')"
     >
       <!-- View and copy tools sit apart from the save/assign/publish flow. -->
+      <div v-if="!editable" class="editor-toolbar-tools">
+        <button type="button" class="button secondary small" :disabled="busy" @click="duplicate">
+          <PhCopy :size="18" aria-hidden="true" />{{
+            language('Make an editable copy', 'إنشاء نسخة للتعديل')
+          }}
+        </button>
+      </div>
       <div v-if="editable" class="editor-toolbar-tools">
         <button type="button" class="button secondary small" @click="preview = !preview">
           <PhEye :size="18" aria-hidden="true" />{{
@@ -481,13 +540,15 @@ function removeDay() {
       <div class="editor-toolbar-actions">
         <RouterLink
           v-if="assignableVersionId && !published && context.view !== 'trainee'"
-          class="button secondary small"
+          class="button small"
+          :class="{ secondary: editable }"
           :to="context.base + '/deliver/' + assignableVersionId"
         >
           {{ language('Assign this program', 'تعيين هذا البرنامج') }}
         </RouterLink>
         <template v-if="editable">
           <button
+            v-if="!assignedPlan"
             type="submit"
             form="program-editor-form"
             class="button secondary small"
@@ -495,29 +556,40 @@ function removeDay() {
           >
             {{ language('Save draft', 'حفظ المسودة') }}</button
           ><button type="button" class="button small" :disabled="busy" @click="publish">
-            {{ busy ? t('loading') : language('Publish program', 'نشر البرنامج') }}
+            {{
+              busy
+                ? t('loading')
+                : assignedPlan
+                  ? language('Apply changes to athlete plan', 'تطبيق التعديلات على خطة الرياضي')
+                  : language('Publish program', 'نشر البرنامج')
+            }}
           </button>
         </template>
       </div>
     </div>
     <p v-if="editable && !loading" class="small-print editor-publish-note">
       {{
-        language(
-          'Publishing creates a fixed version and makes it available in the institution program library. Assignments remain a separate step.',
-          'ينشئ النشر نسخة ثابتة ويتيحها في مكتبة برامج المؤسسة. يبقى التعيين خطوة منفصلة.',
-        )
+        assignedPlan
+          ? language(
+              'Changes apply only to this athlete plan and future workouts. Existing scheduled/started workouts and the library program remain unchanged.',
+              'تخص التعديلات خطة هذا الرياضي وتمارينه المستقبلية فقط. لا تتغير التمارين المجدولة أو التي بدأت ولا برنامج المكتبة.',
+            )
+          : language(
+              'Publishing creates a fixed version and makes it available in the institution program library. Assignments remain a separate step.',
+              'ينشئ النشر نسخة ثابتة ويتيحها في مكتبة برامج المؤسسة. يبقى التعيين خطوة منفصلة.',
+            )
       }}
     </p>
     <PageState :loading="loading" :error="!loadedSuccessfully ? error : ''" @retry="load()"
       ><p v-if="restored" class="notice">
         {{ language('Your local draft has been restored.', 'تم استرداد مسودتك المحلية.') }}
-        <button class="text-link" @click="discard">
+        <button class="text-link danger-action" @click="discard">
           {{ language('Discard local changes', 'تجاهل التعديلات المحلية') }}
         </button>
       </p>
       <p v-if="error" class="notice error" role="alert">
         {{ error }}
-        <button v-if="!isNew" class="text-link" @click="discard">
+        <button v-if="!isNew" class="text-link danger-action" @click="discard">
           {{
             language(
               'Reload saved plan (discards this draft)',
@@ -526,12 +598,7 @@ function removeDay() {
           }}
         </button>
       </p>
-      <p
-        v-if="message && !command.state.busy && !command.state.pending"
-        class="notice success"
-        role="status"
-      >
-        {{ message }}
+      <p v-if="published && !command.state.busy && !command.state.pending" class="actions">
         <RouterLink
           v-if="published"
           :to="
@@ -544,8 +611,19 @@ function removeDay() {
           >{{ language('Assign this plan', 'تعيين هذه الخطة') }}</RouterLink
         >
       </p>
+      <template v-if="previousCopy?.state.pending">
+        <p class="notice">
+          {{
+            language(
+              'An earlier library-copy operation is awaiting confirmation. Resolve its saved request first; it does not update this athlete plan.',
+              'تنتظر عملية سابقة لنسخ البرنامج تأكيداً. عالج طلبها المحفوظ أولاً؛ فهي لا تحدّث خطة الرياضي.',
+            )
+          }}
+        </p>
+        <CommandStatus :command="previousCopy" />
+      </template>
       <CommandStatus :command="command" :show-notice="false" />
-      <form id="program-editor-form" ref="form" @submit.prevent="save">
+      <form id="program-editor-form" ref="form" @submit.prevent="assignedPlan ? publish() : save()">
         <fieldset :disabled="busy" class="form-fields">
           <section v-if="!preview" class="program-identity-card">
             <div
@@ -577,7 +655,7 @@ function removeDay() {
               <button
                 v-if="draft.presentation?.cover"
                 type="button"
-                class="text-link"
+                class="text-link danger-action"
                 @click="delete draft.presentation.cover"
               >
                 {{ language('Remove cover', 'إزالة الغلاف') }}
@@ -590,7 +668,11 @@ function removeDay() {
               }}</small>
             </div>
             <div class="program-identity-fields">
-              <label for="plan-title">{{ language('Program name', 'اسم البرنامج') }}</label>
+              <label for="plan-title">{{
+                assignedPlan
+                  ? language('Plan name', 'اسم الخطة')
+                  : language('Program name', 'اسم البرنامج')
+              }}</label>
               <input id="plan-title" v-model="title" required maxlength="100" class="title-input" />
               <label for="program-description">{{
                 language('What athletes can expect', 'ماذا يتوقع الرياضيون')
@@ -656,26 +738,37 @@ function removeDay() {
           <section v-else class="program-preview-heading">
             <ProgramCover :id="draft.presentation?.cover" />
             <div>
-              <p class="overline">{{ language('Program preview', 'معاينة البرنامج') }}</p>
-              <h2>{{ title }}</h2>
+              <template v-if="editable">
+                <p class="overline">{{ language('Program preview', 'معاينة البرنامج') }}</p>
+                <h2>{{ title }}</h2>
+              </template>
               <p v-if="draft.description">
                 {{ locale === 'ar' ? draft.descriptionAr || draft.description : draft.description }}
               </p>
               <p v-if="draft.presentation?.goal">{{ draft.presentation.goal }}</p>
             </div>
           </section>
-          <button
-            v-if="!editable && context.view !== 'trainee'"
-            type="button"
-            class="button secondary"
-            @click="duplicate"
-          >
-            {{ language('Make an editable copy', 'إنشاء نسخة للتعديل') }}
-          </button>
           <details open v-if="!preview" class="program-schedule">
             <summary>
               {{ language('Program schedule', 'جدول البرنامج') }}
             </summary>
+            <label v-if="!assignedPlan" class="program-preparation">
+              <input v-model="draft.automaticPreparation" type="checkbox" />
+              {{
+                language(
+                  'Default to automatic daily preparation',
+                  'التحضير اليومي التلقائي افتراضياً',
+                )
+              }}
+            </label>
+            <p v-if="!assignedPlan" class="small-print">
+              {{
+                language(
+                  'Suggested for new athlete plans. Confirm dates and timezone when assigning; each plan can override this. Editing the program never changes existing scheduling policies.',
+                  'اقتراح للخطط الجديدة. أكّد التواريخ والمنطقة الزمنية عند التعيين؛ يمكن تغييره لكل خطة. تعديل البرنامج لا يغيّر سياسات الجدولة الحالية.',
+                )
+              }}
+            </p>
             <label
               >{{ language('Repeat every (weeks)', 'التكرار كل (أسابيع)')
               }}<input v-model.number="draft.cycleWeeks" type="number" min="1" max="12" required
@@ -695,6 +788,22 @@ function removeDay() {
               >
             </p>
           </details>
+          <div v-if="!preview" class="actions">
+            <button type="button" class="button secondary" @click="importingWorkout = true">
+              {{ language('Import workout template', 'استيراد قالب تمرين') }}
+            </button>
+          </div>
+          <SidePanel
+            v-model:open="importingWorkout"
+            :title="language('Import workout template', 'استيراد قالب تمرين')"
+            :description="
+              language(
+                'Adds an independent copy to this program. Later template edits do not change it.',
+                'يضيف نسخة مستقلة إلى البرنامج. لا تغيرها تعديلات القالب اللاحقة.',
+              )
+            "
+            ><WorkoutTemplatePicker @choose="importWorkout"
+          /></SidePanel>
           <div class="day-tabs">
             <button
               v-for="(d, i) in draft.days"
@@ -734,7 +843,7 @@ function removeDay() {
                   required /></label
               ><button
                 v-if="draft.days.length > 1"
-                class="icon-button danger"
+                class="icon-button danger danger-action"
                 type="button"
                 :aria-label="language('Remove this day', 'حذف اليوم')"
                 @click="removeDay"
@@ -769,191 +878,78 @@ function removeDay() {
                 language('Recovery day. No workout to record.', 'يوم تعافٍ. لا يوجد تمرين للتسجيل.')
               }}
             </p>
-            <div
+            <h2 v-if="!preview && !day.restDay" class="program-exercises-heading">
+              {{ language('Exercises', 'التمارين') }}
+            </h2>
+            <EmptyState
               v-if="!preview && !day.restDay && !day.exercises.length"
-              class="program-empty-exercises"
+              class="program-workout-empty"
+              :title="language('Start with a real exercise', 'ابدأ بتمرين فعلي')"
+              :description="
+                language(
+                  'Choose an exercise from your library. Nothing is prefilled.',
+                  'اختر تمريناً من مكتبتك. لا توجد تمارين مضافة مسبقاً.',
+                )
+              "
             >
-              <PhBarbell :size="30" aria-hidden="true" />
-              <div>
-                <h2>{{ language('Start with a real exercise', 'ابدأ بتمرين فعلي') }}</h2>
-                <p>
-                  {{
-                    language(
-                      'Choose an exercise from your library. Nothing is prefilled.',
-                      'اختر تمريناً من مكتبتك. لا توجد تمارين مضافة مسبقاً.',
-                    )
-                  }}
-                </p>
-              </div>
+              <button type="button" class="button secondary full" @click="addExercise">
+                <PhPlus :size="18" />{{ language('Add exercise', 'إضافة تمرين') }}
+              </button>
+            </EmptyState>
+            <div v-if="!preview && !day.restDay" class="program-exercise-cards">
+              <WorkoutExerciseCard
+                v-for="(ex, i) in day.exercises"
+                :key="ex.key"
+                :model-value="ex"
+                :catalog="catalog"
+                :index="i"
+                :total="day.exercises.length"
+                :previous-group="day.exercises[i - 1]?.group"
+                :disabled="busy"
+                :remove-disabled="day.exercises.length === 1"
+                @update:model-value="day.exercises[i] = $event"
+                @move="move(i, $event)"
+                @remove="day.exercises.splice(i, 1)"
+                @pair="joinPrevious(i)"
+              />
+              <button
+                v-if="day.exercises.length && day.exercises.length < 12"
+                type="button"
+                class="button secondary full"
+                @click="addExercise"
+              >
+                <PhPlus :size="18" />{{ language('Add exercise', 'إضافة تمرين') }}
+              </button>
             </div>
-            <article
-              v-for="(ex, i) in day.exercises"
-              :key="ex.key"
-              class="editor-exercise"
-              :class="{
-                'grouped-exercise': !!ex.group,
-                'group-continued': !!ex.group && day.exercises[i - 1]?.group === ex.group,
-              }"
-            >
-              <p v-if="ex.group" class="superset-banner">
-                {{ language('Superset / circuit', 'مجموعة مركبة / دائرة') }} · {{ ex.group
-                }}<span v-if="day.exercises[i - 1]?.group === ex.group">
-                  · {{ language('Continue together', 'تابع ضمن المجموعة') }}</span
-                >
-              </p>
-              <div class="editor-exercise-top">
-                <span class="exercise-index">{{ String(i + 1).padStart(2, '0') }}</span>
-                <h3 v-if="preview">{{ name(ex.exerciseId) }}</h3>
-                <ExercisePicker
-                  v-else
-                  class="grow"
-                  :model-value="ex.exerciseId"
-                  :exercises="catalog"
-                  :fallback-name="name(ex.exerciseId)"
-                  :label="language('Exercise', 'التمرين') + ' ' + (i + 1)"
-                  hide-label
-                  @update:model-value="selectExercise(i, $event)"
-                />
-                <div v-if="!preview" class="actions compact-actions">
-                  <button
-                    class="icon-button"
-                    type="button"
-                    :disabled="i === 0"
-                    :aria-label="language('Move exercise up', 'نقل التمرين للأعلى')"
-                    @click="move(i, -1)"
-                  >
-                    <PhArrowUp :size="18" /></button
-                  ><button
-                    class="icon-button"
-                    type="button"
-                    :disabled="i === day.exercises.length - 1"
-                    :aria-label="language('Move exercise down', 'نقل التمرين للأسفل')"
-                    @click="move(i, 1)"
-                  >
-                    <PhArrowDown :size="18" /></button
-                  ><button
-                    class="icon-button danger"
-                    type="button"
-                    :disabled="day.exercises.length === 1"
-                    :aria-label="language('Remove exercise', 'حذف التمرين')"
-                    @click="day.exercises.splice(i, 1)"
-                  >
-                    <PhTrash :size="18" />
-                  </button>
-                </div>
-              </div>
-              <div v-if="preview" class="prescription-line">
-                <p>
-                  {{ ex.group }} · {{ ex.sets }} {{ t('sets') }} · {{ targetLabel(ex) }} ·
-                  {{ ex.rest }} {{ language('sec rest', 'ثانية راحة') }}
-                </p>
-                <p v-for="(target, n) in ex.targets" :key="n">
-                  {{ n + 1 }}. {{ targetLabel(ex, target) }}
-                </p>
-              </div>
-              <template v-else
-                ><button
-                  v-if="i > 0 && !ex.group"
-                  type="button"
-                  class="text-link"
-                  @click="joinPrevious(i)"
-                >
-                  {{ language('Pair with previous exercise', 'اربط بالتمرين السابق') }}</button
-                ><PrescriptionFields v-model="day.exercises[i]!"
-              /></template>
-              <ExerciseDemo :exercise="catalog.find((e) => e.id === ex.exerciseId) || ex.info" />
-              <p v-if="preview">
-                {{
-                  locale === 'ar'
-                    ? (catalog.find((e) => e.id === ex.exerciseId) || ex.info)?.instructions_ar
-                    : (catalog.find((e) => e.id === ex.exerciseId) || ex.info)?.instructions
-                }}
-              </p>
-              <details v-if="!preview" class="exercise-alternatives">
-                <summary>
-                  {{ language('Offer an alternative', 'اقتراح تمرين بديل')
-                  }}<span v-if="ex.alternatives?.length"> ({{ ex.alternatives.length }})</span>
-                </summary>
-                <p class="subtle">
-                  {{
-                    language(
-                      'Choose up to 3 exercises with the same recording type. They use the same sets and targets; athletes can adjust their recorded results.',
-                      'اختر حتى 3 تمارين من نوع التسجيل نفسه. تستخدم المجموعات والأهداف نفسها، ويمكن للرياضي تعديل نتائجه المسجلة.',
-                    )
-                  }}
-                </p>
-                <ul
-                  v-if="ex.alternatives?.length"
-                  class="alternative-chips"
-                  :aria-label="
-                    language('Approved alternatives', 'البدائل المعتمدة') + ' ' + (i + 1)
-                  "
-                >
-                  <li v-for="alternative in ex.alternatives" :key="alternative.exerciseId">
-                    <span>{{ name(alternative.exerciseId) }}</span>
-                    <button
-                      type="button"
-                      :aria-label="
-                        language('Remove alternative', 'إزالة البديل') +
-                        ' ' +
-                        name(alternative.exerciseId)
-                      "
-                      @click="toggleAlternative(i, alternative.exerciseId, false)"
-                    >
-                      <PhX :size="15" aria-hidden="true" />
-                    </button>
-                  </li>
-                </ul>
-                <ExercisePicker
-                  model-value=""
-                  :exercises="catalog"
-                  :excluded-ids="[
-                    ex.exerciseId,
-                    ...(ex.alternatives || []).map((alternative) => alternative.exerciseId),
-                  ]"
-                  :kind="ex.kind || 'strength'"
-                  :disabled="(ex.alternatives?.length || 0) >= 3"
-                  :label="language('Add approved alternative', 'إضافة بديل معتمد') + ' ' + (i + 1)"
-                  :placeholder="
-                    (ex.alternatives?.length || 0) >= 3
-                      ? language('Three alternatives selected', 'تم اختيار ثلاثة بدائل')
-                      : language('Search same-type exercises', 'ابحث عن تمارين من النوع نفسه')
-                  "
-                  @update:model-value="toggleAlternative(i, $event, true)"
-                />
-              </details>
-              <p v-if="preview && ex.alternatives?.length" class="subtle">
-                {{ language('Approved alternatives', 'البدائل المعتمدة') }}:
-                {{ ex.alternatives.map((a) => name(a.exerciseId)).join(' · ') }}
-              </p>
-              <p v-if="preview && ex.note" class="coach-prescription">{{ ex.note }}</p>
-              <details v-if="!preview">
-                <summary>{{ language('Add a coaching cue', 'إضافة توجيه للرياضي') }}</summary>
-                <label
-                  ><span class="sr-only">{{ language('Coaching cue', 'توجيه الرياضي') }}</span
-                  ><textarea v-model="ex.note" maxlength="500" rows="2"></textarea>
-                </label>
-              </details>
-            </article>
-            <button
-              v-if="!preview && !day.restDay && day.exercises.length < 12"
-              type="button"
-              class="button secondary full"
-              @click="addExercise"
-            >
-              <PhPlus :size="18" />{{ language('Add exercise', 'إضافة تمرين') }}
-            </button>
+            <WorkoutPreview
+              v-if="preview && !day.restDay"
+              :workout="day"
+              :catalog="catalog"
+              show-instructions
+            />
           </section>
-        </fieldset>
-      </form></PageState
-    >
+        </fieldset></form
+    ></PageState>
   </div>
 </template>
 
+<style scoped>
+.program-exercise-cards {
+  display: grid;
+  gap: var(--space-4);
+}
+.program-workout-empty :deep(.actions) {
+  width: 100%;
+}
+.program-exercises-heading {
+  font-size: var(--text-section);
+  margin: 0 0 var(--space-4);
+}
+</style>
 <style>
 .editor-toolbar {
   position: sticky;
-  /* Below the sticky phone/tablet header; 0 where the workspace itself scrolls. */
+  /* Below the sticky phone/tablet header; 0 where the institution itself scrolls. */
   top: var(--dashboard-sticky-top, 0);
   z-index: 5;
   display: flex;
@@ -1078,21 +1074,6 @@ function removeDay() {
 .program-preview-heading .program-cover {
   margin: 0;
 }
-.program-empty-exercises {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding: 20px;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  color: var(--muted);
-  text-align: start;
-}
-.program-empty-exercises h3,
-.program-empty-exercises p {
-  margin: 0 0 6px;
-}
 @media (max-width: 680px) {
   .program-identity-card,
   .program-preview-heading {
@@ -1110,72 +1091,21 @@ function removeDay() {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-.alternative-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0;
-  padding: 0;
-  list-style: none;
-}
-.alternative-chips li {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--tint);
-  color: var(--ink);
-}
-.alternative-chips span {
-  overflow: hidden;
-  padding: 7px 3px 7px 11px;
-  font-size: 0.78rem;
-  font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-[dir='rtl'] .alternative-chips span {
-  padding: 7px 11px 7px 3px;
-}
-.alternative-chips button {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 34px;
-  min-height: 34px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-}
-.alternative-chips button:hover {
-  color: var(--error);
-}
-.exercise-alternatives > .exercise-picker {
-  margin-top: 12px;
-}
-@media (max-width: 600px) {
-  .editor-exercise-top > .exercise-picker {
-    flex: 1 0 calc(100% - 28px);
-    width: calc(100% - 28px);
-  }
-}
 </style>
 
 <style scoped>
-.grouped-exercise {
-  border-inline-start: 4px solid var(--accent);
+.program-schedule .program-preparation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
 }
-.group-continued {
-  margin-block-start: 8px;
-}
-.superset-banner {
-  color: var(--accent);
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
+.program-preparation input[type='checkbox'] {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  min-inline-size: 1.15rem;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 auto;
 }
 </style>
