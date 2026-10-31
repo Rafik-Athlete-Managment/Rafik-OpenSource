@@ -62,6 +62,7 @@ jobs:
       - run: npm run content:videos
       - run: npm run test:catalog
       - run: npm run test:workout-document
+      - run: npm run test:api-docs --workspace @rafik/backend
       - run: npm run typecheck --workspace @rafik/shared
       - run: npm run backend:typecheck
       - run: npm run typecheck --workspace @rafik/mobile
@@ -97,6 +98,18 @@ jobs:
       - run: npm run test:concurrent-plans
         if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
       - run: npm run test:delegated-sessions
+        if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
+      - run: npm run test:workout-foundation
+        if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
+      - run: npm run test:workout-sequence
+        if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
+      - run: npm run test:workout-scheduler
+        if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
+      - run: npm run test:plan-adaptation
+        if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
+      - run: npm run test:group-workouts
+        if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
+      - run: npm run test:injury-retention-scheduler --workspace @rafik/backend
         if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
       - run: npm run backend:stop
         if: always()
