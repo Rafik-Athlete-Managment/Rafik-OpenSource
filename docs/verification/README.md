@@ -1,5 +1,13 @@
 # Verification record
 
+## Native individual workout source — 31 October 2026
+
+Mobile and backend typechecks passed. Ten request/session/input cases cover capability refusal, authentication/connectivity separation, decimal/Arabic numeric entry and retained owner identity. Twenty real-SQLite cases cover existing attendance/assessment behavior plus workout disk restart, sending-to-uncertain recovery, exact replay, newer edits during a held save, rejection/replacement, resource-version access restoration, owner boundaries and ten-record pagination. The final-empty-read handoff case confirms newly queued work receives another sync pass instead of waiting for the timer.
+
+The isolated API/SQLite journey passed on the final package contract: scoped trainer download, ordinary reads omitting full packages, provisional start/completion, a simulated lost start acknowledgment, byte-identical retry, one workout and one sequence advancement, zero load, retained actuals/note and athlete package denial. Its database/files were removed by the harness. Bundled Swagger checks and four paired landing content/link tests passed; landing draft #41 is updated at `c046ee3`. Maintained docs and generated backend inventory checks passed. See [the receipt](receipts/2026-10-31-native-individual-workouts.json).
+
+These are Node SQLite/API and source-review results, not rendered React Native, SQLCipher on hardware, physical offline/process death, accessibility/RTL/theme or signed-upgrade acceptance. No Android build, APK, release tag or broad browser suite was run. The [canonical role walkthrough](../testing/instance-validation.md#native-individual-workouts--unreleased-beta3) owns founder/device checks. Group recording, native media/alternative selection and historical unlinked reconciliation remain later scope.
+
 ## Native capability foundation — 31 October 2026
 
 Mobile typechecks and eight focused request/session tests passed, including strict capability parsing and separate missing-endpoint, malformed/unknown-protocol, offline, denied and server-error cases. Existing credentials/owner identity and authorized-response observer regressions remain passing. Backend typecheck and the isolated capability API regression passed: authentication, revoked bearer denial, GET-only/no-store response and disabled native workout/day-only flags. The disposable API harness cleaned its own data.

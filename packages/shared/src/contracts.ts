@@ -106,6 +106,8 @@ export type FieldCommand = FieldAttendanceCommand | FieldResultCommand | FieldFi
 
 /** Server-derived sequence state; clients must not select a different plan day. */
 export type WorkoutAgendaItem = {
+  /** Explicit trainer-only opt-in; absent on ordinary dashboard reads. */
+  field_workout?: FieldWorkoutPackage | null
   assignment_id: string
   member_id: string
   member_name: string
@@ -134,6 +136,48 @@ export type WorkoutAgendaItem = {
   session: { id: string; recorded_mode: string; can_record?: boolean } | null
   can_start: boolean
   can_schedule: boolean
+}
+
+export type FieldWorkoutEntry = {
+  exercise_id?: string | null
+  exercise_key: string
+  set_index: number
+  reps: number
+  load: number
+  unit: 'kg' | 'lb'
+  seconds: number | null
+  metres: number | null
+  effort: number | null
+  completed: boolean
+}
+/** Minimal text-only immutable prescription; no files, clinical data or correction history. */
+export type FieldWorkoutPackage = {
+  id: string
+  institution_id: string
+  assignment_id: string
+  member_id: string
+  member_name: string
+  occurrence_id: string | null
+  title: string
+  day_id: string
+  day_name: string
+  day_name_ar?: string
+  starts_at: string | null
+  training_date: string
+  timezone: string
+  allow_provisional_start: boolean
+  can_record: boolean
+  exercises: {
+    key: string
+    name: string
+    name_ar: string
+    kind: 'strength' | 'timed' | 'distance'
+    rest: number
+    note: string
+  }[]
+  targets?: FieldWorkoutEntry[]
+  entries: FieldWorkoutEntry[]
+  session: { id: string; version: number; note: string; completed_at: string | null } | null
 }
 export type WorkoutAgenda = {
   queue?: 'recording' | 'today' | 'planning' | 'actionable' | null

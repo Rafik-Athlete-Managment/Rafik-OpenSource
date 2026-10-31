@@ -6,6 +6,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { FieldStore, type Database } from '../src/field/store.ts'
 import { AttendanceSync } from '../src/field/sync.ts'
+import { WorkoutSync } from '../src/field/workout-sync.ts'
+import type { FieldWorkoutPackage } from '../src/field/workout-model.ts'
+import { randomUUID } from 'node:crypto'
 import {
   ApiFailure,
   fieldRoster,
@@ -643,5 +646,254 @@ test('an uncertain score retries unchanged and rejects a mismatched receipt befo
     await store.enqueue(owner, scores({ operation: 'new-correction', revision: 1 }))
   } finally {
     db.close()
+  }
+})
+
+test('offline workout start and completion survive disk restart; lost acknowledgments replay exact payloads without losing newer edits', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'rafik-workout-')),
+    file = join(directory, 'workouts.db')
+  let sqlite = new DatabaseSync(file),
+    store = new FieldStore(adapter(sqlite))
+  const institution = randomUUID(),
+    scope = { ...owner, institution }
+  const p: FieldWorkoutPackage = {
+    id: randomUUID(),
+    institution_id: institution,
+    assignment_id: randomUUID(),
+    member_id: randomUUID(),
+    member_name: 'Synthetic athlete',
+    occurrence_id: randomUUID(),
+    title: 'Strength plan',
+    day_id: randomUUID(),
+    day_name: 'Field work',
+    starts_at: '2020-01-01T10:00:00Z',
+    training_date: '2020-01-01',
+    timezone: 'UTC',
+    allow_provisional_start: true,
+    can_record: false,
+    exercises: [
+      { key: 'bench', name: 'Bench press', name_ar: 'ضغط', kind: 'strength', rest: 60, note: '' },
+      { key: 'hold', name: 'Hold', name_ar: 'ثبات', kind: 'timed', rest: 30, note: '' },
+    ],
+    entries: [
+      {
+        exercise_key: 'bench',
+        set_index: 0,
+        reps: 10,
+        load: 0,
+        unit: 'kg',
+        seconds: null,
+        metres: null,
+        effort: null,
+        completed: false,
+      },
+      {
+        exercise_key: 'hold',
+        set_index: 0,
+        reps: 0,
+        load: 0,
+        unit: 'kg',
+        seconds: 30,
+        metres: null,
+        effort: null,
+        completed: false,
+      },
+    ],
+    session: null,
+  }
+  try {
+    await store.initialize()
+    await store.workouts.put(scope, p)
+    assert.deepEqual(await store.institutions(scope.instance, scope.user), [institution])
+    const id = randomUUID(),
+      start = randomUUID()
+    await store.workouts.start(scope, p.id, id, start)
+    const entries = p.entries.map((e) => ({ ...e, completed: true }))
+    await store.workouts.edit(scope, p.id, entries, 'captured offline')
+    await store.workouts.save(scope, p.id, true, randomUUID())
+    await assert.rejects(store.workouts.put(scope, p), /Resolve/)
+    assert.equal((await store.workouts.list({ ...scope, user: 'other' })).length, 0)
+    await store.workouts.state(scope, p.id, start, 'sending')
+    sqlite.close()
+    sqlite = new DatabaseSync(file)
+    store = new FieldStore(adapter(sqlite))
+    await store.initialize()
+    assert.equal((await store.workouts.get(scope, p.id)).pending?.state, 'uncertain')
+    let calls: string[] = [],
+      lost = true
+    const send = async (_path: string, body: string) => {
+      calls.push(body)
+      const command = JSON.parse(body)
+      if (command.action === 'start' && lost) {
+        lost = false
+        throw Error('lost acknowledgment')
+      }
+      return {
+        id,
+        version: command.action === 'start' ? 1 : 2,
+        completed_at: command.complete ? '2026-10-31T10:00:00Z' : null,
+      }
+    }
+    await new WorkoutSync(store.workouts, scope, send).run(() => {
+      throw Error('observer failure')
+    })
+    assert.equal((await store.workouts.get(scope, p.id)).pending?.state, 'uncertain')
+    await new WorkoutSync(store.workouts, scope, send).run()
+    assert.equal(calls[0], calls[1])
+    assert.equal(calls.length, 3)
+    const saved = await store.workouts.get(scope, p.id)
+    assert.equal(saved.pending, null)
+    assert.equal(saved.intent, null)
+    assert.equal(saved.entries[0].load, 0)
+    assert.equal(saved.session?.version, 2)
+    assert.ok(saved.session?.completed_at)
+    assert.equal(saved.note, 'captured offline')
+    assert.equal(saved.localRevision, saved.syncedRevision)
+    await assert.rejects(store.workouts.edit(scope, p.id, entries, 'after completion'), /read-only/)
+  } finally {
+    sqlite.close()
+    rmSync(directory, { recursive: true, force: true })
+  }
+})
+
+test('workout denial/conflict preserves exact command and draft; edits during a held save remain unsynced', async () => {
+  const sqlite = new DatabaseSync(':memory:'),
+    store = new FieldStore(adapter(sqlite))
+  await store.initialize()
+  const scope = { ...owner, institution: randomUUID() },
+    sid = randomUUID()
+  const p: FieldWorkoutPackage = {
+    id: randomUUID(),
+    institution_id: scope.institution,
+    assignment_id: randomUUID(),
+    member_id: randomUUID(),
+    member_name: 'Synthetic',
+    occurrence_id: randomUUID(),
+    title: 'Plan',
+    day_id: randomUUID(),
+    day_name: 'Distance',
+    starts_at: '2020-01-01T10:00:00Z',
+    training_date: '2020-01-01',
+    timezone: 'UTC',
+    allow_provisional_start: false,
+    can_record: true,
+    exercises: [{ key: 'run', name: 'Run', name_ar: 'جري', kind: 'distance', rest: 0, note: '' }],
+    entries: [
+      {
+        exercise_key: 'run',
+        set_index: 0,
+        reps: 0,
+        load: 0,
+        unit: 'kg',
+        seconds: null,
+        metres: 100,
+        effort: null,
+        completed: false,
+      },
+    ],
+    session: { id: sid, version: 3, note: '', completed_at: null },
+  }
+  try {
+    await store.workouts.put(scope, p)
+    const e = p.entries.map((e) => ({ ...e, metres: 123.45, completed: true }))
+    await store.workouts.edit(scope, p.id, e, 'first')
+    await store.workouts.save(scope, p.id, false, randomUUID())
+    let begin!: () => void, release!: () => void
+    const started = new Promise<void>((r) => {
+        begin = r
+      }),
+      gate = new Promise<void>((r) => {
+        release = r
+      })
+    const runner = new WorkoutSync(store.workouts, scope, async () => {
+      begin()
+      await gate
+      return { id: sid, version: 4, completed_at: null }
+    })
+    const sending = runner.run()
+    await started
+    await store.workouts.edit(scope, p.id, e, 'newer while sending')
+    release()
+    await sending
+    let r = await store.workouts.get(scope, p.id)
+    assert.equal(r.note, 'newer while sending')
+    assert.notEqual(r.localRevision, r.syncedRevision)
+    await store.workouts.save(scope, p.id, true, randomUUID())
+    const deny = new WorkoutSync(store.workouts, scope, async () => {
+      throw new ApiFailure(403, 'forbidden')
+    })
+    await deny.run()
+    r = await store.workouts.get(scope, p.id)
+    const payload = JSON.stringify(r.pending?.payload)
+    assert.equal(r.blocked, true)
+    assert.equal(r.pending?.state, 'blocked')
+    assert.ok(r.intent)
+    await store.workouts.retry(scope, p.id)
+    await new WorkoutSync(store.workouts, scope, async () => {
+      throw new ApiFailure(409, 'conflict')
+    }).run()
+    r = await store.workouts.get(scope, p.id)
+    assert.equal(r.pending?.state, 'needs_attention')
+    assert.equal(JSON.stringify(r.pending?.payload), payload)
+    await assert.rejects(store.workouts.remove(scope, p.id), /Resolve saved workout/)
+    const bad = { ...p, entries: p.entries.map((e) => ({ ...e, metres: 0, completed: true })) }
+    await assert.rejects(store.workouts.edit(scope, p.id, bad.entries, ''))
+    await store.workouts.replaceRejected(scope, p.id, {
+      id: sid,
+      version: 5,
+      completed_at: null,
+      note: 'reviewed server copy',
+      entries: e,
+      can_record: true,
+    })
+    r = await store.workouts.get(scope, p.id)
+    assert.equal(r.pending, null)
+    assert.equal(r.intent, null)
+    assert.equal(r.note, 'reviewed server copy')
+    await store.workouts.edit(scope, p.id, e, 'retained device draft')
+    await store.workouts.block(scope)
+    await assert.rejects(
+      store.workouts.restoreAccess(scope, p.id, { id: sid, version: 6, can_record: true }),
+      /Review/,
+    )
+    await store.workouts.restoreAccess(scope, p.id, { id: sid, version: 5, can_record: true })
+    r = await store.workouts.get(scope, p.id)
+    assert.equal(r.blocked, false)
+    assert.equal(r.note, 'retained device draft')
+    for (let i = 0; i < 11; i++)
+      await store.workouts.put(scope, {
+        ...p,
+        id: randomUUID(),
+        member_name: 'Second page athlete ' + i,
+      })
+    assert.equal((await store.workouts.list(scope, 0, 'Second page')).length, 10)
+    assert.equal((await store.workouts.list(scope, 10, 'Second page')).length, 1)
+    assert.equal(await store.workouts.count(scope, 'Second page'), 11)
+    const originalNext = store.workouts.next.bind(store.workouts)
+    let injected = false,
+      sends = 0
+    const reentrant = new WorkoutSync(store.workouts, scope, async () => {
+      sends++
+      return { id: sid, version: 6, completed_at: null }
+    })
+    store.workouts.next = async (owner) => {
+      const next = await originalNext(owner)
+      if (!next && !injected) {
+        injected = true
+        await store.workouts.save(scope, p.id, false, randomUUID())
+        void reentrant.run()
+      }
+      return next
+    }
+    await reentrant.run()
+    assert.equal(sends, 1, 'a save queued at the final empty read schedules another pass')
+    assert.equal((await store.workouts.get(scope, p.id)).session?.version, 6)
+    store.workouts.next = originalNext
+    assert.equal(
+      (await store.workouts.list({ ...scope, user: 'other' }, 0, 'Second page')).length,
+      0,
+    )
+  } finally {
+    sqlite.close()
   }
 })

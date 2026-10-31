@@ -1,15 +1,45 @@
 # Instance validation walkthrough
 
+## Native individual workouts — unreleased beta.3
+
+Prerequisites: matching release-branch backend and an installed native development client using this source (`npm run mobile:start`); separate synthetic administrator, coach and athlete accounts; no database reset or reseed. The published beta.2 APK does not contain this source update. Use clearly named test records and existing signing/encryption identities. Rendered/native acceptance is still pending; Node/API evidence is separate.
+
+### Administrator preparation
+
+1. Create or reuse a clearly named program containing a strength exercise, a timed exercise and a distance exercise. Assign it to a synthetic athlete with the correct primary/supporting coach scope. Schedule its next workout for today using the normal web flow; include a future start time for the timing check. Prepare a second independent plan or athlete for the scope/regression check.
+2. Keep the existing Schedule/People/plan detail available for review. Administrators may schedule/review, but must not gain native coach recording access. An athlete account must not receive trainer field packages. Group recording and assessment flows remain unchanged by this individual slice.
+
+### Coach download and capture
+
+1. Sign into the matching native source app as the assigned coach. Open Individual workouts, search the athlete and download the workout. Expect workout name first, program/athlete second, a device-save acknowledgment and no repeated download card for the saved record. With sufficient fixtures, page saved and online results past ten and return/search again; select the later-page record without losing it.
+2. Before its scheduled instant/date, expect Start disabled and the booking-time explanation. Download the first workout online, then disconnect Wi-Fi/mobile data **and USB forwarding** before testing actual offline behavior. Open the saved copy without waiting for a network response. Date-only plan work uses its source timezone/date; it must not invent a midnight appointment.
+3. Once eligible, choose Start on this device. Expect a provisional, unconfirmed start. Enter zero load with positive reps for bodyweight work, an actual positive duration and fractional distance. Prescribed targets stay separate from actuals; timed/distance fields require actual entry on a new start. Mark each set Done. Invalid values must not be marked complete or submitted; an unfinished set must prevent Finish. Decimal input must retain the decimal point while typing.
+4. Leave and reopen the saved workout after device-save feedback. Expect entries/note retained. Choose Save progress or Finish for sync while disconnected, then restart the app. Expect the same owner/workout/request and a provisional completion, not a server-confirmed summary. Open a previously downloaded attendance/assessment event and switch views: its editor/drafts must remain intact.
+
+### Coach reconnect and recovery
+
+1. Reconnect and use Sync saved workouts (or foreground retry). Expect the original start to be acknowledged before result dispatch. Confirmed completion becomes read-only. Reload/sign in to the same account: the saved summary stays available; another account or institution URL must not adopt it. Do not require a replacement workout or clearing device data.
+2. In a controlled test, disconnect after dispatch before acknowledgment, then retry. Expect the same operation/payload and one server workout/completion. A later edit during a progress save must remain a separate unsynced draft rather than being marked acknowledged with the earlier request.
+3. For a separate synthetic record, change permissions/training restriction or modify results on web before sync. Expect denial/conflict with all local actuals retained. Retry exact saved request performs a fresh access check and never invents a replacement start. Share recovery only with authorized staff; cancel sharing once. For a definitively rejected save, review the current server version, cancel replacement once, then explicitly replace only when willing to discard that draft. Unknown starts cannot use this shortcut.
+4. Restore authorized access on an unchanged record and use Recheck workout access; expect the draft retained. If the server revision changed, require review rather than overwriting it. Remove only a clean downloaded copy and verify server history remains. Unsupported/downgraded server capability must pause workout replay without clearing attendance, assessment or workout queues. Simulate downgrade only in an owned test environment.
+
+### Athlete and administrator review
+
+1. As the athlete on web, open the completed workout. Expect the actual zero load/duration/distance, note and coach attribution. The plan advances once; other independent plans do not advance. Native coach recording must not become athlete self-recording.
+2. As administrator, review the same history/plan/calendar. Expect one occurrence/workout, retained prior history and no duplicate progression. Existing athlete-started unfinished work may still be finished by an authorized coach under ADR 0031; completed self-logged actuals retain their protection.
+
+Report app/backend revisions, role, workout/occurrence ID, expected/actual behavior, connection/USB state and exact message. Do not include passwords, tokens or signing material. Group workout capture, media download, native alternative selection, full historical reconciliation and physical upgrade packaging remain outside this slice.
+
 ## Android compatibility foundation — unreleased beta.3
 
 Prerequisite: a matching source development app already installed, the updated backend and a synthetic coach account. This slice does not require a new native dependency or prove a release APK upgrade. Administrators can inspect the authenticated API contract, while the field UI remains coach-only; athletes gain no new recording access.
 
-1. As the coach, open the schedule and expand **Server compatibility** below its event list. Expect attendance, assessment results and event completion supported. Individual/group workout recording and workouts without a fixed time remain unavailable. Collapse the details: normal event selection remains unchanged.
+1. As the coach, open the schedule and expand **Server compatibility** below its event list. Expect attendance, assessment results, event completion and individual workout recording supported. Group recording and day-only appointments in the attendance calendar remain unavailable; Individual workouts handles its own date-only plan packages. Collapse the details: normal event selection remains unchanged.
 2. Open a previously downloaded synthetic event, save an attendance change while offline and return to the schedule. Expand compatibility and choose **Check again**: expect a connection message, not a version or permission claim. The saved event/change must remain present. Returning to its editor must retain the pending work.
 3. Reconnect and check again. Expect current capabilities without clearing separate permission/session warnings. Open the saved event and use the existing sync/review flow; capability discovery itself must not send or discard its command.
 4. For a developer-controlled older or mocked server returning `404 not_found`, expect the version-check explanation, with saved work retained. A denied/revoked session must show its own authentication/access explanation rather than reporting a legacy server. Do not change a real institution's server merely to simulate this condition.
 
-Record app/backend revision, account role, connection state and exact failure text if these checks fail. Rendered Android acceptance remains pending; Node parser/API tests are separate evidence. Workout download, durable workout actuals and offline completion are the next slice, not available in this foundation.
+Record app/backend revision, account role, connection state and exact failure text if these checks fail. Rendered Android acceptance remains pending; Node parser/API tests are separate evidence. Use the individual workout section above for the subsequent capture implementation; group recording remains the next slice.
 
 This is the single source of truth for manual administrator, coach and athlete validation walkthroughs, for founder acceptance and institution owners checking their own installation. Update the relevant steps here when implemented workflows change; other guides and landing link here rather than copying the procedures. Automated evidence belongs in [verification](../verification/README.md), not in a parallel walkthrough.
 

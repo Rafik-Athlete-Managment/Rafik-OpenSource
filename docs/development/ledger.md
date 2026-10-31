@@ -1,5 +1,11 @@
 # Current delivery ledger
 
+## Native individual workout capture — 31 October 2026
+
+The founder delegated the start policy; selected provisional offline starts with server revalidation. Trainer-only field packages extend the authorized agenda without another allocator or event. The existing SQLCipher connection gains owner-scoped workout records, frozen start requests and measured drafts/save intents; the first save binds its revision only after start acknowledgment. Restart recovery preserves exact operations, later edits remain unsynced, and current capability support is checked before replay. Field views stay mounted when switching; cached and online lists page ten records and avoid duplicate download cards. Strength/timed/distance entry, explicit Done checks, confirmed read-only summaries, sharing, clean-copy removal and explicit rejected-save/server-version recovery are implemented in source. Group capture and native rendered/device acceptance remain pending. ADR 0036 records boundaries and trade-offs.
+
+Paired English/Arabic API, phone and training guidance is pushed to draft landing PR #41 at `c046ee3`; four content/link tests passed. The canonical walkthrough owns role/device checks. API/SQLite/type evidence and remaining native acceptance are recorded in verification. Keep both drafts unmerged.
+
 ## Native compatibility foundation — 31 October 2026
 
 Started the accepted Android workout slice with authenticated `GET /v1/mobile/capabilities`, a shared typed contract, strict native parsing and optional schedule compatibility details. Protocol 1 advertises existing timed attendance, assessments and event completion; individual/group workout capture and day-only calendar remain false. Only a genuine missing endpoint is classified as legacy; connection, malformed response, authorization and server errors remain distinct. No schema, SQLCipher owner keys, queue payloads, receipt identities, signing settings or published version changed. The next slice must implement authorized workout downloads and durable recording before enabling those flags.

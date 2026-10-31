@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Add authenticated, read-only native capability discovery and an English/Arabic Server compatibility disclosure in the Android schedule. Missing contracts, denied sessions and connection failures remain distinct without changing saved work. Native workout capture and day-only calendar remain unavailable until the following slice; no release APK is produced here.
+- Add source-level Android individual workout downloads and provisional offline start/result capture in the existing encrypted cache. Exact start/save replay reuses server sequence/permission checks; measurement-aware actuals, explicit completion, recovery sharing, rejected-save review and bounded saved/online lists are included. Group recording, rendered/physical Android acceptance and release packaging remain pending; no new APK is published.
+
+- Add authenticated, read-only native capability discovery and an English/Arabic Server compatibility disclosure in the Android schedule. Missing contracts, denied sessions and connection failures remain distinct without changing saved work. The subsequent individual capture slice is listed above; group capture and day-only attendance calendar remain unavailable. No release APK is produced here.
 
 - Distinguish completed sessions and assessments in the calendar and booked cards with semantic markers/tags. Show active sign-in feedback and block duplicate submissions. Record sealing is specified for the release after beta.3 and is not enabled here.
 

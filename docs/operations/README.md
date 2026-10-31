@@ -1,5 +1,9 @@
 # Operations
 
+## Native individual workout source rollout — unreleased beta.3
+
+The matching backend advertises individual recording and supplies trainer-only field packages; older/unsupported servers pause native workout replay. No PostgreSQL migration, new credential, signing change or cache reset is required by this slice. The existing encrypted database creates an additive workout table on startup and preserves attendance/assessment records and owner keys. Keep the matching application/database/files backup and the existing coordinated beta.3 upgrade process; do not downgrade to an unsupported backend while workout requests are pending. Export/review unresolved work rather than deleting the encrypted cache. No new release APK or tag is produced by source implementation alone.
+
 ## Native capability foundation — unreleased beta.3
 
 Deploy the matching backend/web source using the existing backup/forward-upgrade procedure. The new authenticated capability GET needs no schema migration, provider secret, SQLCipher reset or signing change. Existing institution queues/receipts retain their identity. This slice does not produce an APK or enable native workout capture; published beta.2 and the breaking beta.3 upgrade boundary remain unchanged. Never clear saved work to satisfy a compatibility check.

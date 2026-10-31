@@ -206,6 +206,7 @@ function SignedIn({
       for (const id of retained.filter((id) => !available.some((c) => c.institution_id === id))) {
         const scope = { instance: client.instance, user: client.user.id, institution: id }
         for (const roster of await store.list(scope)) await store.block(scope, roster.event.id)
+        await store.workouts.block(scope)
       }
       if (!alive.current) return
       setContexts(available)

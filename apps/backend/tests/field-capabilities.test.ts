@@ -37,7 +37,7 @@ test("field capability negotiation is authenticated, read-only and honest about 
         attendance: true,
         assessments: true,
         event_completion: true,
-        individual_workout_recording: false,
+        individual_workout_recording: true,
         group_workout_recording: false,
         day_only_calendar: false,
       },

@@ -1,5 +1,7 @@
 # Architecture decisions
 
+Latest workflow decision: [0036 — provisional native individual workouts](ADR-0036-provisional-native-individual-workouts.md).
+
 Latest dependency decision: [0035 — Expo tooling security backports](ADR-0035-expo-tooling-security-backports.md).
 
 These numbered records explain consequential design and dependency choices, including their trade-offs and status. The [architecture page](../architecture/README.md) describes current behavior; this index is the entry point for decision history, not a competing implementation guide.

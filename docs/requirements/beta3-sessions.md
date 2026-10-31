@@ -1,5 +1,17 @@
 # Beta.3 — sessions, workouts and backend consolidation
 
+## Native individual capture — source implemented 31 October 2026, acceptance pending
+
+Coaches can download occurrence-bound individual workouts, start provisionally offline, record measured actuals and explicitly finish for sync. The encrypted queue uses existing authoritative session commands/receipts; cached permissions and device times never override current server checks. Saved/online directories use ten-record pages and athlete search. Unknown results retain exact requests; rejected saves have explicit current-server review/replacement; recovery sharing warns about private athlete content. Existing selected alternative IDs are retained, while native alternative selection and media download are not added. Historical unlinked recordings remain in web recovery. See [ADR 0036](../decisions/ADR-0036-provisional-native-individual-workouts.md) and the [canonical walkthrough](../testing/instance-validation.md).
+
+This supersedes the foundation checkpoint's disabled individual flag. Group capture is the next slice. Android rendering, SQLCipher/physical offline behavior and signed upgrade/release acceptance remain pending; no APK or beta.3 release is published by this source change.
+
+## Native individual capture — source implemented 31 October 2026, acceptance pending
+
+Coaches can download occurrence-bound individual workouts, start provisionally offline, record measured actuals and explicitly finish for sync. The encrypted queue uses existing authoritative session commands/receipts; cached permissions and device times never override current server checks. Saved/online directories use ten-record pages and athlete search. Unknown results retain exact requests; rejected saves have explicit current-server review/replacement; recovery sharing warns about private athlete content. Existing selected alternative IDs are retained, while native alternative selection and media download are not added. Historical unlinked recordings remain in web recovery. See [ADR 0036](../decisions/ADR-0036-provisional-native-individual-workouts.md) and the [canonical walkthrough](../testing/instance-validation.md).
+
+This supersedes the foundation checkpoint's disabled individual flag. Group capture is the next slice. Android rendering, SQLCipher/physical offline behavior and signed upgrade/release acceptance remain pending; no APK or beta.3 release is published by this source change.
+
 ## Native compatibility foundation — implemented 31 October 2026
 
 Authenticated protocol-1 capability discovery, shared typing and strict Android parsing now distinguish native feature support from account permissions and distinguish missing endpoints from connectivity/authorization failures. A collapsed schedule disclosure exposes the result without changing saved events or queues. Existing timed attendance, assessments and event completion are advertised; native individual/group recording and day-only calendar stay false. Workout download, durable capture/replay and physical upgrade acceptance remain the next implementation slice. See the [API reference](../reference/api.md#native-capabilities--unreleased-beta3) and [canonical walkthrough](../testing/instance-validation.md#android-compatibility-foundation--unreleased-beta3).

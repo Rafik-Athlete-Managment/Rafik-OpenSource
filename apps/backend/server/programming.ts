@@ -14,6 +14,7 @@ import {
   lockedAssignment,
 } from "./workout-sequence.ts";
 import { pageSize } from "./pagination.ts";
+import { fieldWorkoutPackage } from "./field-workout.ts";
 import type { WorkoutAgenda, WorkoutAgendaItem } from "@rafik/shared/contracts";
 import { pageOffset } from "./service-definitions.ts";
 import { usableExerciseAsset } from "./assets.ts";
@@ -1728,6 +1729,8 @@ export async function workoutAgenda(
   now = new Date(),
 ): Promise<WorkoutAgenda> {
   const view = role(query.get("view"));
+  const fieldPackages = query.get("fieldPackages") === "true";
+  if (fieldPackages && view !== "trainer") throw new ApiError(403, "forbidden");
   const profile = await asActor(actor, (tx) =>
     tx.profiles.findUnique({
       where: { id: actor.id },
@@ -1930,6 +1933,18 @@ export async function workoutAgenda(
           now,
           occurrenceToday,
         );
+        const canRecord =
+          view === "trainer" &&
+          state !== "paused" &&
+          !!session &&
+          (session.recorded_mode === "delegated" || !session.completed_at);
+        const canPrepareStart =
+          !blocked &&
+          !!occurrence &&
+          occurrence.state === "scheduled" &&
+          position?.state === "pending" &&
+          !session &&
+          view !== "admin";
         const exercises = (day?.exercises || []) as any[];
         const muscleCounts = new Map<string, number>();
         for (const exercise of exercises) {
@@ -1948,6 +1963,19 @@ export async function workoutAgenda(
             muscleCounts.set(muscle, (muscleCounts.get(muscle) || 0) + 1);
         }
         return {
+          ...(fieldPackages
+            ? {
+                field_workout: fieldWorkoutPackage(
+                  institution,
+                  a,
+                  day,
+                  occurrence,
+                  session,
+                  canPrepareStart,
+                  canRecord,
+                ),
+              }
+            : {}),
           assignment_id: a.id,
           member_id: a.member_id,
           member_name:
@@ -2003,23 +2031,14 @@ export async function workoutAgenda(
             ? {
                 id: session.id,
                 recorded_mode: session.recorded_mode,
-                can_record:
-                  view === "trainer" &&
-                  state !== "paused" &&
-                  (session.recorded_mode === "delegated" ||
-                    !session.completed_at),
+                can_record: canRecord,
               }
             : null,
           can_start:
-            !blocked &&
-            !!occurrence &&
-            occurrence.state === "scheduled" &&
+            canPrepareStart &&
             (occurrence.starts_at
               ? occurrence.starts_at <= now
-              : occurrence.training_date <= occurrenceToday) &&
-            position?.state === "pending" &&
-            !session &&
-            view !== "admin",
+              : occurrence.training_date <= occurrenceToday),
           can_schedule:
             view !== "trainee" &&
             a.state === "active" &&

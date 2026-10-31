@@ -33,6 +33,7 @@ import { AttendanceSync } from './sync'
 import { Button, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
+import { WorkoutsScreen } from './WorkoutsScreen'
 
 export function InstitutionScreen({
   client,
@@ -69,6 +70,9 @@ export function InstitutionScreen({
   const [draftSaving, setDraftSaving] = useState(false)
   const [editor, setEditor] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [workoutView, setWorkoutView] = useState(false)
+  const [workoutsOpened, setWorkoutsOpened] = useState(false)
+  const [workoutPersisting, setWorkoutPersisting] = useState(false)
   const [compatibility, setCompatibility] = useState<CapabilityCheck | null>(null)
   const [compatibilityError, setCompatibilityError] = useState('')
   const [showCompatibility, setShowCompatibility] = useState(false)
@@ -232,8 +236,8 @@ export function InstitutionScreen({
     if (closing) runner.current?.stop()
   }, [closing])
   useEffect(() => {
-    onPersisting(saving || draftSaving)
-  }, [saving, draftSaving, onPersisting])
+    onPersisting(saving || draftSaving || workoutPersisting)
+  }, [saving, draftSaving, workoutPersisting, onPersisting])
   useEffect(() => () => onPersisting(false), [onPersisting])
 
   async function openEvent(id: string, refreshRoster = false) {
@@ -432,580 +436,625 @@ export function InstitutionScreen({
         p.duty === 'trainee' && p.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
     ) || []
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>
-        {selected ? roster?.event.title || t('Event attendance') : t('Coach schedule')}
-      </Text>
-      {message ? (
-        <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {t(message)}
-        </Text>
-      ) : null}
-      {institutionPaused && queueHead.event_id !== selected ? (
-        <View style={styles.card}>
-          <Text style={styles.label}>{t('Saved attendance needs review')}</Text>
-          <Text style={styles.hint}>
-            {' '}
-            {t('Sending is paused at')}{' '}
-            {cached.find((c) => c.event.id === queueHead.event_id)?.event.title ||
-              t('an earlier event')}{' '}
-            {t('. Resolve it before sending more changes.')}{' '}
-          </Text>
-          <Button
-            title="Review saved change"
-            disabled={busy || saving || closing}
-            onPress={() => void openEvent(queueHead.event_id)}
+    <View style={{ flex: 1 }}>
+      <View style={styles.toolbar}>
+        <Button
+          title={l('Schedule', 'الجدول')}
+          primary={!workoutView}
+          disabled={saving || draftSaving || workoutPersisting || closing}
+          onPress={() => setWorkoutView(false)}
+          styles={styles}
+        />
+        <Button
+          title={l('Individual workouts', 'التمارين الفردية')}
+          primary={workoutView}
+          disabled={saving || draftSaving || workoutPersisting || closing}
+          onPress={() => {
+            setWorkoutsOpened(true)
+            setWorkoutView(true)
+          }}
+          styles={styles}
+        />
+      </View>
+      {workoutsOpened ? (
+        <View style={{ flex: 1, display: workoutView ? 'flex' : 'none' }}>
+          <WorkoutsScreen
+            client={client}
+            store={store}
+            owner={owner}
             styles={styles}
+            closing={closing}
+            onPersisting={setWorkoutPersisting}
+            active={workoutView}
           />
         </View>
       ) : null}
-      {!selected ? (
-        <>
-          <Text style={styles.hint}>
-            {' '}
-            {t('Upcoming 14 days ·')} {window.zone}
-            {t('. Saved events remain available outside this window.')}{' '}
+      <ScrollView
+        style={{ display: workoutView ? 'none' : 'flex' }}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>
+          {selected ? roster?.event.title || t('Event attendance') : t('Coach schedule')}
+        </Text>
+        {message ? (
+          <Text accessibilityLiveRegion="polite" style={styles.message}>
+            {t(message)}
           </Text>
-          <Button
-            title={refreshingSchedule ? 'Refreshing…' : 'Refresh schedule and sync'}
-            disabled={busy || refreshingSchedule || saving || closing}
-            onPress={() => void refresh()}
-            styles={styles}
-          />
-          {list.map((event) => (
-            <Pressable
-              key={event.id}
-              accessibilityRole="button"
-              disabled={busy || closing}
-              accessibilityLabel={`${l('Open', 'فتح')} ${event.title}`}
-              onPress={() => void openEvent(event.id)}
-              style={[styles.card, event.state === 'completed' && styles.completedCard]}
-            >
-              <Text style={styles.cardTitle}>{event.title}</Text>
-              <Text style={styles.hint}>
-                {displayDate(event.starts_at, language)} {t('·')} {t(event.kind)} {t('·')}{' '}
-                {t(event.state)}
-              </Text>
-              {event.location ? <Text style={styles.hint}>{event.location}</Text> : null}
-              <Text style={styles.link}>
-                {t(
-                  event.state === 'completed'
-                    ? 'Completed · View confirmed summary online'
-                    : event.state === 'cancelled'
-                      ? 'Cancelled · View details online'
-                      : cached.some((c) => c.event.id === event.id)
-                        ? 'Saved on this device · Open roster'
-                        : 'Open online to save roster',
-                )}
-              </Text>
-            </Pressable>
-          ))}
-          {next !== null ? (
+        ) : null}
+        {institutionPaused && queueHead.event_id !== selected ? (
+          <View style={styles.card}>
+            <Text style={styles.label}>{t('Saved attendance needs review')}</Text>
+            <Text style={styles.hint}>
+              {' '}
+              {t('Sending is paused at')}{' '}
+              {cached.find((c) => c.event.id === queueHead.event_id)?.event.title ||
+                t('an earlier event')}{' '}
+              {t('. Resolve it before sending more changes.')}{' '}
+            </Text>
             <Button
-              title="Load more events"
-              disabled={busy || refreshingSchedule || closing}
-              onPress={() => void refresh(next)}
+              title="Review saved change"
+              disabled={busy || saving || closing}
+              onPress={() => void openEvent(queueHead.event_id)}
               styles={styles}
             />
-          ) : null}
-          {!list.length && !busy ? (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('No field events to show')}</Text>
+          </View>
+        ) : null}
+        {!selected ? (
+          <>
+            <Text style={styles.hint}>
+              {' '}
+              {t('Upcoming 14 days ·')} {window.zone}
+              {t('. Saved events remain available outside this window.')}{' '}
+            </Text>
+            <Button
+              title={refreshingSchedule ? 'Refreshing…' : 'Refresh schedule and sync'}
+              disabled={busy || refreshingSchedule || saving || closing}
+              onPress={() => void refresh()}
+              styles={styles}
+            />
+            {list.map((event) => (
+              <Pressable
+                key={event.id}
+                accessibilityRole="button"
+                disabled={busy || closing}
+                accessibilityLabel={`${l('Open', 'فتح')} ${event.title}`}
+                onPress={() => void openEvent(event.id)}
+                style={[styles.card, event.state === 'completed' && styles.completedCard]}
+              >
+                <Text style={styles.cardTitle}>{event.title}</Text>
+                <Text style={styles.hint}>
+                  {displayDate(event.starts_at, language)} {t('·')} {t(event.kind)} {t('·')}{' '}
+                  {t(event.state)}
+                </Text>
+                {event.location ? <Text style={styles.hint}>{event.location}</Text> : null}
+                <Text style={styles.link}>
+                  {t(
+                    event.state === 'completed'
+                      ? 'Completed · View confirmed summary online'
+                      : event.state === 'cancelled'
+                        ? 'Cancelled · View details online'
+                        : cached.some((c) => c.event.id === event.id)
+                          ? 'Saved on this device · Open roster'
+                          : 'Open online to save roster',
+                  )}
+                </Text>
+              </Pressable>
+            ))}
+            {next !== null ? (
+              <Button
+                title="Load more events"
+                disabled={busy || refreshingSchedule || closing}
+                onPress={() => void refresh(next)}
+                styles={styles}
+              />
+            ) : null}
+            {!list.length && !busy ? (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>{t('No field events to show')}</Text>
+                <Text style={styles.hint}>
+                  {' '}
+                  {t(
+                    'Ask your institution to assign you as event staff. Open the event online before heading offline.',
+                  )}{' '}
+                </Text>
+              </View>
+            ) : null}
+            <Button
+              title={l('Server compatibility', 'توافق الخادم')}
+              onPress={() => setShowCompatibility((value) => !value)}
+              styles={styles}
+            />
+            {showCompatibility ? (
+              <View style={styles.card}>
+                <Text style={styles.label}>{l('Field app features', 'ميزات تطبيق الميدان')}</Text>
+                {compatibilityError ? (
+                  <Text style={styles.message}>{t(compatibilityError)}</Text>
+                ) : compatibility?.state === 'legacy' ? (
+                  <Text style={styles.hint}>
+                    {l(
+                      'This server does not report field capabilities. Ask your institution to check the app and server versions. Saved work is retained.',
+                      'لا يعرض هذا الخادم إمكانات تطبيق الميدان. اطلب من مؤسستك التحقق من إصداري التطبيق والخادم. يبقى العمل المحفوظ محفوظاً.',
+                    )}
+                  </Text>
+                ) : compatibility?.state === 'available' ? (
+                  <>
+                    {(
+                      [
+                        ['attendance', l('Attendance', 'الحضور')],
+                        ['assessments', l('Assessment results', 'نتائج التقييم')],
+                        ['event_completion', l('Event completion', 'إنهاء الموعد')],
+                        [
+                          'individual_workout_recording',
+                          l('Individual workout recording', 'تسجيل التمرين الفردي'),
+                        ],
+                        [
+                          'group_workout_recording',
+                          l('Group workout recording', 'تسجيل التمرين الجماعي'),
+                        ],
+                        [
+                          'day_only_calendar',
+                          l('Day-only appointments in Schedule', 'مواعيد بتاريخ فقط في الجدول'),
+                        ],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <Text key={key} style={styles.hint}>
+                        {label}
+                        {': '}
+                        {compatibility.value.features[key]
+                          ? l('Supported', 'مدعوم')
+                          : l('Not available in the field app', 'غير متاح في تطبيق الميدان')}
+                      </Text>
+                    ))}
+                    <Text style={styles.hint}>
+                      {l(
+                        'Server support does not change your account permissions. Individual workouts use their own view; group workout recording remains in the web dashboard.',
+                        'دعم الخادم لا يغيّر صلاحيات حسابك. للتمارين الفردية عرض مستقل؛ ويبقى تسجيل التمارين الجماعية في لوحة الويب.',
+                      )}
+                    </Text>
+                  </>
+                ) : (
+                  <ActivityIndicator
+                    accessibilityLabel={l(
+                      'Checking server compatibility',
+                      'جارٍ التحقق من توافق الخادم',
+                    )}
+                  />
+                )}
+                <Button
+                  title={l('Check again', 'تحقق مجدداً')}
+                  disabled={!compatibility && !compatibilityError}
+                  onPress={() => setCompatibilityAttempt((value) => value + 1)}
+                  styles={styles}
+                />
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <Button
+              title="Back to schedule"
+              disabled={saving || draftSaving || busy || closing}
+              onPress={() => {
+                selectedRef.current = null
+                setSelected(null)
+                setSnapshot(null)
+                setOnlineRoster(null)
+                setSearch('')
+                setMessage('')
+              }}
+              styles={styles}
+            />
+            {roster ? (
+              <>
+                <Text style={styles.hint}>
+                  {displayDate(roster.event.starts_at, language)} {t('·')} {t(roster.event.kind)}{' '}
+                  {t('·')} {t(roster.event.state)}
+                </Text>
+                {completed ? (
+                  <View
+                    accessibilityLiveRegion="polite"
+                    style={[styles.card, styles.completedCard]}
+                  >
+                    <Text style={styles.cardTitle}>{t('Event completed')}</Text>
+                    <Text style={styles.hint}>
+                      {' '}
+                      {t(
+                        'Confirmed by your institution. Attendance and results below are read-only. The offline event package has been removed. Open correction history below while online.',
+                      )}{' '}
+                    </Text>
+                  </View>
+                ) : beforeStart && roster.event.state === 'scheduled' ? (
+                  <View accessibilityLiveRegion="polite" style={styles.card}>
+                    <Text style={styles.cardTitle}>
+                      {t('Field entry opens at the scheduled start')}
+                    </Text>
+                    <Text style={styles.hint}>
+                      {' '}
+                      {t('Attendance, scores and completion unlock')}{' '}
+                      {displayDate(roster.event.starts_at, language)} {t('(')}{' '}
+                      {Intl.DateTimeFormat().resolvedOptions().timeZone || 'device time'}
+                      {t(
+                        '). You can download and review the roster now. If the time is wrong, ask staff to reschedule the event in the web app, then refresh its roster online.',
+                      )}{' '}
+                    </Text>
+                  </View>
+                ) : null}
+                {snapshot ? (
+                  <Text style={styles.hint}>
+                    {' '}
+                    {t('Roster downloaded')} {displayDate(snapshot.roster.saved_at, language)}
+                    {t('. Permission is checked again when sending.')}{' '}
+                  </Text>
+                ) : null}
+                {snapshot?.roster.blocked ? (
+                  <Text style={styles.message}>
+                    {' '}
+                    {t(
+                      'Access blocked. Saved work is retained for explicit review or discard; attendance entry is locked.',
+                    )}{' '}
+                  </Text>
+                ) : null}
+                {paused ? (
+                  <Text style={styles.message}>
+                    {' '}
+                    {t(
+                      'Sending is paused. Review the saved changes against current server records below. Keep or export what you need before explicitly discarding this device copy and reopening online.',
+                    )}{' '}
+                  </Text>
+                ) : null}
+                {snapshot && (paused || snapshot.roster.blocked || reviewing) ? (
+                  <RecoveryPanel
+                    key={roster.event.id}
+                    owner={owner}
+                    snapshot={snapshot}
+                    client={client}
+                    store={store}
+                    styles={styles}
+                    disabled={
+                      busy ||
+                      saving ||
+                      draftSaving ||
+                      closing ||
+                      pending.some((c) => c.state === 'sending')
+                    }
+                    onDenied={() => accessDenied(roster.event.id)}
+                  />
+                ) : snapshot && (pending.length || snapshot.drafts.length) ? (
+                  <Button
+                    title={l('Review saved work', 'مراجعة العمل المحفوظ')}
+                    onPress={() => setReviewing(true)}
+                    styles={styles}
+                    disabled={busy || saving || draftSaving || closing}
+                  />
+                ) : null}
+                {!completed && roster.event.state === 'scheduled' ? (
+                  <View style={styles.actions}>
+                    <Button
+                      title="Sync saved field work"
+                      disabled={
+                        busy ||
+                        saving ||
+                        closing ||
+                        paused ||
+                        pending.some((c) => c.state === 'sending')
+                      }
+                      onPress={() => void sync()}
+                      styles={styles}
+                      primary
+                    />
+                    <Button
+                      title="Refresh roster"
+                      disabled={
+                        busy ||
+                        saving ||
+                        draftSaving ||
+                        closing ||
+                        !!pending.length ||
+                        !!snapshot?.drafts.length
+                      }
+                      onPress={() => void openEvent(selected, true)}
+                      styles={styles}
+                    />
+                  </View>
+                ) : null}
+                {roster.event.kind === 'assessment' && !roster.definition?.length ? (
+                  <Text style={styles.message}>
+                    {' '}
+                    {t(
+                      'This older attendance package has no assessment definition. Resolve saved attendance, then refresh online to enter scores.',
+                    )}{' '}
+                  </Text>
+                ) : null}
+                <TextInput
+                  accessibilityLabel={t('Find athlete in this event')}
+                  editable={!draftSaving && !saving}
+                  placeholder={t('Find athlete in this event')}
+                  placeholderTextColor={styles.hint.color}
+                  value={search}
+                  onChangeText={setSearch}
+                  style={styles.input}
+                />
+                <Text style={styles.hint}>
+                  {roster.people.filter((p) => p.duty === 'trainee').length}{' '}
+                  {t('athletes in event ·')} {filtered.length} {t('shown')}{' '}
+                </Text>
+                {filtered.map((person) => {
+                  const latest = snapshot?.commands
+                    .filter(
+                      (c) =>
+                        c.payload.action === 'attendance' && c.payload.member === person.member_id,
+                    )
+                    .at(-1)
+                  const unsettled = latest && latest.state !== 'acknowledged'
+                  const value =
+                    unsettled && latest.payload.action === 'attendance'
+                      ? latest.payload.attendance
+                      : person.attendance
+                  const result = roster.results?.find((r) => r.member_id === person.member_id)
+                  const resultCommand = snapshot?.commands
+                    .filter(
+                      (c) => c.payload.action === 'result' && c.payload.member === person.member_id,
+                    )
+                    .at(-1)
+                  const queuedResult =
+                    resultCommand?.payload.action === 'result' &&
+                    resultCommand.state !== 'acknowledged'
+                      ? resultCommand.payload
+                      : undefined
+                  const locked =
+                    saving ||
+                    busy ||
+                    closing ||
+                    !snapshot ||
+                    snapshot.roster.blocked ||
+                    institutionPaused ||
+                    paused ||
+                    finishing ||
+                    !!queuedResult ||
+                    draftSaving ||
+                    !!unsettled ||
+                    roster.event.state !== 'scheduled' ||
+                    beforeStart ||
+                    !person.active
+                  return (
+                    <View key={person.member_id} style={styles.card}>
+                      <Text style={styles.cardTitle}>{person.name}</Text>
+                      <Text style={styles.label}>
+                        {t('Attendance:')} {t(value)}
+                      </Text>
+                      <Text accessibilityLiveRegion="polite" style={styles.hint}>
+                        {t(latest ? stateText[latest.state] : 'Downloaded server attendance')}
+                      </Text>
+                      {latest?.error ? <Text style={styles.message}>{t(latest.error)}</Text> : null}
+                      {!person.active ? (
+                        <Text style={styles.hint}>{t('Inactive athlete — entry unavailable')}</Text>
+                      ) : null}
+                      {!completed ? (
+                        <View style={styles.actions}>
+                          {(['present', 'absent', 'excused'] as const).map((mark) => (
+                            <Button
+                              key={mark}
+                              title={mark.charAt(0).toUpperCase() + mark.slice(1)}
+                              styles={styles}
+                              primary={value === mark}
+                              disabled={locked || value === mark}
+                              onPress={() => void record(person.member_id, mark)}
+                            />
+                          ))}
+                        </View>
+                      ) : null}
+                      <EventHistory
+                        key={`${roster.event.id}:${person.member_id}`}
+                        client={client}
+                        institution={institution}
+                        event={roster.event.id}
+                        member={person.member_id}
+                        name={person.name}
+                        definition={roster.definition}
+                        assessment={roster.event.kind === 'assessment'}
+                        styles={styles}
+                        disabled={busy || saving || draftSaving || closing}
+                        onDenied={() => accessDenied(roster.event.id)}
+                      />
+                      {roster.event.kind === 'assessment' ? (
+                        <>
+                          {result ? (
+                            <View style={{ gap: 6 }}>
+                              <Text style={styles.label}>
+                                {' '}
+                                {t('Confirmed assessment · revision')} {result.revision}
+                              </Text>
+                              {roster.definition?.map((drill) => (
+                                <Text key={drill.key} style={styles.hint}>
+                                  {drill.name}
+                                  {t(':')} {result.values[drill.key] ?? t('Not recorded')}
+                                  {drill.unit ? ` ${drill.unit}` : ''}
+                                </Text>
+                              ))}
+                              {result.note ? (
+                                <Text style={styles.hint}>
+                                  {t('Assessor note:')} {result.note}
+                                </Text>
+                              ) : null}
+                            </View>
+                          ) : null}
+                          {resultCommand ? (
+                            <Text style={styles.hint}>
+                              {' '}
+                              {t('Scores:')} {t(stateText[resultCommand.state])}
+                              {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
+                            </Text>
+                          ) : null}
+                          {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
+                            <Text style={styles.hint}>{t('Score draft saved on device')}</Text>
+                          ) : null}
+                          {!completed &&
+                          roster.definition?.length &&
+                          (value === 'present' ||
+                            result ||
+                            queuedResult ||
+                            snapshot?.drafts.some((d) => d.member === person.member_id)) ? (
+                            <Button
+                              title={
+                                editor === person.member_id
+                                  ? 'Scores editor open'
+                                  : queuedResult
+                                    ? 'Review saved scores'
+                                    : result
+                                      ? 'Review / correct scores'
+                                      : 'Record assessment scores'
+                              }
+                              disabled={
+                                completed ||
+                                beforeStart ||
+                                editor === person.member_id ||
+                                saving ||
+                                draftSaving ||
+                                busy ||
+                                closing
+                              }
+                              onPress={() => setEditor(person.member_id)}
+                              styles={styles}
+                            />
+                          ) : null}
+                          {editor === person.member_id && snapshot && roster.definition?.length ? (
+                            <ScoreEditor
+                              key={`${roster.event.id}:${person.member_id}:${result?.revision || 0}`}
+                              owner={owner}
+                              event={roster.event.id}
+                              member={person.member_id}
+                              name={person.name}
+                              definition={roster.definition}
+                              result={result}
+                              queuedResult={queuedResult}
+                              savedDraft={snapshot.drafts.find(
+                                (d) => d.member === person.member_id,
+                              )}
+                              store={store}
+                              styles={styles}
+                              locked={
+                                saving ||
+                                busy ||
+                                closing ||
+                                snapshot.roster.blocked ||
+                                institutionPaused ||
+                                paused ||
+                                finishing ||
+                                !!queuedResult ||
+                                !person.active ||
+                                value !== 'present' ||
+                                roster.event.state !== 'scheduled' ||
+                                beforeStart
+                              }
+                              onPersisting={setDraftSaving}
+                              onDraftSaved={async (discarded) => {
+                                await reloadLocal()
+                                const latest = await store.snapshot(owner, roster.event.id)
+                                if (
+                                  alive.current &&
+                                  (discarded ||
+                                    latest?.drafts.some((d) => d.member === person.member_id))
+                                )
+                                  setMessage(
+                                    discarded
+                                      ? `Score draft for ${person.name} discarded from this device.`
+                                      : `Score draft for ${person.name} saved on this device. Submit it to confirm the result.`,
+                                  )
+                              }}
+                              onError={(message) => {
+                                if (alive.current) setMessage(message)
+                              }}
+                              onSubmit={submitCommand}
+                              onClose={() => setEditor(null)}
+                            />
+                          ) : null}
+                        </>
+                      ) : null}
+                    </View>
+                  )
+                })}
+                {!filtered.length ? (
+                  <Text style={styles.hint}>
+                    {t(search ? 'No athletes match this name.' : 'This event has no athletes.')}
+                  </Text>
+                ) : null}
+                {snapshot && roster.event.state === 'scheduled' ? (
+                  <View style={styles.card}>
+                    <Text style={styles.cardTitle}>{t('Complete event')}</Text>
+                    {completionProblems.map((problem) => (
+                      <Text key={t(problem)} style={styles.hint}>
+                        {t(problem)}
+                      </Text>
+                    ))}
+                    {pending.length ? (
+                      <Text style={styles.hint}>
+                        {pending.length} {t('saved change(s) awaiting confirmation.')}{' '}
+                      </Text>
+                    ) : null}
+                    {snapshot.drafts.length ? (
+                      <Text style={styles.hint}>
+                        {' '}
+                        {t('Submit or discard')} {snapshot.drafts.length}{' '}
+                        {t('score draft(s) before completing.')}{' '}
+                      </Text>
+                    ) : null}
+                    <Button
+                      title={
+                        finishing ? 'Completion waiting for confirmation' : t('Complete event')
+                      }
+                      onPress={finish}
+                      styles={styles}
+                      primary
+                      disabled={
+                        busy ||
+                        saving ||
+                        draftSaving ||
+                        closing ||
+                        institutionPaused ||
+                        snapshot.roster.blocked ||
+                        !!pending.length ||
+                        !!snapshot.drafts.length ||
+                        !!completionProblems.length ||
+                        beforeStart
+                      }
+                    />
+                  </View>
+                ) : null}
+                {snapshot ? (
+                  <Button
+                    title="Remove device copy / discard pending work"
+                    disabled={
+                      busy ||
+                      saving ||
+                      draftSaving ||
+                      closing ||
+                      pending.some((c) => c.state === 'sending')
+                    }
+                    onPress={removeCopy}
+                    styles={styles}
+                  />
+                ) : null}
+              </>
+            ) : busy ? (
+              <ActivityIndicator accessibilityLabel={t('Opening event roster')} />
+            ) : (
               <Text style={styles.hint}>
                 {' '}
                 {t(
-                  'Ask your institution to assign you as event staff. Open the event online before heading offline.',
+                  'No offline roster exists. Connect to your institution and reopen this event.',
                 )}{' '}
               </Text>
-            </View>
-          ) : null}
-          <Button
-            title={l('Server compatibility', 'توافق الخادم')}
-            onPress={() => setShowCompatibility((value) => !value)}
-            styles={styles}
-          />
-          {showCompatibility ? (
-            <View style={styles.card}>
-              <Text style={styles.label}>{l('Field app features', 'ميزات تطبيق الميدان')}</Text>
-              {compatibilityError ? (
-                <Text style={styles.message}>{t(compatibilityError)}</Text>
-              ) : compatibility?.state === 'legacy' ? (
-                <Text style={styles.hint}>
-                  {l(
-                    'This server does not report field capabilities. Ask your institution to check the app and server versions. Saved work is retained.',
-                    'لا يعرض هذا الخادم إمكانات تطبيق الميدان. اطلب من مؤسستك التحقق من إصداري التطبيق والخادم. يبقى العمل المحفوظ محفوظاً.',
-                  )}
-                </Text>
-              ) : compatibility?.state === 'available' ? (
-                <>
-                  {(
-                    [
-                      ['attendance', l('Attendance', 'الحضور')],
-                      ['assessments', l('Assessment results', 'نتائج التقييم')],
-                      ['event_completion', l('Event completion', 'إنهاء الموعد')],
-                      [
-                        'individual_workout_recording',
-                        l('Individual workout recording', 'تسجيل التمرين الفردي'),
-                      ],
-                      [
-                        'group_workout_recording',
-                        l('Group workout recording', 'تسجيل التمرين الجماعي'),
-                      ],
-                      [
-                        'day_only_calendar',
-                        l('Workouts without a fixed time', 'تمارين دون وقت محدد'),
-                      ],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <Text key={key} style={styles.hint}>
-                      {label}
-                      {': '}
-                      {compatibility.value.features[key]
-                        ? l('Supported', 'مدعوم')
-                        : l('Not available in the field app', 'غير متاح في تطبيق الميدان')}
-                    </Text>
-                  ))}
-                  <Text style={styles.hint}>
-                    {l(
-                      'Server support does not change your account permissions. Use the web dashboard for workout recording until the matching field update is available.',
-                      'دعم الخادم لا يغيّر صلاحيات حسابك. استخدم لوحة الويب لتسجيل التمارين حتى يتوفر تحديث تطبيق الميدان المطابق.',
-                    )}
-                  </Text>
-                </>
-              ) : (
-                <ActivityIndicator
-                  accessibilityLabel={l(
-                    'Checking server compatibility',
-                    'جارٍ التحقق من توافق الخادم',
-                  )}
-                />
-              )}
-              <Button
-                title={l('Check again', 'تحقق مجدداً')}
-                disabled={!compatibility && !compatibilityError}
-                onPress={() => setCompatibilityAttempt((value) => value + 1)}
-                styles={styles}
-              />
-            </View>
-          ) : null}
-        </>
-      ) : (
-        <>
-          <Button
-            title="Back to schedule"
-            disabled={saving || draftSaving || busy || closing}
-            onPress={() => {
-              selectedRef.current = null
-              setSelected(null)
-              setSnapshot(null)
-              setOnlineRoster(null)
-              setSearch('')
-              setMessage('')
-            }}
-            styles={styles}
-          />
-          {roster ? (
-            <>
-              <Text style={styles.hint}>
-                {displayDate(roster.event.starts_at, language)} {t('·')} {t(roster.event.kind)}{' '}
-                {t('·')} {t(roster.event.state)}
-              </Text>
-              {completed ? (
-                <View accessibilityLiveRegion="polite" style={[styles.card, styles.completedCard]}>
-                  <Text style={styles.cardTitle}>{t('Event completed')}</Text>
-                  <Text style={styles.hint}>
-                    {' '}
-                    {t(
-                      'Confirmed by your institution. Attendance and results below are read-only. The offline event package has been removed. Open correction history below while online.',
-                    )}{' '}
-                  </Text>
-                </View>
-              ) : beforeStart && roster.event.state === 'scheduled' ? (
-                <View accessibilityLiveRegion="polite" style={styles.card}>
-                  <Text style={styles.cardTitle}>
-                    {t('Field entry opens at the scheduled start')}
-                  </Text>
-                  <Text style={styles.hint}>
-                    {' '}
-                    {t('Attendance, scores and completion unlock')}{' '}
-                    {displayDate(roster.event.starts_at, language)} {t('(')}{' '}
-                    {Intl.DateTimeFormat().resolvedOptions().timeZone || 'device time'}
-                    {t(
-                      '). You can download and review the roster now. If the time is wrong, ask staff to reschedule the event in the web app, then refresh its roster online.',
-                    )}{' '}
-                  </Text>
-                </View>
-              ) : null}
-              {snapshot ? (
-                <Text style={styles.hint}>
-                  {' '}
-                  {t('Roster downloaded')} {displayDate(snapshot.roster.saved_at, language)}
-                  {t('. Permission is checked again when sending.')}{' '}
-                </Text>
-              ) : null}
-              {snapshot?.roster.blocked ? (
-                <Text style={styles.message}>
-                  {' '}
-                  {t(
-                    'Access blocked. Saved work is retained for explicit review or discard; attendance entry is locked.',
-                  )}{' '}
-                </Text>
-              ) : null}
-              {paused ? (
-                <Text style={styles.message}>
-                  {' '}
-                  {t(
-                    'Sending is paused. Review the saved changes against current server records below. Keep or export what you need before explicitly discarding this device copy and reopening online.',
-                  )}{' '}
-                </Text>
-              ) : null}
-              {snapshot && (paused || snapshot.roster.blocked || reviewing) ? (
-                <RecoveryPanel
-                  key={roster.event.id}
-                  owner={owner}
-                  snapshot={snapshot}
-                  client={client}
-                  store={store}
-                  styles={styles}
-                  disabled={
-                    busy ||
-                    saving ||
-                    draftSaving ||
-                    closing ||
-                    pending.some((c) => c.state === 'sending')
-                  }
-                  onDenied={() => accessDenied(roster.event.id)}
-                />
-              ) : snapshot && (pending.length || snapshot.drafts.length) ? (
-                <Button
-                  title={l('Review saved work', 'مراجعة العمل المحفوظ')}
-                  onPress={() => setReviewing(true)}
-                  styles={styles}
-                  disabled={busy || saving || draftSaving || closing}
-                />
-              ) : null}
-              {!completed && roster.event.state === 'scheduled' ? (
-                <View style={styles.actions}>
-                  <Button
-                    title="Sync saved field work"
-                    disabled={
-                      busy ||
-                      saving ||
-                      closing ||
-                      paused ||
-                      pending.some((c) => c.state === 'sending')
-                    }
-                    onPress={() => void sync()}
-                    styles={styles}
-                    primary
-                  />
-                  <Button
-                    title="Refresh roster"
-                    disabled={
-                      busy ||
-                      saving ||
-                      draftSaving ||
-                      closing ||
-                      !!pending.length ||
-                      !!snapshot?.drafts.length
-                    }
-                    onPress={() => void openEvent(selected, true)}
-                    styles={styles}
-                  />
-                </View>
-              ) : null}
-              {roster.event.kind === 'assessment' && !roster.definition?.length ? (
-                <Text style={styles.message}>
-                  {' '}
-                  {t(
-                    'This older attendance package has no assessment definition. Resolve saved attendance, then refresh online to enter scores.',
-                  )}{' '}
-                </Text>
-              ) : null}
-              <TextInput
-                accessibilityLabel={t('Find athlete in this event')}
-                editable={!draftSaving && !saving}
-                placeholder={t('Find athlete in this event')}
-                placeholderTextColor={styles.hint.color}
-                value={search}
-                onChangeText={setSearch}
-                style={styles.input}
-              />
-              <Text style={styles.hint}>
-                {roster.people.filter((p) => p.duty === 'trainee').length}{' '}
-                {t('athletes in event ·')} {filtered.length} {t('shown')}{' '}
-              </Text>
-              {filtered.map((person) => {
-                const latest = snapshot?.commands
-                  .filter(
-                    (c) =>
-                      c.payload.action === 'attendance' && c.payload.member === person.member_id,
-                  )
-                  .at(-1)
-                const unsettled = latest && latest.state !== 'acknowledged'
-                const value =
-                  unsettled && latest.payload.action === 'attendance'
-                    ? latest.payload.attendance
-                    : person.attendance
-                const result = roster.results?.find((r) => r.member_id === person.member_id)
-                const resultCommand = snapshot?.commands
-                  .filter(
-                    (c) => c.payload.action === 'result' && c.payload.member === person.member_id,
-                  )
-                  .at(-1)
-                const queuedResult =
-                  resultCommand?.payload.action === 'result' &&
-                  resultCommand.state !== 'acknowledged'
-                    ? resultCommand.payload
-                    : undefined
-                const locked =
-                  saving ||
-                  busy ||
-                  closing ||
-                  !snapshot ||
-                  snapshot.roster.blocked ||
-                  institutionPaused ||
-                  paused ||
-                  finishing ||
-                  !!queuedResult ||
-                  draftSaving ||
-                  !!unsettled ||
-                  roster.event.state !== 'scheduled' ||
-                  beforeStart ||
-                  !person.active
-                return (
-                  <View key={person.member_id} style={styles.card}>
-                    <Text style={styles.cardTitle}>{person.name}</Text>
-                    <Text style={styles.label}>
-                      {t('Attendance:')} {t(value)}
-                    </Text>
-                    <Text accessibilityLiveRegion="polite" style={styles.hint}>
-                      {t(latest ? stateText[latest.state] : 'Downloaded server attendance')}
-                    </Text>
-                    {latest?.error ? <Text style={styles.message}>{t(latest.error)}</Text> : null}
-                    {!person.active ? (
-                      <Text style={styles.hint}>{t('Inactive athlete — entry unavailable')}</Text>
-                    ) : null}
-                    {!completed ? (
-                      <View style={styles.actions}>
-                        {(['present', 'absent', 'excused'] as const).map((mark) => (
-                          <Button
-                            key={mark}
-                            title={mark.charAt(0).toUpperCase() + mark.slice(1)}
-                            styles={styles}
-                            primary={value === mark}
-                            disabled={locked || value === mark}
-                            onPress={() => void record(person.member_id, mark)}
-                          />
-                        ))}
-                      </View>
-                    ) : null}
-                    <EventHistory
-                      key={`${roster.event.id}:${person.member_id}`}
-                      client={client}
-                      institution={institution}
-                      event={roster.event.id}
-                      member={person.member_id}
-                      name={person.name}
-                      definition={roster.definition}
-                      assessment={roster.event.kind === 'assessment'}
-                      styles={styles}
-                      disabled={busy || saving || draftSaving || closing}
-                      onDenied={() => accessDenied(roster.event.id)}
-                    />
-                    {roster.event.kind === 'assessment' ? (
-                      <>
-                        {result ? (
-                          <View style={{ gap: 6 }}>
-                            <Text style={styles.label}>
-                              {' '}
-                              {t('Confirmed assessment · revision')} {result.revision}
-                            </Text>
-                            {roster.definition?.map((drill) => (
-                              <Text key={drill.key} style={styles.hint}>
-                                {drill.name}
-                                {t(':')} {result.values[drill.key] ?? t('Not recorded')}
-                                {drill.unit ? ` ${drill.unit}` : ''}
-                              </Text>
-                            ))}
-                            {result.note ? (
-                              <Text style={styles.hint}>
-                                {t('Assessor note:')} {result.note}
-                              </Text>
-                            ) : null}
-                          </View>
-                        ) : null}
-                        {resultCommand ? (
-                          <Text style={styles.hint}>
-                            {' '}
-                            {t('Scores:')} {t(stateText[resultCommand.state])}
-                            {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
-                          </Text>
-                        ) : null}
-                        {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
-                          <Text style={styles.hint}>{t('Score draft saved on device')}</Text>
-                        ) : null}
-                        {!completed &&
-                        roster.definition?.length &&
-                        (value === 'present' ||
-                          result ||
-                          queuedResult ||
-                          snapshot?.drafts.some((d) => d.member === person.member_id)) ? (
-                          <Button
-                            title={
-                              editor === person.member_id
-                                ? 'Scores editor open'
-                                : queuedResult
-                                  ? 'Review saved scores'
-                                  : result
-                                    ? 'Review / correct scores'
-                                    : 'Record assessment scores'
-                            }
-                            disabled={
-                              completed ||
-                              beforeStart ||
-                              editor === person.member_id ||
-                              saving ||
-                              draftSaving ||
-                              busy ||
-                              closing
-                            }
-                            onPress={() => setEditor(person.member_id)}
-                            styles={styles}
-                          />
-                        ) : null}
-                        {editor === person.member_id && snapshot && roster.definition?.length ? (
-                          <ScoreEditor
-                            key={`${roster.event.id}:${person.member_id}:${result?.revision || 0}`}
-                            owner={owner}
-                            event={roster.event.id}
-                            member={person.member_id}
-                            name={person.name}
-                            definition={roster.definition}
-                            result={result}
-                            queuedResult={queuedResult}
-                            savedDraft={snapshot.drafts.find((d) => d.member === person.member_id)}
-                            store={store}
-                            styles={styles}
-                            locked={
-                              saving ||
-                              busy ||
-                              closing ||
-                              snapshot.roster.blocked ||
-                              institutionPaused ||
-                              paused ||
-                              finishing ||
-                              !!queuedResult ||
-                              !person.active ||
-                              value !== 'present' ||
-                              roster.event.state !== 'scheduled' ||
-                              beforeStart
-                            }
-                            onPersisting={setDraftSaving}
-                            onDraftSaved={async (discarded) => {
-                              await reloadLocal()
-                              const latest = await store.snapshot(owner, roster.event.id)
-                              if (
-                                alive.current &&
-                                (discarded ||
-                                  latest?.drafts.some((d) => d.member === person.member_id))
-                              )
-                                setMessage(
-                                  discarded
-                                    ? `Score draft for ${person.name} discarded from this device.`
-                                    : `Score draft for ${person.name} saved on this device. Submit it to confirm the result.`,
-                                )
-                            }}
-                            onError={(message) => {
-                              if (alive.current) setMessage(message)
-                            }}
-                            onSubmit={submitCommand}
-                            onClose={() => setEditor(null)}
-                          />
-                        ) : null}
-                      </>
-                    ) : null}
-                  </View>
-                )
-              })}
-              {!filtered.length ? (
-                <Text style={styles.hint}>
-                  {t(search ? 'No athletes match this name.' : 'This event has no athletes.')}
-                </Text>
-              ) : null}
-              {snapshot && roster.event.state === 'scheduled' ? (
-                <View style={styles.card}>
-                  <Text style={styles.cardTitle}>{t('Complete event')}</Text>
-                  {completionProblems.map((problem) => (
-                    <Text key={t(problem)} style={styles.hint}>
-                      {t(problem)}
-                    </Text>
-                  ))}
-                  {pending.length ? (
-                    <Text style={styles.hint}>
-                      {pending.length} {t('saved change(s) awaiting confirmation.')}{' '}
-                    </Text>
-                  ) : null}
-                  {snapshot.drafts.length ? (
-                    <Text style={styles.hint}>
-                      {' '}
-                      {t('Submit or discard')} {snapshot.drafts.length}{' '}
-                      {t('score draft(s) before completing.')}{' '}
-                    </Text>
-                  ) : null}
-                  <Button
-                    title={finishing ? 'Completion waiting for confirmation' : t('Complete event')}
-                    onPress={finish}
-                    styles={styles}
-                    primary
-                    disabled={
-                      busy ||
-                      saving ||
-                      draftSaving ||
-                      closing ||
-                      institutionPaused ||
-                      snapshot.roster.blocked ||
-                      !!pending.length ||
-                      !!snapshot.drafts.length ||
-                      !!completionProblems.length ||
-                      beforeStart
-                    }
-                  />
-                </View>
-              ) : null}
-              {snapshot ? (
-                <Button
-                  title="Remove device copy / discard pending work"
-                  disabled={
-                    busy ||
-                    saving ||
-                    draftSaving ||
-                    closing ||
-                    pending.some((c) => c.state === 'sending')
-                  }
-                  onPress={removeCopy}
-                  styles={styles}
-                />
-              ) : null}
-            </>
-          ) : busy ? (
-            <ActivityIndicator accessibilityLabel={t('Opening event roster')} />
-          ) : (
-            <Text style={styles.hint}>
-              {' '}
-              {t(
-                'No offline roster exists. Connect to your institution and reopen this event.',
-              )}{' '}
-            </Text>
-          )}
-        </>
-      )}
-      <Text style={styles.hint}>
-        {' '}
-        {t(
-          'Only this account’s explicitly opened rosters are stored on this device. Sync runs while the app is active.',
-        )}{' '}
-      </Text>
-    </ScrollView>
+            )}
+          </>
+        )}
+        <Text style={styles.hint}>
+          {' '}
+          {t(
+            'Only this account’s explicitly opened rosters are stored on this device. Sync runs while the app is active.',
+          )}{' '}
+        </Text>
+      </ScrollView>
+    </View>
   )
 }

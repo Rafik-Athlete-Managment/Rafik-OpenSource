@@ -1,8 +1,14 @@
 # API conventions
 
+## Individual native packages and replay — unreleased beta.3
+
+Trainer `GET /v1/institution/workout-scheduling?view=trainer&queue=actionable&fieldPackages=true&offset=0&limit=10` adds `field_workout` to scoped assignment items. Ordinary reads omit it. The package is a text-only frozen prescription/current individual recording, not files, injury records or history; historical unlinked records return null for web recovery. `allow_provisional_start` is a cached preparation hint. The native client still checks the scheduled instant/date and the server checks current restrictions, authority and sequence during sync.
+
+Native start/save commands keep `/v1/institution/sessions` and their exact operation identities. A provisional start is saved before dispatch. Its separate save intent becomes an immutable request only after binding the acknowledged start revision. Transport uncertainty retries the same payload; no new occurrence is allocated. The server's timestamps are authoritative command times, distinct from a device draft or physical exercise timing. Current `individual_workout_recording` capability is true; group recording and day-only appointments in the attendance calendar remain unsupported. Individual packages can include day-only plan workouts.
+
 ## Native capabilities — unreleased beta.3
 
-`GET /v1/mobile/capabilities` requires an authenticated session and returns protocol `1` plus boolean native feature flags. Attendance, assessments and event completion are supported; individual/group workout capture and day-only calendar are not yet available in the field app. This describes implementation support, not account grants. Responses are not cached and writes return 405. See the canonical [OpenAPI](../../apps/backend/openapi.json).
+`GET /v1/mobile/capabilities` requires an authenticated session and returns protocol `1` plus boolean native feature flags. Attendance, assessments, event completion and individual workout recording are supported. Group recording and day-only appointments in the attendance calendar remain unavailable. This describes implementation support, not account grants. Responses are not cached and writes return 405. See the canonical [OpenAPI](../../apps/backend/openapi.json).
 
 Clients treat only `404 not_found` as absent discovery on an older server. Network failures, 401/403, malformed data and unknown protocol versions must retain their own recovery explanation. Never clear a queue, switch its owner, assume workout support or bypass command authority after a discovery failure.
 
@@ -10,7 +16,7 @@ Clients treat only `404 not_found` as absent discovery on an older server. Netwo
 
 `GET/POST /v1/institution/workout-templates` provides the staff library and creator/administrator revision-checked save/archive. `GET /v1/institution/group-workouts?view=...&event=<UUID>` returns the frozen baseline and authorized participant outcome projection (maximum 100). Only the owning athlete is included for athlete reads. `POST` start uses the event/member/current participant revision and new workout ID, optionally an athlete-specific prescription. Start requires designated coach authority, arrived time, present attendance, active athlete and no applicable cannot-train restriction. Competing new starts fail rather than losing a prescription; exact retries return the acknowledged result after current authority. Skip requires an explicit reason and preserves partial history.
 
-Calendar create accepts `workout_template_id` and exact `workout_template_revision` for training events; it freezes copies rather than live-linking. Additional results use `source_kind=additional`, nullable `assignment_id` and required occurrence/participant identity. Save/review/history reuse `/v1/institution/sessions` and `/v1/workouts/:id`; athletes are read-only for group actuals, administrators review, designated coaches record. Finish requires completed/skipped outcomes for present or already-started participants. No individual cursor changes. Existing assignment history/follow-up remains plan-only; group history stays in its event. Workout-completion analytics include actual group records, while attendance retains its separate denominator. See the [canonical OpenAPI](../../apps/backend/openapi.json) for request schemas; native offline workout recording is not enabled yet.
+Calendar create accepts `workout_template_id` and exact `workout_template_revision` for training events; it freezes copies rather than live-linking. Additional results use `source_kind=additional`, nullable `assignment_id` and required occurrence/participant identity. Save/review/history reuse `/v1/institution/sessions` and `/v1/workouts/:id`; athletes are read-only for group actuals, administrators review, designated coaches record. Finish requires completed/skipped outcomes for present or already-started participants. No individual cursor changes. Existing assignment history/follow-up remains plan-only; group history stays in its event. Workout-completion analytics include actual group records, while attendance retains its separate denominator. See the [canonical OpenAPI](../../apps/backend/openapi.json) for request schemas; native group recording is not enabled; individual capture is described above.
 
 ## Individual workout agenda — unreleased beta.3
 
@@ -18,7 +24,7 @@ Calendar create accepts `workout_template_id` and exact `workout_template_revisi
 
 Each item contains assignment/athlete identity, title/goal, sequence cursor, next immutable day, state (`unscheduled`, `scheduled`, `ready`, `overdue`, `in_progress`, `paused`), general `blocked` reason, current occurrence/session and `can_start`/`can_schedule`. These flags describe the read snapshot; writes always reauthorize and recheck current state. Trainers receive primary-athlete plans and only the relevant sport plans for supporting links; athletes receive their own assignments. Administrators can schedule/review, but do not receive coach recording actions. Canonical shapes are in the [shared contracts](../../packages/shared/src/contracts.ts) and [OpenAPI](../../apps/backend/openapi.json).
 
-The web uses existing POST scheduling commands and passes `occurrence_id` when starting a session. Weekly/automatic individual preparation and group web results are described in their current sections; Android offline workout capture remains pending.
+The web uses existing POST scheduling commands and passes `occurrence_id` when starting a session. Weekly/automatic individual preparation and group web results are described in their current sections; individual Android capture is described above; group capture and native acceptance remain pending.
 
 ## Unreleased beta.3 founder-validation corrections
 
@@ -40,7 +46,7 @@ Use offset-bearing timestamps, a valid IANA timezone and a duration no longer th
 
 For `/v1/institution/sessions`, a bound `start` supplies `occurrence_id` along with the existing `id`, `assignment_id`, `day_id`, `view` and `operation`. The booked time must have arrived. Save actual measurements with the existing `save` payload (`revision`, `entries`, `note`, `complete`); completion resolves its linked position atomically. Corrections preserve completed progression. Generic calendar finish/reschedule/cancel/staff commands return `use_workout_scheduling` for these occurrences. Attendance is separate from exercise completion.
 
-This section describes the original fixed-time checkpoint. Subsequent web controls, recurring/day-only preparation and group web results are implemented as described in their current sections; Android offline workout UI/queue migration remains pending. Existing unlinked workout history and v1 attendance/assessment receipts remain. See the canonical OpenAPI schemas for request fields.
+This section describes the original fixed-time checkpoint. Subsequent web controls, recurring/day-only preparation and group web results are implemented as described in their current sections; the subsequent individual Android UI/queue slice is described above; group capture and native acceptance remain pending. Existing unlinked workout history and v1 attendance/assessment receipts remain. See the canonical OpenAPI schemas for request fields.
 
 ## Breaking beta.3 API boundary
 

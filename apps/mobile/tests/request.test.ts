@@ -5,6 +5,64 @@ import { ApiFailure, ConnectionFailure, failureText } from '../src/field/model.t
 import { translate } from '../src/field/translations.ts'
 import { selectedInstitution } from '../src/field/access.ts'
 import { checkCapabilities, fieldCapabilities } from '../src/field/capabilities.ts'
+import { workoutNumber } from '../src/field/workout-input.ts'
+import { requireWorkoutSupport } from '../src/field/workout-sync.ts'
+
+test('workout replay requires an explicitly supported server and retains authentication/connectivity failures', async () => {
+  const value = {
+    protocol: 1,
+    features: {
+      attendance: true,
+      assessments: true,
+      event_completion: true,
+      individual_workout_recording: true,
+      group_workout_recording: false,
+      day_only_calendar: false,
+    },
+  }
+  await requireWorkoutSupport(async () => value)
+  for (const response of [
+    null,
+    { ...value, protocol: 2 },
+    { ...value, features: { ...value.features, individual_workout_recording: false } },
+  ])
+    await assert.rejects(
+      requireWorkoutSupport(async () => response),
+      (e) => e instanceof ApiFailure && e.code === 'native_workout_upgrade_required',
+    )
+  await assert.rejects(
+    requireWorkoutSupport(async () => {
+      throw new ApiFailure(404, 'not_found')
+    }),
+    (e) => e instanceof ApiFailure && e.code === 'native_workout_upgrade_required',
+  )
+  for (const error of [new ConnectionFailure(), new ApiFailure(403, 'forbidden')])
+    await assert.rejects(
+      requireWorkoutSupport(async () => {
+        throw error
+      }),
+      (e) => e === error,
+    )
+})
+
+test('native numeric entry keeps valid decimals, missing timed values, zero load and limits distinct', () => {
+  assert.deepEqual(workoutNumber('load', '0'), { valid: true, value: 0 })
+  assert.deepEqual(workoutNumber('load', '12.'), { valid: true, value: 12 })
+  assert.deepEqual(workoutNumber('load', '12.5'), { valid: true, value: 12.5 })
+  assert.deepEqual(workoutNumber('metres', '123.45'), { valid: true, value: 123.45 })
+  assert.deepEqual(workoutNumber('metres', '١٢٣٫٤٥'), { valid: true, value: 123.45 })
+  assert.deepEqual(workoutNumber('load', '۱۲٫۵'), { valid: true, value: 12.5 })
+  assert.deepEqual(workoutNumber('seconds', ''), { valid: true, value: null })
+  for (const [field, value] of [
+    ['seconds', '2.5'],
+    ['load', '1001'],
+    ['reps', '201'],
+    ['effort', '0'],
+    ['effort', '11'],
+    ['metres', '.'],
+  ] as const)
+    assert.equal(workoutNumber(field, value).valid, false)
+})
 
 test('capability discovery separates legacy, invalid, offline and denied responses without assuming workout support', async () => {
   const value = {

@@ -542,6 +542,15 @@
               "type": "string",
               "enum": ["recording", "today", "planning", "actionable"]
             }
+          },
+          {
+            "name": "fieldPackages",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Trainer-only explicit opt-in. Adds text-only field_workout packages for occurrence-bound individual workouts after normal athlete/plan scope and pagination. Does not allocate or start work. allow_provisional_start is a cached preparation hint, not current permission or a time override. Files, clinical records and correction history are excluded."
           }
         ],
         "responses": {
@@ -568,7 +577,7 @@
       "post": {
         "tags": ["Coach field work"],
         "summary": "Start an individual workout, or save/review authorized workout actuals",
-        "description": "Current athlete self-recording and authorized delegated coach recording. A sequence-bound start supplies its occurrence ID and must wait until the booked time. Save actual reps/load/time/distance/effort with the current workout version as revision. Completed bound work resolves its assignment position atomically once; subsequent corrections preserve progression. Generic attendance does not complete a workout. Administrators do not record results. New Android offline workout capture is not implemented by this contract. Group workouts start through group-workouts, then reuse this save command with revision, entries, note and complete. Only designated event coaches save group actuals; athletes view their own records and administrators review. Corrections keep attributed history and never advance individual plans.",
+        "description": "Current athlete self-recording and authorized delegated coach recording. A sequence-bound start supplies its occurrence ID and must wait until the booked time. Save actual reps/load/time/distance/effort with the current workout version as revision. Completed bound work resolves its assignment position atomically once; subsequent corrections preserve progression. Generic attendance does not complete a workout. Administrators do not record results. New Android offline workout capture is not implemented by this contract. Group workouts start through group-workouts, then reuse this save command with revision, entries, note and complete. Only designated event coaches save group actuals; athletes view their own records and administrators review. Corrections keep attributed history and never advance individual plans. Native individual starts may be captured provisionally offline after an authorized package download. Persist the exact operation before dispatch; do not pre-allocate another sequence position. After start acknowledgment, bind the first saved-result intent to that acknowledged revision once, then retry its frozen payload exactly. Server timestamps and current authority/restrictions remain authoritative. Device capture is not a confirmed server start/completion.",
         "security": [
           {
             "mobileBearer": []
@@ -1100,7 +1109,7 @@
       "get": {
         "tags": ["Coach field work"],
         "summary": "Inspect supported native field contracts",
-        "description": "Authenticated implementation flags, not account permissions. Protocol 1 currently supports timed attendance, assessments and event completion; native individual/group workout capture and day-only calendar remain unavailable. No draft, queue or record is modified. An older server may return 404 not_found; clients must distinguish this from network, authentication and permission errors.",
+        "description": "Authenticated implementation flags, not account permissions. Protocol 1 supports timed attendance, assessments, event completion and individual workout recording through the matching field-package/queue contract. Group workout capture and day-only appointments in the attendance calendar remain unavailable. Individual packages can represent day-only plan work. No draft, queue or record is modified. Missing discovery, network and authorization failures remain distinct.",
         "responses": {
           "200": {
             "description": "Supported native contracts; not authorization to record",
@@ -1992,6 +2001,17 @@
                 "type": "string"
               }
             }
+          },
+          "field_workout": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FieldWorkoutPackage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Present only with trainer fieldPackages=true; null for records requiring historical reconciliation."
           }
         },
         "required": [
@@ -2558,6 +2578,201 @@
               "day_only_calendar": {
                 "type": "boolean"
               }
+            }
+          }
+        }
+      },
+      "FieldWorkoutEntry": {
+        "type": "object",
+        "required": [
+          "exercise_key",
+          "set_index",
+          "reps",
+          "load",
+          "unit",
+          "seconds",
+          "metres",
+          "effort",
+          "completed"
+        ],
+        "properties": {
+          "exercise_id": {
+            "type": ["string", "null"]
+          },
+          "exercise_key": {
+            "type": "string"
+          },
+          "set_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "load": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "unit": {
+            "enum": ["kg", "lb"]
+          },
+          "seconds": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "metres": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "effort": {
+            "type": ["number", "null"],
+            "minimum": 1,
+            "maximum": 10
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FieldWorkoutPackage": {
+        "type": "object",
+        "required": [
+          "id",
+          "institution_id",
+          "assignment_id",
+          "member_id",
+          "member_name",
+          "occurrence_id",
+          "title",
+          "day_id",
+          "day_name",
+          "starts_at",
+          "training_date",
+          "timezone",
+          "allow_provisional_start",
+          "can_record",
+          "exercises",
+          "entries",
+          "session"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "institution_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member_name": {
+            "type": "string"
+          },
+          "occurrence_id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "day_id": {
+            "type": "string"
+          },
+          "day_name": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "training_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "allow_provisional_start": {
+            "type": "boolean",
+            "description": "Provisional start after the scheduled date/time only; server rechecks current authority and restrictions on sync."
+          },
+          "can_record": {
+            "type": "boolean"
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["key", "name", "name_ar", "kind", "rest", "note"],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "name_ar": {
+                  "type": "string"
+                },
+                "kind": {
+                  "enum": ["strength", "timed", "distance"]
+                },
+                "rest": {
+                  "type": "number"
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldWorkoutEntry"
+            }
+          },
+          "session": {
+            "type": ["object", "null"],
+            "required": ["id", "version", "note", "completed_at"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "note": {
+                "type": "string"
+              },
+              "completed_at": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              }
+            }
+          },
+          "day_name_ar": {
+            "type": "string"
+          },
+          "targets": {
+            "type": "array",
+            "description": "Original prescribed set targets, separate from downloaded actual entries.",
+            "items": {
+              "$ref": "#/components/schemas/FieldWorkoutEntry"
             }
           }
         }

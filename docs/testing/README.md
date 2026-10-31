@@ -1,5 +1,17 @@
 # Testing
 
+## Native individual workouts
+
+From the root, `npm run test:native-workouts` creates/removes a disposable database and runs the actual native SQLite queue against the API: trainer package download, provisional start, measured completion, simulated lost start acknowledgment, exact replay and one sequence advancement. Athlete field-package access is rejected; ordinary agenda reads omit full packages. Existing test fixtures affect only that disposable database.
+
+`npm run test:queue --workspace @rafik/mobile` covers SQLite restart, owner boundaries, edits during a held request, rejection/recovery, access restoration and cached pagination. `npm run test:request --workspace @rafik/mobile` covers numeric entry and unsupported-server preflight. These Node/API checks do not establish rendered Android, native SQLCipher, physical offline/process death or signed upgrade acceptance. Use the [single role walkthrough](instance-validation.md#native-individual-workouts--unreleased-beta3) for those manual checks; do not reset/reseed an instance.
+
+## Native individual workouts
+
+From the root, `npm run test:native-workouts` creates/removes a disposable database and runs the actual native SQLite queue against the API: trainer package download, provisional start, measured completion, simulated lost start acknowledgment, exact replay and one sequence advancement. Athlete field-package access is rejected; ordinary agenda reads omit full packages. Existing test fixtures affect only that disposable database.
+
+`npm run test:queue --workspace @rafik/mobile` covers SQLite restart, owner boundaries, edits during a held request, rejection/recovery, access restoration and cached pagination. `npm run test:request --workspace @rafik/mobile` covers numeric entry and unsupported-server preflight. These Node/API checks do not establish rendered Android, native SQLCipher, physical offline/process death or signed upgrade acceptance. Use the [single role walkthrough](instance-validation.md#native-individual-workouts--unreleased-beta3) for those manual checks; do not reset/reseed an instance.
+
 ## Manual instance validation
 
 The [instance validation walkthrough](instance-validation.md) is the single source of truth for manual administrator, coach and athlete checks. Update its steps in place; handoffs and landing link to it instead of maintaining copies. It separates implemented fixes from scheduling/attendance/content follow-up. Automated focused coverage and remaining rendered/device limits are recorded in [verification](../verification/README.md).

@@ -1,5 +1,7 @@
 # Documentation
 
+- [ADR 0036 — provisional native individual workouts](decisions/ADR-0036-provisional-native-individual-workouts.md): encrypted device capture, exact start/save replay, server authority and remaining native acceptance.
+
 This page is the index for maintained Rafik documentation. The root [README](../README.md) is the project entry point; [CONTRIBUTING](../CONTRIBUTING.md) describes contribution practice. Historical phase records and superseded material are under [archive](archive/README.md). Raw machine-generated check receipts are separate under [verification/receipts](verification/receipts/).
 
 ## Product and design

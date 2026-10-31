@@ -60,6 +60,9 @@ jobs:
       - run: npm run content:videos
       - run: npm run test:catalog
       - run: npm run backend:typecheck
+      - run: npm run typecheck --workspace @rafik/mobile
+      - run: npm run test:request --workspace @rafik/mobile
+      - run: npm run test:queue --workspace @rafik/mobile
       - run: npm run test:api
         if: ${{ !cancelled() && steps.api-ready.outcome == 'success' }}
       - run: npm run test:organizations

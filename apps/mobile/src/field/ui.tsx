@@ -9,12 +9,14 @@ export function Button({
   disabled = false,
   styles,
   primary = false,
+  danger = false,
 }: {
   title: string
   onPress: () => void
   disabled?: boolean
   styles: Styles
   primary?: boolean
+  danger?: boolean
 }) {
   const { t } = useLanguage()
   return (
@@ -23,9 +25,16 @@ export function Button({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, primary && styles.primary, disabled && styles.disabled]}
+      style={[
+        styles.button,
+        primary && styles.primary,
+        danger && styles.dangerButton,
+        disabled && styles.disabled,
+      ]}
     >
-      <Text style={[styles.buttonText, primary && styles.primaryText]}>{t(title)}</Text>
+      <Text style={[styles.buttonText, primary && styles.primaryText, danger && styles.dangerText]}>
+        {t(title)}
+      </Text>
     </Pressable>
   )
 }
@@ -102,6 +111,8 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       padding: 18,
       gap: 10,
     },
+    dangerButton: { borderColor: light ? '#b42332' : '#ffadb4' },
+    dangerText: { color: light ? '#b42332' : '#ffadb4' },
     completedCard: {
       borderWidth: 2,
       borderColor: accent,
