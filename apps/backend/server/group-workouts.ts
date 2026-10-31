@@ -14,7 +14,8 @@ import {
   type access,
 } from "./institution.ts";
 import { eventAccess } from "./calendar.ts";
-import { role, localDay } from "./programming.ts";
+import { role } from "./programming.ts";
+import { localDay } from "./local-date.ts";
 import { assertTrainingAllowed } from "./workout-sequence.ts";
 import { workoutSnapshot } from "./workout-templates.ts";
 import type { Prisma } from "./generated/prisma/client.ts";

@@ -77,15 +77,15 @@ export function fieldWorkoutPackage(
         .name,
     occurrence_id: occurrence.id,
     title:
-      occurrence?.title ||
+      occurrence.title ||
       document?.title ||
       assignment.institution_versions.title,
     day_id: day.id,
     day_name: day.name,
     day_name_ar: day.nameAr || "",
-    starts_at: occurrence?.starts_at?.toISOString() || null,
+    starts_at: occurrence.starts_at?.toISOString() || null,
     training_date: occurrence.training_date.toISOString().slice(0, 10),
-    timezone: occurrence?.timezone || "UTC",
+    timezone: occurrence.timezone || "UTC",
     allow_provisional_start: canStart,
     can_record: canRecord,
     exercises: day.exercises.map((e) => ({

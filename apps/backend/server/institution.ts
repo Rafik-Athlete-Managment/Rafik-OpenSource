@@ -119,6 +119,8 @@ export async function mutation(
     id,
     roles,
     async (tx, member) => {
+      // Authorize before the receipt lookup: a revoked actor must not read or replay a stored
+      // result, even for an operation it sent while it still had access.
       await authorize?.(tx, member);
       const existing = await tx.institution_operations.findUnique({
         where: { id: operation },

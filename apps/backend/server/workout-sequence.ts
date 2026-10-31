@@ -3,11 +3,17 @@ import { effectivePlan, adaptationRevision } from "./plan-prescription.ts";
 import { randomUUID } from "node:crypto";
 import { ApiError, type Actor } from "./db.ts";
 import { event, textValue, uuid, type Tx } from "./institution.ts";
+import { checkedLocalDateText, localDateText } from "./local-date.ts";
 import type { Prisma } from "./generated/prisma/client.ts";
 
 type Input = Record<string, unknown>;
 const json = (value: unknown) => value as Prisma.InputJsonValue;
 
+/**
+ * Row-lock an assignment before reading or moving its sequence cursor. Callers already hold the
+ * institution advisory lock from scoped()/prepareWorkoutRule, so the order is always
+ * institution -> assignment. The partial unique index on unresolved positions is the backstop.
+ */
 export async function lockedAssignment(
   tx: Tx,
   institution: string,
@@ -40,17 +46,8 @@ function timedSlot(input: Input) {
   )
     throw new ApiError(400, "invalid_time");
   const timezone = textValue(input.timezone, 100);
-  let local: string;
-  try {
-    local = new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(start);
-  } catch {
-    throw new ApiError(400, "invalid_timezone");
-  }
+  // The occurrence belongs to the athlete's local training day at its start, not the UTC day.
+  const local = checkedLocalDateText(timezone, start);
   return { start, end, timezone, date: new Date(local + "T00:00:00Z") };
 }
 
@@ -87,6 +84,7 @@ export async function scheduleIndividualWorkout(
     institution,
     uuid(input.assignment_id),
   );
+  // The caller states which position it saw; a stale screen or rule must not bind a later one.
   if (input.cursor !== assignment.sequence_cursor)
     throw new ApiError(409, "sequence_conflict");
   const slot = dayOnly
@@ -394,30 +392,22 @@ export async function workoutStartContext(
   });
   if (occurrence.state !== "scheduled")
     throw new ApiError(409, "workout_not_actionable");
+  // One instant for both checks. Timed work opens at its start; day-only work opens on its
+  // local day. Restrictions are rechecked for today because a provisional offline start may
+  // replay after a cannot-train record was added.
+  const now = new Date(),
+    today = localDateText(occurrence.timezone, now);
   if (
     occurrence.starts_at
-      ? occurrence.starts_at > new Date()
-      : occurrence.training_date.toISOString().slice(0, 10) >
-        new Intl.DateTimeFormat("en-CA", {
-          timeZone: occurrence.timezone,
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).format(new Date())
+      ? occurrence.starts_at > now
+      : occurrence.training_date.toISOString().slice(0, 10) > today
   )
     throw new ApiError(409, "workout_not_started_yet");
   await assertTrainingAllowed(
     tx,
     institution,
     assignment.member_id,
-    new Date(
-      new Intl.DateTimeFormat("en-CA", {
-        timeZone: occurrence.timezone,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date()) + "T00:00:00Z",
-    ),
+    new Date(today + "T00:00:00Z"),
   );
   return { position, occurrence };
 }
@@ -494,6 +484,8 @@ export async function stopAssignmentWork(
     },
   });
   for (const position of positions) {
+    // Started work may hold offline or unsent actuals: pause it for explicit staff disposition
+    // instead of cancelling or completing it. Unstarted future work is simply cancelled.
     const paused = !!position.session_id;
     await tx.institution_workout_positions.update({
       where: { id: position.id },

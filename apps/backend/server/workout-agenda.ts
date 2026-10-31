@@ -6,9 +6,9 @@ import {
   role,
   supportingLinks,
   assignmentScope,
-  localDay,
   workoutState,
 } from "./programming.ts";
+import { localDay } from "./local-date.ts";
 import { effectivePlan } from "./plan-prescription.ts";
 import { pageSize } from "./pagination.ts";
 import { pageOffset } from "./service-definitions.ts";
@@ -34,14 +34,7 @@ export async function workoutAgenda(
   );
   return scoped(actor, institution, [view], async (tx, self) => {
     const search = (query.get("search") || "").trim().slice(0, 100);
-    const today = new Date(
-      new Intl.DateTimeFormat("en-CA", {
-        timeZone: profile?.timezone || "UTC",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(now) + "T00:00:00Z",
-    );
+    const today = localDay(profile?.timezone || "UTC", now);
     const dueDays = await tx.$queryRaw<
       { id: string }[]
     >`SELECT e.id FROM public.institution_events e JOIN public.institution_workout_positions p ON p.occurrence_id=e.id WHERE e.institution_id=${institution}::uuid AND e.timing_mode='day' AND p.state IN('pending','paused') AND e.training_date<=(${now}::timestamptz AT TIME ZONE e.timezone)::date`;

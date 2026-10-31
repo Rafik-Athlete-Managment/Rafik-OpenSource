@@ -9,8 +9,8 @@ import {
   supportingLinks,
   assignmentScope,
   workoutState,
-  localDay,
 } from "./programming.ts";
+import { localDateText, localDay } from "./local-date.ts";
 import { pageOffset } from "./service-definitions.ts";
 
 /** Staff assignment index. Dates classify assignments without rewriting their lifecycle. */
@@ -42,12 +42,7 @@ export async function athletePlans(
       await recipient(tx, institution, self, view, member, false, "training");
 
     const zone = profile?.timezone || "UTC";
-    const today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: zone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
+    const today = localDateText(zone, new Date());
     const day = new Date(today + "T00:00:00Z");
     const peopleScope = {
       institution_id: institution,
