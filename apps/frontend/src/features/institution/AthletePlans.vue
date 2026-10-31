@@ -82,13 +82,6 @@ function navigate(offset = 0, replace = false) {
     },
   })
 }
-function selectAssignment(id?: string) {
-  if (id)
-    return router.push({
-      path: '/training/' + id,
-      query: { ...route.query, assignment: undefined },
-    })
-}
 const live = useLiveSearch(search, () => navigate(0, true))
 watch(
   () => [route.query.status, route.query.search, route.query.offset],

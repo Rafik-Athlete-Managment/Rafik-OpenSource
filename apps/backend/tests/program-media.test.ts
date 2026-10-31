@@ -39,12 +39,12 @@ test("private program imagery has immutable bytes, institution publication and r
   const f = await organizationFixture();
   try {
     const admin = await f.person(),
-      client = await f.person(),
-      outsider = await f.person(),
-      id = await f.create(admin),
-      other = await f.create(outsider),
-      member = await f.join(admin, id, client, ["trainee"]),
-      image = randomUUID();
+client = await f.person(),
+outsider = await f.person(),
+id = await f.create(admin);
+await f.create(outsider);
+const member = await f.join(admin, id, client, ["trainee"]),
+image = randomUUID();
     assert.equal((await media(admin, image, id)).status, 200);
     assert.equal((await media(admin, image, id)).status, 200);
     assert.equal(

@@ -18,13 +18,13 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
   const f = await organizationFixture();
   try {
     const admin = await f.person(),
-      trainer = await f.person(),
-      client = await f.person(),
-      peer = await f.person(),
-      institution = await f.create(admin),
-      staff = await f.join(admin, institution, trainer, ["trainer"]),
-      member = await f.join(admin, institution, client, ["trainee"]),
-      other = await f.join(admin, institution, peer, ["trainer"]);
+trainer = await f.person(),
+client = await f.person(),
+peer = await f.person(),
+institution = await f.create(admin),
+staff = await f.join(admin, institution, trainer, ["trainer"]),
+member = await f.join(admin, institution, client, ["trainee"]);
+await f.join(admin, institution, peer, ["trainer"]);
     ok(
       await call(
         admin,

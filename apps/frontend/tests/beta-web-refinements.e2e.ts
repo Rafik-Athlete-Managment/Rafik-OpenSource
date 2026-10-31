@@ -50,7 +50,7 @@ test('coach browses later pages of athlete plans, nutrition plans and events, th
   test.setTimeout(300000)
   const f = await institutionFixture()
   try {
-    const { institution, endpoint, join } = await prepareInstitution(f, 'Madar browse acceptance')
+    const { endpoint, join } = await prepareInstitution(f, 'Madar browse acceptance')
     await join(f.coach, ['trainer'])
     const athletes = []
     for (let i = 1; i <= 26; i++) {
@@ -243,7 +243,7 @@ test('multiple message attachments survive reload, exact retry and recipient rev
     recipientContext = await browser.newContext(),
     recipient = await recipientContext.newPage()
   try {
-    const { institution, endpoint, join } = await prepareInstitution(f, 'Madar attachments')
+    const { endpoint, join } = await prepareInstitution(f, 'Madar attachments')
     await join(f.client, ['trainee'])
     await f.login(page, f.owner, `/messages`)
     await page.getByRole('tab', { name: 'Contacts', exact: true }).click()

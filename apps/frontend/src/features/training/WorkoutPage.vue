@@ -2,7 +2,7 @@
 import { measureFields, measureLimits, hasActualResult } from '../../lib/set-measures'
 import ExerciseDemo from '../../components/ExerciseDemo.vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import {
   PhArrowLeft,
   PhArrowRight,
@@ -16,7 +16,7 @@ import {
 import PageState from '../../components/PageState.vue'
 import { user } from '../../app/auth'
 import { language, locale, t, errorMessage } from '../../lib/i18n'
-import { clone, convertLoad, type LocalSession, type Session, type Unit } from '../../lib/domain'
+import {  convertLoad, type LocalSession, type Session, type Unit } from '../../lib/domain'
 import { loadWorkout, changeWorkout, syncWorkout, reloadServerSession } from '../../lib/training'
 import { editLocalSession, getLocalSession } from '../../lib/storage'
 import { request } from '../../lib/backend'
@@ -30,7 +30,7 @@ import {
 } from '../../lib/prescriptions'
 import type { Entry, PrescriptionExercise } from '../../lib/domain'
 const route = useRoute()
-const router = useRouter()
+
 const id = String(route.params.id)
 const row = ref<LocalSession>()
 const loading = ref(true)

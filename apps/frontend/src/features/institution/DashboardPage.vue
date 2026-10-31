@@ -2,8 +2,7 @@
 import { institutionContext } from '../../app/institution'
 
 import {
-  PhTray,
-  PhPlus,
+     PhPlus,
   PhCalendarPlus,
   PhClipboardText,
   PhBowlFood,
@@ -277,7 +276,7 @@ watch(
 
 const command = useCommand<'organization'>(
   `organization:${id}:${view}`,
-  async (_, result, args) => {
+  async (_, _result, args) => {
     if (args.action === 'invite') {
       inviteLink.value = location.origin + '/invitation/' + args.token
       inviting.value = false

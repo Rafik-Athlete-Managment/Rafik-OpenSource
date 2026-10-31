@@ -181,7 +181,7 @@ test('coach records a session on the athlete’s behalf with attribution, exact 
     await f.login(page, f.coach, `${base}/athletes/${athlete.id}`)
     await page.getByRole('tab', { name: 'Plans', exact: true }).click()
     await page.getByRole('link', { name: 'Manage workouts for Track block' }).click()
-    const firstDay = plan.days.find((d: any) => !d.restDay)
+    
     await page.getByRole('button', { name: 'Start workout', exact: true }).click()
     await expect(page).toHaveURL(/\/record\/[a-f0-9-]{36}$/)
     await expect(page.getByText('Recorded on behalf of')).toBeVisible()
@@ -748,7 +748,7 @@ test('plan scheduling switches from weekly slots to opt-in day-only preparation'
   page.setDefaultTimeout(15000)
   const f = await institutionFixture()
   try {
-    const prepared = await institution(
+    await institution(
       f,
       'Madar recurring',
       (plan) => {
@@ -1094,8 +1094,7 @@ test('message directory tabs mix institution channels without exposing private p
   const f = await institutionFixture()
   try {
     const prepared = await institution(f, 'Message tabs', undefined, false)
-    const roster = await f.call(f.owner, '/v1/institution?view=admin')
-    const coach = roster.members.find((m: any) => m.user_id === f.coach.id)
+    await f.call(f.owner, '/v1/institution?view=admin')
     const group = randomUUID()
     await f.call(f.coach, '/v1/institution/services', {
       operation: randomUUID(),

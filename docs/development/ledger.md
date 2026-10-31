@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Audit follow-up: unused-code gate — 31 October 2026
+
+Removed compiler-confirmed unused private state, helpers and imports across web/API/tests, while keeping authorization calls and fixture creation in their original order. Unused positional parameters retain their signatures with explicit underscore names; EventHistory still accepts its institution prop. All four workspaces now enforce noUnusedLocals/noUnusedParameters. Typechecks, 55 web units and 12 native requests pass. Removing an unreachable athlete-plan navigation helper required canonical navigation inventory regeneration; generated files are never edited manually. Formatting and typing follow-ups continue before founder device validation.
+
 ## Code quality audit — 31 October 2026
 
 Completed a tracked-source/configuration inventory across all four workspaces and established type/unit/build/disposable-database baselines. Applied the first low-risk refactoring pass: shared measurement facts with stable web imports, one native entry projector, typed Prisma-backed field-package inputs and removal of five unused backend imports. Added a standalone shared compiler check to CI and maintained TypeScript/refactoring guidance. The audit records existing formatter/unused-code failures and the larger module/CSS extractions deferred for coverage. No API/schema/migration/owner-key changes, new dependencies, generated edits or new product features. Internal-only changes need no landing PR. See the [audit](../known-issues/code-quality-audit.md) and [verification](../verification/README.md#code-quality-audit--31-october-2026) for actual evidence and remaining acceptance limits.

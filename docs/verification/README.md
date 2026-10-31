@@ -1,5 +1,9 @@
 # Verification record
 
+## Unused-code enforcement — 31 October 2026
+
+Web, backend, mobile (including its test configuration) and shared typechecks passed with noUnusedLocals/noUnusedParameters enabled. Web units passed 55/55 and native request tests 12/12. The backend inventory remained fresh. The web inventory detected the removed private navigation helper; its generated navigation reference is refreshed through the existing generator. No browser/native build was required for removal of unused bindings. Formatting and source typing continue as separate audit slices.
+
 ## Code quality audit — 31 October 2026
 
 Baseline at a6fc3a09 passed web/backend/mobile typechecks, 55 web tests in 16 files, 20 native queue and ten request tests, the web production build and fresh-database migration/SQL assertions. The full frontend formatter already failed in 117 files; optional noUnused probes reported 31 web, 23 backend and one mobile diagnostic. No semantic lint command is configured. Those probes are diagnostic, not newly enabled release gates.

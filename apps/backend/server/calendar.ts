@@ -412,7 +412,7 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
   if (view === "trainee") throw new ApiError(403, "forbidden");
   const authorize = async (tx: Tx, self: Self) => {
     if (action === "create") {
-      const authorized = await eventPeople(tx, id, self, view, input);
+      await eventPeople(tx, id, self, view, input);
       const makeups = Array.isArray(input.makeups) ? input.makeups : [];
       for (const choice of makeups)
         if (

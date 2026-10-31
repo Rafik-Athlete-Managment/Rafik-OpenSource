@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove verified unused code and enforce unused-local/parameter checks across all TypeScript workspaces, preserving authorization effects, fixture setup and component interfaces.
+
 - Audit all active workspaces for typing, duplication, unused code and styling debt. Share web/native workout measurement facts, type the backend field-package mapper, consolidate native entry projection and add an independent shared-package CI check without changing public contracts or stored data. Record existing formatting failures and deferred structural/CSS work.
 
 - Add source-level Android individual workout downloads and provisional offline start/result capture in the existing encrypted cache. Exact start/save replay reuses server sequence/permission checks; measurement-aware actuals, explicit completion, recovery sharing, rejected-save review and bounded saved/online lists are included. Group recording, rendered/physical Android acceptance and release packaging remain pending; no new APK is published.

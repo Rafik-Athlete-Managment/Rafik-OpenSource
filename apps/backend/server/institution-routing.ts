@@ -47,7 +47,7 @@ export function institutionTransport(value: unknown): unknown {
     ]),
   );
 }
-export function responseTransport(res: ServerResponse, value: unknown) {
+export function responseTransport(_res: ServerResponse, value: unknown) {
   // Old acknowledged receipt objects may still carry the old transport names.
   return institutionTransport(institutionTransport(value));
 }

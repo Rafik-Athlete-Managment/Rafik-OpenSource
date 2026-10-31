@@ -168,7 +168,7 @@ test('athlete profile shows each staff role only what it is allowed to see', asy
       effective_from: today,
       revision: 0,
     })
-    const profile = (view: string) => `/athletes/${athlete.id}`
+    const profile = (_view: string) => `/athletes/${athlete.id}`
 
     // Primary coach: everything for their athlete, including participation status.
     await f.login(primaryPage, f.coach, profile('trainer'))

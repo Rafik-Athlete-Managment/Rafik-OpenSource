@@ -13,7 +13,7 @@ import {
 const syncing = new Map<string, Promise<LocalSession | undefined>>()
 export async function startWorkout(
   day: PlanDay,
-  title: string,
+  _title: string,
   versionId: string,
   owner: string,
   assignmentId?: string,

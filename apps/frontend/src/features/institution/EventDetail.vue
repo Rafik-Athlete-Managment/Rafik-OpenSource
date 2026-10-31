@@ -215,7 +215,7 @@ async function openResult(p: EventPerson, restore = true) {
 }
 const command = useCommand<'change'>(
   scope,
-  async (_, result, args) => {
+  async (_, _result, args) => {
     if (args.action === 'result') {
       await removeDraft(`assessment-result:${user.value!.id}:${id}:${eid}:${args.member}`)
       draftReady.value = false

@@ -26,11 +26,11 @@ test("organization agenda and assessor-led results preserve each participant, co
       one = await f.person(),
       two = await f.person(),
       outsider = await f.person();
-    const id = await f.create(admin),
-      other = await f.create(outsider),
-      staff = await f.join(admin, id, trainer, ["trainer"]),
-      a = await f.join(admin, id, one, ["trainee"]),
-      b = await f.join(admin, id, two, ["trainee"]);
+    const id = await f.create(admin);
+await f.create(outsider);
+const staff = await f.join(admin, id, trainer, ["trainer"]),
+a = await f.join(admin, id, one, ["trainee"]),
+b = await f.join(admin, id, two, ["trainee"]);
     await call(
       admin,
       `/v1/institution`,

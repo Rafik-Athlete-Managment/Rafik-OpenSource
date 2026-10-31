@@ -671,8 +671,7 @@ test('web design audit bootstrap and branding', async ({ page, browser }, info) 
   await page.goto(base + '/institution-settings')
   await expect(page.getByLabel('Accent color', { exact: true })).toBeVisible()
   await capture(page, 'authorized-branding')
-  const institution = base.split('/')[2],
-    token = randomBytes(32).toString('hex')
+  const token = randomBytes(32).toString('hex')
   const response = await page.request.post(testApi + '/v1/institution', {
     headers: { 'x-rafik-client': 'web', Origin: testWeb },
     data: {

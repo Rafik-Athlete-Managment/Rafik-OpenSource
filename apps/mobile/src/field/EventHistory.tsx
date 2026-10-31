@@ -48,7 +48,6 @@ function page(input: unknown, member: string, kind: string): Page {
 }
 export function EventHistory({
   client,
-  institution,
   event,
   member,
   name,

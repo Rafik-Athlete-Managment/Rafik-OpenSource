@@ -1,5 +1,9 @@
 # Monorepo code quality audit
 
+## Follow-up execution — 31 October 2026
+
+The founder requested closure of code-validation work before device practice validation. The unused-code follow-up clears the compiler diagnostic baseline and enforces noUnusedLocals/noUnusedParameters in every workspace. It retains fixture/authorization effects and existing public positional parameters. The findings table below describes the initial pass; follow-up outcomes here supersede its deferred status. Formatting, snapshot typing, duplicate helpers and module/CSS structure remain active work.
+
 Reviewed 31 October 2026 on the unreleased beta.3 branch. Baseline commit: `a6fc3a09fa7a714e9ef58f218b62308ea24cfabc`. This is a source/configuration audit and a measured first refactoring pass, not a claim that every module has been rewritten or every screen rendered. No API, schema, migration, queue identity or user workflow changes are intended.
 
 ## Scope and method

@@ -4,7 +4,6 @@ import { institutionContext } from '../../app/institution'
 
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, ref, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
 import { profile } from '../../app/auth'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage } from '../../lib/i18n'
@@ -14,10 +13,9 @@ import MetricChart from './MetricChart.vue'
 import TrainerDelivery from './TrainerDelivery.vue'
 import ExperienceReport, { type Experience } from './ExperienceReport.vue'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
-const route = useRoute(),
-  institution = institutionContext().institution,
-  view = institutionContext().view,
-  base = ''
+const institution = institutionContext().institution,
+view = institutionContext().view,
+base = '';
 const from = ref(addDays(localDate(profile.value?.timezone || 'UTC'), -27)),
   to = ref(localDate(profile.value?.timezone || 'UTC')),
   loading = ref(true),

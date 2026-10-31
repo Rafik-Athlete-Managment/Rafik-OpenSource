@@ -7,7 +7,7 @@ import { utimesSync, existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { db } from "../server/db.ts";
 import { writePrivate, removePrivate } from "../server/private-bytes.ts";
-import { organizationFixture, call } from "./organization-fixture.ts";
+import { organizationFixture } from "./organization-fixture.ts";
 after(() => db.$disconnect());
 test("local recovery restores private bytes with metadata; orphan cleanup honors references and grace period", async () => {
   const f = await organizationFixture(),

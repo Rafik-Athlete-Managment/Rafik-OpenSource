@@ -68,7 +68,7 @@ async function institution(admin: Person, name: string) {
   );
   return id;
 }
-async function join(admin: Person, id: string, p: Person, role: string) {
+async function join(admin: Person, _id: string, p: Person, role: string) {
   const token = randomBytes(32).toString("hex");
   const r = await call(
     admin,
@@ -83,7 +83,7 @@ async function join(admin: Person, id: string, p: Person, role: string) {
   assert.equal(r.status, 200, JSON.stringify(r));
   assert.equal((await call(p, "/v1/invitations/" + token, {})).status, 200);
 }
-async function member(admin: Person, id: string, p: Person) {
+async function member(admin: Person, _id: string, p: Person) {
   const r = await call(admin, `/v1/institution?view=admin`);
   return r.data.members.find((m: { user_id: string }) => m.user_id === p.id);
 }

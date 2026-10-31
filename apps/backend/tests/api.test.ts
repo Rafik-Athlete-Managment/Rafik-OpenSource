@@ -1,7 +1,7 @@
 import { apiOrigin } from "./test-target.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomBytes, randomUUID, createHash } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { db } from "../server/db.ts";
 import { passwordHash, validatePassword } from "../server/auth.ts";
 const origin = apiOrigin;
@@ -21,23 +21,6 @@ test("new passwords require length and character classes", () => {
   ])
     assert.throws(() => validatePassword(value));
 });
-async function person() {
-  const id = randomUUID(),
-    email = `api-${id}@rafik.test`,
-    token = randomBytes(32).toString("hex");
-  await db.users.create({
-    data: { id, email, email_confirmed_at: new Date() },
-  });
-  identities.push(id);
-  await db.identity_sessions.create({
-    data: {
-      token_hash: createHash("sha256").update(token).digest("hex"),
-      user_id: id,
-      expires_at: new Date(Date.now() + 3600000),
-    },
-  });
-  return { id, email, cookie: "rafik_session=" + token };
-}
 async function call(
   path: string,
   body?: unknown,

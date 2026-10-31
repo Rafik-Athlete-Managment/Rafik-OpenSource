@@ -24,23 +24,17 @@ const props = defineProps<{
 const emit = defineEmits<{ saved: [id: string]; close: [] }>()
 const key = `channel-editor:${user.value!.id}:${props.institution}:${props.view}:${props.initial?.id || 'new'}:${[...(props.initialMembers || [])].sort().join(',')}`
 const people = ref<Institution>(),
-  loading = ref(true),
-  error = ref(''),
-  search = ref(''),
-  ready = ref(false),
-  saved = ref(false)
+loading = ref(true),
+error = ref('');
+const ready = ref(false),
+saved = ref(false);
 const draft = ref({
   id: props.initial?.id || crypto.randomUUID(),
   title: props.initial?.title || props.initialTitle || '',
   members: props.initial?.people.map((p) => p.id) || ([] as string[]),
   managers: props.initial?.people.filter((p) => p.manager).map((p) => p.id) || ([] as string[]),
 })
-const visible = computed(
-  () =>
-    people.value?.members
-      .filter((m) => m.active && m.name.toLowerCase().includes(search.value.toLowerCase()))
-      .slice(0, 30) || [],
-)
+
 const missing = computed(() =>
   draft.value.members.filter((id) => !people.value?.members.some((m) => m.id === id && m.active)),
 )

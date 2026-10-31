@@ -13,7 +13,7 @@ import {
 } from 'reka-ui'
 import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { user, profile, contexts } from '../../app/auth'
+import { user, profile } from '../../app/auth'
 import { request } from '../../lib/backend'
 import { language as l, errorMessage, locale } from '../../lib/i18n'
 import { dateLabel } from '../../lib/display-time'
@@ -71,11 +71,7 @@ const route = useRoute(),
   view = institutionContext().view,
   trainee = view === 'trainee'
 const endpoint = `/v1/institution/nutrition`
-const institutionName = computed(
-  () =>
-    contexts.value.find((c) => c.institution_id === institution)?.name ||
-    l('Institution', 'المؤسسة'),
-)
+
 const selected = ref(String(route.query.member || '')),
   date = ref(localDate(profile.value?.timezone || 'UTC')),
   section = ref(route.query.plan ? 'history' : route.query.section === 'diary' ? 'diary' : 'plan'),

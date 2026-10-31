@@ -2,6 +2,8 @@
 
 ## TypeScript and refactoring standards
 
+All four workspaces enforce noUnusedLocals and noUnusedParameters. Preserve effectful initializers when removing unused result bindings, and prefix intentionally retained positional parameters with an underscore.
+
 Use strict typing with each workspace's existing toolchain: Vue/Vite uses Bundler resolution and isolated modules, the API uses NodeNext, and mobile extends Expo's configuration. Do not copy compiler flags between them blindly. The shared source package uses strict NodeNext, verbatimModuleSyntax and erasableSyntaxOnly, checked by `npm run typecheck --workspace @rafik/shared` from the repository root after the normal root install. CI runs this separately from consumer checks.
 
 Use explicit type-only imports for type dependencies; keep runtime exports explicit at package boundaries. Prefer inferred local values, named domain types for recurring shapes, unknown plus narrowing for external input and documented assertions only at an already-validated boundary. Do not replace any with an unchecked generic cast and call it validation. Preserve mutable form/draft models and existing component signatures. Strip-only Node helpers cannot use parameter properties, runtime enums or other syntax requiring transformation. Follow [TypeScript strict options](https://www.typescriptlang.org/tsconfig/strict.html), [isolatedModules](https://www.typescriptlang.org/tsconfig/isolatedModules.html), [verbatimModuleSyntax](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html) and [erasableSyntaxOnly](https://www.typescriptlang.org/tsconfig/erasableSyntaxOnly.html).

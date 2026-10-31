@@ -3,7 +3,6 @@ import { institutionContext } from '../../app/institution'
 import { PhCalendarBlank, PhCaretRight } from '@phosphor-icons/vue'
 
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { preferredTimezone } from '../../lib/display-time'
 import { request } from '../../lib/backend'
 import { localDate, addDays } from '../../lib/dates'
@@ -15,12 +14,10 @@ const props = defineProps<{
   headingLevel?: number
   hideLink?: boolean
 }>()
-const route = useRoute(),
-  id = institutionContext().institution,
-  view = institutionContext().view,
-  base = '',
-  zone = preferredTimezone,
-  today = localDate(zone.value)
+const view = institutionContext().view,
+base = '',
+zone = preferredTimezone,
+today = localDate(zone.value);
 const events = ref<CalendarEvent[]>([]),
   error = ref(''),
   loading = ref(true)

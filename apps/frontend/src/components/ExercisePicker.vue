@@ -18,8 +18,7 @@ import {
   categoryLabel,
   equipmentCategories,
   equipmentLabel,
-  exerciseArea,
-  exerciseAreas,
+     exerciseAreas,
 } from '../lib/exercise-catalog'
 import { language, locale } from '../lib/i18n'
 

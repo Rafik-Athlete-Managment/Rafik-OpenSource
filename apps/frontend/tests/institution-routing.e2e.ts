@@ -3,7 +3,7 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 
-test('flat routes derive roles and reject retired bookmarks and Tasks', async ({ page }, info) => {
+test('flat routes derive roles and reject retired bookmarks and Tasks', async ({ page }) => {
   test.setTimeout(120000)
   const f = await institutionFixture(),
     id = randomUUID()

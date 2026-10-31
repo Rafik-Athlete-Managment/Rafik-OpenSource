@@ -121,13 +121,8 @@ export async function notificationTarget(
       include: { institutions: { select: { name: true, archived: true } } },
     });
     if (!m?.active || m.institutions.archived) return null;
-    const view = m.roles.includes("trainer")
-        ? "trainer"
-        : m.roles.includes("trainee")
-          ? "trainee"
-          : "admin",
-      base = "",
-      context = m.institutions.name;
+    const base = "",
+context = m.institutions.name;
     if (n.source_kind === "organization_message") {
       const message = await tx.institution_messages.findUnique({
         where: { id: n.source_id },

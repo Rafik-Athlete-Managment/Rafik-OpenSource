@@ -16,11 +16,10 @@ import MonthCalendar from '../../components/MonthCalendar.vue'
 import PageState from '../../components/PageState.vue'
 import type { CalendarEvent } from './service-types'
 const route = useRoute(),
-  router = useRouter(),
-  id = institutionContext().institution,
-  view = institutionContext().view,
-  base = '',
-  zone = preferredTimezone
+router = useRouter();
+const view = institutionContext().view,
+base = '',
+zone = preferredTimezone;
 const today = localDate(zone.value),
   start = ref(String(route.query.from || today.slice(0, 7) + '-01')),
   mode = ref(String(route.query.mode || 'month')),

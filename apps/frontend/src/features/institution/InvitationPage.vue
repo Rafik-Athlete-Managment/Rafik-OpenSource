@@ -41,7 +41,7 @@ async function accept() {
   busy.value = true
   error.value = ''
   try {
-    const result = await request<{ institution_id: string; role: string }>(path, {
+    await request<{ institution_id: string; role: string }>(path, {
       method: 'POST',
       body: '{}',
     })

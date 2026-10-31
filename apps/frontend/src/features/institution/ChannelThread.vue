@@ -69,7 +69,7 @@ const post = (args: Record<string, unknown>) =>
   })
 const command = useCommand<'send' | 'archive'>(
   key,
-  async (name, _, args) => {
+  async (name) => {
     if (name === 'send') {
       ready.value = false
       await draftWrite

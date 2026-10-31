@@ -41,7 +41,7 @@ onUnmounted(() => {
 })
 import { clone, type Exercise } from '../../lib/domain'
 import { language, locale, errorMessage, t } from '../../lib/i18n'
-import { getDraft, storeDraft, removeDraft } from '../../lib/storage'
+import { storeDraft, removeDraft } from '../../lib/storage'
 import PageState from '../../components/PageState.vue'
 const exercises = ref<Exercise[]>([]),
   search = ref(''),
