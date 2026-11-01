@@ -51,6 +51,7 @@ export async function passwordHash(password: string) {
     key = await derive(password, salt);
   return `scrypt$32768$8$1$${salt.toString("hex")}$${key.toString("hex")}`;
 }
+// Verify a dummy hash for unknown emails so login timing reveals less about account existence.
 const dummyPasswordHash = passwordHash(randomBytes(32).toString("hex"));
 async function verifyPassword(password: string, encoded: string | null) {
   if (!encoded) return false;
@@ -195,6 +196,7 @@ async function createMobileSession(user: Actor, deviceName: string) {
   };
 }
 function remoteKey(req: IncomingMessage) {
+  // Trust forwarded addresses only when the operator explicitly enables proxy handling.
   const forwarded =
     process.env.RAFIK_TRUST_PROXY === "true"
       ? req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim()
@@ -219,6 +221,7 @@ async function initialSetup(
     password = validatePassword(body.password),
     encoded = await passwordHash(password);
   const user = await db.$transaction(async (tx) => {
+    // Serialize first-run claims so only one request can create the installation's administrator.
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(1179406164,3)::text`;
     if ((await tx.institutions.count({ where: { kind: "organization" } })) > 0)
       throw new ApiError(409, "setup_already_complete");
@@ -455,6 +458,7 @@ export async function mobileAuthRoute(
       >`SELECT id,user_id,refresh_token_hash,previous_refresh_token_hash,absolute_expires_at,expires_at,revoked_at FROM identity.mobile_sessions WHERE refresh_token_hash=${incomingHash} OR previous_refresh_token_hash=${incomingHash} FOR UPDATE`;
       const session = rows[0];
       if (!session || session.revoked_at) return null;
+      // A reused previous token signals replay or a competing refresh; revoke instead of forking a session.
       if (
         session.previous_refresh_token_hash === incomingHash ||
         session.expires_at <= now ||

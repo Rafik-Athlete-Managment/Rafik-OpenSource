@@ -91,6 +91,7 @@ export async function injuries(
         policy_version: POLICY_VERSION,
         members: rows.map((row) => ({
           ...row,
+          // This reports setup eligibility only; athlete assent is checked before health data access.
           ready:
             row.age_group === "adult" ||
             (row.age_group === "minor" && row.guardian_authorized === true),
@@ -147,6 +148,7 @@ export async function injuries(
       };
     });
   }
+  // Coach reads are primary-coach-only and expose current status, never history or athlete notes.
   return scoped(actor, institution, ["trainer"], async (tx, self) => {
     const rows = await tx.$queryRaw<(Injury & { athlete_name: string })[]>`
       SELECT r.id,r.institution_id,r.athlete_member_id,r.participation,r.effective_from,r.state,r.revision,r.created_at,r.updated_at,r.closed_at,m.name athlete_name
@@ -266,6 +268,7 @@ export async function injuryCommand(
         WHERE institution_id=${institution}::uuid AND athlete_member_id=${self.id}::uuid AND state='active'
         RETURNING *
       `;
+      // Withdrawal closes active records and appends an audit entry; it does not erase their history.
       for (const record of active)
         await appendHistory(tx, actor, record, "withdrawn");
       await event(tx, actor, institution, "injury_consent_withdrawn", self.id);
@@ -273,7 +276,7 @@ export async function injuryCommand(
     }
 
     const operation = uuid(input.operation),
-      id = action === "report" ? uuid(input.id) : uuid(input.id),
+      id = uuid(input.id),
       participation = String(input.participation || ""),
       effective = calendarDate(input.effective_from),
       requestHash = createHash("sha256")

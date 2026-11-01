@@ -46,6 +46,14 @@ No dependency was upgraded or removed. Zero direct imports are not evidence that
 
 No semantic lint dependency was added. Strict compiler checks, unused-code enforcement, formatter, contract/unit/API checks and current CI are the code gates. A future lint policy should have a concrete benefit rather than duplicate these checks.
 
+## Readability and comments — 1 November 2026
+
+Screened all 310 tracked TypeScript code units in the four workspaces: 207 `.ts`/`.tsx` files and 103 Vue single-file components with TypeScript script blocks. A TypeScript AST parse reported no syntax diagnostics. The review used function size/branching to prioritize manual inspection of the API router, authentication, calendar and communication commands, health-data access, workout recording/recovery and mounted mobile coordinators. A file having no comment is not itself a defect: translation tables, simple projections, types and scenario-named tests are clearer without narration.
+
+Added rationale comments only where the boundary is easy to misread: password timing and trusted proxies, first-run serialization and refresh-token replay, the public/authenticated API split, event/channel visibility, injury consent and history behavior, offline cached identity, typed history validation, queued mobile draft writes and mounted editor state. Removed a redundant identical-branch conditional in the injury command. No route, API, authorization, schema, stored-data or UI behavior was intentionally changed.
+
+This is a repository-wide readability pass, not a claim that subjective style is perfect or that every line received a human line-by-line review. Large route/coordinator modules remain intact where splitting them would cross transaction, mounted-state or durable-recovery boundaries without improving a user task. See the [verification record](../verification/README.md#typescript-readability-pass--1-november-2026) for checks and limits.
+
 ## Verification
 
 See [verification](../verification/README.md) and the follow-up receipt for actual completed checks and scope. Native host-stub/Metro evidence does not establish Android rendering, SQLCipher on hardware, process-death recovery or physical offline acceptance. The [canonical walkthrough](../testing/instance-validation.md#native-individual-workouts--unreleased-beta3) remains the next human/device gate. No release merge, APK or landing documentation PR is part of this internal refactor.

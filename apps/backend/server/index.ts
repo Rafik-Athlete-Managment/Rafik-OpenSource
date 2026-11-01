@@ -154,6 +154,7 @@ const server = createServer(async (req, res) => {
       throw new ApiError(403, "client_header_required");
     const url = new URL(req.url || "/", "http://127.0.0.1"),
       path = await institutionRoute(url, res);
+    // Docs, health, branding and public catalogs are handled before session lookup.
     if (await serveApiDocs(req, res)) return;
     if (path.startsWith("/v1/mobile/auth/")) {
       const route = path.slice("/v1/mobile/auth/".length),
@@ -273,6 +274,7 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
+    // Domain handlers below receive one actor; each owner module enforces role and resource scope.
     const actor = await identify(req);
     if (path === "/v1/mobile/capabilities") {
       requireActor(actor);

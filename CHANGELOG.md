@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Screen the tracked TypeScript and Vue TypeScript code across Backend, Frontend, Mobile and Shared. Add concise rationale comments at security, health-data, authorization, offline-recovery and mounted-state boundaries; remove one redundant conditional without changing behavior. Record coverage and limits in the code-quality audit.
+
 - Release review: an Android provisional start that the server answers with a session already started on the web or another device now needs review instead of replaying forever and blocking later saved workouts. Skipping an in-progress individual workout no longer stops weekly/automatic preparation or hides the plan from planning queues. CI now runs the sequence, scheduler, plan-adaptation, group-workout, workout-foundation, injury-retention and API-document suites. One institution-local date helper replaces repeated formatters; no API, schema or stored-data change.
 - Tighten the skipped-workout scheduler regression to require successful preparation and use the Prisma JSON input type for its immutable prescription fixture.
 

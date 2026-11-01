@@ -70,6 +70,7 @@ export const api = {
     } catch (e) {
       if (!navigator.onLine) {
         try {
+          // Cached identity can keep the shell readable offline; protected API calls still require server authorization.
           return JSON.parse(localStorage.getItem('rafik.cached-user') || 'null') as ApiUser | null
         } catch {
           return null

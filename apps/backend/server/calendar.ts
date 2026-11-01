@@ -44,6 +44,7 @@ export async function eventAccess(
   view: Role,
   key: string,
 ) {
+  // Admins may review institution events; coaches and athletes need a matching event-person duty.
   const item = await tx.institution_events.findUnique({
     where: { id: uuid(key) },
     include: {

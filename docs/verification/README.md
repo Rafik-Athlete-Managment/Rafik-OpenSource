@@ -1,5 +1,11 @@
 # Verification record
 
+## TypeScript readability pass — 1 November 2026
+
+Coverage: 207 tracked `.ts`/`.tsx` files and 103 Vue components with TypeScript scripts across Frontend, Backend, Mobile and Shared (310 source units total; generated declarations and dependencies excluded). The AST inventory found no TypeScript parse diagnostics. Complexity-ranked review focused on authentication, routing, calendar/communication authorization, health-data access and native offline/draft ownership. Comments were added at non-obvious security and recovery boundaries; simple types, dictionaries and scenario-named tests remain uncommented by design. One identical-branch conditional was simplified without changing its result.
+
+Validation: all four workspace typechecks passed; Prettier passed for all changed code files; `git diff --check` passed. The final documentation check passed across 82 maintained documents. No behavior tests were needed for comment-only changes and an identical-branch simplification. This does not establish native rendering, physical device behavior or subjective perfection of every style choice.
+
 ## Beta.3 release review — 1 November 2026
 
 Scope: the [release review](../known-issues/beta3-release-review.md) fixes only; earlier passing evidence is reused for unaffected areas.

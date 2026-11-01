@@ -59,6 +59,7 @@ export async function channelAccess(
   });
   if (!channel || channel.institution_id !== id)
     throw new ApiError(403, "conversation_unavailable");
+  // Admin management access does not grant read access to unjoined private conversations.
   const own = channel.institution_channel_members.find(
     (m) => m.member_id === self.id,
   );

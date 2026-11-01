@@ -77,6 +77,7 @@ export function WorkoutsScreen({
     reads = useRef(0),
     runner = useRef<WorkoutSync | null>(null)
   const drafts = useRef({ entries: [] as FieldWorkoutEntry[], note: '' }),
+    // Keep device edits ordered; commands and view changes wait for this chain before reading the record.
     writes = useRef(Promise.resolve()),
     editSerial = useRef(0)
   const closingRef = useRef(closing)
@@ -93,6 +94,7 @@ export function WorkoutsScreen({
     return () => listener.remove()
   }, [active, selected])
   async function refreshLocal() {
+    // Ignore slower count/page reads when a newer search or local refresh has already started.
     const token = ++localRead.current
     const needle = appliedSearch.current,
       requested = cacheOffset.current

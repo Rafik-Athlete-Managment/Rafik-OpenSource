@@ -8,6 +8,7 @@ import { Button, displayDate, type Styles } from './ui'
 type Entry = import('@rafik/shared/contracts').FieldHistoryEntry
 type Page = import('@rafik/shared/contracts').FieldHistoryPage
 function page(input: unknown, member: string, kind: string): Page {
+  // Validate the response before rendering; each history page must still match this athlete and selected tab.
   const p = input as Page
   if (
     !p ||

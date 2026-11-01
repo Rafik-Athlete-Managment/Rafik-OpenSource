@@ -101,6 +101,7 @@ export const words = {
 } as const
 export type Word = keyof typeof words
 export const t = (key: Word) => words[key][locale.value === 'ar' ? 1 : 0]
+// Persist the choice and update direction together so Arabic layout stays RTL after reload.
 watch(
   locale,
   (value) => {

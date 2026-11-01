@@ -65,6 +65,7 @@ export function ScoreEditor({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  // Keep typed values as strings and finish their device write before creating a server command.
   function edit(next: ScoreDraft) {
     if (locked || commandBusy.current) return
     draftRef.current = next

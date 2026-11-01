@@ -22,6 +22,8 @@ Shared measurement facts live at `@rafik/shared/workout-measures`. The web set-m
 
 Verify references, runtime effects, peer/plugin dependencies and fixture cleanup before removal. Use existing shared UI components/design tokens; merge repeated CSS only after checking cascade, scoped selectors, responsive behavior and RTL/themes. Preserve package formatter conventions and avoid unrelated formatting churn. See the [audit and prioritized debt](../known-issues/code-quality-audit.md).
 
+Write comments for rationale, permission boundaries, transaction ordering, durable-state ownership and other constraints that are not clear from names and types. Do not add a comment to every file or restate a statement in prose; descriptive test names and straightforward data declarations need no comment.
+
 ## Native workout ownership and replay
 
 WorkoutsScreen owns selection/measurement entry; workout-model/input validate presentation and keep missing values distinct from zero. FieldStore initializes the additive workout table and shares its existing serialized database lane with WorkoutStore. WorkoutSync sends the existing session commands, with capability preflight in the native sender. Do not add another allocator or guess the first save revision before the start is acknowledged. Frozen requests and later drafts are distinct; observer/read failures must not turn committed writes into uncertain replay. Keep explicit recovery for rejection, exact retry for uncertainty and resource-authorized access restoration.

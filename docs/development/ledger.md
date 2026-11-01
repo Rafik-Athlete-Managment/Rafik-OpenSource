@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## TypeScript readability and comments — 1 November 2026
+
+Screened 207 tracked TypeScript/TSX files and 103 Vue TypeScript blocks across frontend, backend, mobile and shared packages; the AST parse found no syntax diagnostics. Manually reviewed the highest-complexity security, health-data, routing, communication, calendar and native offline-state modules. Added comments only for rationale and constraints that names/types do not explain; removed one redundant identical-branch expression. Simple types, translation maps, projections and scenario-named tests do not need filler comments. Typecheck/format/docs results and the review's limits are in [verification](../verification/README.md#typescript-readability-pass--1-november-2026) and [the audit](../known-issues/code-quality-audit.md#readability-and-comments--1-november-2026).
+
 ## Beta.3 release review — 1 November 2026
 
 Reviewed the cumulative `v1.0.0-beta.2` to release-branch diff with priority on authorization, sequence transactions, scheduling, group results and native offline recovery. Fixed a native start-conflict replay loop, preparation/queue blocking after a started workout is skipped, and a CI gap that left the beta.3 workout suites unexecuted. Consolidated local-date helpers and documented lock/receipt/pause invariants. The [review report](../known-issues/beta3-release-review.md) holds the matrix, findings, product questions and limits; device and founder validation remain open.

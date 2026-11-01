@@ -456,6 +456,7 @@ export function InstitutionScreen({
           styles={styles}
         />
       </View>
+      {/* Keep this editor mounted while hidden so switching views preserves selection and device drafts. */}
       {workoutsOpened ? (
         <View style={{ flex: 1, display: workoutView ? 'flex' : 'none' }}>
           <WorkoutsScreen
