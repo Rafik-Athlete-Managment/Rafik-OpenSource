@@ -40,7 +40,11 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
       calendar = `/v1/institution/calendar`,
       day = new Date(Date.now() + 86400000).toISOString().slice(0, 10),
       today = new Date().toISOString().slice(0, 10),
-      month = today.slice(0, 7) + "-01";
+      month = today.slice(0, 7) + "-01",
+      // The completed fixture event below ends an hour ago, which can be last month or
+      // yesterday shortly after UTC midnight; start the report window at its month.
+      reportFrom =
+        new Date(Date.now() - 7200000).toISOString().slice(0, 7) + "-01";
     assert.equal(
       (await call(admin, `/v1/institution/packages`, {})).status,
       404,
@@ -159,7 +163,7 @@ test("explicit session and workplace feedback stay separate, scoped and retry-sa
     const analytics = (person: any, view: string) =>
       call(
         person,
-        `/v1/institution/analytics?view=${view}&from=${month}&to=${today}`,
+        `/v1/institution/analytics?view=${view}&from=${reportFrom}&to=${today}`,
       );
     const report = ok(await analytics(admin, "admin")).experience;
     const performance = ok(await analytics(admin, "admin")).performance;

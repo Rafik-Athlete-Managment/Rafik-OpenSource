@@ -897,3 +897,81 @@ test('workout denial/conflict preserves exact command and draft; edits during a 
     sqlite.close()
   }
 })
+
+test('a start acknowledged with another session needs review and does not block later workouts', async () => {
+  const sqlite = new DatabaseSync(':memory:'),
+    store = new FieldStore(adapter(sqlite)),
+    institution = randomUUID(),
+    scope = { ...owner, institution }
+  // next() drains in id order; the conflicting record sorts first so it would block the second.
+  const [first, second] = [randomUUID(), randomUUID()].sort()
+  const base: FieldWorkoutPackage = {
+    id: first,
+    institution_id: institution,
+    assignment_id: randomUUID(),
+    member_id: randomUUID(),
+    member_name: 'Synthetic athlete',
+    occurrence_id: randomUUID(),
+    title: 'Strength plan',
+    day_id: randomUUID(),
+    day_name: 'Field work',
+    starts_at: '2020-01-01T10:00:00Z',
+    training_date: '2020-01-01',
+    timezone: 'UTC',
+    allow_provisional_start: true,
+    can_record: false,
+    exercises: [
+      { key: 'bench', name: 'Bench press', name_ar: 'ضغط', kind: 'strength', rest: 60, note: '' },
+    ],
+    entries: [
+      {
+        exercise_key: 'bench',
+        set_index: 0,
+        reps: 10,
+        load: 0,
+        unit: 'kg',
+        seconds: null,
+        metres: null,
+        effort: null,
+        completed: false,
+      },
+    ],
+    session: null,
+  }
+  try {
+    await store.initialize()
+    await store.workouts.put(scope, base)
+    await store.workouts.put(scope, { ...base, id: second, occurrence_id: randomUUID() })
+    const local = randomUUID(),
+      elsewhere = randomUUID(),
+      later = randomUUID()
+    await store.workouts.start(scope, first, local, randomUUID())
+    await store.workouts.edit(
+      scope,
+      first,
+      base.entries.map((e) => ({ ...e, completed: true, load: 40 })),
+      'offline capture',
+    )
+    await store.workouts.start(scope, second, later, randomUUID())
+    const sent: string[] = []
+    // The server adopts a session another coach/device already started for this occurrence.
+    const send = async (_path: string, body: string) => {
+      const command = JSON.parse(body)
+      sent.push(command.id)
+      return command.id === local
+        ? { id: elsewhere, version: 3, completed_at: null }
+        : { id: command.id, version: 1, completed_at: null }
+    }
+    await new WorkoutSync(store.workouts, scope, send).run()
+    await new WorkoutSync(store.workouts, scope, send).run()
+    const conflicted = await store.workouts.get(scope, first)
+    assert.equal(conflicted.pending?.state, 'needs_attention')
+    assert.equal(conflicted.pending?.payload.id, local, 'the exact start request is retained')
+    assert.equal(conflicted.session?.id, local, 'another session is never adopted')
+    assert.equal(conflicted.entries[0].load, 40, 'the device recording remains for recovery')
+    assert.equal((await store.workouts.get(scope, second)).session?.version, 1)
+    assert.deepEqual(sent, [local, later], 'a reviewed conflict is not replayed automatically')
+  } finally {
+    sqlite.close()
+  }
+})

@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Beta.3 release review — 1 November 2026
+
+Reviewed the cumulative `v1.0.0-beta.2` to release-branch diff with priority on authorization, sequence transactions, scheduling, group results and native offline recovery. Fixed a native start-conflict replay loop, preparation/queue blocking after a started workout is skipped, and a CI gap that left the beta.3 workout suites unexecuted. Consolidated local-date helpers and documented lock/receipt/pause invariants. The [review report](../known-issues/beta3-release-review.md) holds the matrix, findings, product questions and limits; device and founder validation remain open.
+
 ## Audit follow-up: source and ownership cleanup — 31 October 2026
 
 Moved active workout shapes to the shared package with stable web type exports; application runtime source no longer uses explicit any annotations. Owned SQL projections and SQL-validated snapshot assertions preserve current validation/permissions. One prescribed-entry constructor serves individual/group/field targets. Authorized agenda reads are separated from programming commands; native exercise JSX is controlled by its existing mounted owner. Fixture registries/cleanup stay file-owned. Duplicate draft/calendar projections, obsolete route-bound audit runners, five dead private interfaces and duplicated testing guidance are cleaned. Source-level component/default-entry tests and backend LF/CRLF freshness regression are added to CI. Final code/workflow evidence is recorded in verification; no API/schema/owner-key or release change is intended.

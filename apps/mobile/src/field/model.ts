@@ -78,6 +78,8 @@ export function failureText(error: unknown): string {
         'This workout has not reached its scheduled start. Keep saved work and check the booking time.',
       sequence_conflict:
         'The plan sequence changed. Keep this recording and review the current workout online.',
+      workout_started_elsewhere:
+        'This workout was already started on the web or another device. Keep this recording and ask authorized staff to reconcile it online.',
       assignment_unavailable:
         'This athlete plan is no longer available for recording. Keep saved work for review.',
       previous_workout_unresolved:

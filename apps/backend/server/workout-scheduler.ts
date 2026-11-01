@@ -10,32 +10,22 @@ import {
 } from "./institution.ts";
 import { planAuthority, role } from "./programming.ts";
 import { calendarDate } from "./service-definitions.ts";
+import { checkedLocalDateText } from "./local-date.ts";
 import {
   lockedAssignment,
   scheduleIndividualWorkout,
+  unresolvedSession,
 } from "./workout-sequence.ts";
 
 const dateText = (d: Date) => d.toISOString().slice(0, 10);
 const plusDays = (s: string, n: number) =>
   dateText(new Date(Date.parse(s + "T12:00:00Z") + n * 86400000));
-export function localDay(zone: string, now: Date) {
-  try {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: zone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(now);
-  } catch {
-    throw new ApiError(400, "invalid_timezone");
-  }
-}
 /** Resolve a wall clock only when it identifies one instant. Never guess across DST. */
 export function weeklyInstant(day: string, time: string, zone: string) {
   calendarDate(day);
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
     throw new ApiError(400, "invalid_time");
-  localDay(zone, new Date());
+  checkedLocalDateText(zone, new Date());
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: zone,
     year: "numeric",
@@ -150,7 +140,7 @@ export async function workoutRuleCommand(
       const starts = calendarDate(input.starts_on),
         ends = calendarDate(input.ends_on),
         zone = String(input.timezone || "");
-      localDay(zone, new Date());
+      checkedLocalDateText(zone, new Date());
       if (
         ends < starts ||
         Date.parse(ends) - Date.parse(starts) > 366 * 86400000 ||
@@ -284,7 +274,7 @@ export async function prepareWorkoutRule(id: string, now = new Date()) {
           return stamp("scheduling_authority_unavailable");
         throw e;
       }
-      const today = localDay(rule.timezone, now);
+      const today = checkedLocalDateText(rule.timezone, now);
       if (
         plan.state !== "active" ||
         (plan.end_date && dateText(plan.end_date) < today) ||
@@ -299,7 +289,7 @@ export async function prepareWorkoutRule(id: string, now = new Date()) {
           },
         })) ||
         (await tx.institution_sessions.findFirst({
-          where: { assignment_id: plan.id, completed_at: null },
+          where: { assignment_id: plan.id, ...unresolvedSession },
         }))
       )
         return stamp("previous_workout_unresolved");

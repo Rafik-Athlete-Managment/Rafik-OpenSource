@@ -22,6 +22,7 @@ import {
 import { pageSize } from "./pagination.ts";
 import type { WorkoutAgendaItem } from "@rafik/shared/contracts";
 import { pageOffset } from "./service-definitions.ts";
+import { localDateText } from "./local-date.ts";
 import { usableExerciseAsset } from "./assets.ts";
 import media from "../content/exercise-media.json" with { type: "json" };
 import videos from "../content/exercise-videos.json" with { type: "json" };
@@ -1354,12 +1355,7 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
         select: { timezone: true },
       }),
     );
-    today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: profile?.timezone || "UTC",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
+    today = localDateText(profile?.timezone || "UTC", new Date());
   }
   // Delegated recording: a coach with plan authority (primary, or supporting for the plan's
   // sport) may start and save a session for an athlete under the coach's own identity.
@@ -1668,17 +1664,6 @@ export async function previousInstitutionPerformance(
   });
 }
 
-/** Bounded, read-only projection. All roster filtering happens before pagination. */
-/** Calendar day at `now` in a zone, as a UTC-midnight date for date-column comparison. */
-export const localDay = (timezone: string, now: Date) =>
-  new Date(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(now) + "T00:00:00Z",
-  );
 /** One rule for an assignment's next-workout state, shared by agenda and plan reads. */
 export function workoutState(
   positionState: string | undefined,

@@ -41,6 +41,7 @@ This page is the index for maintained Rafik documentation. The root [README](../
 ## Development and quality
 
 - [Monorepo code quality audit](known-issues/code-quality-audit.md): baseline, completed source/ownership cleanup, dependency/removal review, deliberate retention and evidence limits.
+- [Beta.3 release review](known-issues/beta3-release-review.md): release-wide correctness/security review matrix, verified findings and fixes, open product questions and evidence gaps.
 
 - [Instance validation walkthrough](testing/instance-validation.md): single source of truth for manual administrator, coach and athlete checks, setup, expected results and version-specific boundaries.
 

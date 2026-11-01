@@ -11,6 +11,7 @@ import {
   access,
 } from "./institution.ts";
 import { role, recipient } from "./programming.ts";
+import { localDateText } from "./local-date.ts";
 import { selectedWorkoutTemplate } from "./workout-templates.ts";
 import {
   definition,
@@ -710,12 +711,7 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
         (item.starts_at
           ? item.starts_at > new Date()
           : item.training_date.toISOString().slice(0, 10) >
-            new Intl.DateTimeFormat("en-CA", {
-              timeZone: item.timezone,
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            }).format(new Date()))
+            localDateText(item.timezone, new Date()))
       )
         throw new ApiError(400, "event_not_started");
       if (action === "session-note") {

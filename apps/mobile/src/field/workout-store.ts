@@ -1,5 +1,5 @@
 import type { Database } from './store.ts'
-import { ownerKey, type Owner } from './model.ts'
+import { ApiFailure, ownerKey, type Owner } from './model.ts'
 import {
   workoutPackage,
   validateEntries,
@@ -235,6 +235,17 @@ export class WorkoutStore {
       const r = await this.read(db, owner, id),
         p = r.pending,
         doc = input as { id: string; version: number; completed_at?: string | null }
+      // The server returns the occurrence's existing session when staff already started it on
+      // the web or another device. Its stored receipt makes that answer permanent, so treat it
+      // as a definitive conflict (needs review, not replayed) and never adopt the other session.
+      if (
+        p &&
+        p.payload.operation === operation &&
+        p.payload.action === 'start' &&
+        typeof doc?.id === 'string' &&
+        doc.id !== r.session?.id
+      )
+        throw new ApiFailure(409, 'workout_started_elsewhere')
       if (
         !p ||
         p.payload.operation !== operation ||

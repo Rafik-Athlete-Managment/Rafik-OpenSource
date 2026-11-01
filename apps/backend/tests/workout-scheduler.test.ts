@@ -580,3 +580,128 @@ test("weekly and opt-in automatic preparation preserve one unresolved position, 
     { stdio: "pipe", env: process.env },
   );
 });
+
+test("skipping a started workout releases preparation and planning queues", async () => {
+  const coachUser = "11000000-0000-4000-8000-000000000002";
+  // The previous scenario ends by revoking this coach; this run owns its isolated database.
+  await db.institution_members.update({
+    where: { id: coach },
+    data: { active: true },
+  });
+  const auth = await cookie(coachUser);
+  const post = async (path: string, input: object) => {
+    const response = await fetch(apiOrigin + "/v1/institution/" + path, {
+      method: "POST",
+      headers: {
+        Cookie: auth,
+        "x-rafik-client": "web",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  const base = await db.institution_assignments.findUniqueOrThrow({
+    where: { id: assignment },
+  });
+  const sourceVersion = await db.institution_versions.findUniqueOrThrow({
+    where: { id: base.version_id },
+  });
+  const version = await db.institution_versions.create({
+    data: {
+      ...sourceVersion,
+      id: randomUUID(),
+      revision: 5,
+      prescription: sourceVersion.prescription as any,
+    },
+  });
+  const plan = await db.institution_assignments.create({
+    data: {
+      ...base,
+      adaptation: base.adaptation ?? undefined,
+      id: randomUUID(),
+      version_id: version.id,
+      sequence_cursor: 0,
+      state: "active",
+      start_date: new Date("2026-01-01T00:00:00Z"),
+      end_date: null,
+    },
+  });
+  const now = Date.now();
+  const scheduled = await post("workout-scheduling", {
+    operation: randomUUID(),
+    action: "schedule-workout",
+    view: "trainer",
+    assignment_id: plan.id,
+    cursor: 0,
+    starts_at: new Date(now - 2 * 3600000).toISOString(),
+    ends_at: new Date(now - 3600000).toISOString(),
+    timezone: "UTC",
+  });
+  assert.equal(scheduled.status, 200, JSON.stringify(scheduled));
+  const position = await db.institution_workout_positions.findFirstOrThrow({
+    where: { assignment_id: plan.id },
+    include: { institution_events: true },
+  });
+  const session = randomUUID();
+  const started = await post("sessions", {
+    operation: randomUUID(),
+    action: "start",
+    view: "trainer",
+    id: session,
+    assignment_id: plan.id,
+    day_id: position.day_id,
+    occurrence_id: position.occurrence_id,
+  });
+  assert.equal(started.status, 200, JSON.stringify(started));
+  const skipped = await post("workout-scheduling", {
+    operation: randomUUID(),
+    action: "skip-workout",
+    view: "trainer",
+    assignment_id: plan.id,
+    occurrence_id: position.occurrence_id,
+    revision: position.institution_events.revision,
+    reason: "Abandoned after warm-up",
+  });
+  assert.equal(skipped.status, 200, JSON.stringify(skipped));
+  // The started record stays as incomplete history; it cannot be saved any more.
+  assert.equal(
+    (
+      await db.institution_sessions.findUniqueOrThrow({
+        where: { id: session },
+      })
+    ).completed_at,
+    null,
+  );
+  const actor = { id: coachUser, email: null, user_metadata: {} };
+  const queue = async (name: string) =>
+    (
+      await workoutAgenda(
+        actor,
+        institution,
+        new URLSearchParams(`view=trainer&queue=${name}&assignment=${plan.id}`),
+      )
+    ).items.length;
+  assert.equal(await queue("planning"), 1, "the next workout can be planned");
+  assert.equal(await queue("recording"), 0, "no unrecordable open work");
+  const rule = await command(auth, {
+    operation: randomUUID(),
+    action: "set-workout-rule",
+    view: "trainer",
+    assignment_id: plan.id,
+    rule_id: null,
+    revision: null,
+    mode: "weekly",
+    starts_on: new Date(now + 86400000).toISOString().slice(0, 10),
+    ends_on: new Date(now + 14 * 86400000).toISOString().slice(0, 10),
+    weekdays: [1, 2, 3, 4, 5, 6, 7],
+    local_time: "05:00",
+    duration_minutes: 30,
+    timezone: "UTC",
+  });
+  assert.equal(rule.status, 200, JSON.stringify(rule));
+  assert.notEqual(
+    await prepareWorkoutRule(rule.data.rule.id, new Date(now)),
+    "previous_workout_unresolved",
+  );
+});
