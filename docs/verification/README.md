@@ -1,5 +1,9 @@
 # Verification record
 
+## Frontend navigation inventory freshness — 1 November 2026
+
+The web job in GitHub Checks run 41324368707 failed at `frontend:inventory:check`; subsequent web steps were skipped. Local reproduction reported stale `navigation.md`. Regenerated the inventory from source. `frontend:inventory:check`, `format:check` and `docs:check` passed locally. This is reference freshness only; no rendered web behavior was checked for this correction. The remote web job must still run on the corrected commit.
+
 ## Native group workout source — 1 November 2026
 
 Backend and mobile TypeScript checks passed. The focused group-workout API test passed against an isolated local PostgreSQL database, including the trainer-only native package projection. The authenticated capability API test and no-database Swagger/OpenAPI test passed. Mobile Node SQLite queue checks passed with `--test-isolation=none` (22/22), including whole-event sheet download, protection of a pending participant sheet, owner isolation, group-start/session-save routing and concurrent mounted sync runners. Maintained documentation links/anchors passed. The standard `test:queue` and `test:api-docs` commands could not spawn child processes under this sandbox (`EPERM`); the same files passed with direct Node test execution. Paired English/Arabic landing guidance was updated on existing draft PR [#34](https://github.com/KenseiEmam/rafik-landing/pull/34); no landing build was run. These checks do not establish rendered phone UX, SQLCipher on hardware, physical offline/process-death recovery, Arabic layout or signed upgrade preservation. Founder/device checks remain in the [canonical walkthrough](../testing/instance-validation.md#native-group-workouts--unreleased-beta3). No Android build or broad browser suite was run.

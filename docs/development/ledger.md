@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Frontend navigation inventory freshness — 1 November 2026
+
+The beta.3 web CI job stopped at `frontend:inventory:check`. Regenerated the maintained navigation reference from current source; its line references had shifted after web edits. No route or UI behavior changed. The focused inventory regression and freshness checks are recorded in verification.
+
 ## Native group workout source — 1 November 2026
 
 Added a trainer-only group field package to the existing backend group endpoint and enabled protocol-1 group capability for matching source clients. Opening or refreshing an authorized group event online saves the attendance roster and every participant sheet in one user action. Partial sheet failures are reported; unsent drafts and queued work remain intact. The phone reuses the individual measurement editor. Group starts retain event/member/roster revision and exact operation; measured result saves reuse the current session command. Two mounted workout views can run sync without sending one command twice because the shared SQL lane claims a queued request atomically. The [canonical guide](../testing/instance-validation.md#native-group-workouts--unreleased-beta3) holds device validation; paired English/Arabic public guidance is on the existing [landing draft PR #34](https://github.com/KenseiEmam/rafik-landing/pull/34). Web remains the place for participant adaptation and explicit skip. No native dependency, schema migration, APK or release tag changed.
