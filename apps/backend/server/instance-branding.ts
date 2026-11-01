@@ -9,6 +9,7 @@ export type Branding = {
   logo_mime: string | null;
 };
 
+/** Loads the public name, colors and logo metadata configured for this installation. */
 export async function readBranding(): Promise<Branding> {
   const rows = await db.$queryRaw<
     Branding[]
@@ -25,6 +26,7 @@ export async function readBranding(): Promise<Branding> {
   );
 }
 
+/** Loads the configured logo bytes for the public branding endpoint. */
 export async function readBrandingLogo() {
   const rows = await db.$queryRaw<
     { logo: Buffer | null; mime: string | null }[]
@@ -34,6 +36,7 @@ export async function readBrandingLogo() {
   return { bytes: rows[0].logo, mime: rows[0].mime };
 }
 
+/** Saves institution branding after validating the requested colors, name and logo. */
 export async function updateBranding(
   actor: Actor,
   institutionId: string,
@@ -85,6 +88,7 @@ export async function updateBranding(
   });
 }
 
+/** Checks whether this signed-in member can change the selected institution's branding. */
 export async function canManageBranding(actor: Actor, institutionId: string) {
   uuid(institutionId);
   return scoped(actor, institutionId, ["admin"], async (tx: Tx) => {

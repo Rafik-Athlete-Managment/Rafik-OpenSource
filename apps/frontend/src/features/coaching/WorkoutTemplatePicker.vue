@@ -1,3 +1,4 @@
+<!-- Searches workout templates and returns one for use in a program or event. -->
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { institutionContext } from '../../app/institution'

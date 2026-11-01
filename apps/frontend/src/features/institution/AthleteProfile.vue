@@ -1,3 +1,4 @@
+<!-- Athlete profile: editable personal details and role-authorized training history. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

@@ -29,6 +29,7 @@ function sql(statement: string) {
   )
 }
 
+/** Creates disposable injury-test accounts and records with teardown owned by this fixture. */
 export async function injuryFixture() {
   const people: Person[] = [],
     institutions: string[] = []

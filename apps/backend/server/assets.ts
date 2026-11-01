@@ -31,6 +31,7 @@ export type Asset = {
   revision?: number;
   created_at: Date;
 };
+/** Builds the stable API path used to retrieve an institution-owned asset. */
 export const assetPath = (asset: Asset) =>
   `organization/${asset.institution_id}/${asset.id}`;
 function validBytes(bytes: Buffer, type: string) {
@@ -68,6 +69,7 @@ async function channelMember(
   if (!found) throw new ApiError(403, "conversation_unavailable");
   return found;
 }
+/** Stores an uploaded private asset after checking institution role and ownership. */
 export async function putInstitutionAsset(
   actor: Actor,
   institution: string,
@@ -138,6 +140,7 @@ export async function putInstitutionAsset(
     return { id, filename, media_type: type, bytes: bytes.length };
   });
 }
+/** Checks that an exercise media reference can be used in this institution's record. */
 export async function usableExerciseAsset(
   tx: Tx,
   institution: string,
@@ -160,6 +163,7 @@ export async function usableExerciseAsset(
   }
   return a;
 }
+/** Retrieves one private institution asset after confirming the caller may view it. */
 export async function getInstitutionAsset(actor: Actor, id: string) {
   uuid(id);
   const a = (
@@ -206,6 +210,7 @@ export async function getInstitutionAsset(actor: Actor, id: string) {
     };
   });
 }
+/** Lists the assets visible to the current role, with search and pagination. */
 export async function institutionAssets(
   actor: Actor,
   institution: string,
@@ -228,6 +233,7 @@ export async function institutionAssets(
   });
 }
 
+/** Applies an authorized asset action such as rename or removal. */
 export async function assetCommand(
   actor: Actor,
   institution: string,

@@ -1,3 +1,4 @@
+<!-- Shows coach workload and assigned-athlete delivery information. -->
 <script setup lang="ts">
 import { language as l } from '../../lib/i18n'
 import MetricChart from './MetricChart.vue'

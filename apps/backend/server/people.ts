@@ -3,6 +3,7 @@ import { ApiError, type Actor } from "./db.ts";
 import { scoped, uuid, type Tx, type Role, access } from "./institution.ts";
 import { role } from "./programming.ts";
 import { pageOffset } from "./service-definitions.ts";
+/** Applies the shared search and pagination rules to a list of people. */
 export async function peoplePage(
   tx: Tx,
   id: string,
@@ -155,6 +156,7 @@ export async function peoplePage(
     next: offset + take < total ? offset + take : null,
   };
 }
+/** Lists institution members and role-specific details for the people directory. */
 export async function institutionPeople(
   actor: Actor,
   id: string,
@@ -165,6 +167,7 @@ export async function institutionPeople(
     peoplePage(tx, id, self, view, q),
   );
 }
+/** Lists people the current user is allowed to start a conversation with. */
 export async function institutionRecipients(
   actor: Actor,
   id: string,
@@ -238,6 +241,7 @@ export async function institutionRecipients(
 }
 
 /** Member identity uses the same roster scope; staff analytics are administrator-only. */
+/** Loads one institution member's role-specific profile for an authorized viewer. */
 export async function institutionMemberProfile(
   actor: Actor,
   id: string,

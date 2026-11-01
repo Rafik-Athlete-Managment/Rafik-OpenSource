@@ -1,3 +1,4 @@
+<!-- Nutrition page: opens the food diary and nutrition plans available to this role. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

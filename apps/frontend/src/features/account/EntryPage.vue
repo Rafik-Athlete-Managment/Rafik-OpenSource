@@ -1,3 +1,4 @@
+<!-- Chooses first-run setup or sign-in based on whether this installation has an administrator. -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'

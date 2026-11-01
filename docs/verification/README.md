@@ -1,5 +1,11 @@
 # Verification record
 
+## Founder-focused code explanations — 1 November 2026
+
+Inventory: all 292 tracked top-level exported TypeScript functions now have plain-language purpose comments, and all 104 Vue single-file components have a header describing their role. This includes Backend, Frontend, Mobile, Shared, test helpers and the web offline-shell builder. Comments explain the job and important workflow effects; private one-line helpers and callbacks are not exhaustively annotated. The inventory counts tracked source, excluding generated declarations and dependencies.
+
+Validation: Frontend, Backend, Mobile and Shared typechecks passed; the frontend format command and Prettier checks for editable Backend, Mobile and Shared source passed; `npm run docs:check` passed across 82 maintained documents; and `git diff --check` passed. Generated database types were excluded from formatting edits. The phone API-address helper received only line wrapping needed to pass formatting. No behavior tests or Android build were run.
+
 ## TypeScript readability pass — 1 November 2026
 
 Coverage: 207 tracked `.ts`/`.tsx` files and 103 Vue components with TypeScript scripts across Frontend, Backend, Mobile and Shared (310 source units total; generated declarations and dependencies excluded). The AST inventory found no TypeScript parse diagnostics. Complexity-ranked review focused on authentication, routing, calendar/communication authorization, health-data access and native offline/draft ownership. Comments were added at non-obvious security and recovery boundaries; simple types, dictionaries and scenario-named tests remain uncommented by design. One identical-branch conditional was simplified without changing its result.

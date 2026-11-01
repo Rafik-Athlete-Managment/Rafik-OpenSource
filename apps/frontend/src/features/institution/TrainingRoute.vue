@@ -1,3 +1,4 @@
+<!-- Selects the athlete training view or the staff athlete-plan workflow for the route. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

@@ -1,3 +1,4 @@
+<!-- Shows upcoming booked sessions beside the schedule or dashboard. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 import { PhCalendarBlank, PhCaretRight } from '@phosphor-icons/vue'

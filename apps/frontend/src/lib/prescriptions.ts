@@ -1,12 +1,15 @@
 import type { Entry, Prescription, PrescriptionExercise, Target } from './domain'
 import sample from '../content/sample.json'
 import { language, locale, t } from './i18n'
+/** Joins the exercise details used in program and workout previews. */
 export const exerciseInfo = (e: PrescriptionExercise) =>
   e.info || sample.exercises.find((x) => x.id === e.exerciseId)
+/** Returns the displayed exercise name, including any chosen alternative. */
 export const exerciseName = (e: PrescriptionExercise) => {
   const info = exerciseInfo(e)
   return (locale.value === 'ar' ? info?.name_ar || info?.name : info?.name) || e.exerciseId
 }
+/** Formats the actual exercise values an athlete recorded. */
 export const actualLabel = (e: Entry, kind = 'strength') => {
   const base =
     kind === 'timed'
@@ -16,6 +19,7 @@ export const actualLabel = (e: Entry, kind = 'strength') => {
         : `${e.load} ${t(e.unit)} × ${e.reps}`
   return base + (e.effort ? ` · RPE ${e.effort}` : '')
 }
+/** Formats the prescribed target values shown before an exercise is logged. */
 export const targetLabel = (e: PrescriptionExercise, target: Target = e) => {
   const base =
     e.kind === 'timed'
@@ -25,6 +29,7 @@ export const targetLabel = (e: PrescriptionExercise, target: Target = e) => {
         : `${target.reps} ${t('reps')} · ${target.load} ${t(e.unit)}`
   return base + (target.effort ? ` · RPE ${target.effort}` : '')
 }
+/** Adds defaults for older saved prescriptions before current views edit them. */
 export function upgradePrescription(p: Prescription): Prescription {
   p.days.forEach((d) =>
     d.exercises.forEach((e) => {
@@ -44,6 +49,7 @@ export function upgradePrescription(p: Prescription): Prescription {
 }
 
 /** Project actual identity without changing the immutable prescribed targets. */
+/** Builds the recorded exercise entry while keeping missing actual values distinct from zero. */
 export function performedExercise(
   exercise: PrescriptionExercise,
   entries: Entry[],

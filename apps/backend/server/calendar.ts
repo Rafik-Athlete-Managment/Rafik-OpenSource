@@ -37,6 +37,7 @@ function calendarPerson<
 type Input = Record<string, unknown>;
 type Self = Awaited<ReturnType<typeof access>>;
 const json = (v: unknown) => v as Prisma.InputJsonValue;
+/** Checks whether this administrator, coach or athlete may open the requested event. */
 export async function eventAccess(
   tx: Tx,
   id: string,
@@ -149,6 +150,7 @@ export async function scheduledEvents(
   });
 }
 
+/** Lists calendar events, or loads one event with its authorized participant details. */
 export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
   const view = role(q.get("view"));
   return scoped(actor, id, [view], async (tx, self) => {
@@ -359,6 +361,7 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
     };
   });
 }
+/** Previews a staff event command and its effects without saving the event. */
 export async function calendarPreview(actor: Actor, id: string, input: Input) {
   const view = role(input.view);
   if (view === "trainee") throw new ApiError(403, "forbidden");
@@ -408,6 +411,7 @@ async function eventPeople(
     members.push(await recipient(tx, id, self, view, key, true, "training"));
   return { staff, participants, members };
 }
+/** Creates or changes a calendar event after checking role, scope and command details. */
 export async function calendarCommand(actor: Actor, id: string, input: Input) {
   const view = role(input.view),
     key = uuid(input.id),

@@ -3,6 +3,7 @@ import { ApiFailure } from './model.ts'
 
 export type CapabilityCheck = { state: 'available'; value: FieldCapabilities } | { state: 'legacy' }
 
+/** Validates the server's mobile feature list before the phone enables a workflow. */
 export function fieldCapabilities(input: unknown): FieldCapabilities {
   const value = input as FieldCapabilities | null
   const keys: (keyof FieldCapabilities['features'])[] = [

@@ -1,3 +1,4 @@
+<!-- Shows practical help and troubleshooting for using this Rafik installation. -->
 <script setup lang="ts">
 import AppUpdates from '../../components/AppUpdates.vue'
 import { language, t } from '../../lib/i18n'

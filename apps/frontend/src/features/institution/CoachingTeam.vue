@@ -1,3 +1,4 @@
+<!-- Manages primary and supporting coach assignments for an athlete. -->
 <script setup lang="ts">
 import SectionHeader from '../../components/SectionHeader.vue'
 import { computed, ref, watch } from 'vue'

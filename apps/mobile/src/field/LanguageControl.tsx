@@ -2,6 +2,7 @@ import { Text, View } from 'react-native'
 import { useLanguage } from './Language'
 import { Button, type Styles } from './ui'
 
+/** Shows the phone language switch and reports when the preference cannot be saved. */
 export function LanguageControl({ styles }: { styles: Styles }) {
   const { language, setLanguage, preferenceError, l } = useLanguage()
   return (

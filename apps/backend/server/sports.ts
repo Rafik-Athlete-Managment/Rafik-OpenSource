@@ -15,6 +15,7 @@ const SPORT_LIMIT = 200;
 const KINDS = ["sport", "specialty"];
 
 /** Sports and specialties are institution metadata; they grant no capability by themselves. */
+/** Lists the sports and specialties configured for this institution. */
 export async function institutionSports(
   actor: Actor,
   id: string,
@@ -54,6 +55,7 @@ async function currentSports(tx: Tx, member: string) {
     .sort();
 }
 
+/** Adds, edits or removes a sport configured for the institution. */
 export async function institutionSportsCommand(
   actor: Actor,
   id: string,

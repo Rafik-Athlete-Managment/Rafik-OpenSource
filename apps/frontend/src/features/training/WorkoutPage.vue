@@ -1,3 +1,4 @@
+<!-- Workout logger: records an athlete's exercise results and syncs them with the server. -->
 <script setup lang="ts">
 import { measureFields, measureLimits, hasActualResult } from '../../lib/set-measures'
 import ExerciseDemo from '../../components/ExerciseDemo.vue'

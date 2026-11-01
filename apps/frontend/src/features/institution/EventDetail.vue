@@ -1,3 +1,4 @@
+<!-- Event detail: manages the roster, attendance, results and completion for one event. -->
 <script setup lang="ts">
 import { preferredTimezone } from '../../lib/display-time'
 import { localDate } from '../../lib/dates'

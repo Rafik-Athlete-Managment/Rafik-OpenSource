@@ -1,3 +1,4 @@
+<!-- Lists conversations and lets the user start an authorized one-to-one or group chat. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

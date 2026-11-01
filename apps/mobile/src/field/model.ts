@@ -20,6 +20,7 @@ export type {
   FieldCommand,
 }
 export type Owner = { instance: string; user: string; institution: string }
+/** Builds the storage key that keeps one account's saved records separate. */
 export const ownerKey = (owner: Owner) =>
   JSON.stringify([owner.instance, owner.user, owner.institution])
 export type CommandState =
@@ -52,6 +53,7 @@ export class ConnectionFailure extends Error {
   }
 }
 
+/** Turns an API or device error into plain language for the coach. */
 export function failureText(error: unknown): string {
   if (error instanceof ApiFailure) {
     const messages: Record<string, string> = {
@@ -109,11 +111,13 @@ const revision = (value: unknown): number => {
   if (!Number.isSafeInteger(value) || (value as number) < 0) throw Error('Invalid server revision.')
   return value as number
 }
+/** Accepts only attendance values supported by the field app. */
 export function attendance(value: unknown): FieldAttendance {
   if (!['unmarked', 'present', 'absent', 'excused'].includes(String(value)))
     throw Error('Invalid attendance data.')
   return value as FieldAttendance
 }
+/** Checks an API event response before the phone stores or displays it. */
 export function fieldEvent(input: unknown): FieldEvent {
   const e = record(input)
   if (
@@ -133,6 +137,7 @@ export function fieldEvent(input: unknown): FieldEvent {
     location: string(e.location),
   }
 }
+/** Checks one roster member before the phone uses its role or attendance. */
 export function fieldPerson(input: unknown): FieldPerson {
   const p = record(input)
   if (!['staff', 'trainee'].includes(String(p.duty)) || typeof p.active !== 'boolean')
@@ -146,6 +151,7 @@ export function fieldPerson(input: unknown): FieldPerson {
     active: p.active,
   }
 }
+/** Checks that a downloaded roster belongs to the event the coach opened. */
 export function fieldRoster(input: unknown, id: string): FieldRoster {
   const data = record(input)
   const event = fieldEvent(data.event)
@@ -178,6 +184,7 @@ export function fieldRoster(input: unknown, id: string): FieldRoster {
   return { event, people, definition, results }
 }
 
+/** Checks that saved assessment results belong to the selected event. */
 export function fieldResult(input: unknown, event: string): FieldResult {
   const r = record(input)
   if (r.event_id !== event) throw Error('Invalid assessment event.')
@@ -230,6 +237,7 @@ export function scoreValues(definition: FieldDrill[], draft: ScoreDraft): FieldR
   return values
 }
 
+/** Lists the attendance problems that must be fixed before an event can finish. */
 export function finishProblems(roster: FieldRoster): string[] {
   const athletes = roster.people.filter((p) => p.duty === 'trainee')
   const problems: string[] = []

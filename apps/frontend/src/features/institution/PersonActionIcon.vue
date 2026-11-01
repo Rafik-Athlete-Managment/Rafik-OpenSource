@@ -1,3 +1,4 @@
+<!-- Shows a compact icon action for contacting or managing one person. -->
 <script setup lang="ts">
 defineProps<{ kind: 'profile' | 'message' | 'manage' }>()
 </script>

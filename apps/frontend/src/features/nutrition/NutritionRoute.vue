@@ -1,3 +1,4 @@
+<!-- Nutrition route: selects the correct plan or diary view for the current account. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

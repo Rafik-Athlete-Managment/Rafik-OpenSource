@@ -14,6 +14,7 @@ import { definition, ids } from "./service-definitions.ts";
 import type { Prisma } from "./generated/prisma/client.ts";
 type Input = Record<string, unknown>;
 type Self = Awaited<ReturnType<typeof access>>;
+/** Lists assessment and workout templates available to the requested role. */
 export async function serviceCatalog(
   actor: Actor,
   id: string,
@@ -97,6 +98,7 @@ export async function serviceCatalog(
     };
   });
 }
+/** Creates, edits, archives or restores a template in the shared catalog. */
 export async function serviceCatalogCommand(
   actor: Actor,
   id: string,

@@ -14,6 +14,7 @@ export interface ExerciseVideo {
 export const exerciseVideos = catalog.items as ExerciseVideo[]
 const byId = new Map(exerciseVideos.map((item) => [item.id, item]))
 const byExercise = new Map(exerciseVideos.map((item) => [item.exerciseId, item]))
+/** Finds the reviewed video that matches an exercise, if one is available. */
 export function videoForExercise(e?: Omit<Exercise, 'kind'> & { kind?: string }) {
   if (!e || e.media_url) return undefined
   return e.media_ref
@@ -23,8 +24,10 @@ export function videoForExercise(e?: Omit<Exercise, 'kind'> & { kind?: string })
       : undefined
 }
 const api = import.meta.env.VITE_API_URL || 'http://127.0.0.1:55331'
+/** Builds the API URL used to load a public exercise media asset. */
 export const exerciseAssetUrl = (path: string) => api + path
 
+/** Finds credited illustrations that match an exercise's name or catalog ID. */
 export function illustrationsForExercise(e?: Omit<Exercise, 'kind'> & { kind?: string }) {
   if (!e || e.media_url) return undefined
   return illustrations.items.find((item) =>
@@ -35,6 +38,7 @@ export function illustrationsForExercise(e?: Omit<Exercise, 'kind'> & { kind?: s
 }
 
 /** Public reference posters only; private uploads stay behind ResourceAsset's authorized fetch. */
+/** Chooses the compact preview image used beside an exercise name. */
 export function exerciseThumbnail(e?: Exercise) {
   if (!e || e.media_asset) return undefined
   const video = videoForExercise(e)
@@ -42,6 +46,7 @@ export function exerciseThumbnail(e?: Exercise) {
   return illustrationsForExercise(e)?.frames[0]?.path.replace('/v1/catalog', '')
 }
 
+/** Tells the view whether it should offer a media preview for the exercise. */
 export function hasExerciseMedia(e?: Exercise) {
   return Boolean(
     e && (e.media_asset || e.media_url || videoForExercise(e) || illustrationsForExercise(e)),

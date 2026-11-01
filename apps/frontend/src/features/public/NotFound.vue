@@ -1,3 +1,4 @@
+<!-- Explains that the requested page does not exist and offers a safe route back. -->
 <script setup lang="ts">
 import { PhTray } from '@phosphor-icons/vue'
 import { language } from '../../lib/i18n'

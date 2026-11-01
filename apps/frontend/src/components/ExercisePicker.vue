@@ -1,3 +1,4 @@
+<!-- Exercise picker: searches the approved movement catalog and returns a chosen exercise. -->
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
 import {

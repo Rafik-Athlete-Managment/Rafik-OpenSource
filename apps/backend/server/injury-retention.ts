@@ -3,6 +3,7 @@ import { db } from "./db.ts";
 const DAY = 24 * 60 * 60 * 1000;
 const RETRY_AFTER_FAILURE = 15 * 60 * 1000;
 
+/** Permanently removes closed injury details whose retention period has ended. */
 export async function purgeExpiredInjuryRecords(institutionIds: string[] = []) {
   return db.$transaction(async (tx) => {
     const closed = await tx.$queryRaw<
@@ -46,6 +47,7 @@ export async function purgeExpiredInjuryRecords(institutionIds: string[] = []) {
   });
 }
 
+/** Starts the recurring cleanup timer and reports failures through the supplied handler. */
 export function startInjuryRetention(
   cleanup = purgeExpiredInjuryRecords,
   schedule: (

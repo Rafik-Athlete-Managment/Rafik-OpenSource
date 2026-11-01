@@ -21,6 +21,7 @@ const dateText = (d: Date) => d.toISOString().slice(0, 10);
 const plusDays = (s: string, n: number) =>
   dateText(new Date(Date.parse(s + "T12:00:00Z") + n * 86400000));
 /** Resolve a wall clock only when it identifies one instant. Never guess across DST. */
+/** Converts a local weekly date and time into an instant, rejecting ambiguous clock changes. */
 export function weeklyInstant(day: string, time: string, zone: string) {
   calendarDate(day);
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
@@ -74,6 +75,7 @@ async function authority(
   ]);
   return { self, plan };
 }
+/** Reads the automatic-preparation settings attached to an athlete plan. */
 export async function workoutRules(
   actor: Actor,
   institution: string,
@@ -94,6 +96,7 @@ export async function workoutRules(
     };
   });
 }
+/** Enables, edits or stops automatic workout preparation for one plan. */
 export async function workoutRuleCommand(
   actor: Actor,
   institution: string,
@@ -221,6 +224,7 @@ export async function workoutRuleCommand(
 }
 
 /** One bounded transaction per rule. Same institution -> assignment lock order as user writes. */
+/** Prepares the next workout occurrence for one enabled plan rule. */
 export async function prepareWorkoutRule(id: string, now = new Date()) {
   return db.$transaction(
     async (tx) => {
@@ -406,6 +410,7 @@ export async function prepareWorkoutRule(id: string, now = new Date()) {
     { timeout: 15000 },
   );
 }
+/** Finds enabled rules due now and prepares a bounded batch of workout occurrences. */
 export async function prepareWorkouts(now = new Date(), limit = 50) {
   const rules = await db.institution_workout_recurrences.findMany({
     where: { state: "active" },
@@ -431,6 +436,7 @@ export async function prepareWorkouts(now = new Date(), limit = 50) {
   }
   return { checked: rules.length };
 }
+/** Starts the background timer that prepares workouts whose rules are due. */
 export function startWorkoutScheduler() {
   let stopped = false,
     timer: ReturnType<typeof setTimeout> | undefined;

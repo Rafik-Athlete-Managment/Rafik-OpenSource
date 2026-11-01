@@ -1,3 +1,4 @@
+<!-- Collects account credentials and restores the user session after successful sign-in. -->
 <script setup lang="ts">
 import PasswordField from '../../components/PasswordField.vue'
 import { computed, ref } from 'vue'

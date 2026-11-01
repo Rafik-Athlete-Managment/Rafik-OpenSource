@@ -1,3 +1,4 @@
+<!-- Exercise media: opens credited photos or videos without embedding large media in a list. -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {

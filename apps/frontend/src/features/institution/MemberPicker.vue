@@ -1,3 +1,4 @@
+<!-- Searches institution members and returns the selected person or people. -->
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, computed, useId } from 'vue'
 import { request } from '../../lib/backend'

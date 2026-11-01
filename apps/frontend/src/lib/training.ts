@@ -11,6 +11,7 @@ import {
   removeDraft,
 } from './storage'
 const syncing = new Map<string, Promise<LocalSession | undefined>>()
+/** Creates a local workout record from a plan day so the athlete can begin logging. */
 export async function startWorkout(
   day: PlanDay,
   _title: string,
@@ -59,6 +60,7 @@ export async function startWorkout(
   await event('session_started', session.id)
   return row
 }
+/** Loads an athlete's local workout and refreshes it from the server when allowed. */
 export async function loadWorkout(id: string, owner: string, institution?: string) {
   const local = await getLocalSession(id)
   if (local && local.owner === owner) {
@@ -97,6 +99,7 @@ export async function loadWorkout(id: string, owner: string, institution?: strin
     updatedAt: new Date().toISOString(),
   })
 }
+/** Saves an edit to the local workout draft and marks it as needing synchronization. */
 export async function changeWorkout(id: string, fn: (s: Session) => void) {
   const row = await editLocalSession(id, (r) => {
     fn(r.session)
@@ -109,6 +112,7 @@ export async function changeWorkout(id: string, fn: (s: Session) => void) {
   )
   return row
 }
+/** Sends one saved workout to the server, preventing two uploads for the same workout. */
 export async function syncWorkout(id: string, owner: string) {
   if (owner === 'guest') return getLocalSession(id)
   if (syncing.has(id)) return syncing.get(id)!
@@ -182,6 +186,7 @@ export async function syncWorkout(id: string, owner: string) {
     syncing.delete(id)
   }
 }
+/** Replaces a rejected local workout with the current server version after access checks. */
 export async function reloadServerSession(id: string, owner: string) {
   const previous = await getLocalSession(id)
   if (!previous || previous.owner !== owner) throw new Error('forbidden')
@@ -197,6 +202,7 @@ export async function reloadServerSession(id: string, owner: string) {
     updatedAt: new Date().toISOString(),
   })
 }
+/** Tries to upload every pending workout draft belonging to the signed-in account. */
 export async function syncPending(owner: string) {
   for (const row of await localSessions(owner)) await syncWorkout(row.id, owner)
 }

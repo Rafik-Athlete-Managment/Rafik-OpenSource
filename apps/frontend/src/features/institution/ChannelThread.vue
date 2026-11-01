@@ -1,3 +1,4 @@
+<!-- Displays one conversation and sends messages to its current participants. -->
 <script setup lang="ts">
 import { preferredTimezone } from '../../lib/display-time'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'

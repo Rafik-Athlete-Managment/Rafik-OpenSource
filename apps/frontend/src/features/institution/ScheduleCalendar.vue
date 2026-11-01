@@ -1,3 +1,4 @@
+<!-- Schedule calendar: searches, views and opens the institution's scheduled events. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

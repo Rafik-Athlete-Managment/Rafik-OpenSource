@@ -61,6 +61,7 @@ async function appendHistory(
   `;
 }
 
+/** Returns health information limited to what the caller's institution role may see. */
 export async function injuries(
   actor: Actor,
   institution: string,
@@ -178,6 +179,7 @@ export async function injuries(
   });
 }
 
+/** Records an athlete health-status action while preserving consent and history rules. */
 export async function injuryCommand(
   actor: Actor,
   institution: string,

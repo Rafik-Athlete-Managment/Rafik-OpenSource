@@ -1,3 +1,4 @@
+<!-- Dashboard navigation: shows role-specific sections and keeps one menu group expanded. -->
 <script setup lang="ts">
 import { computed, ref, useId, watch } from 'vue'
 import { useRoute } from 'vue-router'

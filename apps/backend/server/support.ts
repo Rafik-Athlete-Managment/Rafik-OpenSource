@@ -1,5 +1,6 @@
 import { asActor, ApiError, type Actor } from "./db.ts";
 import { pageOffset } from "./service-definitions.ts";
+/** Lists support requests the current account is allowed to review. */
 export async function supportCases(actor: Actor, params: URLSearchParams) {
   return asActor(actor, (tx) =>
     tx.support_cases.findMany({
@@ -10,6 +11,7 @@ export async function supportCases(actor: Actor, params: URLSearchParams) {
     }),
   );
 }
+/** Creates or updates a support request and its allowed status fields. */
 export async function supportCommand(
   actor: Actor,
   input: Record<string, unknown>,

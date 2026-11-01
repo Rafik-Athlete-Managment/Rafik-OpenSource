@@ -1,3 +1,4 @@
+<!-- Summarizes athlete experience feedback for coaches and administrators. -->
 <script setup lang="ts">
 import { language as l } from '../../lib/i18n'
 import MetricChart from './MetricChart.vue'

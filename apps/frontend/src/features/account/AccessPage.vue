@@ -1,3 +1,4 @@
+<!-- Explains the signed-in account roles and which institution permissions are available. -->
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'

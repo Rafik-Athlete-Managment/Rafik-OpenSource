@@ -3,6 +3,7 @@ import { institutionContext } from '../../app/institution'
 import { contexts } from '../../app/auth'
 import { request } from '../../lib/backend'
 import type { Exercise, Plan, PlanVersion } from '../../lib/domain'
+/** Reads the selected program and athlete from the current route query. */
 export function programContext(_route: RouteLocationNormalizedLoaded) {
   const { institution, view } = institutionContext(),
     base = '',

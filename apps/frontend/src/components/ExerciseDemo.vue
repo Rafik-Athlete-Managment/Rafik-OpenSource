@@ -1,3 +1,4 @@
+<!-- Exercise demo: shows the movement instructions and available credited media. -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ResourceAsset from './ResourceAsset.vue'

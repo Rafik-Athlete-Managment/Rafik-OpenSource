@@ -1,3 +1,4 @@
+<!-- Timezone selector: searches supported zones and returns the chosen preference. -->
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import {

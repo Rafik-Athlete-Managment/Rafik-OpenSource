@@ -9,6 +9,7 @@ async function operator(tx: Tx, actor: Actor) {
   >`SELECT user_id FROM public.platform_grants WHERE user_id=${actor.id}::uuid`;
   if (!grants.length) throw new ApiError(403, "forbidden");
 }
+/** Reads installation-level administration data for an authorized platform operator. */
 export async function platformRead(actor: Actor, q: URLSearchParams) {
   return db.$transaction(async (tx) => {
     await operator(tx, actor);
@@ -100,6 +101,7 @@ export async function platformRead(actor: Actor, q: URLSearchParams) {
     };
   });
 }
+/** Applies an installation-level administrative action after checking platform access. */
 export async function platformCommand(
   actor: Actor,
   input: Record<string, unknown>,

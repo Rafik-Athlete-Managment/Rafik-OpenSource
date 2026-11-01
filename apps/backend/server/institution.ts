@@ -16,6 +16,7 @@ import type { Prisma } from "./generated/prisma/client.ts";
 export type Tx = Prisma.TransactionClient;
 export type Role = "admin" | "trainer" | "trainee";
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
+/** Validates an incoming identifier and returns its normalized UUID string. */
 export function uuid(value: unknown) {
   if (
     typeof value !== "string" ||
@@ -26,6 +27,7 @@ export function uuid(value: unknown) {
     throw new ApiError(400, "invalid_request");
   return value;
 }
+/** Trims and length-checks text received from a request before it is stored. */
 export function textValue(value: unknown, max = 100) {
   if (typeof value !== "string" || !value.trim() || value.trim().length > max)
     throw new ApiError(400, "invalid_request");
@@ -45,6 +47,7 @@ function primaryRole(roles: readonly string[]): Role | undefined {
     roles.includes(role),
   );
 }
+/** Finds the caller's active institution role or rejects the request. */
 export async function access(
   tx: Tx,
   actor: Actor,
@@ -67,6 +70,7 @@ export async function access(
     throw new ApiError(403, "workspace_unavailable");
   return member;
 }
+/** Writes an institution audit record for a completed domain action. */
 export async function event(
   tx: Tx,
   actor: Actor,
@@ -85,6 +89,7 @@ export async function event(
     },
   });
 }
+/** Runs a database callback only after confirming the actor's institution role. */
 export async function scoped<T>(
   actor: Actor,
   id: string,
@@ -102,6 +107,7 @@ export async function scoped<T>(
     { timeout: 15000 },
   );
 }
+/** Runs a role-checked database change and records its audit event together. */
 export async function mutation(
   actor: Actor,
   id: string,
@@ -166,6 +172,7 @@ export async function mutation(
     input.action === "close",
   );
 }
+/** Returns the institution memberships and platform-admin status for one account. */
 export async function contexts(actor: Actor) {
   const memberships = await db.institution_members.findMany({
     where: {
@@ -214,6 +221,7 @@ async function ownName(actor: Actor) {
       "Member",
   );
 }
+/** Reads the institution settings and membership data available to the caller. */
 export async function institutionView(
   actor: Actor,
   id: string,
@@ -441,6 +449,7 @@ async function applyInvitationSports(
       })),
     });
 }
+/** Creates or updates institution settings while enforcing administrator permissions. */
 export async function institutionCommand(
   actor: Actor,
   id: string,
@@ -634,6 +643,7 @@ export async function institutionCommand(
     throw new ApiError(400, "invalid_command");
   });
 }
+/** Creates or lists single-use invitation links for staff and athletes. */
 export async function invitation(
   token: string,
   actor: Actor | null,
@@ -732,6 +742,7 @@ export async function invitation(
   });
 }
 
+/** Validates an invitation and creates the invited user's account and membership. */
 export async function acceptInvitationSignup(
   token: string,
   email: string,

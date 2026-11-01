@@ -1,3 +1,4 @@
+<!-- Schedule switch: changes between the calendar and scheduled-event list views. -->
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { PhCalendarBlank, PhListBullets } from '@phosphor-icons/vue'

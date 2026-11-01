@@ -1,3 +1,4 @@
+<!-- Programs page: searches, creates and opens reusable coach-authored programs. -->
 <script setup lang="ts">
 import { PhTray } from '@phosphor-icons/vue'
 import { useListPageSize } from '../../lib/list-page-size'

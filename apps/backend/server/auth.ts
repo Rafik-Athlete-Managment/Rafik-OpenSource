@@ -37,6 +37,7 @@ function derive(password: string, salt: Buffer) {
     );
   });
 }
+/** Checks an unknown password against Rafik's shared password rules before saving it. */
 export function validatePassword(value: unknown) {
   if (!strongPassword(value)) throw new ApiError(400, "password_length");
   return value;
@@ -46,6 +47,7 @@ function validateLoginPassword(value: unknown) {
     throw new ApiError(400, "password_length");
   return value;
 }
+/** Converts a password into the salted scrypt value stored by the account system. */
 export async function passwordHash(password: string) {
   const salt = randomBytes(16),
     key = await derive(password, salt);
@@ -88,6 +90,7 @@ function institutionName(value: unknown) {
     throw new ApiError(400, "invalid_institution_name");
   return value.trim();
 }
+/** Finds the signed-in account from the browser session or Android bearer token. */
 export async function identify(req: IncomingMessage): Promise<Actor | null> {
   if (req.headers["x-rafik-client"] === "android") {
     const token = req.headers.authorization?.match(
@@ -263,6 +266,7 @@ async function initialSetup(
   });
   return session(res, actor(user));
 }
+/** Handles browser setup, sign-in, sign-out and session requests. */
 export async function authRoute(
   path: string,
   body: Record<string, unknown>,
@@ -406,6 +410,7 @@ export async function authRoute(
   throw new ApiError(404, "not_found");
 }
 
+/** Handles Android sign-in and refresh-token requests without using browser cookies. */
 export async function mobileAuthRoute(
   path: string,
   body: Record<string, unknown>,

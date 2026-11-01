@@ -1,5 +1,6 @@
 import { ApiFailure, ConnectionFailure } from './model.ts'
 
+/** Validates and normalizes the institution API address entered during phone setup. */
 export function instanceUrl(input: string) {
   let url: URL
   try {

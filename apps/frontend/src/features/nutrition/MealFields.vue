@@ -1,3 +1,4 @@
+<!-- Edits one meal’s name, time and food entries inside a nutrition plan. -->
 <script setup lang="ts">
 import { ref } from 'vue'
 import { language as l, locale } from '../../lib/i18n'

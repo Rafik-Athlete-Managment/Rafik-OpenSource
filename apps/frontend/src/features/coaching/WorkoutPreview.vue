@@ -1,3 +1,4 @@
+<!-- Workout preview: shows the saved workout sections and prescriptions read-only. -->
 <script setup lang="ts">
 import type { PlanDay, Exercise, PrescriptionExercise } from '../../lib/domain'
 import ExerciseMediaPreview from '../../components/ExerciseMediaPreview.vue'

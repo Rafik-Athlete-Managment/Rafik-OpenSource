@@ -59,6 +59,7 @@ export async function setPrimary(
   });
 }
 
+/** Adds a supporting coach to an athlete while preserving the primary-coach link. */
 export async function linkSupportingCoach(
   tx: Tx,
   actor: Actor,
@@ -140,6 +141,7 @@ export async function linkSupportingCoach(
   return result;
 }
 
+/** Ends an athlete's supporting-coach link without deleting its history. */
 export async function endSupportingCoach(
   tx: Tx,
   actor: Actor,

@@ -5,6 +5,7 @@ function copy(day: PlanDay) {
   result.exercises.forEach((e) => (e.key = crypto.randomUUID()))
   return result
 }
+/** Copies one workout day and gives the copy a new name and stable identity. */
 export function duplicateSession(plan: Prescription, index: number, suffix: string) {
   const result = clone(plan)
   let slot: { week: number; weekday: number } | undefined
@@ -25,6 +26,7 @@ export function duplicateSession(plan: Prescription, index: number, suffix: stri
   result.days.push(day)
   return result
 }
+/** Copies a program week so the coach can reuse its workout days. */
 export function duplicateWeek(plan: Prescription, week: number) {
   if ((plan.cycleWeeks || 1) >= 12) throw Error('invalid_day_count')
   const result = clone(plan),

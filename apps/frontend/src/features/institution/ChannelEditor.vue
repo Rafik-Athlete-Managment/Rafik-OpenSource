@@ -1,3 +1,4 @@
+<!-- Creates or edits a messaging channel and its allowed participants. -->
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { user } from '../../app/auth'

@@ -1,3 +1,4 @@
+<!-- Timezone clock: shows the current time using the account's preferred timezone. -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { PhClock } from '@phosphor-icons/vue'

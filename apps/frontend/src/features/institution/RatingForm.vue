@@ -1,3 +1,4 @@
+<!-- Collects an athlete’s rating and optional feedback after a coaching interaction. -->
 <script setup lang="ts">
 import { nextTick } from 'vue'
 import { ref, computed, onMounted, watch } from 'vue'

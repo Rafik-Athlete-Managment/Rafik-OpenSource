@@ -1,3 +1,4 @@
+<!-- Side panel: presents supporting content beside a page or as a compact overlay. -->
 <script setup lang="ts">
 import {
   DialogRoot,

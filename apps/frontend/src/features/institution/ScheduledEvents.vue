@@ -1,3 +1,4 @@
+<!-- Scheduled event list: filters and paginates booked sessions and assessments. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

@@ -1,3 +1,4 @@
+<!-- Overflow menu: groups less-used actions and closes when the user selects or leaves it. -->
 <script setup lang="ts">
 import type { Component } from 'vue'
 import { useRouter, type RouteLocationRaw } from 'vue-router'

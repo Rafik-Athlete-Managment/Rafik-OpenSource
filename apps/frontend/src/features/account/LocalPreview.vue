@@ -1,3 +1,4 @@
+<!-- Provides the local-only sample account preview used to explore a development instance. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import { ref } from 'vue'

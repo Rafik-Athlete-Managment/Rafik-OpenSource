@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 
+/** Creates a stable cache name from the shell files so changed files get a new version. */
 export function shellIdentity(contents: Record<string, string | Uint8Array>) {
   const hash = createHash('sha256')
   for (const [name, content] of Object.entries(contents).sort(([a], [b]) => a.localeCompare(b))) {
@@ -8,6 +9,7 @@ export function shellIdentity(contents: Record<string, string | Uint8Array>) {
   return 'rafik-shell-' + hash.digest('hex').slice(0, 16)
 }
 
+/** Builds the service-worker source that caches the app shell for offline page loads. */
 export function shellWorker(cache: string, assets: string[]) {
   return `const CACHE=${JSON.stringify(cache)};const ASSETS=${JSON.stringify(assets)};
 // Never skipWaiting: every open tab keeps the complete version it started with.

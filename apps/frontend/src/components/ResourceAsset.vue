@@ -1,3 +1,4 @@
+<!-- Resource asset: displays an authorized file with its name, type and available actions. -->
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue'
 import { language as l } from '../lib/i18n'

@@ -1,3 +1,4 @@
+<!-- Displays the privacy information for this Rafik installation. -->
 <script setup lang="ts">
 import { language, t } from '../../lib/i18n'
 </script>

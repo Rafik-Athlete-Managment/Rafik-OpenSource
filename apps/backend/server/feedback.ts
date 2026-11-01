@@ -36,6 +36,7 @@ async function eligible(
     if (!rows.length) throw new ApiError(403, "feedback_unavailable");
   } else throw new ApiError(400, "invalid_request");
 }
+/** Lists coach feedback that the signed-in athlete is allowed to read. */
 export async function feedback(
   actor: Actor,
   institution: string,
@@ -81,6 +82,7 @@ export async function feedback(
     };
   });
 }
+/** Saves or acknowledges feedback while checking the current user's role and record. */
 export async function feedbackCommand(
   actor: Actor,
   institution: string,

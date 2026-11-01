@@ -1,3 +1,4 @@
+<!-- Command status: shows whether a saved action is pending, confirmed or needs recovery. -->
 <script setup lang="ts">
 import { language as l } from '../lib/i18n'
 const props = withDefaults(

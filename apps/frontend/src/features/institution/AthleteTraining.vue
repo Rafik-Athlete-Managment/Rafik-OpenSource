@@ -1,3 +1,4 @@
+<!-- Athlete workout list: shows the next workouts in each active assigned plan. -->
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { user } from '../../app/auth'

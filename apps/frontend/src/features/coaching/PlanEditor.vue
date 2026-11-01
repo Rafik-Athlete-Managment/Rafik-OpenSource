@@ -1,3 +1,4 @@
+<!-- Program editor: builds a reusable training plan from weeks, workout days and exercises. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import WorkoutTemplatePicker from './WorkoutTemplatePicker.vue'

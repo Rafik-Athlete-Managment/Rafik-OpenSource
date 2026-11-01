@@ -1,3 +1,4 @@
+<!-- Selects an athlete and shares a published program as an assigned plan. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import TimezonePicker from '../../components/TimezonePicker.vue'

@@ -45,6 +45,7 @@ async function validateFood(tx: Tx, foods: unknown) {
   if (!Array.isArray(foods)) throw new ApiError(400, "invalid_guidance");
   await tx.$queryRaw`SELECT public.validate_nutrition_meals(${JSON.stringify(foods)}::jsonb)::text`;
 }
+/** Lists nutrition plans, foods or diary entries allowed for the requested role. */
 export async function nutrition(
   actor: Actor,
   institution: string,
@@ -174,6 +175,7 @@ export async function nutrition(
     };
   });
 }
+/** Creates or updates a nutrition plan, food entry or athlete diary record. */
 export async function nutritionCommand(
   actor: Actor,
   institution: string,

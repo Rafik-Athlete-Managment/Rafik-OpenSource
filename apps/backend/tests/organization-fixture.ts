@@ -12,8 +12,10 @@ const composeFile = resolve(
   import.meta.dirname,
   "../../../infrastructure/compose.yaml",
 );
+/** Runs Docker Compose against this test's configured disposable database. */
 export const dockerCompose = (args: string[], options = {}) =>
   execFileSync("docker", ["compose", "-f", composeFile, ...args], options);
+/** Adds the unique request ID and action name required by a test command. */
 export const operation = <T extends object, A extends string>(
   action: A,
   args: T,
@@ -22,6 +24,7 @@ export const operation = <T extends object, A extends string>(
   action,
   ...args,
 });
+/** Sends one authenticated test request and returns its status and decoded body. */
 export async function call(p: Person, path: string, input?: unknown) {
   if (path === "/v1/institutions" && input)
     return fixtureInstitution(p, input as Record<string, unknown>);
@@ -39,6 +42,7 @@ export async function call(p: Person, path: string, input?: unknown) {
     data: institutionTransport(await r.json()) as any,
   };
 }
+/** Creates disposable test members and an institution, then removes only those records. */
 export async function organizationFixture() {
   const people: string[] = [],
     spaces: string[] = [];

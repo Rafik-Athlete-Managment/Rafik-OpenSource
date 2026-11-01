@@ -1,3 +1,4 @@
+<!-- Creates and manages single-use invitation links for institution members. -->
 <script setup lang="ts">
 import PasswordField from '../../components/PasswordField.vue'
 import { onMounted, ref } from 'vue'

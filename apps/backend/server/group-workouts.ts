@@ -23,6 +23,7 @@ type Self = Awaited<ReturnType<typeof access>>;
 type Input = Record<string, unknown>;
 const json = (value: unknown) => value as Prisma.InputJsonValue;
 
+/** Checks whether the caller may view this participant's result for a group workout. */
 export async function groupSessionAuthority(
   tx: Tx,
   institution: string,
@@ -50,6 +51,7 @@ export async function groupSessionAuthority(
   if (!person) throw new ApiError(403, "trainee_unavailable");
   return { occurrence, person };
 }
+/** Stops group-workout changes when the caller, event or participant is not writable. */
 export async function assertGroupWritable(
   tx: Tx,
   institution: string,
@@ -75,6 +77,7 @@ export async function assertGroupWritable(
     throw new ApiError(409, "group_workout_not_actionable");
   return context;
 }
+/** Loads the group workout and participant records visible for one event. */
 export async function groupWorkouts(
   actor: Actor,
   institution: string,
@@ -162,6 +165,7 @@ export async function groupWorkouts(
     };
   });
 }
+/** Starts, records, finishes or reviews a coach-led group workout. */
 export async function groupWorkoutCommand(
   actor: Actor,
   institution: string,

@@ -22,8 +22,10 @@ const CREDENTIALS = 'rafik.field.credentials.v1'
 const DB_KEY = 'rafik.field.database-key.v1'
 let storeFlight: Promise<FieldStore> | null = null
 
+/** Creates the unique command ID used to safely retry a phone-to-server request. */
 export const operationId = () => Crypto.randomUUID()
 
+/** Opens the encrypted on-device database used for saved field work. */
 export function privateStore(): Promise<FieldStore> {
   if (!storeFlight)
     storeFlight = (async () => {

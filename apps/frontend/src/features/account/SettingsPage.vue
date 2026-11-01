@@ -1,3 +1,4 @@
+<!-- Edits the signed-in user’s profile, language, units, timezone and security settings. -->
 <script setup lang="ts">
 import { notifySuccess } from '../../lib/feedback'
 import PageHeading from '../../components/PageHeading.vue'

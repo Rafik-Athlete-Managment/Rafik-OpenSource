@@ -1,3 +1,4 @@
+<!-- Draws one analytics measure over time with labels for its values and period. -->
 <script setup lang="ts">
 import { computed, ref, watch, useId } from 'vue'
 import {

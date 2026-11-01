@@ -1,3 +1,4 @@
+<!-- Manages assessment templates and other reusable institution service definitions. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

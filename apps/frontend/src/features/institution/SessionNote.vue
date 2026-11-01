@@ -1,3 +1,4 @@
+<!-- Edits the note attached to a workout session. -->
 <script setup lang="ts">
 import { nextTick } from 'vue'
 import { ref, computed, onMounted, watch } from 'vue'

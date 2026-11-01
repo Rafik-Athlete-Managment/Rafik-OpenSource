@@ -24,6 +24,7 @@ export const unresolvedSession: Prisma.institution_sessionsWhereInput = {
  * institution advisory lock from scoped()/prepareWorkoutRule, so the order is always
  * institution -> assignment. The partial unique index on unresolved positions is the backstop.
  */
+/** Locks an athlete plan row so concurrent schedule changes cannot allocate twice. */
 export async function lockedAssignment(
   tx: Tx,
   institution: string,
@@ -61,6 +62,7 @@ function timedSlot(input: Input) {
   return { start, end, timezone, date: new Date(local + "T00:00:00Z") };
 }
 
+/** Stops workout scheduling when the athlete's current participation status blocks training. */
 export async function assertTrainingAllowed(
   tx: Tx,
   institution: string,
@@ -80,6 +82,7 @@ export async function assertTrainingAllowed(
   if (restriction) throw new ApiError(409, "participation_unavailable");
 }
 
+/** Books the next unfinished workout from one athlete plan at a chosen time. */
 export async function scheduleIndividualWorkout(
   tx: Tx,
   actor: Actor,
@@ -235,6 +238,7 @@ export async function scheduleIndividualWorkout(
   return { occurrence, position };
 }
 
+/** Marks the next unfinished workout as skipped and advances that plan's sequence. */
 export async function skipIndividualWorkout(
   tx: Tx,
   actor: Actor,
@@ -294,6 +298,7 @@ export async function skipIndividualWorkout(
   };
 }
 
+/** Changes the time of a scheduled workout without allocating another plan position. */
 export async function rescheduleIndividualWorkout(
   tx: Tx,
   actor: Actor,
@@ -372,6 +377,7 @@ export async function rescheduleIndividualWorkout(
 }
 
 /** Exact old commands remain valid for unlinked history; new bound records cannot bypass their position. */
+/** Loads the sequence and permission facts needed before starting a workout. */
 export async function workoutStartContext(
   tx: Tx,
   institution: string,
@@ -422,6 +428,7 @@ export async function workoutStartContext(
   return { position, occurrence };
 }
 
+/** Checks that a linked session still belongs to a writable athlete-plan position. */
 export async function assertLinkedWorkoutWritable(
   tx: Tx,
   institution: string,
@@ -434,6 +441,7 @@ export async function assertLinkedWorkoutWritable(
     throw new ApiError(409, "workout_not_actionable");
 }
 
+/** Marks a plan position complete after confirming its workout has a valid result. */
 export async function resolveCompletedWorkout(
   tx: Tx,
   actor: Actor,
@@ -479,6 +487,7 @@ export async function resolveCompletedWorkout(
   });
 }
 
+/** Stops future automatic preparation when an athlete plan is ended or changed. */
 export async function stopAssignmentWork(
   tx: Tx,
   actor: Actor,

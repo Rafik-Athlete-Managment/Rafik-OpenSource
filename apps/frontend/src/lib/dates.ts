@@ -19,6 +19,7 @@ export function formatInstant(
     timeZone: timezone,
   }).format(typeof value === 'string' ? new Date(value) : value)
 }
+/** Chooses a valid timezone for display, falling back when the profile value is invalid. */
 export function displayTimezone(
   preference?: string | null,
   device = Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -34,6 +35,7 @@ export function displayTimezone(
   }
   return 'UTC'
 }
+/** Returns the calendar date at a timezone without changing the underlying instant. */
 export function localDate(timezone: string, instant: Date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
@@ -42,6 +44,7 @@ export function localDate(timezone: string, instant: Date = new Date()) {
     day: '2-digit',
   }).format(instant)
 }
+/** Moves a date-only value by whole calendar days without timezone conversion. */
 export function addDays(date: string, days: number) {
   const d = new Date(date + 'T12:00:00Z')
   d.setUTCDate(d.getUTCDate() + days)

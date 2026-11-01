@@ -1,3 +1,4 @@
+<!-- Shows a recorded workout so an authorized coach can review the athlete’s results. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import { onMounted, ref, computed, watch } from 'vue'

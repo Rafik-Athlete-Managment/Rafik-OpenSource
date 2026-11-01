@@ -1,3 +1,4 @@
+<!-- Group workout workspace: selects participants and coordinates their recording and review. -->
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

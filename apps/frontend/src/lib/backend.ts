@@ -22,6 +22,7 @@ type RequestOptions = RequestInit & {
   feedback?: 'errors' | 'success' | 'none'
   successMessage?: string
 }
+/** Sends a typed request to the Rafik API and turns failed responses into app errors. */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { feedback = 'errors', successMessage, ...init } = options
   const method = (init.method || 'GET').toUpperCase()
@@ -140,6 +141,8 @@ export const api = {
     changed(null)
   },
 }
+/** Returns the API URL for the selected program cover image. */
 export const programImage = (id: string) => url + '/v1/program-media/' + encodeURIComponent(id)
+/** Returns the API URL for the installation logo at the current version. */
 export const instanceLogo = (version: string) =>
   url + '/v1/instance/branding/logo?v=' + encodeURIComponent(version)

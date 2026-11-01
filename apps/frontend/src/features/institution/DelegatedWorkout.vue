@@ -1,3 +1,4 @@
+<!-- Lets an authorized coach record or finish an athlete workout on the athlete’s behalf. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

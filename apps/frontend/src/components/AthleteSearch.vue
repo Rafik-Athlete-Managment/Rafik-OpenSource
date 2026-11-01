@@ -1,3 +1,4 @@
+<!-- Athlete search: filters the supplied athlete list and returns the selected person. -->
 <script setup lang="ts">
 import { language as l } from '../lib/i18n'
 defineProps<{ modelValue: string }>()

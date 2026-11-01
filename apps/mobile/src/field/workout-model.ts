@@ -4,6 +4,7 @@ export type { FieldWorkoutEntry, FieldWorkoutPackage }
 const invalid = () => Error('Invalid workout package. Refresh it online before recording.')
 const text = (v: unknown): v is string => typeof v === 'string'
 const uuid = (v: unknown): v is string => text(v) && /^[a-f0-9-]{36}$/i.test(v)
+/** Checks a downloaded workout package before the phone allows it to be opened. */
 export function workoutPackage(input: unknown): FieldWorkoutPackage {
   const p = input as FieldWorkoutPackage
   if (
@@ -82,6 +83,7 @@ export function workoutPackage(input: unknown): FieldWorkoutPackage {
       : null,
   }
 }
+/** Checks the coach's actual exercise values before saving or finishing a workout. */
 export function validateEntries(
   p: FieldWorkoutPackage,
   entries: FieldWorkoutEntry[],
@@ -133,6 +135,7 @@ export function validateEntries(
   if (complete && entries.some((e) => !e.completed))
     throw Error('Mark every set done before finishing the workout.')
 }
+/** Checks whether the scheduled workout has reached its allowed start time. */
 export function startTimeReached(p: FieldWorkoutPackage, now = new Date()) {
   if (p.starts_at) return now.getTime() >= Date.parse(p.starts_at)
   const parts = new Intl.DateTimeFormat('en', {

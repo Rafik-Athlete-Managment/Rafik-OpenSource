@@ -25,6 +25,6 @@ export function checkedLocalDateText(timezone: string, at: Date) {
   }
 }
 
-/** The local day as a UTC-midnight Date, matching how Prisma returns PostgreSQL date columns. */
+/** The local day as UTC midnight, matching PostgreSQL date columns. */
 export const localDay = (timezone: string, at: Date) =>
   new Date(localDateText(timezone, at) + "T00:00:00Z");

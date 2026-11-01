@@ -10,6 +10,7 @@ export function timezoneOptions(selected = ''): string[] {
   return [...new Set(['UTC', selected, ...values])].sort()
 }
 
+/** Shows a timezone name and its current UTC offset in the selector. */
 export function timezoneLabel(zone: string, at = new Date()): string {
   const offset = new Intl.DateTimeFormat('en', {
     timeZone: zone,

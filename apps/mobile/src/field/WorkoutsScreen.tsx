@@ -27,6 +27,7 @@ import { WorkoutSync, requireWorkoutSupport } from './workout-sync'
 import { workoutNumber, type WorkoutMeasure } from './workout-input'
 import { Button, displayDate, type Styles } from './ui'
 
+/** Downloads and records individual workouts, keeping drafts safe while offline or syncing. */
 export function WorkoutsScreen({
   client,
   store,

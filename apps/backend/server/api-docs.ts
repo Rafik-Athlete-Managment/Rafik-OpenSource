@@ -14,6 +14,7 @@ const assets: Record<string, { path: string; type: string }> = {
   },
 };
 
+/** Builds the local Swagger UI script, optionally enabling its interactive controls. */
 export function swaggerInitializer(interactive: boolean) {
   return `"use strict";
 (() => {

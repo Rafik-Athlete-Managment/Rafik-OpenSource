@@ -301,6 +301,7 @@ router.beforeEach(async (to, from) => {
       return '/dashboard'
   }
 })
+/** Accepts only a safe in-app return path after sign-in; otherwise uses the dashboard. */
 export const safeNext = (value: unknown, fallback = '/dashboard') =>
   typeof value === 'string' &&
   value.startsWith('/') &&

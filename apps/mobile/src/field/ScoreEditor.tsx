@@ -7,6 +7,7 @@ import type { FieldStore } from './store'
 import { operationId } from './native'
 import { Button, type Styles } from './ui'
 
+/** Lets a coach enter, save and retry one athlete's assessment results on the device. */
 export function ScoreEditor({
   owner,
   event,

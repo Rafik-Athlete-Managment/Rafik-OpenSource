@@ -2,6 +2,7 @@ import { type Actor } from "./db.ts";
 import { scoped } from "./institution.ts";
 import { role } from "./programming.ts";
 import { ApiError } from "./db.ts";
+/** Lists workout follow-up items that the caller is permitted to review. */
 export async function followUp(actor: Actor, id: string, q: URLSearchParams) {
   const view = role(q.get("view"));
   if (view === "trainee") throw new ApiError(403, "forbidden");

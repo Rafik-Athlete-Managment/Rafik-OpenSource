@@ -1,3 +1,4 @@
+<!-- Searches and manages the institution exercise library used by programs and workouts. -->
 <script setup lang="ts">
 import { useListPageSize } from '../../lib/list-page-size'
 import { loadEditorDraft } from '../../lib/editor-draft'

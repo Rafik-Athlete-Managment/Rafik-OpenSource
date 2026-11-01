@@ -1,3 +1,4 @@
+<!-- Shows period-labelled institution activity measures available to the signed-in staff role. -->
 <script setup lang="ts">
 import { useLiveSearch } from '../../lib/live-search'
 import { institutionContext } from '../../app/institution'

@@ -1,3 +1,4 @@
+<!-- Lists past recorded workout sessions and opens their review details. -->
 <script setup lang="ts">
 import { PhTray, PhCaretRight } from '@phosphor-icons/vue'
 import { useLiveSearch } from '../../lib/live-search'

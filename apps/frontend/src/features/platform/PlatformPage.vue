@@ -1,3 +1,4 @@
+<!-- Shows installation-level controls reserved for platform administrators. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import { ref, onMounted } from 'vue'

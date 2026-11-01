@@ -16,6 +16,7 @@ function observe(reg: ServiceWorkerRegistration) {
     }
   })
 }
+/** Registers the service worker that checks for and installs web app updates. */
 export function registerAppUpdates() {
   if (!updatesSupported || registration) return
   // Register immediately; failed installation must not imply offline availability.
@@ -30,6 +31,7 @@ export function registerAppUpdates() {
       updateState.value = 'failed'
     })
 }
+/** Checks whether a newer web app build is ready and updates the visible status. */
 export async function checkAppUpdate() {
   if (!updatesSupported || updateState.value === 'checking') return
   updateState.value = 'checking'

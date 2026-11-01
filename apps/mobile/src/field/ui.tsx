@@ -3,6 +3,7 @@ import type { Language } from './translations'
 import { Platform, Pressable, StyleSheet, Text } from 'react-native'
 
 export type Styles = ReturnType<typeof makeStyles>
+/** Renders the shared phone action button with primary, danger and disabled states. */
 export function Button({
   title,
   onPress,
@@ -39,11 +40,14 @@ export function Button({
   )
 }
 
+/** Formats a date for display in the selected phone language. */
 export const displayDate = (date: string, language: Language = 'en') =>
   new Date(date).toLocaleString(language === 'ar' ? 'ar' : 'en')
+/** Formats a device-local calendar day as YYYY-MM-DD. */
 export const localDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
+/** Creates the shared phone styles for the selected theme and text direction. */
 export function makeStyles(light: boolean, language: Language = 'en') {
   // Android 0.88 maps 'left' to paragraph start; 'right' becomes the RTL end.
   const textAlign =

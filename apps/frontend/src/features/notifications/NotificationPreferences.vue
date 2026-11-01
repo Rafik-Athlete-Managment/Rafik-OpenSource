@@ -1,3 +1,4 @@
+<!-- Lets the user choose which notification categories they receive. -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { request } from '../../lib/backend'

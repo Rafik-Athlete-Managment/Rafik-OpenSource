@@ -1,3 +1,4 @@
+<!-- Update notice: tells the user when a newer web app version is ready to load. -->
 <script setup lang="ts">
 import { checkAppUpdate, updatesSupported, updateState } from '../app/updates'
 import { language as l } from '../lib/i18n'

@@ -19,6 +19,7 @@ import { Button, makeStyles, type Styles } from './ui'
 import { InstitutionScreen } from './InstitutionScreen'
 
 type Runtime = { client: NativeClient; store: FieldStore }
+/** Signs in the coach, selects the institution connection and opens the field tools. */
 export default function Home() {
   const { t, language } = useLanguage()
   const styles = makeStyles(useColorScheme() === 'light', language)

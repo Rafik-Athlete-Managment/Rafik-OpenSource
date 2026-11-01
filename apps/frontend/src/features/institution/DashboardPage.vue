@@ -1,3 +1,4 @@
+<!-- Routes the signed-in institution member to the dashboard for their role. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

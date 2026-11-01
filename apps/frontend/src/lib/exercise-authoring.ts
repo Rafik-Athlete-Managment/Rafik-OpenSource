@@ -1,6 +1,7 @@
 import type { Exercise, PrescriptionExercise } from './domain'
 
 /** Picker integrity only; publishing authority and snapshot validation remain on the server. */
+/** Replaces an exercise with a catalog movement while keeping its prescription. */
 export function selectMovement(ex: PrescriptionExercise, id: string, catalog: Exercise[]) {
   const selected = catalog.find((item) => item.id === id && item.active !== false)
   if (!selected || id === ex.exerciseId) return false
@@ -13,6 +14,7 @@ export function selectMovement(ex: PrescriptionExercise, id: string, catalog: Ex
   return true
 }
 
+/** Adds an allowed substitute movement to an exercise prescription. */
 export function addExerciseAlternative(ex: PrescriptionExercise, id: string, catalog: Exercise[]) {
   const alternatives = ex.alternatives || []
   const selected = catalog.find((item) => item.id === id && item.active !== false)

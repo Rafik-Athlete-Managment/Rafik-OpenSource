@@ -1,3 +1,4 @@
+<!-- Shows recorded assessment results for an athlete or institution event. -->
 <script setup lang="ts">
 import { preferredTimezone } from '../../lib/display-time'
 import { institutionContext } from '../../app/institution'

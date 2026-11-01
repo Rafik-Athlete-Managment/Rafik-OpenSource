@@ -1,6 +1,7 @@
 import { asActor, ApiError, type Actor } from "./db.ts";
 import { institutionAccountData } from "./account-data.ts";
 
+/** Reads or saves the signed-in user's name, language, units and timezone. */
 export async function accountProfile(
   actor: Actor,
   input: Record<string, unknown>,
@@ -31,6 +32,7 @@ export async function accountProfile(
     return rows[0]?.value;
   });
 }
+/** Collects the signed-in user's account data into an exportable response. */
 export async function accountExport(actor: Actor) {
   const own = await asActor(actor, async (tx) => ({
     profile: await tx.profiles.findUnique({ where: { id: actor.id } }),
@@ -45,6 +47,7 @@ export async function accountExport(actor: Actor) {
     exportedAt: new Date().toISOString(),
   };
 }
+/** Previews or performs account deletion after the user confirms the request. */
 export async function accountDeletion(
   actor: Actor,
   input: Record<string, unknown>,

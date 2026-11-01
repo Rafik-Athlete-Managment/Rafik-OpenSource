@@ -8,6 +8,7 @@ type ActualResult = { reps: number; seconds?: number | null; metres?: number | n
  */
 export type MeasureField = 'load' | 'reps' | 'seconds' | 'metres' | 'effort'
 
+/** Chooses the two measurement labels used for the selected exercise type. */
 export function measureFields(kind?: ExerciseKind): { first: MeasureField; second: MeasureField } {
   const first = kind === 'timed' ? 'seconds' : kind === 'distance' ? 'metres' : 'load'
   return { first, second: first === 'load' ? 'reps' : 'effort' }

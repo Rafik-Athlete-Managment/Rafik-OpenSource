@@ -1,3 +1,4 @@
+<!-- Lists unfinished workouts that need a coach’s review or follow-up action. -->
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'

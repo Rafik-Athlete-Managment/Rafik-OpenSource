@@ -58,13 +58,16 @@ export interface LocalSession {
   restUntil?: number
   updatedAt: string
 }
+/** Makes a JSON-safe copy before a form edits a value owned by another view. */
 export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
+/** Converts an exercise load between kilograms and pounds. */
 export const convertLoad = (value: number, from: Unit, to: Unit) =>
   from === to
     ? value
     : Math.round((from === 'kg' ? value * 2.2046226218 : value / 2.2046226218) * 100) / 100
 
 /** Hydrate old local metadata without changing owner IDs or exact pending operation payloads. */
+/** Restores the institution name saved with a local session for offline display. */
 export function restoreInstitution(row: LocalSession | undefined) {
   if (row) {
     const previous = row.session as Session & { workspace_id?: string }

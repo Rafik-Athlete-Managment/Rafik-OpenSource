@@ -313,6 +313,7 @@ const arabic: Record<string, string> = {
   Excused: 'معذور',
 }
 
+/** Translates a field-app message and keeps the original text if no translation exists. */
 export function translate(language: Language, text: string): string {
   if (language === 'en' || !text) return text
   if (arabic[text]) return arabic[text]

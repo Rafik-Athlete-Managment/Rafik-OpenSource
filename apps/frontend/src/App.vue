@@ -1,3 +1,4 @@
+<!-- App shell: restores account state, applies the selected theme and renders the active route. -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'

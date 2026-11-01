@@ -1,3 +1,4 @@
+<!-- Lists the signed-in user’s notifications and opens the related record. -->
 <script setup lang="ts">
 import { preferredTimezone } from '../../lib/display-time'
 import PageHeading from '../../components/PageHeading.vue'

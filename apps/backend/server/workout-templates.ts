@@ -17,6 +17,7 @@ type Input = Record<string, unknown>;
 type Self = Awaited<ReturnType<typeof access>>;
 
 /** Normalize a single workout using the same catalog/prescription checks as program publication. */
+/** Copies a template's current exercises into a program or event without linking future edits. */
 export async function workoutSnapshot(
   tx: Tx,
   institution: string,
@@ -79,6 +80,7 @@ export async function workoutSnapshot(
   )) as unknown as Prescription;
   return prescription.days[0] as unknown as Prisma.InputJsonObject;
 }
+/** Loads one active workout template that the caller may import or review. */
 export async function selectedWorkoutTemplate(
   tx: Tx,
   institution: string,
@@ -92,6 +94,7 @@ export async function selectedWorkoutTemplate(
   if (row.revision !== revision) throw new ApiError(409, "conflict");
   return row;
 }
+/** Lists searchable workout templates visible to the current institution role. */
 export async function workoutTemplates(
   actor: Actor,
   institution: string,
@@ -131,6 +134,7 @@ export async function workoutTemplates(
     };
   });
 }
+/** Creates, edits, archives or restores an institution workout template. */
 export async function workoutTemplateCommand(
   actor: Actor,
   institution: string,

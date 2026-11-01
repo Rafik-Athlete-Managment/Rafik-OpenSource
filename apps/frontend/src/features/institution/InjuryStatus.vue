@@ -1,3 +1,4 @@
+<!-- Shows and updates participation restrictions while keeping health details role-limited. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, ref } from 'vue'

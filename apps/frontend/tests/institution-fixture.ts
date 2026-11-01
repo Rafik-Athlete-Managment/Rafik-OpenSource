@@ -28,6 +28,7 @@ const sql = (input: string) =>
     { cwd: root, input, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
   )
 type Person = { id: string; email: string; session: { cookie: string } }
+/** Creates isolated browser-test users and institution records with owned teardown. */
 export async function institutionFixture() {
   if (
     !readFileSync(composeFile, 'utf8').startsWith('name: ${RAFIK_INSTANCE_ID:-rafik-prisma-local}')

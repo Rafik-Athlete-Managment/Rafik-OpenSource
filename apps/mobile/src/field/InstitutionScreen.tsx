@@ -35,6 +35,7 @@ import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
 
+/** Main field screen: loads event rosters, records attendance and syncs changes. */
 export function InstitutionScreen({
   client,
   store,

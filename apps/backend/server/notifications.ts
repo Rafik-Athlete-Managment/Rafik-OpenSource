@@ -12,6 +12,7 @@ export type Preferences = Record<
   (typeof categories)[number],
   { in_app: boolean; email: boolean }
 >;
+/** Returns the notification categories shown in account preferences by default. */
 export const defaultCategories = () =>
   Object.fromEntries(
     categories.map((k) => [k, { in_app: true, email: false }]),
@@ -30,6 +31,7 @@ async function asRecipient<T>(
     await tx.$executeRawUnsafe("SET LOCAL ROLE rafik_api");
   }
 }
+/** Reads or saves notification settings for the signed-in user. */
 export async function notificationPreferences(
   actor: Actor,
   input?: Record<string, unknown>,
@@ -105,6 +107,7 @@ export async function notificationPreferences(
     return { ...current, timezone: profile.timezone };
   });
 }
+/** Resolves the members who should receive a notification for an institution event. */
 export async function notificationTarget(
   tx: Tx,
   n: Notification,
@@ -205,6 +208,7 @@ export async function notificationTarget(
   return null;
 }
 
+/** Loads the signed-in user's inbox with unread counts and pagination details. */
 export async function notificationInbox(actor: Actor, q: URLSearchParams) {
   const offset = pageOffset(q.get("offset"));
   return db.$transaction(async (tx) => {
@@ -257,6 +261,7 @@ export async function notificationInbox(actor: Actor, q: URLSearchParams) {
     return { items, next: candidates.length > 25 ? offset + 25 : null };
   });
 }
+/** Marks one notification as read after checking that it belongs to the user. */
 export async function readNotification(
   actor: Actor,
   input: Record<string, unknown>,
@@ -280,6 +285,7 @@ export async function readNotification(
     return { read: true };
   });
 }
+/** Queues reminders for upcoming events without creating duplicate sends. */
 export async function prepareReminders(tx: Tx) {
   await tx.$queryRaw`SELECT public.prepare_notification_reminders()::text`;
 }
@@ -302,6 +308,7 @@ export const localSink: NotificationSink = {
     });
   },
 };
+/** Delivers queued notifications through the configured notification adapter. */
 export async function dispatchNotifications(
   sink: NotificationSink = localSink,
 ) {

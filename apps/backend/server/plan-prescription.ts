@@ -17,6 +17,7 @@ export function effectivePlan<
       }
     : assignment.institution_versions;
 }
+/** Reads the saved adaptation revision so edits can detect a stale plan copy. */
 export function adaptationRevision(assignment: { adaptation?: unknown }) {
   return (assignment.adaptation as { revision?: number } | null)?.revision || 0;
 }

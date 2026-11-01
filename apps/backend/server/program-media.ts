@@ -22,6 +22,7 @@ function imageType(bytes: Buffer, type: string) {
           bytes.subarray(8, 12).toString() === "WEBP"
         : false;
 }
+/** Saves media attached to a program after confirming the caller can edit it. */
 export async function putProgramMedia(
   actor: Actor,
   institution: string,
@@ -77,6 +78,7 @@ export async function putProgramMedia(
     return { id };
   });
 }
+/** Retrieves program media after checking the caller's access to that program. */
 export async function getProgramMedia(actor: Actor, id: string) {
   uuid(id);
   const media = (

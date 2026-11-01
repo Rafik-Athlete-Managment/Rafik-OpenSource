@@ -31,6 +31,7 @@ function messageAssets(input: Record<string, unknown>): string[] {
     throw new ApiError(400, "invalid_request");
   return assets;
 }
+/** Checks channel membership and role rules before returning private conversation data. */
 export async function channelAccess(
   tx: Tx,
   id: string,
@@ -69,6 +70,7 @@ export async function channelAccess(
     throw new ApiError(403, "conversation_unavailable");
   return channel;
 }
+/** Lists conversations and messages visible to the signed-in institution member. */
 export async function communication(
   actor: Actor,
   id: string,
@@ -282,6 +284,7 @@ async function selectedPeople(
         await recipient(tx, id, self, view, m.id, true, "training");
   return { members, managers };
 }
+/** Starts conversations or applies a message, membership or read-state change. */
 export async function communicationCommand(
   actor: Actor,
   id: string,

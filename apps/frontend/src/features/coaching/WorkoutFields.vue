@@ -1,3 +1,4 @@
+<!-- Workout fields: edits the reusable sections and exercises for one workout. -->
 <script setup lang="ts">
 import WorkoutExerciseCard from './WorkoutExerciseCard.vue'
 import EmptyState from '../../components/EmptyState.vue'

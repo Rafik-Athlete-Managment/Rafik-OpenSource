@@ -12,18 +12,22 @@ const db = openDB<RafikDB>('rafik-revamp', 1, {
     db.createObjectStore('events', { keyPath: 'id' })
   },
 })
+/** Loads one workout saved on this browser for offline access. */
 export const getLocalSession = async (id: string) =>
   restoreInstitution(await (await db).get('sessions', id))
+/** Saves a workout and its sync state to this browser's local database. */
 export const putLocalSession = async (value: LocalSession) => {
   await (await db).put('sessions', value)
   return value
 }
+/** Lists local workouts that belong to the signed-in account. */
 export async function localSessions(owner: string) {
   return (await (await db).getAll('sessions'))
     .map((row) => restoreInstitution(row)!)
     .filter((s) => s.owner === owner)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 }
+/** Updates one saved workout inside a local database transaction. */
 export async function editLocalSession(id: string, fn: (row: LocalSession) => void) {
   const tx = (await db).transaction('sessions', 'readwrite')
   const value = restoreInstitution(await tx.store.get(id))
@@ -34,6 +38,7 @@ export async function editLocalSession(id: string, fn: (row: LocalSession) => vo
   await tx.done
   return value
 }
+/** Saves a small user draft locally so it remains available after navigation or reload. */
 export async function storeDraft(key: string, value: unknown) {
   await (
     await db
@@ -43,11 +48,14 @@ export async function storeDraft(key: string, value: unknown) {
     savedAt: new Date().toISOString(),
   })
 }
+/** Reads a locally saved draft and returns it as the requested draft type. */
 export const getDraft = async <T>(key: string) =>
   (await (await db).get('drafts', key))?.value as T | undefined
+/** Deletes a saved draft from this browser after it is no longer needed. */
 export const removeDraft = async (key: string) => {
   await (await db).delete('drafts', key)
 }
+/** Adds a local diagnostic event without storing private workout content. */
 export async function event(name: string, id: string) {
   const database = await db
   await database.put('events', { id: name + ':' + id, name, at: new Date().toISOString() })
@@ -57,7 +65,9 @@ export async function event(name: string, id: string) {
       await database.delete('events', e.id)
   }
 }
+/** Reads local diagnostic events for support and recovery screens. */
 export const diagnosticEvents = async () => (await db).getAll('events')
+/** Removes local sessions and drafts owned by an account that is signing out or deleting. */
 export async function removeAccountLocalData(owner: string) {
   const database = await db
   const tx = database.transaction(['sessions', 'drafts'], 'readwrite')

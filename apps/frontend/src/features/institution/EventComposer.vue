@@ -1,3 +1,4 @@
+<!-- Event editor: creates or updates a scheduled training event or assessment. -->
 <script setup lang="ts">
 import { institutionContext } from '../../app/institution'
 

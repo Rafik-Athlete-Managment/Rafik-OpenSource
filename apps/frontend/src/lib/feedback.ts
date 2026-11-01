@@ -11,6 +11,7 @@ const toast = Swal.mixin({
 })
 const notifiedErrors = new WeakSet<object>()
 
+/** Shows a short success toast for a completed user action. */
 export function notifySuccess(message: string) {
   const rtl = locale.value === 'ar'
   void toast.fire({
@@ -21,6 +22,7 @@ export function notifySuccess(message: string) {
   })
 }
 
+/** Shows an error toast while leaving the failed form available for correction. */
 export function notifyError(message: string) {
   const rtl = locale.value === 'ar'
   void toast.fire({
@@ -31,6 +33,7 @@ export function notifyError(message: string) {
   })
 }
 
+/** Shows one error toast for a repeated failure instead of repeating it on every retry. */
 export function notifyErrorOnce(error: unknown, message: string) {
   if (error && (typeof error === 'object' || typeof error === 'function')) {
     if (notifiedErrors.has(error)) return

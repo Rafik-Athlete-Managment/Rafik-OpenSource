@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Founder-focused code explanations — 1 November 2026
+
+Adjusted the readability standard to help the founder follow the implementation in plain language. Added purpose comments above all 292 tracked top-level exported TypeScript functions and explanatory headers to all 104 Vue single-file components, including mobile and test helpers. Comments describe the job and relevant permissions, persistence or data flow; tiny internal helpers remain documented only when their behavior is not clear from context. See [the maintainer guide](./maintainer-guide.md#typescript-and-refactoring-standards), [audit](../known-issues/code-quality-audit.md#readability-and-comments--1-november-2026) and [verification record](../verification/README.md#founder-focused-code-explanations--1-november-2026).
+
 ## TypeScript readability and comments — 1 November 2026
 
 Screened 207 tracked TypeScript/TSX files and 103 Vue TypeScript blocks across frontend, backend, mobile and shared packages; the AST parse found no syntax diagnostics. Manually reviewed the highest-complexity security, health-data, routing, communication, calendar and native offline-state modules. Added comments only for rationale and constraints that names/types do not explain; removed one redundant identical-branch expression. Simple types, translation maps, projections and scenario-named tests do not need filler comments. Typecheck/format/docs results and the review's limits are in [verification](../verification/README.md#typescript-readability-pass--1-november-2026) and [the audit](../known-issues/code-quality-audit.md#readability-and-comments--1-november-2026).

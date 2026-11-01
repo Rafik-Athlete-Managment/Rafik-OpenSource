@@ -1,3 +1,4 @@
+<!-- Searches athlete nutrition plans and opens one for review or editing. -->
 <script setup lang="ts">
 import { useLiveSearch } from '../../lib/live-search'
 import { institutionContext } from '../../app/institution'

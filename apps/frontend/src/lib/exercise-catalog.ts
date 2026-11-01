@@ -100,10 +100,13 @@ const starterAreas: Record<string, string> = {
   'stationary-cycle': 'cardio',
   'low-step-up': 'upper legs',
 }
+/** Returns the exercise's body area for labels and filters. */
 export const exerciseArea = (e: Exercise) =>
   e.body_part || e.category || (!e.owner_id && !e.institution_id ? starterAreas[e.id] : '') || ''
+/** Returns all body areas associated with the exercise. */
 export const exerciseAreas = (e: Exercise) =>
   e.body_parts?.length ? e.body_parts : [exerciseArea(e)].filter(Boolean)
+/** Converts a stored exercise category into its display label. */
 export function categoryLabel(value: string) {
   return locale.value === 'ar'
     ? areas[value] || value
@@ -111,6 +114,7 @@ export function categoryLabel(value: string) {
       ? value[0]!.toUpperCase() + value.slice(1)
       : ''
 }
+/** Converts a stored equipment name into its display label. */
 export function equipmentLabel(value: string) {
   return locale.value === 'ar'
     ? equipmentArabic[value] || value
@@ -128,6 +132,7 @@ function normalizeEquipmentPart(value: string) {
     : normalized || null
 }
 
+/** Returns the equipment categories used to filter this exercise. */
 export function equipmentCategories(e: Exercise) {
   const result = new Set<string>()
   for (const part of (e.equipment_items?.join(', ') || e.equipment).split(
@@ -169,5 +174,6 @@ export const movements: Record<string, string> = {
   balance: 'توازن',
   plyometric: 'بليومتري',
 }
+/** Looks up a translated picker label and falls back to the original value. */
 export const optionLabel = (key: string, options: Record<string, string>) =>
   locale.value === 'ar' ? options[key] || key : key.charAt(0).toUpperCase() + key.slice(1)

@@ -55,6 +55,7 @@ const bodyAreas = new Set([
   "lower arms",
   "neck",
 ]);
+/** Converts a request value to a supported institution role or rejects it. */
 export const role = (v: unknown): Role => {
   if (!["admin", "trainer", "trainee"].includes(String(v)))
     throw new ApiError(400, "invalid_roles");
@@ -72,6 +73,7 @@ const date = (v: unknown) => {
     throw new ApiError(400, "invalid_date");
   return new Date(v + "T00:00:00Z");
 };
+/** Returns the exercise catalog entries the requested role may use. */
 export async function catalog(
   tx: Tx,
   id: string,
@@ -152,6 +154,7 @@ export type CoachScope = "primary" | "training";
  * Prisma member filter for athletes a coach may see in training scope. Wrapped in AND so
  * spreading it never replaces a caller's own OR clause.
  */
+/** Builds the database filter for plans assigned to one coach. */
 export const coachedBy = (coach: string) => ({
   AND: [
     {
@@ -166,6 +169,7 @@ export const coachedBy = (coach: string) => ({
     },
   ],
 });
+/** Lists the coaches assigned to an athlete, including their responsibility. */
 export async function coaches(
   tx: Tx,
   athlete: { id: string; trainer_id: string | null },
@@ -183,6 +187,7 @@ export async function coaches(
     select: { id: true },
   }));
 }
+/** Resolves an athlete or coach who may receive the requested program action. */
 export async function recipient(
   tx: Tx,
   id: string,
@@ -207,6 +212,7 @@ export async function recipient(
   return m;
 }
 /** Active supporting links of a coach: each covers one athlete for one sport or specialty. */
+/** Loads the active supporting-coach links used to determine plan access. */
 export async function supportingLinks(
   tx: Tx,
   institution: string,
@@ -227,6 +233,7 @@ type Links = Awaited<ReturnType<typeof supportingLinks>>;
  * Plans a coach may see: every plan of their primary athletes, and only plans labelled with
  * the linked sport for athletes they support. Wrapped in AND to compose with caller filters.
  */
+/** Builds the plan filter that includes the primary and active supporting coaches. */
 export const assignmentScope = (coach: string, links: Links) => ({
   AND: [
     {
@@ -244,6 +251,7 @@ export const assignmentScope = (coach: string, links: Links) => ({
   ],
 });
 /** Workout sessions follow the scope of the plan they were recorded against. */
+/** Builds the workout filter for sessions the primary or supporting coach may access. */
 export const sessionScope = (coach: string, links: Links) => ({
   AND: [
     {
@@ -261,6 +269,7 @@ export const sessionScope = (coach: string, links: Links) => ({
  * Plan writes: admins and the primary coach for any plan; a supporting coach only for plans
  * labelled with a sport they are linked to for this athlete (including the plan replaced).
  */
+/** Checks whether the current role can read or change the selected athlete plan. */
 export async function planAuthority(
   tx: Tx,
   institution: string,
@@ -286,6 +295,7 @@ export async function planAuthority(
     throw new ApiError(403, "trainee_unavailable");
   return m;
 }
+/** Creates the fixed program copy saved with an athlete's assignment. */
 export async function snapshot(
   tx: Tx,
   id: string,
@@ -305,6 +315,7 @@ export async function snapshot(
     >`SELECT public.snapshot_prescription_catalog(${p}::jsonb,${items}::jsonb) value`
   )[0].value;
 }
+/** Lists or loads programs and athlete plans visible to the requested role. */
 export async function programs(
   actor: Actor,
   id: string,
@@ -429,6 +440,7 @@ export async function programs(
     };
   });
 }
+/** Creates, edits, publishes, adapts or ends a program or athlete plan. */
 export async function programCommand(actor: Actor, id: string, input: Input) {
   const view = role(input.view);
   if (view === "trainee") throw new ApiError(403, "forbidden");
@@ -708,6 +720,7 @@ export async function programCommand(actor: Actor, id: string, input: Input) {
     authorize,
   );
 }
+/** Lists program shares that the current user is allowed to view. */
 export async function delivery(
   actor: Actor,
   id: string,
@@ -919,6 +932,7 @@ export async function delivery(
     };
   });
 }
+/** Shares or revokes a program after checking the coach and athlete relationship. */
 export async function deliveryCommand(actor: Actor, id: string, input: Input) {
   const view = role(input.view),
     action = String(input.action);
@@ -1268,6 +1282,7 @@ async function readableSession(
   return m;
 }
 /** Attributed versions of one session, oldest first; readable by anyone who can read the session. */
+/** Lists previous workout records that the caller is authorized to review. */
 export async function institutionSessionHistory(
   actor: Actor,
   sessionId: string,
@@ -1303,6 +1318,7 @@ export async function institutionSessionHistory(
     };
   });
 }
+/** Loads one institution workout session after checking the caller's access. */
 export async function institutionSession(
   actor: Actor,
   sessionId: string,
@@ -1343,6 +1359,7 @@ export async function institutionSession(
     };
   });
 }
+/** Starts, saves, finishes or reviews an individual athlete workout session. */
 export async function sessionCommand(actor: Actor, id: string, input: Input) {
   const view = role(input.view),
     action = String(input.action),
@@ -1638,6 +1655,7 @@ export async function sessionCommand(actor: Actor, id: string, input: Input) {
     authorize,
   );
 }
+/** Loads prior exercise results for an athlete when the caller may review them. */
 export async function previousInstitutionPerformance(
   actor: Actor,
   sessionId: string,
@@ -1665,6 +1683,7 @@ export async function previousInstitutionPerformance(
 }
 
 /** One rule for an assignment's next-workout state, shared by agenda and plan reads. */
+/** Reduces saved workout records to the current sequence and completion state. */
 export function workoutState(
   positionState: string | undefined,
   occurrence:
@@ -1700,6 +1719,7 @@ export function workoutState(
             : "ready";
 }
 /** Staff scheduling uses existing plan-specific authority and exact command receipts. */
+/** Schedules, moves or skips the next workout using the existing plan sequence. */
 export async function workoutSchedulingCommand(
   actor: Actor,
   institution: string,

@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue'
 export const locale = ref<'en' | 'ar'>(localStorage.getItem('rafik.locale') === 'ar' ? 'ar' : 'en')
+/** Chooses the English or Arabic version of a message using the current language. */
 export const language = (en: string, ar: string) => (locale.value === 'ar' ? ar : en)
 export const words = {
   home: ['Home', 'الرئيسية'],
@@ -100,6 +101,7 @@ export const words = {
   newSession: ['Start a new session', 'ابدأ حصة جديدة'],
 } as const
 export type Word = keyof typeof words
+/** Looks up a short interface label in the current language. */
 export const t = (key: Word) => words[key][locale.value === 'ar' ? 1 : 0]
 // Persist the choice and update direction together so Arabic layout stays RTL after reload.
 watch(
@@ -111,6 +113,7 @@ watch(
   },
   { immediate: true },
 )
+/** Converts an API or network error into an English or Arabic message for the user. */
 export function errorMessage(error: unknown): string {
   const raw =
     error instanceof Error

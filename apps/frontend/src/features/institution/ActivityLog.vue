@@ -1,3 +1,4 @@
+<!-- Lists institution actions for staff to review who changed a record and when. -->
 <script setup lang="ts">
 import { computed } from 'vue'
 import {

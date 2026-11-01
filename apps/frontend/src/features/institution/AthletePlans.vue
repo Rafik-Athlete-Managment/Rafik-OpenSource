@@ -1,3 +1,4 @@
+<!-- Athlete plan directory: searches assigned plans and opens their details for staff. -->
 <script setup lang="ts">
 import { PhTray, PhCalendarPlus } from '@phosphor-icons/vue'
 import OverflowMenu from '../../components/OverflowMenu.vue'

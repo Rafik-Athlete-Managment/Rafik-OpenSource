@@ -1,3 +1,4 @@
+<!-- Resource uploader: sends selected files and reports progress or recoverable errors. -->
 <script setup lang="ts">
 import FileDropzone from './FileDropzone.vue'
 import { ref, onUnmounted } from 'vue'

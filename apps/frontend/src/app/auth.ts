@@ -8,6 +8,7 @@ export const user = shallowRef<ApiUser | null>(null)
 export const profile = ref<Profile | null>(null)
 export const contexts = ref<Context[]>([])
 export const platform = ref(false)
+/** Loads the current user's institution and platform access after sign-in. */
 export async function refreshContexts() {
   const id = user.value?.id
   if (!id) {
@@ -29,6 +30,7 @@ export async function refreshContexts() {
   }
 }
 let init: Promise<void> | undefined
+/** Loads or updates the signed-in user's profile, then refreshes their access context. */
 export async function refreshProfile() {
   if (!user.value) {
     profile.value = null
@@ -54,6 +56,7 @@ export async function refreshProfile() {
     await refreshContexts()
   }
 }
+/** Starts session restoration once and listens for later sign-in or sign-out changes. */
 export function ready() {
   return (init ||= (async () => {
     if (!configured) return
@@ -71,6 +74,7 @@ export function ready() {
     })
   })())
 }
+/** Signs out through the API and clears the profile and access data held in the app. */
 export async function logout() {
   await api.logout()
   user.value = null

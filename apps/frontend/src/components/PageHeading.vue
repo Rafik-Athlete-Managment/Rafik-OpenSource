@@ -1,3 +1,4 @@
+<!-- Shared page heading: presents the view title, task description and optional actions. -->
 <template>
   <header class="ui-page-heading"><slot /></header>
 </template>

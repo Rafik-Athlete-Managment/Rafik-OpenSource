@@ -1,3 +1,4 @@
+<!-- Month calendar: lays out event dates and emits the day selected by the user. -->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PhCheckCircle } from '@phosphor-icons/vue'

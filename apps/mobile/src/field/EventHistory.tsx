@@ -47,6 +47,7 @@ function page(input: unknown, member: string, kind: string): Page {
   }
   return p
 }
+/** Shows one athlete's saved attendance or assessment history for the selected event. */
 export function EventHistory({
   client,
   event,

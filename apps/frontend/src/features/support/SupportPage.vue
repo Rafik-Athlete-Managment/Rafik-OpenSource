@@ -1,3 +1,4 @@
+<!-- Creates and tracks support requests for the current account or institution. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import { computed, onMounted, ref, watch } from 'vue'

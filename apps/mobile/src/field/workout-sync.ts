@@ -1,6 +1,7 @@
 import { ApiFailure, ConnectionFailure, failureText, type Owner } from './model.ts'
 import { checkCapabilities } from './capabilities.ts'
 import type { WorkoutStore } from './workout-store.ts'
+/** Confirms the server supports workout recording before queued phone work is sent. */
 export async function requireWorkoutSupport(request: (path: string) => Promise<unknown>) {
   try {
     const result = await checkCapabilities(request)

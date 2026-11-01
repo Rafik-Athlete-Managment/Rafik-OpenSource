@@ -1,3 +1,4 @@
+<!-- Lets an invited user choose a password before joining the institution. -->
 <script setup lang="ts">
 import PasswordField from '../../components/PasswordField.vue'
 import { ref } from 'vue'

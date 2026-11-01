@@ -1,3 +1,4 @@
+<!-- Coach dashboard: today's recording work, athlete status, planning and follow-up. -->
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { PhCalendarBlank, PhHeartbeat, PhInfo, PhArrowClockwise } from '@phosphor-icons/vue'

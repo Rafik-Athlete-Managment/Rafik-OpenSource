@@ -1,3 +1,4 @@
+<!-- Athlete dashboard: today's workouts and events, food logging and coach contact. -->
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { request } from '../../lib/backend'

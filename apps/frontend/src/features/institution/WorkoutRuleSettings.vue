@@ -1,3 +1,4 @@
+<!-- Configures whether an athlete plan prepares workouts automatically and when. -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { profile } from '../../app/auth'

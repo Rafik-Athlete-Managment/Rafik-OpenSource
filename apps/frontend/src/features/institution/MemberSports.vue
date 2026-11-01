@@ -1,3 +1,4 @@
+<!-- Edits the sports and specialties associated with a member. -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { request } from '../../lib/backend'

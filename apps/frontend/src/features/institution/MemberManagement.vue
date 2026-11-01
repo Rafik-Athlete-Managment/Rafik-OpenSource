@@ -1,3 +1,4 @@
+<!-- Shows institution people by role and opens their profile or management actions. -->
 <script setup lang="ts">
 import SectionHeader from '../../components/SectionHeader.vue'
 import { computed, ref, watch, onUnmounted } from 'vue'

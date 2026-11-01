@@ -1,3 +1,4 @@
+<!-- Shows and records coach feedback for an athlete’s completed workout. -->
 <script setup lang="ts">
 import PageHeading from '../../components/PageHeading.vue'
 import { ref, onMounted, onUnmounted } from 'vue'

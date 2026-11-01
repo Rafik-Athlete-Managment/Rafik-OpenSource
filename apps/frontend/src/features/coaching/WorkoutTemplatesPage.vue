@@ -1,3 +1,4 @@
+<!-- Workout template library: searches, creates and manages reusable workouts. -->
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { institutionContext } from '../../app/institution'

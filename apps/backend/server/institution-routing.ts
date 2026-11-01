@@ -19,6 +19,7 @@ const opaque = new Set([
   "detail",
   "snapshot",
 ]);
+/** Converts institution identifiers at the published API compatibility boundary. */
 export function institutionTransport(value: unknown): unknown {
   if (Array.isArray(value)) return value.map((v) => institutionTransport(v));
   if (typeof value === "string") {
@@ -47,10 +48,12 @@ export function institutionTransport(value: unknown): unknown {
     ]),
   );
 }
+/** Converts API responses to the identifier names expected by supported clients. */
 export function responseTransport(_res: ServerResponse, value: unknown) {
   // Old acknowledged receipt objects may still carry the old transport names.
   return institutionTransport(institutionTransport(value));
 }
+/** Resolves supported institution URLs before the server dispatches an API handler. */
 export async function institutionRoute(
   url: URL,
   _res: ServerResponse,

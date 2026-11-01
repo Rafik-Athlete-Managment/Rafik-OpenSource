@@ -1,3 +1,4 @@
+<!-- Edits the institution name, logo and light/dark accent colors. -->
 <script setup lang="ts">
 import FileDropzone from '../../components/FileDropzone.vue'
 import { onMounted, ref } from 'vue'

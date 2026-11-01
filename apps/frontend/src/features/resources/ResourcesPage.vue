@@ -1,3 +1,4 @@
+<!-- Lists shared files and resources available to the current institution role. -->
 <script setup lang="ts">
 import EmptyState from '../../components/EmptyState.vue'
 import PageHeading from '../../components/PageHeading.vue'

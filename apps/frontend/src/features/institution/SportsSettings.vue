@@ -1,3 +1,4 @@
+<!-- Adds and updates the sports and coaching specialties offered by the institution. -->
 <script setup lang="ts">
 import SectionHeader from '../../components/SectionHeader.vue'
 import { computed, onMounted, ref } from 'vue'

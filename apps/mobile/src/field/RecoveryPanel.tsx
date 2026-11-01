@@ -15,6 +15,7 @@ import type { FieldStore } from './store'
 import { useLanguage } from './Language'
 import { Button, displayDate, type Styles } from './ui'
 
+/** Shows saved field work that needs review, retry or access recovery before syncing. */
 export function RecoveryPanel({
   owner,
   snapshot,

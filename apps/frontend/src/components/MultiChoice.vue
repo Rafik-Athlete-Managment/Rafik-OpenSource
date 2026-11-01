@@ -1,3 +1,4 @@
+<!-- Shared multi-select control: searches options and returns the selected values. -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { language as l } from '../lib/i18n'

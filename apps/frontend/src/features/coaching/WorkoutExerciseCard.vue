@@ -1,3 +1,4 @@
+<!-- Shared exercise editor: changes a prescribed movement, targets and alternatives in one card. -->
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import ExercisePicker from '../../components/ExercisePicker.vue'

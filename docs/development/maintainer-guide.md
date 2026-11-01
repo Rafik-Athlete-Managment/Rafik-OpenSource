@@ -22,7 +22,7 @@ Shared measurement facts live at `@rafik/shared/workout-measures`. The web set-m
 
 Verify references, runtime effects, peer/plugin dependencies and fixture cleanup before removal. Use existing shared UI components/design tokens; merge repeated CSS only after checking cascade, scoped selectors, responsive behavior and RTL/themes. Preserve package formatter conventions and avoid unrelated formatting churn. See the [audit and prioritized debt](../known-issues/code-quality-audit.md).
 
-Write comments for rationale, permission boundaries, transaction ordering, durable-state ownership and other constraints that are not clear from names and types. Do not add a comment to every file or restate a statement in prose; descriptive test names and straightforward data declarations need no comment.
+Write comments for the person reading the code, not just for an IDE or code reviewer. Above meaningful exported functions and UI components, use plain language to explain what the function/component is for, what important information it receives, what it returns or shows, and any important state, permission or persistence effect. Explain non-obvious private helpers where they interrupt the reader's understanding. Keep comments short and concrete; do not explain basic syntax, restate each line, or add boilerplate above tiny helpers and data declarations whose purpose is already clear. Prefer familiar words and define project-specific terms when they first matter.
 
 ## Native workout ownership and replay
 

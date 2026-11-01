@@ -28,6 +28,7 @@ import { ApiError, asActor, type Actor } from "./db.ts";
 import { scoped, uuid } from "./institution.ts";
 import { role, recipient } from "./programming.ts";
 import { calendarDate, pageOffset } from "./service-definitions.ts";
+/** Reads and validates the requested analytics date range and access scope. */
 export async function analyticWindow(actor: Actor, q: URLSearchParams) {
   const from = calendarDate(q.get("from")),
     to = calendarDate(q.get("to"));
@@ -45,6 +46,7 @@ export async function analyticWindow(actor: Actor, q: URLSearchParams) {
     return { from, to, zone, ...bounds };
   });
 }
+/** Builds institution activity metrics for administrators and coaches. */
 export async function institutionAnalytics(
   actor: Actor,
   id: string,
@@ -138,6 +140,7 @@ export async function institutionAnalytics(
     };
   });
 }
+/** Returns an athlete's assessment results for the requested date range. */
 export async function assessmentHistory(
   actor: Actor,
   id: string,
