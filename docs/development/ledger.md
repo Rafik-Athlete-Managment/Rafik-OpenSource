@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Founder device-validation walkthroughs — 1 November 2026
+
+Expanded the canonical instance guide so the founder can validate the web group-workout flow, current native individual capture, physical-phone SQLCipher fail-closed startup, owner separation, forced-stop recovery and USB-disconnected offline replay. Added a separate signed-upgrade procedure that applies only when a newer same-key release candidate exists. The published beta APK cannot test unreleased source, and native group recording remains unsupported; web group recording is already covered by the role walkthrough. See [instance validation](../testing/instance-validation.md#tonights-validation-route), [Android development](./android.md) and [Android release](../operations/android-release.md).
+
 ## Founder-focused code explanations — 1 November 2026
 
 Adjusted the readability standard to help the founder follow the implementation in plain language. Added purpose comments above all 292 tracked top-level exported TypeScript functions and explanatory headers to all 104 Vue single-file components, including mobile and test helpers. Comments describe the job and relevant permissions, persistence or data flow; tiny internal helpers remain documented only when their behavior is not clear from context. See [the maintainer guide](./maintainer-guide.md#typescript-and-refactoring-standards), [audit](../known-issues/code-quality-audit.md#readability-and-comments--1-november-2026) and [verification record](../verification/README.md#founder-focused-code-explanations--1-november-2026).

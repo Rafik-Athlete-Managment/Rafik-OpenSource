@@ -1,5 +1,9 @@
 # Verification record
 
+## Founder device walkthroughs — 1 November 2026
+
+Documentation only: the canonical instance guide now includes actionable physical-phone SQLCipher startup, owner isolation, force-stop recovery and offline replay steps, plus signed upgrade checks gated on a newer same-key release APK. Web group recording has an existing administrator/coach/athlete walkthrough; the phone app reports group recording unsupported. No device, APK upgrade or new runtime behavior was tested by this documentation change.
+
 ## Founder-focused code explanations — 1 November 2026
 
 Inventory: all 292 tracked top-level exported TypeScript functions now have plain-language purpose comments, and all 104 Vue single-file components have a header describing their role. This includes Backend, Frontend, Mobile, Shared, test helpers and the web offline-shell builder. Comments explain the job and important workflow effects; private one-line helpers and callbacks are not exhaustively annotated. The inventory counts tracked source, excluding generated declarations and dependencies.

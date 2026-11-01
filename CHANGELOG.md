@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Expand the canonical founder validation guide with a physical-phone workflow covering SQLCipher startup, account isolation, force-stop recovery, USB-disconnected offline sync and a separate signed-APK upgrade gate. Clarify that group recording is web-only while the native capability remains unsupported.
+
 - Add plain-language descriptions to all 292 tracked exported TypeScript functions and all 104 Vue components, explaining their purpose and important effects for contributors learning the codebase. Add this founder-focused reading standard to the maintainer guide and `AGENTS.md`.
 
 - Screen the tracked TypeScript and Vue TypeScript code across Backend, Frontend, Mobile and Shared. Add concise rationale comments at security, health-data, authorization, offline-recovery and mounted-state boundaries; remove one redundant conditional without changing behavior. Record coverage and limits in the code-quality audit.

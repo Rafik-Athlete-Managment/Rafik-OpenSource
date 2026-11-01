@@ -1,5 +1,15 @@
 # Instance validation walkthrough
 
+## Tonight's validation route
+
+Use this guide with the same source branch/backend as the app you are testing. The published beta APK does not include unreleased beta.3 changes. No step requires resetting or reseeding the database.
+
+1. Run the applicable [administrator](#administrator), [coach](#coach) and [athlete](#athlete) web walkthroughs. For group workouts, use the detailed [template and group-workout flow](#workout-templates-and-group-workouts--unreleased-beta3).
+2. For the unreleased individual workout phone flow, follow [native individual workouts](#native-individual-workouts--unreleased-beta3), then run the [physical-phone, encrypted-storage and offline-recovery checks](#physical-phone-encrypted-storage-and-offline-recovery--unreleased-beta3).
+3. Use the [signed APK upgrade check](#signed-android-upgrade--requires-a-new-release-candidate) only when there is a newer signed candidate APK. It cannot be tested using the same installed APK or the published beta.2 artifact.
+
+Group workout recording is available in the web workflow. The phone app currently reports group recording unsupported; there is no native group recorder to validate or use offline.
+
 ## Native individual workouts — unreleased beta.3
 
 Prerequisites: matching release-branch backend and an installed native development client using this source (`npm run mobile:start`); separate synthetic administrator, coach and athlete accounts; no database reset or reseed. The published beta.2 APK does not contain this source update. Use clearly named test records and existing signing/encryption identities. Rendered/native acceptance is still pending; Node/API evidence is separate.
@@ -30,6 +40,86 @@ Prerequisites: matching release-branch backend and an installed native developme
 2. As administrator, review the same history/plan/calendar. Expect one occurrence/workout, retained prior history and no duplicate progression. Existing athlete-started unfinished work may still be finished by an authorized coach under ADR 0031; completed self-logged actuals retain their protection.
 
 Report app/backend revisions, role, workout/occurrence ID, expected/actual behavior, connection/USB state and exact message. Do not include passwords, tokens or signing material. Group workout capture, media download, native alternative selection, full historical reconciliation and physical upgrade packaging remain outside this slice.
+
+## Physical phone, encrypted storage and offline recovery — unreleased beta.3
+
+This check exercises the current native source on physical hardware. It does not require an emulator. Use a synthetic coach and athlete, a matching local backend, and a Galaxy S20+ or another Android phone. Record the phone model and Android version. A development build and a release APK are different artifacts; the published beta.2 app cannot validate beta.3 source changes.
+
+### Start the source app on a USB-connected phone
+
+1. From the repository root, start the local database/API and web dashboard using [Start the local app](#start-the-local-app). Complete migrations through the normal startup flow and prepare a synthetic coach, athlete, event and eligible individual workout. Assign the coach to the relevant athlete/event. Keep the API listening on `127.0.0.1:55331`.
+2. Connect and unlock the phone with USB debugging enabled. In PowerShell at the repository root, confirm the phone is authorized and forward only the local API port:
+
+   ```powershell
+   $rafikAdb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+   & $rafikAdb devices -l
+   & $rafikAdb -d reverse tcp:55331 tcp:55331
+   ```
+
+   The device should show `device`, not `unauthorized`. On Linux/macOS, use `adb devices -l` and `adb -d reverse tcp:55331 tcp:55331`.
+
+3. From the repository root, build and install the current native development client on that phone:
+
+   ```sh
+   npm run mobile:android -- --device
+   ```
+
+   Keep the Metro terminal running. If the build is already installed and only JavaScript changed, start Metro with `npm run mobile:start`; do not rebuild for every JS-only edit. The first native build requires the Android SDK/JDK configured for this checkout. Expo Go is not supported because this app requires SQLCipher.
+
+4. Sign in to Rafik Field using `http://127.0.0.1:55331` and the synthetic coach. The USB reverse rule lets the phone reach the laptop's local API. Open the schedule and download the event and eligible workout while online.
+
+### Check SQLCipher startup and stored work
+
+1. On first launch, wait for **Opening encrypted field storage** to finish. The coach schedule should open. If the app reports **Encrypted storage is unavailable**, stop: this build did not pass the SQLCipher runtime check and must not store field records.
+2. Record attendance on the downloaded event and enter a recognizable synthetic assessment value. On the individual workout, start it and enter a recognizable note/value. Wait for the device-save acknowledgment before going offline.
+3. Turn off Wi-Fi and mobile data. Remove USB forwarding while leaving the cable connected:
+
+   ```powershell
+   & $rafikAdb -d reverse --remove tcp:55331
+   & $rafikAdb -d reverse --list
+   ```
+
+   Confirm the `55331` rule is absent. Airplane mode by itself is not enough while ADB forwarding remains enabled.
+
+4. Force-stop Rafik from Android **Settings → Apps → Rafik Field → Force stop**, reopen it, and sign in only if the app requests the same account's credentials. Reopen the downloaded event and workout. Expect the device-saved values and pending state to remain, clearly distinct from institution-confirmed data.
+5. Sign out only after confirming pending work is retained. Sign in as a different synthetic coach on the same instance; the first coach's event/workout drafts must not appear or be replayable. Sign back in as the original coach and confirm the drafts are still available. Do not clear app data, uninstall the app, or change account ownership to recover a pending item.
+
+### Reconnect and verify recovery
+
+1. Restore the local API connection and USB forwarding:
+
+   ```powershell
+   & $rafikAdb -d reverse tcp:55331 tcp:55331
+   ```
+
+   Reconnect the laptop/API and phone to the network. Use the app's normal access refresh and sync/retry actions.
+
+2. Confirm the original saved requests reach the server once. Open the web event/workout history and verify the expected values, coach attribution and completion state. Retry a confirmed request only through the app's normal retry path; there must be no duplicate event result or workout completion.
+3. For one synthetic item, interrupt connectivity during sync. The item must remain pending/uncertain until the app resolves it with the same command identity. Do not clear it or create a replacement command merely because the response was delayed.
+4. If a definitive authorization/revision conflict occurs, use the app's review flow. Verify the device copy remains until an explicit decision; an access denial or a successful unrelated request must not clear the warning.
+5. After all test commands are acknowledged, remove only the synthetic records you created through normal application controls. Remove the USB reverse rule with `& $rafikAdb -d reverse --remove tcp:55331`.
+
+This walk-through checks fail-closed SQLCipher startup, persistence through a forced app stop, account separation and server recovery. It does not prove resistance to a rooted device, forensic extraction, key loss or Android backup restoration. The app has no remote wipe; uninstalling/clearing app data or losing its SecureStore key can make unsent records unrecoverable. Never use real athlete data for this check.
+
+## Signed Android upgrade — requires a new release candidate
+
+This is a release-candidate gate, not a beta.3 task that can be completed with the published beta.2 APK. Wait until there is a newer standalone APK signed with the same existing Rafik release key, with a strictly higher `android.versionCode`, and with matching non-secret `build.json` and `SHA256SUMS`. Follow [Android beta builds and updates](../operations/android-release.md#upgrade-without-losing-saved-work) to identify the artifacts. Do not generate a new key, uninstall the old app, clear app data or install a lower version code.
+
+1. On a dedicated test phone, install and open the previous accepted signed APK. Record its version, version code and checksum. Sign in as a synthetic coach and download a test event/workout.
+2. While online, create a device-saved but unsynced synthetic attendance/result or workout draft. Confirm the UI says it is saved on the device and still pending.
+3. Install the newer candidate over the existing app using Android's update prompt, or from the repository root with the candidate APK path:
+
+   ```powershell
+   & $rafikAdb -d install -r "<path-to-new-signed-candidate.apk>"
+   ```
+
+   Android must update the same `org.rafik.field` app. If it reports a signature mismatch, stop; do not uninstall to bypass it.
+
+4. Launch the updated app without clearing data. Confirm the account, downloaded record and unsent draft remain. Repeat the offline cold-start check: disable network and remove ADB forwarding, force-stop the app, reopen, and verify the pending values.
+5. Reconnect, sync through the normal UI and verify the server receives the result once. Confirm history, revision, event/workout completion, and that later edits remain pending until separately acknowledged.
+6. Compare the installed candidate version/versionCode and APK checksum with its `build.json` and `SHA256SUMS`. Record old/new source revisions, APK checksums, phone/Android version, offline state and pass/fail for each step.
+
+Installing the same APK again with `-r` is only a reinstall check. It does not test an upgrade. A development build, emulator-only check or earlier beta.1 upgrade does not substitute for this check on a new signed release candidate.
 
 ## Android compatibility foundation — unreleased beta.3
 
@@ -114,7 +204,7 @@ As each athlete:
 1. Open the event and **View workout**. Expect the shared prescription and only your own result/skip status. No participant editor, coach feedback form or recording action should appear. Opening another athlete's result URL must be refused.
 2. Verify own individual workout start/history still works independently, and the group record cannot be edited through the athlete workout route. An unrelated coach must not gain access merely by knowing the event/result URL.
 
-Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Native offline workout entry, group plans and workout sections are deferred; the current phone app can keep attendance/assessment work, but unresolved group workout completion must be resolved on the web.
+Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Native group recording is not supported: the phone's compatibility disclosure should report it as unavailable and no group recorder should appear. Group plans and workout sections are deferred. Complete unresolved group workout results on the web; use the separate physical-phone steps below for native individual workout capture.
 
 ### Shared exercise cards — administrators and coaches
 
