@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Release review: an Android provisional start that the server answers with a session already started on the web or another device now needs review instead of replaying forever and blocking later saved workouts. Skipping an in-progress individual workout no longer stops weekly/automatic preparation or hides the plan from planning queues. CI now runs the sequence, scheduler, plan-adaptation, group-workout, workout-foundation, injury-retention and API-document suites. One institution-local date helper replaces repeated formatters; no API, schema or stored-data change.
+
 - Consolidate shared workout types and prescribed-entry projection, type active runtime JSON/SQL boundaries, separate the authorized agenda read model and controlled native exercise UI, and fix platform institution counts. Add focused component/default-entry and backend inventory portability checks to CI.
 
 - Consolidate duplicate fixture/draft/calendar helpers, remove five obsolete audit runners and five unused legacy interfaces, retain isolated browser aliases and clean duplicated testing guidance.
