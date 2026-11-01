@@ -14,6 +14,7 @@ import { checkedLocalDateText } from "./local-date.ts";
 import {
   lockedAssignment,
   scheduleIndividualWorkout,
+  unresolvedSession,
 } from "./workout-sequence.ts";
 
 const dateText = (d: Date) => d.toISOString().slice(0, 10);
@@ -288,7 +289,7 @@ export async function prepareWorkoutRule(id: string, now = new Date()) {
           },
         })) ||
         (await tx.institution_sessions.findFirst({
-          where: { assignment_id: plan.id, completed_at: null },
+          where: { assignment_id: plan.id, ...unresolvedSession },
         }))
       )
         return stamp("previous_workout_unresolved");

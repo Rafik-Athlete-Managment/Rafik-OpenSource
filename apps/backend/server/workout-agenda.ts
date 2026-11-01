@@ -9,6 +9,7 @@ import {
   workoutState,
 } from "./programming.ts";
 import { localDay } from "./local-date.ts";
+import { unresolvedSession } from "./workout-sequence.ts";
 import { effectivePlan } from "./plan-prescription.ts";
 import { pageSize } from "./pagination.ts";
 import { pageOffset } from "./service-definitions.ts";
@@ -51,7 +52,7 @@ export async function workoutAgenda(
     )
       throw new ApiError(400, "invalid_request");
     const unfinished: Prisma.institution_assignmentsWhereInput = {
-      institution_sessions: { some: { completed_at: null } },
+      institution_sessions: { some: unresolvedSession },
     };
     const queueScope: Prisma.institution_assignmentsWhereInput =
       queue === "actionable"
@@ -117,7 +118,7 @@ export async function workoutAgenda(
               queueScope,
               {
                 OR: [
-                  { institution_sessions: { some: { completed_at: null } } },
+                  unfinished,
                   {
                     institution_workout_positions: {
                       none: { state: { in: ["pending", "paused"] } },

@@ -10,6 +10,16 @@ type Input = Record<string, unknown>;
 const json = (value: unknown) => value as Prisma.InputJsonValue;
 
 /**
+ * Incomplete sessions that still await recording. Staff may skip a started workout; its
+ * session then stays incomplete as history but can never be saved, so it must not keep
+ * blocking preparation or appear as open work in agenda queues.
+ */
+export const unresolvedSession: Prisma.institution_sessionsWhereInput = {
+  completed_at: null,
+  NOT: { institution_workout_positions: { is: { state: "skipped" } } },
+};
+
+/**
  * Row-lock an assignment before reading or moving its sequence cursor. Callers already hold the
  * institution advisory lock from scoped()/prepareWorkoutRule, so the order is always
  * institution -> assignment. The partial unique index on unresolved positions is the backstop.
