@@ -23,8 +23,8 @@ import {
   type FieldWorkoutEntry,
   type FieldWorkoutPackage,
   type WorkoutRecord,
-  workoutPackage,
 } from './workout-model'
+import { downloadGroupEvent } from './group-download'
 import { WorkoutSync, requireWorkoutSupport } from './workout-sync'
 import { workoutNumber, type WorkoutMeasure } from './workout-input'
 import { Button, displayDate, type Styles } from './ui'
@@ -158,22 +158,19 @@ export function WorkoutsScreen({
     }
     try {
       await refreshLocal()
-      await requireWorkoutSupport((path) => client.request(path), !!groupEvent)
-      const packages = groupEvent
-        ? (
-            await client.request<{
-              workout: unknown | null
-              participants: { field_workout?: FieldWorkoutPackage }[]
-            }>(`/institution/group-workouts?view=trainer&event=${groupEvent}&fieldPackages=true`)
-          ).participants.flatMap((person) => (person.field_workout ? [person.field_workout] : []))
-        : null
+      if (!groupEvent) await requireWorkoutSupport((path) => client.request(path))
+      const group = groupEvent ? await downloadGroupEvent(client, store, owner, groupEvent) : null
       const result = groupEvent
         ? null
         : await client.request<WorkoutAgenda>(
             `/institution/workout-scheduling?view=trainer&queue=actionable&fieldPackages=true&search=${encodeURIComponent(needle)}&offset=${page}&limit=10`,
           )
       if (alive.current && token === reads.current) {
-        if (packages) setGroupPackages(packages.map((p) => workoutPackage(p)))
+        if (group) {
+          setGroupPackages(group.packages)
+          if (group.errors.length) setError(group.errors[0])
+          await refreshLocal()
+        }
         if (result) {
           setAvailable(result.items.flatMap((i) => (i.field_workout ? [i.field_workout] : [])))
           setOffset(result.offset)
@@ -262,31 +259,6 @@ export function WorkoutsScreen({
         )
         await open(r.package.id)
       }
-    } catch (e) {
-      if (alive.current) setError(failureText(e))
-    } finally {
-      flight.current = false
-      if (alive.current) setBusy(false)
-    }
-  }
-  async function downloadGroup() {
-    if (!groupEvent || flight.current) return
-    flight.current = true
-    setBusy(true)
-    setError('')
-    try {
-      // Never replace a participant's pending request or edited draft.
-      for (const p of groupPackages) {
-        if (savedIds.includes(p.id)) continue
-        await store.workouts.put(owner, p)
-      }
-      await refreshLocal()
-      setNotice(
-        l(
-          'Group sheets saved on this device. Results still need server confirmation.',
-          'حُفظت سجلات المجموعة على هذا الجهاز. تبقى النتائج بحاجة إلى تأكيد الخادم.',
-        ),
-      )
     } catch (e) {
       if (alive.current) setError(failureText(e))
     } finally {
@@ -699,15 +671,11 @@ export function WorkoutsScreen({
             </>
           ) : null}
           <Button
-            title={l('Refresh group roster', 'تحديث قائمة المجموعة')}
-            disabled={busy || onlineLoading || closing}
+            title={l('Refresh event download', 'تحديث تنزيل الموعد')}
+            disabled={
+              busy || onlineLoading || closing || persisting || invalidInput || storageFailed
+            }
             onPress={() => void load()}
-            styles={styles}
-          />
-          <Button
-            title={l('Download all group sheets', 'تنزيل سجلات المجموعة كلها')}
-            disabled={busy || onlineLoading || closing || !groupPackages.length}
-            onPress={() => void downloadGroup()}
             styles={styles}
           />
           <Button

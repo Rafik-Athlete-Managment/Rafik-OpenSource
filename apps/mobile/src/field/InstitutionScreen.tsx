@@ -34,7 +34,7 @@ import { Button, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
-import { requireWorkoutSupport } from './workout-sync'
+import { downloadGroupEvent } from './group-download'
 
 /** Main field screen: loads event rosters, records attendance and syncs changes. */
 export function InstitutionScreen({
@@ -241,8 +241,8 @@ export function InstitutionScreen({
     if (closing) runner.current?.stop()
   }, [closing])
   useEffect(() => {
-    onPersisting(saving || draftSaving || workoutPersisting)
-  }, [saving, draftSaving, workoutPersisting, onPersisting])
+    onPersisting(saving || draftSaving || workoutPersisting || groupPersisting)
+  }, [saving, draftSaving, workoutPersisting, groupPersisting, onPersisting])
   useEffect(() => () => onPersisting(false), [onPersisting])
 
   async function openEvent(id: string, refreshRoster = false) {
@@ -281,13 +281,36 @@ export function InstitutionScreen({
       if (!alive.current || selectedRef.current !== id) return
       const roster = fieldRoster(data, id)
       await store.saveRoster(owner, roster)
+      let groupMessage = ''
+      if (roster.event.kind === 'training' && roster.event.state === 'scheduled') {
+        try {
+          const group = await downloadGroupEvent(client, store, owner, id)
+          if (group.group) {
+            groupMessage = group.errors.length
+              ? l(
+                  `Attendance roster saved, but ${group.errors.length} workout sheet(s) could not be updated: ${group.errors[0]}`,
+                  `حُفظت قائمة الحضور، لكن تعذّر تحديث ${group.errors.length} من سجلات التمرين: ${group.errors[0]}`,
+                )
+              : l(
+                  `Attendance roster and ${group.packages.length} participant workout sheet(s) saved on this device.`,
+                  `حُفظت قائمة الحضور و${group.packages.length} من سجلات المشاركين على هذا الجهاز.`,
+                )
+          }
+        } catch (error) {
+          groupMessage = l(
+            `Attendance roster saved, but group sheets could not be downloaded: ${failureText(error)}`,
+            `حُفظت قائمة الحضور، لكن تعذّر تنزيل سجلات المجموعة: ${failureText(error)}`,
+          )
+        }
+      }
       if (!alive.current || selectedRef.current !== id) return
       setOnlineRoster(roster)
       await reloadLocal()
       setMessage(
-        roster.event.state === 'scheduled'
-          ? 'Event package saved for field capture on this device.'
-          : 'This event is read-only. Its offline roster has been removed.',
+        groupMessage ||
+          (roster.event.state === 'scheduled'
+            ? 'Event package saved for field capture on this device.'
+            : 'This event is read-only. Its offline roster has been removed.'),
       )
     } catch (error) {
       if (error instanceof ApiFailure && error.status === 403) await store.block(owner, id)
@@ -689,11 +712,13 @@ export function InstitutionScreen({
                         try {
                           const savedSheets = await store.workouts.groupList(owner, roster.event.id)
                           if (!savedSheets.length) {
-                            await requireWorkoutSupport((path) => client.request(path), true)
-                            const group = await client.request<{ workout: unknown | null }>(
-                              `/institution/group-workouts?view=trainer&event=${roster.event.id}`,
+                            const group = await downloadGroupEvent(
+                              client,
+                              store,
+                              owner,
+                              roster.event.id,
                             )
-                            if (!group.workout) {
+                            if (!group.group) {
                               setMessage(
                                 l(
                                   'This event has no group workout.',
@@ -702,6 +727,7 @@ export function InstitutionScreen({
                               )
                               return
                             }
+                            if (group.errors.length) setMessage(group.errors[0])
                           }
                           setWorkoutView(false)
                           setGroupOpened(roster.event.id)

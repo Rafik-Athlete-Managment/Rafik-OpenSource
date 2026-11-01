@@ -7,6 +7,7 @@ import { join } from 'node:path'
 import { FieldStore, type Database } from '../src/field/store.ts'
 import { AttendanceSync } from '../src/field/sync.ts'
 import { WorkoutSync } from '../src/field/workout-sync.ts'
+import { downloadGroupEvent } from '../src/field/group-download.ts'
 import type { FieldWorkoutPackage } from '../src/field/workout-model.ts'
 import { randomUUID } from 'node:crypto'
 import {
@@ -1017,10 +1018,30 @@ test('group participant sheets use separate local identities and the group start
   }
   try {
     await store.initialize()
-    await store.workouts.put(scope, p)
+    const client = {
+      request: async (path: string) =>
+        path === '/mobile/capabilities'
+          ? {
+              protocol: 1,
+              features: {
+                attendance: true,
+                assessments: true,
+                event_completion: true,
+                individual_workout_recording: true,
+                group_workout_recording: true,
+                day_only_calendar: false,
+              },
+            }
+          : {
+              workout: { source: 'group' },
+              participants: [{ member_id: member, field_workout: p }],
+            },
+    } as unknown as Parameters<typeof downloadGroupEvent>[0]
+    assert.equal((await downloadGroupEvent(client, store, scope, event)).saved, 1)
     assert.equal((await store.workouts.groupList(scope, event)).length, 1)
     assert.equal((await store.workouts.groupList({ ...scope, user: 'other' }, event)).length, 0)
     await store.workouts.start(scope, id, session, randomUUID())
+    assert.equal((await downloadGroupEvent(client, store, scope, event)).protected, 1)
     const routes: string[] = []
     const send = async (path: string, body: string) => {
       routes.push(path)
