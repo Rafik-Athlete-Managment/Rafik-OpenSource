@@ -1,5 +1,15 @@
 # Verification record
 
+## Beta.3 release review — 1 November 2026
+
+Scope: the [release review](../known-issues/beta3-release-review.md) fixes only; earlier passing evidence is reused for unaffected areas.
+
+Local (Node 22.23, no database): backend, mobile and shared typechecks passed; 21/21 real-SQLite queue cases, including the new start-conflict regression, which failed before the fix (`uncertain` instead of `needs_attention`); 3/3 native component host-stub cases; two API-document and two prescribed-entry cases; backend and frontend inventory checks; formatting of changed files. Metro exported the Android JavaScript bundle with two workers and no bytecode; no native build, APK or device run was made. `test:request` and the documentation test require Node 24's `--test-isolation` flag and were not run locally. Docker Hub rate-limited the database image pull, so no backend integration suite ran locally.
+
+GitHub CI (Node 24, isolated databases per suite) on the review branch ran the newly enabled workout-foundation migration verifier and the sequence, scheduler (four cases including the new skipped-start regression), plan-adaptation, group-workout and injury-retention suites; all passed. The same run exposed a pre-existing time-of-day flake in the feedback suite: its fixture event ends an hour before the run, outside a report window starting on the first of the current UTC month when run just after midnight on the 1st. The fixture window now starts at the event's month; the final CI result for the pushed commit is recorded on the review PR.
+
+Not established: SQLCipher behavior, rendered Android screens, process death, physical offline/USB-disconnected behavior, signed upgrade, rendered web checks (no web UI change) or founder/human acceptance. The local Docker daemon started for this run was stopped; no database, container or fixture was left by this review. The Metro export directory under `/tmp` is outside the repository and was removed.
+
 ## Code quality follow-up closure — 31 October 2026
 
 All four workspace compiler gates pass with unused locals/parameters enforced. Active runtime source has zero explicit any annotations (frontend 140 files, backend 42, mobile 24, shared four; generated declarations excluded). This does not claim that arbitrary server JSON is validated by TypeScript or that integration/negative fixtures are any-free. The five deleted private interfaces have no references and produce identical JavaScript before/after removal.
