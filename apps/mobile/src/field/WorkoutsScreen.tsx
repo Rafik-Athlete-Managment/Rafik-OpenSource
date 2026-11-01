@@ -5,6 +5,7 @@ import {
   Alert,
   AppState,
   BackHandler,
+  Pressable,
   ScrollView,
   Share,
   Text,
@@ -22,6 +23,7 @@ import {
   type FieldWorkoutEntry,
   type FieldWorkoutPackage,
   type WorkoutRecord,
+  workoutPackage,
 } from './workout-model'
 import { WorkoutSync, requireWorkoutSupport } from './workout-sync'
 import { workoutNumber, type WorkoutMeasure } from './workout-input'
@@ -36,6 +38,8 @@ export function WorkoutsScreen({
   closing,
   onPersisting,
   active,
+  groupEvent,
+  groupTitle,
 }: {
   client: NativeClient
   store: FieldStore
@@ -44,6 +48,8 @@ export function WorkoutsScreen({
   closing: boolean
   onPersisting: (busy: boolean) => void
   active: boolean
+  groupEvent?: string
+  groupTitle?: string
 }) {
   const { l, t, language } = useLanguage()
   const [saved, setSaved] = useState<WorkoutRecord[]>([]),
@@ -66,6 +72,8 @@ export function WorkoutsScreen({
     [error, setError] = useState(''),
     [notice, setNotice] = useState('')
   const [onlineLoading, setOnlineLoading] = useState(false)
+  const [groupPackages, setGroupPackages] = useState<FieldWorkoutPackage[]>([])
+  const [groupOpen, setGroupOpen] = useState(true)
   const [raw, setRaw] = useState<Record<string, string>>({}),
     [storageFailed, setStorageFailed] = useState(false)
   const [invalidInputs, setInvalidInputs] = useState<Record<string, boolean>>({})
@@ -99,19 +107,30 @@ export function WorkoutsScreen({
     const token = ++localRead.current
     const needle = appliedSearch.current,
       requested = cacheOffset.current
+    if (groupEvent) {
+      const items = await store.workouts.groupList(owner, groupEvent)
+      const activeId = selection.current
+      const active = activeId ? await store.workouts.get(owner, activeId) : null
+      if (!alive.current || token !== localRead.current) return
+      setSaved(items)
+      setSavedIds(items.map((item) => item.package.id))
+      if (selection.current === activeId) setRecord(active)
+      return
+    }
     const count = await store.workouts.count(owner, needle)
     if (!alive.current || token !== localRead.current || needle !== appliedSearch.current) return
     const page = Math.min(requested, Math.max(0, Math.floor((count - 1) / 10) * 10))
     cacheOffset.current = page
     const items = await store.workouts.list(owner, page, needle)
     const ids = await store.workouts.ids(owner)
-    const active = selection.current ? await store.workouts.get(owner, selection.current) : null
+    const activeId = selection.current
+    const active = activeId ? await store.workouts.get(owner, activeId) : null
     if (!alive.current || token !== localRead.current) return
     setSaved(items)
     setSavedTotal(count)
     setSavedOffset(page)
     setSavedIds(ids)
-    setRecord(active)
+    if (selection.current === activeId) setRecord(active)
   }
   async function sync() {
     try {
@@ -139,14 +158,27 @@ export function WorkoutsScreen({
     }
     try {
       await refreshLocal()
-      await requireWorkoutSupport((path) => client.request(path))
-      const result = await client.request<WorkoutAgenda>(
-        `/institution/workout-scheduling?view=trainer&queue=actionable&fieldPackages=true&search=${encodeURIComponent(needle)}&offset=${page}&limit=10`,
-      )
+      await requireWorkoutSupport((path) => client.request(path), !!groupEvent)
+      const packages = groupEvent
+        ? (
+            await client.request<{
+              workout: unknown | null
+              participants: { field_workout?: FieldWorkoutPackage }[]
+            }>(`/institution/group-workouts?view=trainer&event=${groupEvent}&fieldPackages=true`)
+          ).participants.flatMap((person) => (person.field_workout ? [person.field_workout] : []))
+        : null
+      const result = groupEvent
+        ? null
+        : await client.request<WorkoutAgenda>(
+            `/institution/workout-scheduling?view=trainer&queue=actionable&fieldPackages=true&search=${encodeURIComponent(needle)}&offset=${page}&limit=10`,
+          )
       if (alive.current && token === reads.current) {
-        setAvailable(result.items.flatMap((i) => (i.field_workout ? [i.field_workout] : [])))
-        setOffset(result.offset)
-        setTotal(result.total)
+        if (packages) setGroupPackages(packages.map((p) => workoutPackage(p)))
+        if (result) {
+          setAvailable(result.items.flatMap((i) => (i.field_workout ? [i.field_workout] : [])))
+          setOffset(result.offset)
+          setTotal(result.total)
+        }
       }
     } catch (e) {
       if (e instanceof ApiFailure && [401, 403].includes(e.status)) {
@@ -162,8 +194,8 @@ export function WorkoutsScreen({
   }
   useEffect(() => {
     alive.current = true
-    const active = new WorkoutSync(store.workouts, owner, async (path, body) => {
-      await requireWorkoutSupport((path) => client.request(path))
+    const active = new WorkoutSync(store.workouts, owner, async (path, body, group) => {
+      await requireWorkoutSupport((path) => client.request(path), group)
       return client.request(path, { method: 'POST', body })
     })
     runner.current = active
@@ -187,7 +219,7 @@ export function WorkoutsScreen({
       sub.remove()
       clearInterval(timer)
     }
-  }, [client, store, owner])
+  }, [client, store, owner, groupEvent])
   useEffect(() => {
     if (closing) runner.current?.stop()
   }, [closing])
@@ -196,11 +228,14 @@ export function WorkoutsScreen({
     return () => onPersisting(false)
   }, [persisting, storageFailed, invalidInput, onPersisting])
   async function open(id: string) {
+    if (invalidInput || storageFailed)
+      throw Error('Correct or save the current sheet before switching athletes.')
     await writes.current
     const r = await store.workouts.get(owner, id)
     if (!alive.current) return
     selection.current = id
     setSelected(id)
+    if (groupEvent) setGroupOpen(false)
     setRecord(r)
     drafts.current = { entries: r.entries.map((e) => ({ ...e })), note: r.note }
     setEntries(drafts.current.entries)
@@ -227,6 +262,31 @@ export function WorkoutsScreen({
         )
         await open(r.package.id)
       }
+    } catch (e) {
+      if (alive.current) setError(failureText(e))
+    } finally {
+      flight.current = false
+      if (alive.current) setBusy(false)
+    }
+  }
+  async function downloadGroup() {
+    if (!groupEvent || flight.current) return
+    flight.current = true
+    setBusy(true)
+    setError('')
+    try {
+      // Never replace a participant's pending request or edited draft.
+      for (const p of groupPackages) {
+        if (savedIds.includes(p.id)) continue
+        await store.workouts.put(owner, p)
+      }
+      await refreshLocal()
+      setNotice(
+        l(
+          'Group sheets saved on this device. Results still need server confirmation.',
+          'حُفظت سجلات المجموعة على هذا الجهاز. تبقى النتائج بحاجة إلى تأكيد الخادم.',
+        ),
+      )
     } catch (e) {
       if (alive.current) setError(failureText(e))
     } finally {
@@ -319,6 +379,7 @@ export function WorkoutsScreen({
       await writes.current
       selection.current = ''
       setSelected('')
+      if (groupEvent) setGroupOpen(true)
       setRecord(null)
       setError('')
       await refreshLocal()
@@ -451,10 +512,19 @@ export function WorkoutsScreen({
           },
         }
       } else {
-        const page = await client.request<WorkoutAgenda>(
-          `/institution/workout-scheduling?view=trainer&fieldPackages=true&assignment=${original.package.assignment_id}`,
-        )
-        const found = page.items.find((item) => item.field_workout?.id === id)?.field_workout
+        const found = original.package.group
+          ? (
+              await client.request<{
+                participants: { field_workout?: FieldWorkoutPackage }[]
+              }>(
+                `/institution/group-workouts?view=trainer&event=${original.package.group.event_id}&fieldPackages=true`,
+              )
+            ).participants.find((person) => person.field_workout?.id === id)?.field_workout
+          : (
+              await client.request<WorkoutAgenda>(
+                `/institution/workout-scheduling?view=trainer&fieldPackages=true&assignment=${original.package.assignment_id}`,
+              )
+            ).items.find((item) => item.field_workout?.id === id)?.field_workout
         if (!found)
           throw Error(
             'The downloaded workout is no longer current. Review it online before starting.',
@@ -509,12 +579,17 @@ export function WorkoutsScreen({
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>
-        {selected
-          ? record
-            ? dayName(record.package)
-            : ''
-          : l('Individual workouts', 'التمارين الفردية')}
+        {groupEvent
+          ? groupTitle || l('Group workout', 'التمرين الجماعي')
+          : selected
+            ? record
+              ? dayName(record.package)
+              : ''
+            : l('Individual workouts', 'التمارين الفردية')}
       </Text>
+      {groupEvent ? (
+        <Text style={styles.hint}>{l('Participant workout sheets', 'سجلات تمارين المشاركين')}</Text>
+      ) : null}
       {error ? (
         <Text accessibilityLiveRegion="polite" style={styles.message}>
           {t(error)}
@@ -534,12 +609,121 @@ export function WorkoutsScreen({
           accessibilityLabel={l('Loading workout data', 'جارٍ تحميل بيانات التمرين')}
         />
       ) : null}
-      {!selected ? (
+      {groupEvent ? (
+        <View style={styles.card}>
+          <Button
+            title={
+              groupOpen
+                ? l('Hide athlete list', 'إخفاء قائمة الرياضيين')
+                : l('Show athlete list', 'إظهار قائمة الرياضيين')
+            }
+            onPress={() => setGroupOpen((value) => !value)}
+            styles={styles}
+          />
+          {groupOpen ? (
+            <>
+              <TextInput
+                accessibilityLabel={l('Find an athlete', 'ابحث عن رياضي')}
+                placeholder={l('Search athlete names…', 'ابحث بأسماء الرياضيين…')}
+                placeholderTextColor={styles.hint.color}
+                value={search}
+                onChangeText={setSearch}
+                style={styles.input}
+              />
+              {[
+                ...groupPackages,
+                ...saved
+                  .filter((item) => !groupPackages.some((p) => p.id === item.package.id))
+                  .map((item) => item.package),
+              ]
+                .filter((p) =>
+                  p.member_name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+                )
+                .map((p) => {
+                  const local = saved.find((item) => item.package.id === p.id)
+                  return (
+                    <Pressable
+                      key={p.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${p.member_name}, ${local ? l('open sheet', 'فتح السجل') : l('download sheet', 'تنزيل السجل')}`}
+                      accessibilityState={{
+                        selected: selected === p.id,
+                        disabled: busy || persisting || invalidInput || storageFailed,
+                      }}
+                      disabled={
+                        busy || persisting || invalidInput || storageFailed || selected === p.id
+                      }
+                      onPress={() => void (local ? open(p.id) : download(p))}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 12,
+                        minHeight: 64,
+                        paddingVertical: 10,
+                        borderTopWidth: 1,
+                        borderColor: styles.input.borderColor,
+                      }}
+                    >
+                      <View style={{ flex: 1, gap: 3 }}>
+                        <Text style={styles.label}>{p.member_name}</Text>
+                        <Text style={styles.hint}>
+                          {local?.session?.completed_at
+                            ? l('Completed', 'مكتمل')
+                            : local?.pending || local?.intent
+                              ? l('Awaiting sync', 'بانتظار المزامنة')
+                              : local
+                                ? l('Saved on device', 'محفوظ على الجهاز')
+                                : p.can_record || p.allow_provisional_start
+                                  ? l('Available online', 'متاح عبر الاتصال')
+                                  : l('View only', 'للعرض فقط')}
+                        </Text>
+                      </View>
+                      <Text style={styles.link}>
+                        {selected === p.id
+                          ? l('Selected', 'محدد')
+                          : local
+                            ? l('Open ›', 'فتح ‹')
+                            : l('Save ↓', 'تنزيل ↓')}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              {!groupPackages.length && !saved.length ? (
+                <Text style={styles.hint}>
+                  {l(
+                    'Refresh online to load the group roster and download sheets before going offline.',
+                    'حدّث عبر الاتصال لتحميل قائمة المجموعة وسجلاتها قبل قطع الاتصال.',
+                  )}
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+          <Button
+            title={l('Refresh group roster', 'تحديث قائمة المجموعة')}
+            disabled={busy || onlineLoading || closing}
+            onPress={() => void load()}
+            styles={styles}
+          />
+          <Button
+            title={l('Download all group sheets', 'تنزيل سجلات المجموعة كلها')}
+            disabled={busy || onlineLoading || closing || !groupPackages.length}
+            onPress={() => void downloadGroup()}
+            styles={styles}
+          />
+          <Button
+            title={l('Sync saved sheets', 'مزامنة السجلات المحفوظة')}
+            disabled={busy || closing}
+            onPress={() => void sync()}
+            styles={styles}
+          />
+        </View>
+      ) : null}
+      {!selected && !groupEvent ? (
         <>
           <Text style={styles.hint}>
             {l(
-              'Download before going offline. Starts and results remain provisional until the server accepts them. Group recording remains in the web dashboard.',
-              'نزّل التمرين قبل قطع الاتصال. يبقى البدء والنتائج مؤقتين حتى يقبلهما الخادم. يبقى التسجيل الجماعي في لوحة الويب.',
+              'Download before going offline. Starts and results remain provisional until the server accepts them. Open a group event from Schedule for participant sheets.',
+              'نزّل التمرين قبل قطع الاتصال. يبقى البدء والنتائج مؤقتين حتى يقبلهما الخادم. افتح موعد المجموعة من الجدول للوصول إلى سجلات المشاركين.',
             )}
           </Text>
           <Text style={styles.label}>{l('Find an athlete', 'ابحث عن رياضي')}</Text>
@@ -683,7 +867,11 @@ export function WorkoutsScreen({
       ) : record ? (
         <>
           <Button
-            title={l('Back to workouts', 'العودة للتمارين')}
+            title={
+              groupEvent
+                ? l('Back to athlete list', 'العودة لقائمة الرياضيين')
+                : l('Back to workouts', 'العودة للتمارين')
+            }
             disabled={busy || persisting}
             onPress={() => void back()}
             styles={styles}

@@ -9,7 +9,14 @@ export function workoutPackage(input: unknown): FieldWorkoutPackage {
   const p = input as FieldWorkoutPackage
   if (
     !p ||
-    ![p.id, p.institution_id, p.assignment_id, p.member_id].every(uuid) ||
+    ![p.id, p.institution_id, p.member_id].every(uuid) ||
+    (p.group
+      ? p.assignment_id !== null ||
+        !uuid(p.group.event_id) ||
+        !Number.isSafeInteger(p.group.roster_revision) ||
+        p.group.roster_revision < 0 ||
+        p.group.event_id !== p.occurrence_id
+      : !uuid(p.assignment_id)) ||
     !text(p.day_id) ||
     !p.day_id ||
     (p.occurrence_id !== null && !uuid(p.occurrence_id)) ||
@@ -51,6 +58,9 @@ export function workoutPackage(input: unknown): FieldWorkoutPackage {
     id: p.id,
     institution_id: p.institution_id,
     assignment_id: p.assignment_id,
+    ...(p.group
+      ? { group: { event_id: p.group.event_id, roster_revision: p.group.roster_revision } }
+      : {}),
     member_id: p.member_id,
     member_name: p.member_name,
     occurrence_id: p.occurrence_id,

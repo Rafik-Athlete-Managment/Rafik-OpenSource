@@ -5,10 +5,22 @@
 Use this guide with the same source branch/backend as the app you are testing. The published beta APK does not include unreleased beta.3 changes. No step requires resetting or reseeding the database.
 
 1. Run the applicable [administrator](#administrator), [coach](#coach) and [athlete](#athlete) web walkthroughs. For group workouts, use the detailed [template and group-workout flow](#workout-templates-and-group-workouts--unreleased-beta3).
-2. For the unreleased individual workout phone flow, follow [native individual workouts](#native-individual-workouts--unreleased-beta3), then run the [physical-phone, encrypted-storage and offline-recovery checks](#physical-phone-encrypted-storage-and-offline-recovery--unreleased-beta3).
+2. For unreleased phone recording, follow [native individual workouts](#native-individual-workouts--unreleased-beta3) and [native group workouts](#native-group-workouts--unreleased-beta3), then run the [physical-phone, encrypted-storage and offline-recovery checks](#physical-phone-encrypted-storage-and-offline-recovery--unreleased-beta3).
 3. Use the [signed APK upgrade check](#signed-android-upgrade--requires-a-new-release-candidate) only when there is a newer signed candidate APK. It cannot be tested using the same installed APK or the published beta.2 artifact.
 
-Group workout recording is available in the web workflow. The phone app currently reports group recording unsupported; there is no native group recorder to validate or use offline.
+Group workout recording is implemented in the unreleased phone source as well as the web workflow. Device rendering, offline recovery and a signed upgrade remain to be validated before beta.3 release.
+
+## Native group workouts — unreleased beta.3
+
+Prerequisites: matching branch backend and native source app, a designated coach, two synthetic athletes marked present in a group training event, and an administrator for review. Keep the event's frozen workout template and time visible on the web. The published beta.2 APK cannot run this source flow.
+
+1. As coach, open the group training event in **Schedule**, then **Open group workout sheets**. Expect a collapsible, searchable athlete list. Download all sheets while online; confirm each athlete has a separate named sheet and the prescribed strength/time/distance targets appear as references, not completed actuals. A custom training event without a group workout should stay on its attendance view with an explanation.
+2. Before the event time, Start is disabled. After the start, disconnect Wi-Fi/mobile data and USB forwarding. Open one athlete's downloaded sheet, start provisionally, enter measured actuals and mark each set done. Switch to the second athlete, then return: the first athlete's values and note must remain. Invalid numeric input or a failed device save must block switching. Finish one sheet; it remains pending until the server acknowledges it.
+3. Force-stop and reopen the app offline. Find the downloaded group event/sheets and confirm the same participant drafts and queued operation IDs survive. Reconnect and sync: the group start must reach `/v1/institution/group-workouts` first, then result saves use `/v1/institution/sessions`. Confirm one session per athlete, correct coach attribution, read-only completed summaries and no change to individual plan cursors. Check another account cannot see or send the first coach's device sheets.
+4. On a separate synthetic sheet, start it on the web before the offline phone start replays. Expect the phone to retain its recording for explicit review, without adopting the competing server session. Deny event access or mark the athlete unable to train before another replay; expect a paused, retained draft. Confirm another independent sheet can still sync. Administrators and athletes must not receive the coach's native recorder; athletes may view only their own results on web.
+5. Complete the group event on web after all present participants have a completed result or an explicit **Skip with reason**. The phone currently records measured sheets; use the web flow for participant adaptation and explicit skip. Verify the field app cannot falsely report a server completion from an unsynced device draft.
+
+Report app/backend revisions, phone model/Android version, event and participant IDs, connection/USB state, expected/actual result and exact error text. Do not include private workout results or credentials.
 
 ## Native individual workouts — unreleased beta.3
 
@@ -39,7 +51,7 @@ Prerequisites: matching release-branch backend and an installed native developme
 1. As the athlete on web, open the completed workout. Expect the actual zero load/duration/distance, note and coach attribution. The plan advances once; other independent plans do not advance. Native coach recording must not become athlete self-recording.
 2. As administrator, review the same history/plan/calendar. Expect one occurrence/workout, retained prior history and no duplicate progression. Existing athlete-started unfinished work may still be finished by an authorized coach under ADR 0031; completed self-logged actuals retain their protection.
 
-Report app/backend revisions, role, workout/occurrence ID, expected/actual behavior, connection/USB state and exact message. Do not include passwords, tokens or signing material. Group workout capture, media download, native alternative selection, full historical reconciliation and physical upgrade packaging remain outside this slice.
+Report app/backend revisions, role, workout/occurrence ID, expected/actual behavior, connection/USB state and exact message. Do not include passwords, tokens or signing material. Group capture has its own section above; media download, native alternative selection, full historical reconciliation and physical upgrade packaging remain outside this slice.
 
 ## Physical phone, encrypted storage and offline recovery — unreleased beta.3
 
@@ -125,12 +137,12 @@ Installing the same APK again with `-r` is only a reinstall check. It does not t
 
 Prerequisite: a matching source development app already installed, the updated backend and a synthetic coach account. This slice does not require a new native dependency or prove a release APK upgrade. Administrators can inspect the authenticated API contract, while the field UI remains coach-only; athletes gain no new recording access.
 
-1. As the coach, open the schedule and expand **Server compatibility** below its event list. Expect attendance, assessment results, event completion and individual workout recording supported. Group recording and day-only appointments in the attendance calendar remain unavailable; Individual workouts handles its own date-only plan packages. Collapse the details: normal event selection remains unchanged.
+1. As the coach, open the schedule and expand **Server compatibility** below its event list. Expect attendance, assessment results, event completion and individual/group workout recording supported. Day-only appointments in the attendance calendar remain unavailable; Individual workouts handles its own date-only plan packages. Collapse the details: normal event selection remains unchanged.
 2. Open a previously downloaded synthetic event, save an attendance change while offline and return to the schedule. Expand compatibility and choose **Check again**: expect a connection message, not a version or permission claim. The saved event/change must remain present. Returning to its editor must retain the pending work.
 3. Reconnect and check again. Expect current capabilities without clearing separate permission/session warnings. Open the saved event and use the existing sync/review flow; capability discovery itself must not send or discard its command.
 4. For a developer-controlled older or mocked server returning `404 not_found`, expect the version-check explanation, with saved work retained. A denied/revoked session must show its own authentication/access explanation rather than reporting a legacy server. Do not change a real institution's server merely to simulate this condition.
 
-Record app/backend revision, account role, connection state and exact failure text if these checks fail. Rendered Android acceptance remains pending; Node parser/API tests are separate evidence. Use the individual workout section above for the subsequent capture implementation; group recording remains the next slice.
+Record app/backend revision, account role, connection state and exact failure text if these checks fail. Rendered Android acceptance remains pending; Node parser/API tests are separate evidence. Use the individual and group workout sections above for recording validation.
 
 This is the single source of truth for manual administrator, coach and athlete validation walkthroughs, for founder acceptance and institution owners checking their own installation. Update the relevant steps here when implemented workflows change; other guides and landing link here rather than copying the procedures. Automated evidence belongs in [verification](../verification/README.md), not in a parallel walkthrough.
 
@@ -204,7 +216,7 @@ As each athlete:
 1. Open the event and **View workout**. Expect the shared prescription and only your own result/skip status. No participant editor, coach feedback form or recording action should appear. Opening another athlete's result URL must be refused.
 2. Verify own individual workout start/history still works independently, and the group record cannot be edited through the athlete workout route. An unrelated coach must not gain access merely by knowing the event/result URL.
 
-Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Native group recording is not supported: the phone's compatibility disclosure should report it as unavailable and no group recorder should appear. Group plans and workout sections are deferred. Complete unresolved group workout results on the web; use the separate physical-phone steps below for native individual workout capture.
+Inspect English/Arabic, both themes, desktop/phone, no-match searches and later participant/library pages. Record pass/fail/not checked using the guide's failure-report format. Group plans and workout sections are deferred. For native participant sheet capture, use [native group workouts](#native-group-workouts--unreleased-beta3); explicit skip and participant adaptation remain in the web workflow.
 
 ### Shared exercise cards — administrators and coaches
 

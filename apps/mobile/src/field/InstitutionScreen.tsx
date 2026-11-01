@@ -34,6 +34,7 @@ import { Button, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
+import { requireWorkoutSupport } from './workout-sync'
 
 /** Main field screen: loads event rosters, records attendance and syncs changes. */
 export function InstitutionScreen({
@@ -72,8 +73,11 @@ export function InstitutionScreen({
   const [editor, setEditor] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [workoutView, setWorkoutView] = useState(false)
+  const [groupEvent, setGroupEvent] = useState<string | null>(null)
+  const [groupOpened, setGroupOpened] = useState<string | null>(null)
   const [workoutsOpened, setWorkoutsOpened] = useState(false)
   const [workoutPersisting, setWorkoutPersisting] = useState(false)
+  const [groupPersisting, setGroupPersisting] = useState(false)
   const [compatibility, setCompatibility] = useState<CapabilityCheck | null>(null)
   const [compatibilityError, setCompatibilityError] = useState('')
   const [showCompatibility, setShowCompatibility] = useState(false)
@@ -441,16 +445,20 @@ export function InstitutionScreen({
       <View style={styles.toolbar}>
         <Button
           title={l('Schedule', 'الجدول')}
-          primary={!workoutView}
-          disabled={saving || draftSaving || workoutPersisting || closing}
-          onPress={() => setWorkoutView(false)}
+          primary={!workoutView && !groupEvent}
+          disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
+          onPress={() => {
+            setWorkoutView(false)
+            setGroupEvent(null)
+          }}
           styles={styles}
         />
         <Button
           title={l('Individual workouts', 'التمارين الفردية')}
           primary={workoutView}
-          disabled={saving || draftSaving || workoutPersisting || closing}
+          disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
           onPress={() => {
+            setGroupEvent(null)
             setWorkoutsOpened(true)
             setWorkoutView(true)
           }}
@@ -471,8 +479,24 @@ export function InstitutionScreen({
           />
         </View>
       ) : null}
+      {groupOpened ? (
+        <View style={{ flex: 1, display: groupEvent === groupOpened ? 'flex' : 'none' }}>
+          <WorkoutsScreen
+            key={groupOpened}
+            client={client}
+            store={store}
+            owner={owner}
+            styles={styles}
+            closing={closing}
+            onPersisting={setGroupPersisting}
+            active={groupEvent === groupOpened}
+            groupEvent={groupOpened}
+            groupTitle={roster?.event.title}
+          />
+        </View>
+      ) : null}
       <ScrollView
-        style={{ display: workoutView ? 'none' : 'flex' }}
+        style={{ display: workoutView || groupEvent ? 'none' : 'flex' }}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
@@ -610,8 +634,8 @@ export function InstitutionScreen({
                     ))}
                     <Text style={styles.hint}>
                       {l(
-                        'Server support does not change your account permissions. Individual workouts use their own view; group workout recording remains in the web dashboard.',
-                        'دعم الخادم لا يغيّر صلاحيات حسابك. للتمارين الفردية عرض مستقل؛ ويبقى تسجيل التمارين الجماعية في لوحة الويب.',
+                        'Server support does not change your account permissions. Open a group training event to download participant sheets.',
+                        'دعم الخادم لا يغيّر صلاحيات حسابك. افتح موعد تدريب جماعي لتنزيل سجلات المشاركين.',
                       )}
                     </Text>
                   </>
@@ -649,6 +673,47 @@ export function InstitutionScreen({
             />
             {roster ? (
               <>
+                {roster.event.kind === 'training' ? (
+                  <Button
+                    title={l('Open group workout sheets', 'فتح سجلات التمرين الجماعي')}
+                    disabled={
+                      busy ||
+                      saving ||
+                      draftSaving ||
+                      closing ||
+                      workoutPersisting ||
+                      groupPersisting
+                    }
+                    onPress={() => {
+                      void (async () => {
+                        try {
+                          const savedSheets = await store.workouts.groupList(owner, roster.event.id)
+                          if (!savedSheets.length) {
+                            await requireWorkoutSupport((path) => client.request(path), true)
+                            const group = await client.request<{ workout: unknown | null }>(
+                              `/institution/group-workouts?view=trainer&event=${roster.event.id}`,
+                            )
+                            if (!group.workout) {
+                              setMessage(
+                                l(
+                                  'This event has no group workout.',
+                                  'لا يتضمن هذا الموعد تمريناً جماعياً.',
+                                ),
+                              )
+                              return
+                            }
+                          }
+                          setWorkoutView(false)
+                          setGroupOpened(roster.event.id)
+                          setGroupEvent(roster.event.id)
+                        } catch (error) {
+                          setMessage(failureText(error))
+                        }
+                      })()
+                    }}
+                    styles={styles}
+                  />
+                ) : null}
                 <Text style={styles.hint}>
                   {displayDate(roster.event.starts_at, language)} {t('·')} {t(roster.event.kind)}{' '}
                   {t('·')} {t(roster.event.state)}

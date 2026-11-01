@@ -1,5 +1,6 @@
 import type { PlanDay } from "@rafik/shared/workouts";
 import { prescribedEntries } from "./workout-document.ts";
+import { createHash } from "node:crypto";
 import type {
   FieldWorkoutEntry,
   FieldWorkoutPackage,
@@ -89,6 +90,64 @@ export function fieldWorkoutPackage(
     allow_provisional_start: canStart,
     can_record: canRecord,
     exercises: day.exercises.map((e) => ({
+      key: e.key,
+      name: e.info?.name || e.exerciseId,
+      name_ar: e.info?.name_ar || "",
+      kind: e.kind || e.info?.kind || "strength",
+      rest: e.rest || 0,
+      note: e.note || "",
+    })),
+    targets: targets.map(entry),
+    entries: (document?.entries || targets).map(entry),
+    session: session
+      ? {
+          id: session.id,
+          version: session.version,
+          note: document?.note || "",
+          completed_at: session.completed_at?.toISOString() || null,
+        }
+      : null,
+  };
+}
+
+/** Projects a frozen group prescription into the same native sheet as individual work. */
+export function groupFieldWorkoutPackage(
+  institution: string,
+  occurrence: Occurrence,
+  person: { member_id: string; name: string; revision: number },
+  day: PlanDay,
+  session: Session | null,
+  canStart: boolean,
+  canRecord: boolean,
+): FieldWorkoutPackage {
+  // The event/member pair needs a stable local key before any server session exists.
+  const hash = createHash("sha256")
+    .update(`${occurrence.id}:${person.member_id}`)
+    .digest("hex");
+  const id = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
+  const document = session?.document as
+    | { entries?: FieldWorkoutEntry[]; note?: string; prescription?: PlanDay }
+    | undefined;
+  const actualDay = document?.prescription || day;
+  const targets = prescribedEntries(actualDay.exercises);
+  return {
+    id,
+    institution_id: institution,
+    assignment_id: null,
+    group: { event_id: occurrence.id, roster_revision: person.revision },
+    member_id: person.member_id,
+    member_name: person.name,
+    occurrence_id: occurrence.id,
+    title: occurrence.title,
+    day_id: actualDay.id,
+    day_name: actualDay.name,
+    day_name_ar: actualDay.nameAr || "",
+    starts_at: occurrence.starts_at?.toISOString() || null,
+    training_date: occurrence.training_date.toISOString().slice(0, 10),
+    timezone: occurrence.timezone || "UTC",
+    allow_provisional_start: canStart,
+    can_record: canRecord,
+    exercises: actualDay.exercises.map((e) => ({
       key: e.key,
       name: e.info?.name || e.exerciseId,
       name_ar: e.info?.name_ar || "",

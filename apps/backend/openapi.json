@@ -426,7 +426,7 @@
       "post": {
         "tags": ["Coach field work"],
         "summary": "Schedule, reschedule or explicitly skip an individual plan workout",
-        "description": "Unreleased beta.3 server slice. Explicit staff scheduling uses fixed times; a day-only worker occurrence can be converted to a timed occurrence through reschedule. Binds the next non-rest day from the immutable plan cycle without advancing its cursor. One unresolved workout blocks that assignment only. Skip requires a staff reason; completion advances through the existing session save command. Uses exact operation receipts and rechecks current plan authority before replay. Recurring/automatic preparation is configured through workout-rules. Additional group workouts use group-workouts; new Android offline workout UI remains pending.",
+        "description": "Unreleased beta.3 server slice. Explicit staff scheduling uses fixed times; a day-only worker occurrence can be converted to a timed occurrence through reschedule. Binds the next non-rest day from the immutable plan cycle without advancing its cursor. One unresolved workout blocks that assignment only. Skip requires a staff reason; completion advances through the existing session save command. Uses exact operation receipts and rechecks current plan authority before replay. Recurring/automatic preparation is configured through workout-rules. Additional group workouts use group-workouts; native workout capture requires matching app/backend versions and device validation.",
         "security": [
           {
             "mobileBearer": []
@@ -577,7 +577,7 @@
       "post": {
         "tags": ["Coach field work"],
         "summary": "Start an individual workout, or save/review authorized workout actuals",
-        "description": "Current athlete self-recording and authorized delegated coach recording. A sequence-bound start supplies its occurrence ID and must wait until the booked time. Save actual reps/load/time/distance/effort with the current workout version as revision. Completed bound work resolves its assignment position atomically once; subsequent corrections preserve progression. Generic attendance does not complete a workout. Administrators do not record results. New Android offline workout capture is not implemented by this contract. Group workouts start through group-workouts, then reuse this save command with revision, entries, note and complete. Only designated event coaches save group actuals; athletes view their own records and administrators review. Corrections keep attributed history and never advance individual plans. Native individual starts may be captured provisionally offline after an authorized package download. Persist the exact operation before dispatch; do not pre-allocate another sequence position. After start acknowledgment, bind the first saved-result intent to that acknowledged revision once, then retry its frozen payload exactly. Server timestamps and current authority/restrictions remain authoritative. Device capture is not a confirmed server start/completion.",
+        "description": "Current athlete self-recording and authorized delegated coach recording. A sequence-bound start supplies its occurrence ID and must wait until the booked time. Save actual reps/load/time/distance/effort with the current workout version as revision. Completed bound work resolves its assignment position atomically once; subsequent corrections preserve progression. Generic attendance does not complete a workout. Administrators do not record results. Group workouts start through group-workouts, then reuse this save command with revision, entries, note and complete. Only designated event coaches save group actuals; athletes view their own records and administrators review. Corrections keep attributed history and never advance individual plans. Native individual and group starts may be captured provisionally offline after an authorized package download. Persist the exact operation before dispatch; do not pre-allocate another sequence position. After start acknowledgment, bind the first saved-result intent to that acknowledged revision once, then retry its frozen payload exactly. Server timestamps and current authority/restrictions remain authoritative. Device capture is not a confirmed server start/completion.",
         "security": [
           {
             "mobileBearer": []
@@ -903,7 +903,7 @@
       "get": {
         "tags": ["Coach field work"],
         "summary": "Read a group workout baseline and separate participant outcomes",
-        "description": "Current designated event coaches and administrators read the bounded roster (maximum 100). Athletes see only their own participant and actuals; shared prescription is visible. Returns server can_start/can_skip flags and general blocked reasons; writes recheck. No clinical record detail. No individual assignment or cursor allocation.",
+        "description": "Current designated event coaches and administrators read the bounded roster (maximum 100). Athletes see only their own participant and actuals; shared prescription is visible. Returns server can_start/can_skip flags and general blocked reasons; writes recheck. Trainer-only fieldPackages=true additionally projects one minimal native sheet per participant, with frozen event/member identity, roster revision, prescribed targets and current session actuals. No clinical record detail. No individual assignment or cursor allocation.",
         "security": [
           {
             "mobileBearer": []
@@ -930,6 +930,11 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "fieldPackages",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false }
           }
         ],
         "responses": {

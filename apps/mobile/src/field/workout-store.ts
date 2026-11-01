@@ -36,10 +36,22 @@ export class WorkoutStore {
     return this.lane(async (db) =>
       (
         await db.getAllAsync<{ payload: string }>(
-          "SELECT payload FROM field_workouts WHERE owner=? AND instr(lower(json_extract(payload,'$.package.member_name')),lower(?))>0 ORDER BY id LIMIT 10 OFFSET ?",
+          "SELECT payload FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL AND instr(lower(json_extract(payload,'$.package.member_name')),lower(?))>0 ORDER BY id LIMIT 10 OFFSET ?",
           ownerKey(owner),
           search,
           offset,
+        )
+      ).map((x) => JSON.parse(x.payload) as WorkoutRecord),
+    )
+  }
+  /** Saved participant sheets remain discoverable when the event cannot be fetched. */
+  groupList(owner: Owner, event: string) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? AND json_extract(payload,'$.package.group.event_id')=? ORDER BY json_extract(payload,'$.package.member_name')",
+          ownerKey(owner),
+          event,
         )
       ).map((x) => JSON.parse(x.payload) as WorkoutRecord),
     )
@@ -49,7 +61,7 @@ export class WorkoutStore {
       async (db) =>
         (
           await db.getFirstAsync<{ n: number }>(
-            "SELECT count(*) AS n FROM field_workouts WHERE owner=? AND instr(lower(json_extract(payload,'$.package.member_name')),lower(?))>0",
+            "SELECT count(*) AS n FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL AND instr(lower(json_extract(payload,'$.package.member_name')),lower(?))>0",
             ownerKey(owner),
             search,
           )
@@ -60,7 +72,7 @@ export class WorkoutStore {
     return this.lane(async (db) =>
       (
         await db.getAllAsync<{ id: string }>(
-          'SELECT id FROM field_workouts WHERE owner=?',
+          "SELECT id FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL",
           ownerKey(owner),
         )
       ).map((r) => r.id),
@@ -126,15 +138,25 @@ export class WorkoutStore {
       r.session = { id: session, version: 0, completed_at: null }
       r.pending = {
         state: 'queued',
-        payload: {
-          action: 'start',
-          view: 'trainer',
-          id: session,
-          operation,
-          assignment_id: p.assignment_id,
-          day_id: p.day_id,
-          occurrence_id: p.occurrence_id,
-        },
+        payload: p.group
+          ? {
+              action: 'start',
+              view: 'trainer',
+              id: session,
+              operation,
+              event: p.group.event_id,
+              member_id: p.member_id,
+              revision: p.group.roster_revision,
+            }
+          : {
+              action: 'start',
+              view: 'trainer',
+              id: session,
+              operation,
+              assignment_id: p.assignment_id,
+              day_id: p.day_id,
+              occurrence_id: p.occurrence_id,
+            },
       }
       await this.write(db, owner, r)
       return r
@@ -188,7 +210,7 @@ export class WorkoutStore {
   next(owner: Owner) {
     return this.lane(async (db) => {
       const row = await db.getFirstAsync<{ payload: string }>(
-        "SELECT payload FROM field_workouts WHERE owner=? AND json_extract(payload,'$.blocked')=0 AND (json_extract(payload,'$.pending.state') IN ('queued','uncertain','sending') OR (json_type(payload,'$.pending')='null' AND json_type(payload,'$.intent')='object' AND json_extract(payload,'$.session.version')>0)) ORDER BY id LIMIT 1",
+        "SELECT payload FROM field_workouts WHERE owner=? AND json_extract(payload,'$.blocked')=0 AND (json_extract(payload,'$.pending.state') IN ('queued','uncertain') OR (json_type(payload,'$.pending')='null' AND json_type(payload,'$.intent')='object' AND json_extract(payload,'$.session.version')>0)) ORDER BY id LIMIT 1",
         ownerKey(owner),
       )
       if (!row) return null
@@ -211,6 +233,21 @@ export class WorkoutStore {
       }
       await this.write(db, owner, r)
       return r
+    })
+  }
+  /** Only one mounted recorder may claim an exact queued command for dispatch. */
+  claim(owner: Owner, id: string, operation: unknown) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (
+        !r.pending ||
+        r.pending.payload.operation !== operation ||
+        !['queued', 'uncertain'].includes(r.pending.state)
+      )
+        return false
+      r.pending.state = 'sending'
+      await this.write(db, owner, r)
+      return true
     })
   }
   state(

@@ -154,7 +154,9 @@ export type FieldWorkoutEntry = {
 export type FieldWorkoutPackage = {
   id: string
   institution_id: string
-  assignment_id: string
+  assignment_id: string | null
+  /** Present only for a coach-led group event. The roster revision is frozen for replay. */
+  group?: { event_id: string; roster_revision: number }
   member_id: string
   member_name: string
   occurrence_id: string | null

@@ -230,6 +230,26 @@ test("group templates and results: frozen baseline, separate actuals, permission
       .status,
     200,
   );
+  const field = ok(
+    await call(
+      coach,
+      endpoint + `/group-workouts?view=trainer&event=${eid}&fieldPackages=true`,
+    ),
+  );
+  assert.equal(field.participants.length, 2);
+  assert.equal(field.participants[0].field_workout.assignment_id, null);
+  assert.equal(field.participants[0].field_workout.group.event_id, eid);
+  assert.equal(field.participants[0].field_workout.entries[0].completed, false);
+  assert.equal(
+    (
+      await call(
+        a,
+        endpoint +
+          `/group-workouts?view=trainee&event=${eid}&fieldPackages=true`,
+      )
+    ).status,
+    403,
+  );
   assert.equal(
     (await call(other, endpoint + `/group-workouts?view=trainer&event=${eid}`))
       .status,
@@ -380,6 +400,20 @@ test("group templates and results: frozen baseline, separate actuals, permission
   assert.equal(record.assignment_id, null);
   assert.equal(record.source_kind, "additional");
   assert.equal(record.prescription.exercises[0].sets, 1);
+  const startedField = ok(
+    await call(
+      coach,
+      endpoint + `/group-workouts?view=trainer&event=${eid}&fieldPackages=true`,
+    ),
+  ).participants.find(
+    (person: { member_id: string }) => person.member_id === a.member,
+  );
+  assert.equal(
+    startedField.field_workout.exercises[0].key,
+    modified.exercises[0].key,
+  );
+  assert.equal(startedField.field_workout.session.id, record.id);
+  assert.equal("document" in startedField.session, false);
   assert.deepEqual(
     ok(await call(coach, endpoint + "/group-workouts", begin)),
     record,

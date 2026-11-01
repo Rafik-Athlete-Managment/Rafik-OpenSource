@@ -287,7 +287,7 @@ const server = createServer(async (req, res) => {
           assessments: true,
           event_completion: true,
           individual_workout_recording: true,
-          group_workout_recording: false,
+          group_workout_recording: true,
           day_only_calendar: false,
         },
       } satisfies FieldCapabilities);

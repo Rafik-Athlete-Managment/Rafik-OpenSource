@@ -2,10 +2,16 @@ import { ApiFailure, ConnectionFailure, failureText, type Owner } from './model.
 import { checkCapabilities } from './capabilities.ts'
 import type { WorkoutStore } from './workout-store.ts'
 /** Confirms the server supports workout recording before queued phone work is sent. */
-export async function requireWorkoutSupport(request: (path: string) => Promise<unknown>) {
+export async function requireWorkoutSupport(
+  request: (path: string) => Promise<unknown>,
+  group = false,
+) {
   try {
     const result = await checkCapabilities(request)
-    if (result.state !== 'available' || !result.value.features.individual_workout_recording)
+    if (
+      result.state !== 'available' ||
+      !result.value.features[group ? 'group_workout_recording' : 'individual_workout_recording']
+    )
       throw new ApiFailure(409, 'native_workout_upgrade_required')
   } catch (error) {
     if (error instanceof ApiFailure || error instanceof ConnectionFailure) throw error
@@ -20,11 +26,11 @@ export class WorkoutSync {
   private paused = false
   private store: WorkoutStore
   private owner: Owner
-  private send: (path: string, body: string) => Promise<unknown>
+  private send: (path: string, body: string, group: boolean) => Promise<unknown>
   constructor(
     store: WorkoutStore,
     owner: Owner,
-    send: (path: string, body: string) => Promise<unknown>,
+    send: (path: string, body: string, group: boolean) => Promise<unknown>,
   ) {
     this.store = store
     this.owner = owner
@@ -52,7 +58,7 @@ export class WorkoutSync {
         p = r?.pending
       if (!r || !p || !['queued', 'uncertain'].includes(p.state) || this.stopped) return
       const operation = p.payload.operation
-      await this.store.state(this.owner, r.package.id, operation, 'sending')
+      if (!(await this.store.claim(this.owner, r.package.id, operation))) continue
       try {
         changed()
       } catch {
@@ -63,7 +69,13 @@ export class WorkoutSync {
         return
       }
       try {
-        const result = await this.send('/institution/sessions', JSON.stringify(p.payload))
+        const result = await this.send(
+          p.payload.action === 'start' && r.package.group
+            ? '/institution/group-workouts'
+            : '/institution/sessions',
+          JSON.stringify(p.payload),
+          !!r.package.group,
+        )
         await this.store.acknowledge(this.owner, r.package.id, operation, result)
       } catch (error) {
         this.paused = true

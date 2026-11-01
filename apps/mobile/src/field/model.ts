@@ -69,7 +69,7 @@ export function failureText(error: unknown): string {
         'Sign in again to the same account and institution to send saved work.',
       event_not_started: 'The event has not started or was cancelled. Review the server event.',
       group_workout_results_required:
-        'Complete or explicitly skip participant workouts in the web app before finishing this group event.',
+        'Finish each present participant sheet, or explicitly skip them in the web app, before completing this event. Sync saved phone results first.',
       results_required: 'Assessment results are required. Complete this correction in the web app.',
       attendance_required: 'Confirm attendance before saving scores or completing this event.',
       participation_unavailable:
@@ -88,7 +88,7 @@ export function failureText(error: unknown): string {
         'Finish or explicitly resolve the previous workout in this plan first.',
       invalid_session: 'Check the workout results and completion checks before sending again.',
       native_workout_upgrade_required:
-        'Individual workout capture needs a matching app and server update. Saved work is retained.',
+        'Workout capture needs a matching app and server update. Saved work is retained.',
       invalid_results: 'Check every assessment value and its limits before correcting this record.',
     }
     return (

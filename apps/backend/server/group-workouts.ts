@@ -18,6 +18,7 @@ import { role } from "./programming.ts";
 import { localDay } from "./local-date.ts";
 import { assertTrainingAllowed } from "./workout-sequence.ts";
 import { workoutSnapshot } from "./workout-templates.ts";
+import { groupFieldWorkoutPackage } from "./field-workout.ts";
 import type { Prisma } from "./generated/prisma/client.ts";
 type Self = Awaited<ReturnType<typeof access>>;
 type Input = Record<string, unknown>;
@@ -85,6 +86,8 @@ export async function groupWorkouts(
 ) {
   const view = role(query.get("view")),
     eid = uuid(query.get("event"));
+  const fieldPackages = query.get("fieldPackages") === "true";
+  if (fieldPackages && view !== "trainer") throw new ApiError(403, "forbidden");
   return scoped(actor, institution, [view], async (tx, self) => {
     const occurrence = await eventAccess(tx, institution, self, view, eid),
       source = occurrence.workout_snapshot as unknown as FrozenWorkout;
@@ -100,7 +103,14 @@ export async function groupWorkouts(
         member_id: { in: people.map((p) => p.member_id) },
         source_kind: "additional",
       },
-      select: { id: true, member_id: true, completed_at: true, version: true },
+      select: {
+        id: true,
+        member_id: true,
+        completed_at: true,
+        version: true,
+        document: true,
+        local_date: true,
+      },
     });
     const now = new Date(),
       today = localDay(occurrence.timezone, now);
@@ -140,18 +150,34 @@ export async function groupWorkouts(
                   : person.attendance !== "present"
                     ? "attendance_required"
                     : null;
+        const canStart =
+          view === "trainer" &&
+          !blockedReason &&
+          !person.workout_skip_reason &&
+          !session;
+        const canDownloadStart =
+          view === "trainer" &&
+          occurrence.state === "scheduled" &&
+          !unavailable &&
+          !blocked &&
+          person.attendance === "present" &&
+          !person.workout_skip_reason &&
+          !session;
         return {
           member_id: person.member_id,
           name: person.institution_members.name,
           revision: person.revision,
           attendance: person.attendance,
           skip_reason: person.workout_skip_reason,
-          session: session || null,
-          can_start:
-            view === "trainer" &&
-            !blockedReason &&
-            !person.workout_skip_reason &&
-            !session,
+          session: session
+            ? {
+                id: session.id,
+                member_id: session.member_id,
+                completed_at: session.completed_at,
+                version: session.version,
+              }
+            : null,
+          can_start: canStart,
           can_skip:
             view === "trainer" &&
             occurrence.state !== "cancelled" &&
@@ -160,6 +186,26 @@ export async function groupWorkouts(
             !session?.completed_at &&
             (person.attendance === "present" || !!session),
           blocked: blockedReason,
+          ...(fieldPackages
+            ? {
+                field_workout: groupFieldWorkoutPackage(
+                  institution,
+                  occurrence,
+                  {
+                    member_id: person.member_id,
+                    name: person.institution_members.name,
+                    revision: person.revision,
+                  },
+                  source.day,
+                  session || null,
+                  !!canDownloadStart,
+                  !!session &&
+                    !session.completed_at &&
+                    !blockedReason &&
+                    !person.workout_skip_reason,
+                ),
+              }
+            : {}),
         };
       }),
     };

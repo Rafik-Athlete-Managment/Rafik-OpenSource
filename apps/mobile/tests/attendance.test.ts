@@ -975,3 +975,73 @@ test('a start acknowledged with another session needs review and does not block 
     sqlite.close()
   }
 })
+
+test('group participant sheets use separate local identities and the group start route', async () => {
+  const sqlite = new DatabaseSync(':memory:')
+  const store = new FieldStore(adapter(sqlite))
+  const scope = { ...owner, institution: randomUUID() }
+  const event = randomUUID(),
+    member = randomUUID(),
+    id = randomUUID(),
+    session = randomUUID()
+  const entry = {
+    exercise_key: 'run',
+    set_index: 0,
+    reps: 0,
+    load: 0,
+    unit: 'kg' as const,
+    seconds: 45,
+    metres: null,
+    effort: null,
+    completed: false,
+  }
+  const p: FieldWorkoutPackage = {
+    id,
+    institution_id: scope.institution,
+    assignment_id: null,
+    group: { event_id: event, roster_revision: 2 },
+    member_id: member,
+    member_name: 'Runner',
+    occurrence_id: event,
+    title: 'Team training',
+    day_id: randomUUID(),
+    day_name: 'Conditioning',
+    starts_at: '2020-01-01T10:00:00Z',
+    training_date: '2020-01-01',
+    timezone: 'UTC',
+    allow_provisional_start: true,
+    can_record: false,
+    exercises: [{ key: 'run', name: 'Run', name_ar: 'جري', kind: 'timed', rest: 30, note: '' }],
+    entries: [entry],
+    session: null,
+  }
+  try {
+    await store.initialize()
+    await store.workouts.put(scope, p)
+    assert.equal((await store.workouts.groupList(scope, event)).length, 1)
+    assert.equal((await store.workouts.groupList({ ...scope, user: 'other' }, event)).length, 0)
+    await store.workouts.start(scope, id, session, randomUUID())
+    const routes: string[] = []
+    const send = async (path: string, body: string) => {
+      routes.push(path)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      const command = JSON.parse(body)
+      return {
+        id: session,
+        version: command.action === 'start' ? 1 : 2,
+        completed_at: command.complete ? '2020-01-01T11:00:00Z' : null,
+      }
+    }
+    await Promise.all([
+      new WorkoutSync(store.workouts, scope, send).run(),
+      new WorkoutSync(store.workouts, scope, send).run(),
+    ])
+    await store.workouts.edit(scope, id, [{ ...entry, completed: true }], 'Recorded on field')
+    await store.workouts.save(scope, id, true, randomUUID())
+    await new WorkoutSync(store.workouts, scope, send).run()
+    assert.deepEqual(routes, ['/institution/group-workouts', '/institution/sessions'])
+    assert.equal((await store.workouts.get(scope, id)).session?.version, 2)
+  } finally {
+    sqlite.close()
+  }
+})

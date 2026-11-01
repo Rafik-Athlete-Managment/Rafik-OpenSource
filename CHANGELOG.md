@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add source-level Android group workout sheets for designated event coaches: a collapsible searchable participant list, offline downloads, measured per-athlete logging and exact group-start/session-save replay. Group packages retain frozen event/roster identities and share the encrypted owner-scoped store; an atomic queue claim prevents duplicate dispatch from mounted views. The matching backend advertises group capability and projects minimal native sheets. Physical-device, rendered UI and signed-upgrade acceptance remain pending; web still handles participant adaptation and explicit skip.
+
 - Expand the canonical founder validation guide with a physical-phone workflow covering SQLCipher startup, account isolation, force-stop recovery, USB-disconnected offline sync and a separate signed-APK upgrade gate. Clarify that group recording is web-only while the native capability remains unsupported.
 
 - Add plain-language descriptions to all 292 tracked exported TypeScript functions and all 104 Vue components, explaining their purpose and important effects for contributors learning the codebase. Add this founder-focused reading standard to the maintainer guide and `AGENTS.md`.
