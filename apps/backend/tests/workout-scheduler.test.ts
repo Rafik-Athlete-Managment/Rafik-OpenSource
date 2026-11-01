@@ -6,6 +6,7 @@ import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { db } from "../server/db.ts";
+import type { Prisma } from "../server/generated/prisma/client.ts";
 import {
   prepareWorkoutRule,
   weeklyInstant,
@@ -612,7 +613,7 @@ test("skipping a started workout releases preparation and planning queues", asyn
       ...sourceVersion,
       id: randomUUID(),
       revision: 5,
-      prescription: sourceVersion.prescription as any,
+      prescription: sourceVersion.prescription as Prisma.InputJsonValue,
     },
   });
   const plan = await db.institution_assignments.create({
@@ -700,8 +701,9 @@ test("skipping a started workout releases preparation and planning queues", asyn
     timezone: "UTC",
   });
   assert.equal(rule.status, 200, JSON.stringify(rule));
-  assert.notEqual(
+  assert.equal(
     await prepareWorkoutRule(rule.data.rule.id, new Date(now)),
-    "previous_workout_unresolved",
+    "prepared",
+    "the skipped session must not block the next workout from being prepared",
   );
 });
