@@ -61,7 +61,9 @@ export function ScoreEditor({
   const sequence = useRef(0)
   const commandBusy = useRef(false)
   const flight = useRef<Promise<void>>(Promise.resolve())
-  const [status, setStatus] = useState(savedDraft ? 'Draft restored from this device.' : '')
+  const [status, setStatus] = useState(
+    savedDraft ? 'Unsynced draft restored from this device.' : '',
+  )
   const [persisting, setPersisting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -83,7 +85,7 @@ export function ScoreEditor({
         if (version !== sequence.current) return
         setPersisting(false)
         onPersisting(false)
-        setStatus('Score draft saved on this device. Not yet submitted.')
+        setStatus('')
         void onDraftSaved().catch((error) => onError(failureText(error)))
       })
       .catch((e) => {

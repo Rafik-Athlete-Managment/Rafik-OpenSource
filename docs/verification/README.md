@@ -1,5 +1,9 @@
 # Verification record
 
+## Phone daily workspace source checks — 2 November 2026
+
+The final mobile TypeScript/test TypeScript check passed. The attendance-to-recording step retains the existing server-confirmed dependency gate; its compact UI alone does not validate offline step progression. The focused host-stub WorkoutExercises component tests passed 3/3; the Node SQLite attendance/workout queue suite passed 22/22, including offline finish and exact replay. `git diff --check` passed. The standard npm test commands first failed with Windows sandbox `spawn EPERM`; the same test files passed directly with `node --test --test-isolation=none`. These checks cover types, controlled exercise inputs and queue behavior, not the rendered app bar, touch layout, Arabic RTL, physical offline use or the new assessment step. No Android native build, emulator run, signed APK upgrade or broad browser suite was run for this JS-only change. Use the [canonical phone walkthrough](../testing/instance-validation.md#phone-daily-workspace-and-event-steps--unreleased-beta3) for founder acceptance.
+
 ## Focused phone event navigation — 2 November 2026
 
 The unreleased source separates app tabs from the open event, makes attendance the first group step, and provides Next, Back to attendance, Close and Finish event in the event flow. The mobile typecheck and focused formatting check passed. Documentation validation passed its two fixtures and 2,295 local links plus 708 heading links across 82 maintained documents. The paired English/Arabic landing source guide was updated in draft PR #34. No Android build, rendered device inspection, offline replay or signed upgrade was performed for this UI change; the canonical native group walkthrough specifies those checks.

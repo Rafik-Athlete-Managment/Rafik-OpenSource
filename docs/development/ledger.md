@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Phone daily workspace and progressive logging — 2 November 2026
+
+The unreleased beta.3 phone source now leads with a day-scoped Schedule: five cards at a time, a date/type/order filter sheet, compact home tabs and account menu. An event opens into a preview, then compact attendance rows. Assessments move to a results step; group workouts open one shared preview and keep the selected athlete's sheet under a fixed, collapsible switcher. The phone saves attendance offline, then waits for server confirmation before opening dependent recording steps or finishing the event. A completed workout shows device-only status until exact replay is acknowledged, then a read-only summary with time and set count. No backend or native dependency changed. The canonical [phone walkthrough](../testing/instance-validation.md#phone-daily-workspace-and-event-steps--unreleased-beta3) requests physical validation; current code checks are in [verification](../verification/README.md).
+
 ## Focused phone event flow — 2 November 2026
 
 An open event now owns its own header and Close action; app-level Schedule/My athletes tabs appear only outside events. Group attendance leads to **Next: record workouts** after all active athletes have confirmed attendance and at least one is present. The coach can return to attendance from the recording step, or leave and continue later without deleting saved work. The group **Finish event** action sits after the workout sheets and still uses the server's existing completion rules; if nobody is present, completion remains on the attendance step. An open assessment score editor warns before leaving because unsaved text would be lost. This is a source UI correction; physical phone rendering remains pending.

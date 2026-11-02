@@ -263,58 +263,74 @@ function SignedIn({
     }
   }
   const options = [...new Set([...contexts.map((c) => c.institution_id), ...savedInstitutions])]
+  const accountMenu = accountOpen ? (
+    <View style={styles.accountMenu}>
+      <Text style={styles.label}>{l('Signed in as', 'مسجل باسم')}</Text>
+      <Text selectable style={[styles.hint, { writingDirection: 'ltr' }]}>
+        {client.user.email}
+      </Text>
+      <View style={styles.actions}>
+        <Button
+          title="English"
+          primary={language === 'en'}
+          onPress={() => setLanguage('en')}
+          styles={styles}
+        />
+        <Button
+          title="العربية"
+          primary={language === 'ar'}
+          onPress={() => setLanguage('ar')}
+          styles={styles}
+        />
+      </View>
+      {preferenceError ? (
+        <Text style={styles.hint}>
+          {l(
+            'Language preference was not saved. Tap a language to retry.',
+            'لم يُحفظ تفضيل اللغة. اضغط اللغة للمحاولة مرة أخرى.',
+          )}
+        </Text>
+      ) : null}
+      <Button
+        title={closing ? 'Signing out…' : 'Sign out'}
+        disabled={closing || loading || fieldBusy}
+        onPress={() => void logout()}
+        styles={styles}
+      />
+      {options.length > 1
+        ? options.map((id) => (
+            <Button
+              key={id}
+              title={contexts.find((c) => c.institution_id === id)?.name || t('Saved institution')}
+              disabled={closing || loading || fieldBusy}
+              onPress={() => {
+                setInstitution(id)
+                setAccountOpen(false)
+              }}
+              styles={styles}
+              primary={institution === id}
+            />
+          ))
+        : null}
+    </View>
+  ) : null
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.topbar}>
-        <View style={styles.heading}>
+      {!institution || loading ? (
+        <View style={styles.topbar}>
           <Text style={styles.kicker}>{t('RAFIK FIELD')}</Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={l('Account menu', 'قائمة الحساب')}
-          accessibilityState={{ expanded: accountOpen }}
-          onPress={() => setAccountOpen((open) => !open)}
-          style={styles.accountButton}
-        >
-          <Text style={styles.link}>{l('Account ▾', 'الحساب ▾')}</Text>
-        </Pressable>
-      </View>
-      {accountOpen ? (
-        <View style={styles.accountMenu}>
-          <Text style={styles.label}>{l('Signed in as', 'مسجل باسم')}</Text>
-          <Text selectable style={[styles.hint, { writingDirection: 'ltr' }]}>
-            {client.user.email}
-          </Text>
-          <View style={styles.actions}>
-            <Button
-              title="English"
-              primary={language === 'en'}
-              onPress={() => setLanguage('en')}
-              styles={styles}
-            />
-            <Button
-              title="العربية"
-              primary={language === 'ar'}
-              onPress={() => setLanguage('ar')}
-              styles={styles}
-            />
-          </View>
-          {preferenceError ? (
-            <Text style={styles.hint}>
-              {l(
-                'Language preference was not saved. Tap a language to retry.',
-                'لم يُحفظ تفضيل اللغة. اضغط اللغة للمحاولة مرة أخرى.',
-              )}
-            </Text>
-          ) : null}
-          <Button
-            title={closing ? 'Signing out…' : 'Sign out'}
-            disabled={closing || loading || fieldBusy}
-            onPress={() => void logout()}
-            styles={styles}
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Account menu', 'قائمة الحساب')}
+            accessibilityState={{ expanded: accountOpen }}
+            onPress={() => setAccountOpen((open) => !open)}
+            style={styles.accountButton}
+          >
+            <Text style={styles.link}>{l('Account ▾', 'الحساب ▾')}</Text>
+          </Pressable>
         </View>
       ) : null}
+      {(!institution || loading) && accountMenu}
       {message ? (
         <View style={{ paddingHorizontal: 18 }}>
           <Text accessibilityLiveRegion="polite" style={styles.message}>
@@ -328,20 +344,6 @@ function SignedIn({
           />
         </View>
       ) : null}
-      {options.length > 1 ? (
-        <View style={styles.toolbar}>
-          {options.map((id) => (
-            <Button
-              key={id}
-              title={`${contexts.find((c) => c.institution_id === id)?.name || t('Saved institution')}${institution === id ? l(' · selected', ' · محددة') : ''}`}
-              disabled={closing || loading || fieldBusy}
-              onPress={() => setInstitution(id)}
-              styles={styles}
-              primary={institution === id}
-            />
-          ))}
-        </View>
-      ) : null}
       {institution && !loading ? (
         <InstitutionScreen
           key={institution}
@@ -351,6 +353,10 @@ function SignedIn({
           styles={styles}
           closing={closing}
           onPersisting={setFieldBusy}
+          accountOpen={accountOpen}
+          onAccountPress={() => setAccountOpen((open) => !open)}
+          accountMenu={accountMenu}
+          onEventOpen={() => setAccountOpen(false)}
         />
       ) : (
         <ScrollView contentContainerStyle={styles.content}>

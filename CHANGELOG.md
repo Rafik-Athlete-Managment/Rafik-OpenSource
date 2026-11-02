@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refine the unreleased coach phone workspace: one compact app bar, a day-scoped five-card schedule with a filter sheet, a concise event preview, attendance rows with details on demand, a separate assessment-results step, and a fixed athlete switcher above group recording. Attendance saves offline; the next recording step waits for confirmation so dependent commands preserve order. Workout completion shows a device-only summary before sync and a confirmed summary after acknowledgment. No API, schema or native dependency changed; physical rendering and offline acceptance remain open.
+
 - Keep a coach inside an open phone event: show attendance first, then a clear Next action for group workouts. Move app navigation out of the event, provide an explicit Close action that retains saved work, and place Finish event after the workout step. Use coach-facing labels for the normal event controls.
 
 - Make the coach phone flow more compact: navigation tabs, account menu, denser exercise set entry, attendance-first group sheets, and a single view with a collapsible athlete selector. Local edits save automatically; Finish workout queues a final result offline and shows a confirmed read-only summary after sync. Keep progress sync and recovery options available without making them routine steps. Allow an untouched missed custom/group calendar event to be rescheduled to a future time while protecting events with recorded field work.

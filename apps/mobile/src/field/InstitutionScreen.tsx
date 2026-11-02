@@ -2,10 +2,12 @@ import { RecoveryPanel } from './RecoveryPanel'
 import { EventHistory } from './EventHistory'
 import { useLanguage } from './Language'
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   ActivityIndicator,
   Alert,
   AppState,
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -35,6 +37,7 @@ import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
 import { downloadGroupEvent } from './group-download'
+import type { FieldWorkoutPackage } from './workout-model'
 
 /** Main field screen: loads event rosters, records attendance and syncs changes. */
 export function InstitutionScreen({
@@ -44,6 +47,10 @@ export function InstitutionScreen({
   styles,
   closing,
   onPersisting,
+  accountOpen,
+  onAccountPress,
+  accountMenu,
+  onEventOpen,
 }: {
   client: NativeClient
   store: FieldStore
@@ -51,6 +58,10 @@ export function InstitutionScreen({
   styles: Styles
   closing: boolean
   onPersisting: (busy: boolean) => void
+  accountOpen: boolean
+  onAccountPress: () => void
+  accountMenu: ReactNode
+  onEventOpen: () => void
 }) {
   const { t, l, language } = useLanguage()
   const [owner] = useState<Owner>(() => ({
@@ -76,6 +87,24 @@ export function InstitutionScreen({
   const [groupEvent, setGroupEvent] = useState<string | null>(null)
   const [groupOpened, setGroupOpened] = useState<string | null>(null)
   const [groupAvailable, setGroupAvailable] = useState(false)
+  const [groupPreview, setGroupPreview] = useState<FieldWorkoutPackage | null>(null)
+  const [eventStage, setEventStage] = useState<'preview' | 'attendance' | 'results'>('preview')
+  const [expandedPerson, setExpandedPerson] = useState<string | null>(null)
+  const [refreshSignal, setRefreshSignal] = useState(0)
+  const [headerRefreshing, setHeaderRefreshing] = useState(false)
+  const [refreshNotice, setRefreshNotice] = useState('')
+  const [selectedDay, setSelectedDay] = useState(() => localDate(new Date()))
+  const [draftDay, setDraftDay] = useState(selectedDay)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [recordFilter, setRecordFilter] = useState<'all' | 'training' | 'assessment'>('all')
+  const [draftRecordFilter, setDraftRecordFilter] = useState<'all' | 'training' | 'assessment'>(
+    'all',
+  )
+  const [latestFirst, setLatestFirst] = useState(false)
+  const [draftLatestFirst, setDraftLatestFirst] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(5)
+  const [showOtherSaved, setShowOtherSaved] = useState(false)
+  const [showDeviceOptions, setShowDeviceOptions] = useState(false)
   const [workoutsOpened, setWorkoutsOpened] = useState(false)
   const [workoutPersisting, setWorkoutPersisting] = useState(false)
   const [groupPersisting, setGroupPersisting] = useState(false)
@@ -109,16 +138,7 @@ export function InstitutionScreen({
   const savingRef = useRef(false)
   const closingRef = useRef(closing)
   closingRef.current = closing
-  const [window] = useState(() => {
-    const from = new Date()
-    const to = new Date(from)
-    to.setDate(to.getDate() + 13)
-    return {
-      from: localDate(from),
-      to: localDate(to),
-      zone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-    }
-  })
+  const [zone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
 
   async function reloadLocal() {
     const list = await store.list(owner)
@@ -136,10 +156,8 @@ export function InstitutionScreen({
     if (!alive.current || closingRef.current) return
     try {
       const startedWithWork = await store.next(owner)
-      let finished = false
       await runner.current?.run((completed) => {
         if (completed && alive.current) {
-          finished = true
           setEvents((prior) =>
             prior.map((event) => (event.id === completed.event.id ? completed.event : event)),
           )
@@ -158,19 +176,13 @@ export function InstitutionScreen({
       if (startedWithWork) {
         const remaining = await store.next(owner)
         if (alive.current)
-          setMessage(
-            remaining
-              ? `${stateText[remaining.state]}. ${remaining.error || ''}`
-              : finished
-                ? 'Event completed and confirmed by your institution. The device copy was removed.'
-                : 'Saved field changes confirmed by your institution.',
-          )
+          setMessage(remaining ? `${stateText[remaining.state]}. ${remaining.error || ''}` : '')
       }
     } catch (error) {
       if (alive.current) setMessage(failureText(error))
     }
   }
-  async function refresh(offset = 0, background = false) {
+  async function refresh(offset = 0, background = false, day = selectedDay) {
     if (!alive.current || busyRef.current || refreshingRef.current || closingRef.current) return
     refreshingRef.current = true
     setRefreshingSchedule(true)
@@ -179,7 +191,13 @@ export function InstitutionScreen({
       setBusy(true)
     }
     try {
-      const query = new URLSearchParams({ ...window, view: 'trainer', offset: String(offset) })
+      const query = new URLSearchParams({
+        from: day,
+        to: day,
+        zone,
+        view: 'trainer',
+        offset: String(offset),
+      })
       const result = await client.request<{ items: unknown[]; next: number | null }>(
         `/institution/calendar?${query}`,
       )
@@ -189,8 +207,7 @@ export function InstitutionScreen({
         offset ? [...prior, ...items.filter((i) => !prior.some((e) => e.id === i.id))] : items,
       )
       setNext(result.next)
-      if (!selectedRef.current)
-        setMessage('Schedule refreshed. Open an event online to save its attendance roster.')
+      if (!offset) setVisibleCount(5)
       await sync()
     } catch (error) {
       if (error instanceof ApiFailure && error.status === 403) {
@@ -254,11 +271,15 @@ export function InstitutionScreen({
     setMessage('')
     selectedRef.current = id
     setSelected(id)
+    onEventOpen()
     setWorkoutView(false)
     setGroupEvent(null)
     setSnapshot(null)
     setOnlineRoster(null)
     setGroupAvailable(false)
+    setGroupPreview(null)
+    setEventStage('preview')
+    setShowDeviceOptions(false)
     setSearch('')
     setReviewing(false)
     setEditor(null)
@@ -266,11 +287,10 @@ export function InstitutionScreen({
       const saved = await store.snapshot(owner, id)
       if (!alive.current || selectedRef.current !== id) return
       setSnapshot(saved)
-      setGroupAvailable((await store.workouts.groupList(owner, id)).length > 0)
+      const savedGroup = await store.workouts.groupList(owner, id)
+      setGroupAvailable(savedGroup.length > 0)
+      setGroupPreview(savedGroup[0]?.package || null)
       if (saved && !refreshRoster) {
-        setMessage(
-          'Saved event opened from this device. Refresh roster online for the latest data.',
-        )
         void sync()
         return
       }
@@ -293,15 +313,13 @@ export function InstitutionScreen({
           const group = await downloadGroupEvent(client, store, owner, id)
           if (group.group) {
             setGroupAvailable(true)
+            setGroupPreview(group.packages[0] || null)
             groupMessage = group.errors.length
               ? l(
                   `Attendance roster saved, but ${group.errors.length} workout sheet(s) could not be updated: ${group.errors[0]}`,
                   `حُفظت قائمة الحضور، لكن تعذّر تحديث ${group.errors.length} من سجلات التمرين: ${group.errors[0]}`,
                 )
-              : l(
-                  `Attendance roster and ${group.packages.length} participant workout sheet(s) saved on this device.`,
-                  `حُفظت قائمة الحضور و${group.packages.length} من سجلات المشاركين على هذا الجهاز.`,
-                )
+              : ''
           }
         } catch (error) {
           groupMessage = l(
@@ -313,12 +331,7 @@ export function InstitutionScreen({
       if (!alive.current || selectedRef.current !== id) return
       setOnlineRoster(roster)
       await reloadLocal()
-      setMessage(
-        groupMessage ||
-          (roster.event.state === 'scheduled'
-            ? 'Event package saved for field capture on this device.'
-            : 'This event is read-only. Its offline roster has been removed.'),
-      )
+      setMessage(groupMessage)
     } catch (error) {
       if (error instanceof ApiFailure && error.status === 403) await store.block(owner, id)
       if (alive.current && selectedRef.current === id) {
@@ -340,7 +353,6 @@ export function InstitutionScreen({
     if (!person) return
     savingRef.current = true
     setSaving(true)
-    setMessage('Saving attendance on this device…')
     try {
       await store.enqueue(owner, {
         action: 'attendance',
@@ -353,7 +365,6 @@ export function InstitutionScreen({
       })
       if (alive.current) {
         await reloadLocal()
-        setMessage('Attendance saved on this device. Awaiting institution confirmation.')
       }
       await sync()
     } catch (error) {
@@ -371,10 +382,16 @@ export function InstitutionScreen({
       await store.enqueue(owner, payload)
       if (alive.current) {
         await reloadLocal()
-        setMessage(
+        setRefreshNotice(
           payload.action === 'finish'
-            ? 'Completion saved on device; waiting for institution confirmation.'
-            : 'Scores saved on device; waiting for institution confirmation.',
+            ? l(
+                'Event saved on this phone. Waiting to send.',
+                'حُفظ الموعد على هذا الهاتف. بانتظار الإرسال.',
+              )
+            : l(
+                'Results saved on this phone. Waiting to send.',
+                'حُفظت النتائج على هذا الهاتف. بانتظار الإرسال.',
+              ),
         )
       }
       await sync()
@@ -467,10 +484,21 @@ export function InstitutionScreen({
   const completionProblems = roster ? finishProblems(roster) : []
   const completed = roster?.event.state === 'completed'
   const beforeStart = !!roster && Date.parse(roster.event.starts_at) > now
-  const list = [
+  const availableEvents = [
     ...events,
     ...cached.filter((c) => !events.some((e) => e.id === c.event.id)).map((c) => c.event),
   ]
+  const onSelectedDay = (event: FieldEvent) => localDate(new Date(event.starts_at)) === selectedDay
+  const list = availableEvents
+    .filter(
+      (event) => onSelectedDay(event) && (recordFilter === 'all' || event.kind === recordFilter),
+    )
+    .sort((a, b) =>
+      latestFirst
+        ? Date.parse(b.starts_at) - Date.parse(a.starts_at)
+        : Date.parse(a.starts_at) - Date.parse(b.starts_at),
+    )
+  const otherSaved = cached.filter((item) => !onSelectedDay(item.event))
   const filtered =
     roster?.people.filter(
       (p) =>
@@ -489,11 +517,23 @@ export function InstitutionScreen({
   const attendanceReady = allAttendanceConfirmed && presentCount > 0
   async function openGroupSheets() {
     if (!roster || !selected || !attendanceReady) {
-      setMessage(
-        l(
-          'Mark and confirm attendance before recording group workouts.',
-          'سجّل الحضور وأكّده قبل تسجيل تمارين المجموعة.',
-        ),
+      const unmarked =
+        roster?.people.filter(
+          (person) =>
+            person.duty === 'trainee' && person.active && person.attendance === 'unmarked',
+        ).length || 0
+      setRefreshNotice(
+        unmarked
+          ? l(
+              `${unmarked} athlete(s) still need an attendance mark.`,
+              `لم يُحدَّد حضور ${unmarked} من الرياضيين بعد.`,
+            )
+          : pending.some((command) => command.payload.action === 'attendance')
+            ? l('Wait for attendance confirmation, then continue.', 'انتظر تأكيد الحضور ثم تابع.')
+            : l(
+                'At least one athlete must be present to record workouts.',
+                'يجب حضور رياضي واحد على الأقل لتسجيل التمارين.',
+              ),
       )
       return
     }
@@ -508,6 +548,7 @@ export function InstitutionScreen({
         if (group.errors.length) setMessage(group.errors[0])
       }
       setWorkoutView(false)
+      setRefreshNotice('')
       setGroupOpened(roster.event.id)
       setGroupEvent(roster.event.id)
     } catch (error) {
@@ -537,37 +578,121 @@ export function InstitutionScreen({
     setSelected(null)
     setGroupEvent(null)
     setGroupAvailable(false)
+    setGroupPreview(null)
+    setEventStage('preview')
     setEditor(null)
     setSnapshot(null)
     setOnlineRoster(null)
     setSearch('')
     setMessage('')
+    setRefreshNotice('')
+  }
+  function refreshCurrent() {
+    if (
+      busy ||
+      headerRefreshing ||
+      saving ||
+      draftSaving ||
+      workoutPersisting ||
+      groupPersisting ||
+      closing
+    )
+      return
+    if (!selected) {
+      if (workoutView) {
+        setHeaderRefreshing(true)
+        setRefreshSignal((value) => value + 1)
+      } else void refresh()
+      return
+    }
+    if (pending.length || snapshot?.drafts.length) {
+      setRefreshNotice(
+        l(
+          'Send or review saved changes before refreshing.',
+          'أرسل التغييرات المحفوظة أو راجعها قبل التحديث.',
+        ),
+      )
+      return
+    }
+    setRefreshNotice('')
+    if (groupEvent) {
+      setHeaderRefreshing(true)
+      setRefreshSignal((value) => value + 1)
+    } else void openEvent(selected, true)
+  }
+  function applyScheduleFilters(day: string) {
+    const parsed = new Date(`${day}T12:00:00Z`)
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(day) ||
+      !Number.isFinite(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== day
+    ) {
+      setRefreshNotice(
+        l('Enter a valid date as YYYY-MM-DD.', 'أدخل تاريخاً صحيحاً بصيغة YYYY-MM-DD.'),
+      )
+      return
+    }
+    setSelectedDay(day)
+    setRecordFilter(draftRecordFilter)
+    setLatestFirst(draftLatestFirst)
+    setVisibleCount(5)
+    setFiltersOpen(false)
+    void refresh(0, false, day)
   }
   return (
     <View style={{ flex: 1 }}>
       {!selected ? (
-        <View accessibilityRole="tablist" style={styles.tabBar}>
-          <Tab
-            title={l('Schedule', 'الجدول')}
-            selected={!workoutView}
-            disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
-            onPress={() => {
-              setWorkoutView(false)
-              setGroupEvent(null)
-            }}
-            styles={styles}
-          />
-          <Tab
-            title={l('Solo workouts', 'التمارين الفردية')}
-            selected={workoutView}
-            disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
-            onPress={() => {
-              setGroupEvent(null)
-              setWorkoutsOpened(true)
-              setWorkoutView(true)
-            }}
-            styles={styles}
-          />
+        <View style={styles.appBar}>
+          <View style={styles.topbar}>
+            <Text style={styles.kicker}>{l('RAFIK FIELD', 'رفيق الميداني')}</Text>
+            <View style={styles.actions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={l('Refresh', 'تحديث')}
+                disabled={busy || refreshingSchedule || headerRefreshing || closing}
+                onPress={refreshCurrent}
+                style={styles.headerIcon}
+              >
+                {refreshingSchedule || headerRefreshing ? (
+                  <ActivityIndicator size="small" />
+                ) : (
+                  <Text style={styles.link}>↻</Text>
+                )}
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={l('Account menu', 'قائمة الحساب')}
+                accessibilityState={{ expanded: accountOpen }}
+                onPress={onAccountPress}
+                style={styles.headerIcon}
+              >
+                <Text style={styles.link}>⋯</Text>
+              </Pressable>
+            </View>
+          </View>
+          <View accessibilityRole="tablist" style={styles.tabBar}>
+            <Tab
+              title={l('Schedule', 'الجدول')}
+              selected={!workoutView}
+              disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
+              onPress={() => {
+                setWorkoutView(false)
+                setGroupEvent(null)
+              }}
+              styles={styles}
+            />
+            <Tab
+              title={l('Solo workouts', 'التمارين الفردية')}
+              selected={workoutView}
+              disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
+              onPress={() => {
+                setGroupEvent(null)
+                setWorkoutsOpened(true)
+                setWorkoutView(true)
+              }}
+              styles={styles}
+            />
+          </View>
         </View>
       ) : (
         <View style={styles.eventHeader}>
@@ -579,10 +704,56 @@ export function InstitutionScreen({
               {groupAvailable
                 ? groupEvent
                   ? l('Step 2 of 2 · Workouts', 'الخطوة ٢ من ٢ · التمارين')
-                  : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')
-                : l('Attendance and results', 'الحضور والنتائج')}
+                  : eventStage === 'preview'
+                    ? l('Event preview', 'معاينة الموعد')
+                    : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')
+                : eventStage === 'preview'
+                  ? l('Event preview', 'معاينة الموعد')
+                  : eventStage === 'results'
+                    ? l('Step 2 of 2 · Results', 'الخطوة ٢ من ٢ · النتائج')
+                    : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')}
             </Text>
           </View>
+          {groupEvent || eventStage !== 'preview' ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                groupEvent || eventStage === 'results'
+                  ? l('Back to attendance', 'العودة إلى الحضور')
+                  : l('Back to event preview', 'العودة إلى معاينة الموعد')
+              }
+              disabled={groupPersisting || closing}
+              onPress={() =>
+                groupEvent
+                  ? setGroupEvent(null)
+                  : setEventStage(eventStage === 'results' ? 'attendance' : 'preview')
+              }
+              style={styles.headerIcon}
+            >
+              <Text style={styles.link}>‹</Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Refresh event', 'تحديث الموعد')}
+            disabled={
+              busy ||
+              headerRefreshing ||
+              saving ||
+              draftSaving ||
+              workoutPersisting ||
+              groupPersisting ||
+              closing
+            }
+            onPress={refreshCurrent}
+            style={styles.headerIcon}
+          >
+            {busy || headerRefreshing ? (
+              <ActivityIndicator size="small" />
+            ) : (
+              <Text style={styles.link}>↻</Text>
+            )}
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={l(
@@ -599,6 +770,18 @@ export function InstitutionScreen({
           </Pressable>
         </View>
       )}
+      {!selected ? accountMenu : null}
+      {refreshNotice ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={l('Dismiss refresh warning', 'إخفاء تنبيه التحديث')}
+          onPress={() => setRefreshNotice('')}
+          style={styles.noticeToast}
+        >
+          <Text style={styles.hint}>{refreshNotice}</Text>
+          <Text style={styles.link}>×</Text>
+        </Pressable>
+      ) : null}
       {selected && message ? (
         <Text
           accessibilityLiveRegion="polite"
@@ -618,6 +801,8 @@ export function InstitutionScreen({
             closing={closing}
             onPersisting={setWorkoutPersisting}
             active={workoutView}
+            refreshSignal={refreshSignal}
+            onRefreshComplete={() => setHeaderRefreshing(false)}
           />
         </View>
       ) : null}
@@ -633,6 +818,16 @@ export function InstitutionScreen({
             onPersisting={setGroupPersisting}
             active={groupEvent === groupOpened}
             groupEvent={groupOpened}
+            presentAthletes={
+              roster?.people
+                .filter(
+                  (person) =>
+                    person.duty === 'trainee' && person.active && person.attendance === 'present',
+                )
+                .map((person) => person.member_id) || []
+            }
+            refreshSignal={refreshSignal}
+            onRefreshComplete={() => setHeaderRefreshing(false)}
             groupTitle={roster?.event.title}
             onBackToEvent={() => setGroupEvent(null)}
             onFinishEvent={finish}
@@ -655,14 +850,118 @@ export function InstitutionScreen({
           />
         </View>
       ) : null}
+      {selected && eventStage === 'preview' && !groupEvent ? (
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {roster ? (
+            <>
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>{roster.event.title}</Text>
+                <Text style={styles.hint}>
+                  {displayDate(roster.event.starts_at, language)} ·{' '}
+                  {l(
+                    roster.event.kind === 'assessment' ? 'Assessment' : 'Training',
+                    roster.event.kind === 'assessment' ? 'تقييم' : 'تدريب',
+                  )}
+                </Text>
+                <Text style={styles.hint}>
+                  {roster.people.filter((person) => person.duty === 'trainee').length}{' '}
+                  {l('athletes', 'رياضيين')} ·{' '}
+                  {l(roster.event.state, roster.event.state === 'completed' ? 'مكتمل' : 'مجدول')}
+                </Text>
+              </View>
+              {groupPreview ? (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>{l('Workout preview', 'معاينة التمرين')}</Text>
+                  <Text style={styles.hint}>
+                    {language === 'ar' && groupPreview.day_name_ar
+                      ? groupPreview.day_name_ar
+                      : groupPreview.day_name}
+                  </Text>
+                  {groupPreview.exercises.slice(0, 5).map((exercise) => (
+                    <Text key={exercise.key} style={styles.hint}>
+                      • {language === 'ar' && exercise.name_ar ? exercise.name_ar : exercise.name}
+                    </Text>
+                  ))}
+                  {groupPreview.exercises.length > 5 ? (
+                    <Text style={styles.hint}>
+                      +{groupPreview.exercises.length - 5} {l('more', 'أخرى')}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+              <Button
+                title={
+                  completed
+                    ? l('Review event', 'مراجعة الموعد')
+                    : beforeStart
+                      ? l('Recording opens at start time', 'يبدأ التسجيل عند موعد البدء')
+                      : l('Start attendance', 'بدء تسجيل الحضور')
+                }
+                disabled={busy || closing || (!completed && beforeStart)}
+                onPress={() => setEventStage('attendance')}
+                styles={styles}
+                primary
+              />
+              {beforeStart && !completed ? (
+                <Text style={styles.hint}>
+                  {l(
+                    'Need a different time? Reschedule it on the web.',
+                    'هل تحتاج وقتاً آخر؟ أعد جدولته عبر الويب.',
+                  )}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <ActivityIndicator accessibilityLabel={l('Opening event', 'جارٍ فتح الموعد')} />
+          )}
+        </ScrollView>
+      ) : null}
       <ScrollView
-        style={{ display: workoutView || groupEvent ? 'none' : 'flex' }}
+        style={{
+          display:
+            workoutView || groupEvent || (selected && eventStage === 'preview') ? 'none' : 'flex',
+        }}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>
-          {selected ? roster?.event.title || t('Event attendance') : t('Coach schedule')}
-        </Text>
+        {!selected ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>
+                {selectedDay === localDate(new Date())
+                  ? l('Today’s schedule', 'جدول اليوم')
+                  : new Intl.DateTimeFormat(language === 'ar' ? 'ar-AE' : 'en-GB', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                    }).format(new Date(`${selectedDay}T12:00:00`))}
+              </Text>
+              <Text style={styles.hint}>
+                {l('Your training and assessments for this day.', 'تدريباتك وتقييماتك لهذا اليوم.')}
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={l('Filter schedule', 'تصفية الجدول')}
+              onPress={() => {
+                setDraftDay(selectedDay)
+                setDraftRecordFilter(recordFilter)
+                setDraftLatestFirst(latestFirst)
+                setFiltersOpen(true)
+              }}
+              style={styles.headerIcon}
+            >
+              <Text style={styles.link}>☷</Text>
+            </Pressable>
+          </View>
+        ) : null}
         {!selected && message ? (
           <Text accessibilityLiveRegion="polite" style={styles.message}>
             {t(message)}
@@ -688,69 +987,107 @@ export function InstitutionScreen({
         ) : null}
         {!selected ? (
           <>
-            <Text style={styles.hint}>
-              {' '}
-              {t('Upcoming 14 days ·')} {window.zone}
-              {t('. Saved events remain available outside this window.')}{' '}
-            </Text>
-            <Button
-              title={refreshingSchedule ? 'Refreshing…' : 'Refresh schedule and sync'}
-              disabled={busy || refreshingSchedule || saving || closing}
-              onPress={() => void refresh()}
-              styles={styles}
-            />
-            {list.map((event) => (
+            {list.slice(0, visibleCount).map((event) => (
               <Pressable
                 key={event.id}
                 accessibilityRole="button"
                 disabled={busy || closing}
                 accessibilityLabel={`${l('Open', 'فتح')} ${event.title}`}
                 onPress={() => void openEvent(event.id)}
-                style={[styles.card, event.state === 'completed' && styles.completedCard]}
+                style={[
+                  styles.card,
+                  event.kind === 'assessment' && styles.assessmentCard,
+                  event.state === 'completed' && styles.completedCard,
+                ]}
               >
                 <Text style={styles.cardTitle}>{event.title}</Text>
                 <Text style={styles.hint}>
-                  {displayDate(event.starts_at, language)} {t('·')} {t(event.kind)} {t('·')}{' '}
-                  {t(event.state)}
-                </Text>
-                {event.location ? <Text style={styles.hint}>{event.location}</Text> : null}
-                <Text style={styles.link}>
-                  {t(
+                  {displayDate(event.starts_at, language)} ·{' '}
+                  {event.kind === 'assessment' ? l('Assessment', 'تقييم') : l('Training', 'تدريب')}{' '}
+                  ·{' '}
+                  {l(
+                    event.state,
                     event.state === 'completed'
-                      ? 'Completed · View confirmed summary online'
+                      ? 'مكتمل'
                       : event.state === 'cancelled'
-                        ? 'Cancelled · View details online'
-                        : cached.some((c) => c.event.id === event.id)
-                          ? 'Saved on this device · Open roster'
-                          : 'Open online to save roster',
+                        ? 'ملغى'
+                        : 'مجدول',
                   )}
                 </Text>
+                {event.location ? <Text style={styles.hint}>{event.location}</Text> : null}
+                {cached.some((c) => c.event.id === event.id) ? (
+                  <Text style={styles.link}>{l('Available offline', 'متاح دون اتصال')}</Text>
+                ) : null}
               </Pressable>
             ))}
-            {next !== null ? (
+            {visibleCount < list.length || next !== null ? (
               <Button
-                title="Load more events"
+                title={l('Load more', 'عرض المزيد')}
                 disabled={busy || refreshingSchedule || closing}
-                onPress={() => void refresh(next)}
+                onPress={() =>
+                  visibleCount < list.length
+                    ? setVisibleCount((count) => count + 5)
+                    : next !== null
+                      ? void refresh(next)
+                      : undefined
+                }
                 styles={styles}
               />
             ) : null}
             {!list.length && !busy ? (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>{t('No field events to show')}</Text>
+                <Text style={styles.cardTitle}>
+                  {l('Nothing scheduled for this day', 'لا توجد مواعيد لهذا اليوم')}
+                </Text>
                 <Text style={styles.hint}>
-                  {' '}
-                  {t(
-                    'Ask your institution to assign you as event staff. Open the event online before heading offline.',
-                  )}{' '}
+                  {l(
+                    'Choose another date or refresh when connected.',
+                    'اختر يوماً آخر أو حدّث عند الاتصال.',
+                  )}
                 </Text>
               </View>
             ) : null}
-            <Button
-              title={l('Server compatibility', 'توافق الخادم')}
+            {otherSaved.length ? (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showOtherSaved }}
+                  onPress={() => setShowOtherSaved((open) => !open)}
+                  style={{ minHeight: 44, justifyContent: 'center' }}
+                >
+                  <Text style={styles.link}>
+                    {l('Other events saved on this phone', 'مواعيد أخرى محفوظة على الهاتف')} (
+                    {otherSaved.length}) {showOtherSaved ? '⌃' : '⌄'}
+                  </Text>
+                </Pressable>
+                {showOtherSaved
+                  ? otherSaved.map((item) => (
+                      <Pressable
+                        key={item.event.id}
+                        accessibilityRole="button"
+                        onPress={() => void openEvent(item.event.id)}
+                        style={styles.card}
+                      >
+                        <Text style={styles.cardTitle}>{item.event.title}</Text>
+                        <Text style={styles.hint}>
+                          {displayDate(item.event.starts_at, language)}
+                        </Text>
+                      </Pressable>
+                    ))
+                  : null}
+              </>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showCompatibility }}
               onPress={() => setShowCompatibility((value) => !value)}
-              styles={styles}
-            />
+              style={{ minHeight: 44, justifyContent: 'center' }}
+            >
+              <Text style={styles.hint}>
+                {l('App connection details', 'تفاصيل اتصال التطبيق')}{' '}
+                {showCompatibility ? '⌃' : '⌄'}
+              </Text>
+            </Pressable>
             {showCompatibility ? (
               <View style={styles.card}>
                 <Text style={styles.label}>{l('Field app features', 'ميزات تطبيق الميدان')}</Text>
@@ -855,20 +1192,21 @@ export function InstitutionScreen({
                 ) : beforeStart && roster.event.state === 'scheduled' ? (
                   <View accessibilityLiveRegion="polite" style={styles.card}>
                     <Text style={styles.cardTitle}>
-                      {t('Field entry opens at the scheduled start')}
+                      {l('Recording opens when the event starts', 'يبدأ التسجيل عند بدء الموعد')}
                     </Text>
                     <Text style={styles.hint}>
-                      {' '}
-                      {t('Attendance, scores and completion unlock')}{' '}
-                      {displayDate(roster.event.starts_at, language)} {t('(')}{' '}
-                      {Intl.DateTimeFormat().resolvedOptions().timeZone || 'device time'}
-                      {t(
-                        '). You can download and review the roster now. If the time is wrong, ask staff to reschedule the event in the web app, then refresh its roster online.',
-                      )}{' '}
+                      {displayDate(roster.event.starts_at, language)} ·{' '}
+                      {Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'}
+                    </Text>
+                    <Text style={styles.hint}>
+                      {l(
+                        'Need a different time? Reschedule it on the web.',
+                        'هل تحتاج وقتاً آخر؟ أعد جدولته عبر الويب.',
+                      )}
                     </Text>
                   </View>
                 ) : null}
-                {snapshot ? (
+                {snapshot && pending.length ? (
                   <Text style={styles.hint}>
                     {' '}
                     {t('Roster downloaded')} {displayDate(snapshot.roster.saved_at, language)}
@@ -932,19 +1270,6 @@ export function InstitutionScreen({
                         styles={styles}
                       />
                     ) : null}
-                    <Button
-                      title={l('Update attendance list', 'تحديث قائمة الحضور')}
-                      disabled={
-                        busy ||
-                        saving ||
-                        draftSaving ||
-                        closing ||
-                        !!pending.length ||
-                        !!snapshot?.drafts.length
-                      }
-                      onPress={() => void openEvent(selected, true)}
-                      styles={styles}
-                    />
                   </View>
                 ) : null}
                 {roster.event.kind === 'assessment' && !roster.definition?.length ? (
@@ -955,300 +1280,387 @@ export function InstitutionScreen({
                     )}{' '}
                   </Text>
                 ) : null}
-                <TextInput
-                  accessibilityLabel={t('Find athlete in this event')}
-                  editable={!draftSaving && !saving}
-                  placeholder={t('Find athlete in this event')}
-                  placeholderTextColor={styles.hint.color}
-                  value={search}
-                  onChangeText={setSearch}
-                  style={styles.input}
-                />
-                <Text style={styles.hint}>
-                  {roster.people.filter((p) => p.duty === 'trainee').length}{' '}
-                  {t('athletes in event ·')} {filtered.length} {t('shown')}{' '}
-                </Text>
-                {filtered.map((person) => {
-                  const latest = snapshot?.commands
-                    .filter(
-                      (c) =>
-                        c.payload.action === 'attendance' && c.payload.member === person.member_id,
-                    )
-                    .at(-1)
-                  const unsettled = latest && latest.state !== 'acknowledged'
-                  const value =
-                    unsettled && latest.payload.action === 'attendance'
-                      ? latest.payload.attendance
-                      : person.attendance
-                  const result = roster.results?.find((r) => r.member_id === person.member_id)
-                  const resultCommand = snapshot?.commands
-                    .filter(
-                      (c) => c.payload.action === 'result' && c.payload.member === person.member_id,
-                    )
-                    .at(-1)
-                  const queuedResult =
-                    resultCommand?.payload.action === 'result' &&
-                    resultCommand.state !== 'acknowledged'
-                      ? resultCommand.payload
-                      : undefined
-                  const locked =
-                    saving ||
-                    busy ||
-                    closing ||
-                    !snapshot ||
-                    snapshot.roster.blocked ||
-                    institutionPaused ||
-                    paused ||
-                    finishing ||
-                    !!queuedResult ||
-                    draftSaving ||
-                    !!unsettled ||
-                    roster.event.state !== 'scheduled' ||
-                    beforeStart ||
-                    !person.active
-                  return (
-                    <View key={person.member_id} style={styles.card}>
-                      <Text style={styles.cardTitle}>{person.name}</Text>
-                      <Text style={styles.label}>
-                        {t('Attendance:')} {t(value)}
-                      </Text>
-                      <Text accessibilityLiveRegion="polite" style={styles.hint}>
-                        {t(latest ? stateText[latest.state] : 'Downloaded server attendance')}
-                      </Text>
-                      {latest?.error ? <Text style={styles.message}>{t(latest.error)}</Text> : null}
-                      {!person.active ? (
-                        <Text style={styles.hint}>{t('Inactive athlete — entry unavailable')}</Text>
-                      ) : null}
-                      {!completed ? (
-                        <View style={styles.actions}>
-                          {(['present', 'absent', 'excused'] as const).map((mark) => (
-                            <Button
-                              key={mark}
-                              title={
-                                mark === 'present'
-                                  ? l('Present', 'حاضر')
-                                  : mark === 'absent'
-                                    ? l('Absent', 'غائب')
-                                    : l('Excused', 'معذور')
-                              }
-                              styles={styles}
-                              primary={value === mark}
-                              disabled={locked || value === mark}
-                              onPress={() => void record(person.member_id, mark)}
-                            />
-                          ))}
-                        </View>
-                      ) : null}
-                      <EventHistory
-                        key={`${roster.event.id}:${person.member_id}`}
-                        client={client}
-                        institution={institution}
-                        event={roster.event.id}
-                        member={person.member_id}
-                        name={person.name}
-                        definition={roster.definition}
-                        assessment={roster.event.kind === 'assessment'}
-                        styles={styles}
-                        disabled={busy || saving || draftSaving || closing}
-                        onDenied={() => accessDenied(roster.event.id)}
-                      />
-                      {roster.event.kind === 'assessment' ? (
-                        <>
-                          {result ? (
-                            <View style={{ gap: 6 }}>
-                              <Text style={styles.label}>
-                                {' '}
-                                {t('Confirmed assessment · revision')} {result.revision}
-                              </Text>
-                              {roster.definition?.map((drill) => (
-                                <Text key={drill.key} style={styles.hint}>
-                                  {drill.name}
-                                  {t(':')} {result.values[drill.key] ?? t('Not recorded')}
-                                  {drill.unit ? ` ${drill.unit}` : ''}
-                                </Text>
-                              ))}
-                              {result.note ? (
-                                <Text style={styles.hint}>
-                                  {t('Assessor note:')} {result.note}
-                                </Text>
-                              ) : null}
-                            </View>
+                {!beforeStart || completed || !!pending.length ? (
+                  <>
+                    <TextInput
+                      accessibilityLabel={t('Find athlete in this event')}
+                      editable={!draftSaving && !saving}
+                      placeholder={t('Find athlete in this event')}
+                      placeholderTextColor={styles.hint.color}
+                      value={search}
+                      onChangeText={setSearch}
+                      style={styles.input}
+                    />
+                    <Text style={styles.hint}>
+                      {roster.people.filter((p) => p.duty === 'trainee').length}{' '}
+                      {t('athletes in event ·')} {filtered.length} {t('shown')}{' '}
+                    </Text>
+                    {filtered.map((person) => {
+                      const latest = snapshot?.commands
+                        .filter(
+                          (c) =>
+                            c.payload.action === 'attendance' &&
+                            c.payload.member === person.member_id,
+                        )
+                        .at(-1)
+                      const unsettled = latest && latest.state !== 'acknowledged'
+                      const value =
+                        unsettled && latest.payload.action === 'attendance'
+                          ? latest.payload.attendance
+                          : person.attendance
+                      const result = roster.results?.find((r) => r.member_id === person.member_id)
+                      const resultCommand = snapshot?.commands
+                        .filter(
+                          (c) =>
+                            c.payload.action === 'result' && c.payload.member === person.member_id,
+                        )
+                        .at(-1)
+                      const queuedResult =
+                        resultCommand?.payload.action === 'result' &&
+                        resultCommand.state !== 'acknowledged'
+                          ? resultCommand.payload
+                          : undefined
+                      const locked =
+                        saving ||
+                        busy ||
+                        closing ||
+                        !snapshot ||
+                        snapshot.roster.blocked ||
+                        institutionPaused ||
+                        paused ||
+                        finishing ||
+                        !!queuedResult ||
+                        draftSaving ||
+                        !!unsettled ||
+                        roster.event.state !== 'scheduled' ||
+                        beforeStart ||
+                        !person.active
+                      return (
+                        <View key={person.member_id} style={styles.attendanceRow}>
+                          <View style={styles.toolbar}>
+                            <Text style={[styles.cardTitle, { flex: 1 }]} numberOfLines={2}>
+                              {person.name}
+                            </Text>
+                            <Text accessibilityLiveRegion="polite" style={styles.hint}>
+                              {t(value)}
+                              {unsettled ? ` · ${t(stateText[latest.state])}` : ''}
+                            </Text>
+                          </View>
+                          {latest?.error ? (
+                            <Text style={styles.message}>{t(latest.error)}</Text>
                           ) : null}
-                          {resultCommand ? (
+                          {!person.active ? (
                             <Text style={styles.hint}>
-                              {' '}
-                              {t('Scores:')} {t(stateText[resultCommand.state])}
-                              {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
+                              {t('Inactive athlete — entry unavailable')}
                             </Text>
                           ) : null}
-                          {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
-                            <Text style={styles.hint}>{t('Score draft saved on device')}</Text>
+                          {eventStage === 'attendance' && !completed ? (
+                            <View style={styles.actions}>
+                              {(['present', 'absent', 'excused'] as const).map((mark) => (
+                                <Button
+                                  key={mark}
+                                  title={
+                                    mark === 'present'
+                                      ? l('Present', 'حاضر')
+                                      : mark === 'absent'
+                                        ? l('Absent', 'غائب')
+                                        : l('Excused', 'معذور')
+                                  }
+                                  styles={styles}
+                                  primary={value === mark}
+                                  disabled={locked || value === mark}
+                                  onPress={() => void record(person.member_id, mark)}
+                                />
+                              ))}
+                            </View>
                           ) : null}
-                          {!completed &&
-                          roster.definition?.length &&
-                          (value === 'present' ||
-                            result ||
-                            queuedResult ||
-                            snapshot?.drafts.some((d) => d.member === person.member_id)) ? (
-                            <Button
-                              title={
-                                editor === person.member_id
-                                  ? 'Scores editor open'
-                                  : queuedResult
-                                    ? 'Review saved scores'
-                                    : result
-                                      ? 'Review / correct scores'
-                                      : 'Record assessment scores'
-                              }
-                              disabled={
-                                completed ||
-                                beforeStart ||
-                                editor === person.member_id ||
-                                saving ||
-                                draftSaving ||
-                                busy ||
-                                closing
-                              }
-                              onPress={() => setEditor(person.member_id)}
-                              styles={styles}
-                            />
+                          {expandedPerson === person.member_id ? (
+                            <>
+                              <EventHistory
+                                key={`${roster.event.id}:${person.member_id}`}
+                                client={client}
+                                institution={institution}
+                                event={roster.event.id}
+                                member={person.member_id}
+                                name={person.name}
+                                definition={roster.definition}
+                                assessment={roster.event.kind === 'assessment'}
+                                styles={styles}
+                                disabled={busy || saving || draftSaving || closing}
+                                onDenied={() => accessDenied(roster.event.id)}
+                              />
+                              {roster.event.kind === 'assessment' && eventStage === 'results' ? (
+                                <>
+                                  {result ? (
+                                    <View style={{ gap: 6 }}>
+                                      <Text style={styles.label}>
+                                        {' '}
+                                        {t('Confirmed assessment · revision')} {result.revision}
+                                      </Text>
+                                      {roster.definition?.map((drill) => (
+                                        <Text key={drill.key} style={styles.hint}>
+                                          {drill.name}
+                                          {t(':')} {result.values[drill.key] ?? t('Not recorded')}
+                                          {drill.unit ? ` ${drill.unit}` : ''}
+                                        </Text>
+                                      ))}
+                                      {result.note ? (
+                                        <Text style={styles.hint}>
+                                          {t('Assessor note:')} {result.note}
+                                        </Text>
+                                      ) : null}
+                                    </View>
+                                  ) : null}
+                                  {resultCommand ? (
+                                    <Text style={styles.hint}>
+                                      {' '}
+                                      {t('Scores:')} {t(stateText[resultCommand.state])}
+                                      {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
+                                    </Text>
+                                  ) : null}
+                                  {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
+                                    <Text style={styles.hint}>
+                                      {t('Score draft saved on device')}
+                                    </Text>
+                                  ) : null}
+                                  {!completed &&
+                                  roster.definition?.length &&
+                                  (value === 'present' ||
+                                    result ||
+                                    queuedResult ||
+                                    snapshot?.drafts.some((d) => d.member === person.member_id)) ? (
+                                    <Button
+                                      title={
+                                        editor === person.member_id
+                                          ? 'Scores editor open'
+                                          : queuedResult
+                                            ? 'Review saved scores'
+                                            : result
+                                              ? 'Review / correct scores'
+                                              : 'Record assessment scores'
+                                      }
+                                      disabled={
+                                        completed ||
+                                        beforeStart ||
+                                        editor === person.member_id ||
+                                        saving ||
+                                        draftSaving ||
+                                        busy ||
+                                        closing
+                                      }
+                                      onPress={() => setEditor(person.member_id)}
+                                      styles={styles}
+                                    />
+                                  ) : null}
+                                  {editor === person.member_id &&
+                                  snapshot &&
+                                  roster.definition?.length ? (
+                                    <ScoreEditor
+                                      key={`${roster.event.id}:${person.member_id}:${result?.revision || 0}`}
+                                      owner={owner}
+                                      event={roster.event.id}
+                                      member={person.member_id}
+                                      name={person.name}
+                                      definition={roster.definition}
+                                      result={result}
+                                      queuedResult={queuedResult}
+                                      savedDraft={snapshot.drafts.find(
+                                        (d) => d.member === person.member_id,
+                                      )}
+                                      store={store}
+                                      styles={styles}
+                                      locked={
+                                        saving ||
+                                        busy ||
+                                        closing ||
+                                        snapshot.roster.blocked ||
+                                        institutionPaused ||
+                                        paused ||
+                                        finishing ||
+                                        !!queuedResult ||
+                                        !person.active ||
+                                        value !== 'present' ||
+                                        roster.event.state !== 'scheduled' ||
+                                        beforeStart
+                                      }
+                                      onPersisting={setDraftSaving}
+                                      onDraftSaved={async (discarded) => {
+                                        await reloadLocal()
+                                        if (discarded && alive.current)
+                                          setRefreshNotice(
+                                            l(
+                                              'Device draft discarded.',
+                                              'حُذفت المسودة من الجهاز.',
+                                            ),
+                                          )
+                                      }}
+                                      onError={(message) => {
+                                        if (alive.current) setMessage(message)
+                                      }}
+                                      onSubmit={submitCommand}
+                                      onClose={() => setEditor(null)}
+                                    />
+                                  ) : null}
+                                </>
+                              ) : null}
+                            </>
                           ) : null}
-                          {editor === person.member_id && snapshot && roster.definition?.length ? (
-                            <ScoreEditor
-                              key={`${roster.event.id}:${person.member_id}:${result?.revision || 0}`}
-                              owner={owner}
-                              event={roster.event.id}
-                              member={person.member_id}
-                              name={person.name}
-                              definition={roster.definition}
-                              result={result}
-                              queuedResult={queuedResult}
-                              savedDraft={snapshot.drafts.find(
-                                (d) => d.member === person.member_id,
-                              )}
-                              store={store}
-                              styles={styles}
-                              locked={
-                                saving ||
-                                busy ||
-                                closing ||
-                                snapshot.roster.blocked ||
-                                institutionPaused ||
-                                paused ||
-                                finishing ||
-                                !!queuedResult ||
-                                !person.active ||
-                                value !== 'present' ||
-                                roster.event.state !== 'scheduled' ||
-                                beforeStart
-                              }
-                              onPersisting={setDraftSaving}
-                              onDraftSaved={async (discarded) => {
-                                await reloadLocal()
-                                const latest = await store.snapshot(owner, roster.event.id)
-                                if (
-                                  alive.current &&
-                                  (discarded ||
-                                    latest?.drafts.some((d) => d.member === person.member_id))
+                          {eventStage === 'attendance' || eventStage === 'results' ? (
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityState={{ expanded: expandedPerson === person.member_id }}
+                              onPress={() =>
+                                setExpandedPerson(
+                                  expandedPerson === person.member_id ? null : person.member_id,
                                 )
-                                  setMessage(
-                                    discarded
-                                      ? `Score draft for ${person.name} discarded from this device.`
-                                      : `Score draft for ${person.name} saved on this device. Submit it to confirm the result.`,
-                                  )
-                              }}
-                              onError={(message) => {
-                                if (alive.current) setMessage(message)
-                              }}
-                              onSubmit={submitCommand}
-                              onClose={() => setEditor(null)}
-                            />
+                              }
+                              style={{ minHeight: 44, justifyContent: 'center' }}
+                            >
+                              <Text style={styles.link}>
+                                {expandedPerson === person.member_id
+                                  ? l('Hide details', 'إخفاء التفاصيل')
+                                  : eventStage === 'results' && value === 'present'
+                                    ? l('Record or review results', 'تسجيل النتائج أو مراجعتها')
+                                    : l('History and corrections', 'السجل والتصحيحات')}
+                              </Text>
+                            </Pressable>
                           ) : null}
-                        </>
-                      ) : null}
-                    </View>
-                  )
-                })}
-                {!filtered.length ? (
-                  <Text style={styles.hint}>
-                    {t(search ? 'No athletes match this name.' : 'This event has no athletes.')}
-                  </Text>
-                ) : null}
-                {groupAvailable && roster.event.state === 'scheduled' && presentCount > 0 ? (
-                  <Button
-                    title={l('Next: record workouts', 'التالي: تسجيل التمارين')}
-                    onPress={() => void openGroupSheets()}
-                    styles={styles}
-                    primary
-                    disabled={
-                      !attendanceReady ||
-                      busy ||
-                      saving ||
-                      draftSaving ||
-                      groupPersisting ||
-                      closing
-                    }
-                  />
-                ) : null}
-                {snapshot &&
-                roster.event.state === 'scheduled' &&
-                (!groupAvailable || !presentCount) ? (
-                  <View style={styles.card}>
-                    <Text style={styles.cardTitle}>{l('Finish event', 'إنهاء الموعد')}</Text>
-                    {completionProblems.map((problem) => (
-                      <Text key={t(problem)} style={styles.hint}>
-                        {t(problem)}
-                      </Text>
-                    ))}
-                    {pending.length ? (
+                        </View>
+                      )
+                    })}
+                    {!filtered.length ? (
                       <Text style={styles.hint}>
-                        {pending.length} {t('saved change(s) awaiting confirmation.')}{' '}
+                        {t(search ? 'No athletes match this name.' : 'This event has no athletes.')}
                       </Text>
                     ) : null}
-                    {snapshot.drafts.length ? (
-                      <Text style={styles.hint}>
-                        {' '}
-                        {t('Submit or discard')} {snapshot.drafts.length}{' '}
-                        {t('score draft(s) before completing.')}{' '}
-                      </Text>
+                    {roster.event.kind === 'assessment' &&
+                    eventStage === 'attendance' &&
+                    roster.event.state === 'scheduled' ? (
+                      <Button
+                        title={l('Next: record results', 'التالي: تسجيل النتائج')}
+                        onPress={() => {
+                          if (!allAttendanceConfirmed) {
+                            const unmarked = roster.people.filter(
+                              (person) =>
+                                person.duty === 'trainee' &&
+                                person.active &&
+                                person.attendance === 'unmarked',
+                            ).length
+                            setRefreshNotice(
+                              unmarked
+                                ? l(
+                                    `${unmarked} athlete(s) still need an attendance mark.`,
+                                    `لم يُحدَّد حضور ${unmarked} من الرياضيين بعد.`,
+                                  )
+                                : l(
+                                    'Wait for attendance confirmation, then continue.',
+                                    'انتظر تأكيد الحضور ثم تابع.',
+                                  ),
+                            )
+                            return
+                          }
+                          setExpandedPerson(null)
+                          setEventStage('results')
+                        }}
+                        styles={styles}
+                        primary
+                        disabled={busy || saving || draftSaving || closing}
+                      />
                     ) : null}
-                    <Button
-                      title={
-                        finishing
-                          ? l('Waiting for confirmation…', 'بانتظار التأكيد…')
-                          : l('Finish event', 'إنهاء الموعد')
-                      }
-                      onPress={finish}
-                      styles={styles}
-                      primary
-                      disabled={
-                        busy ||
-                        saving ||
-                        draftSaving ||
-                        closing ||
-                        institutionPaused ||
-                        snapshot.roster.blocked ||
-                        !!pending.length ||
-                        !!snapshot.drafts.length ||
-                        !!completionProblems.length ||
-                        beforeStart
-                      }
-                    />
-                  </View>
-                ) : null}
-                {snapshot ? (
-                  <Button
-                    title="Remove device copy / discard pending work"
-                    disabled={
-                      busy ||
-                      saving ||
-                      draftSaving ||
-                      closing ||
-                      pending.some((c) => c.state === 'sending')
-                    }
-                    onPress={removeCopy}
-                    styles={styles}
-                  />
+                    {groupAvailable &&
+                    eventStage === 'attendance' &&
+                    roster.event.state === 'scheduled' &&
+                    (!allAttendanceConfirmed || presentCount > 0) ? (
+                      <Button
+                        title={l('Next: record workouts', 'التالي: تسجيل التمارين')}
+                        onPress={() => void openGroupSheets()}
+                        styles={styles}
+                        primary
+                        disabled={busy || saving || draftSaving || groupPersisting || closing}
+                      />
+                    ) : null}
+                    {snapshot &&
+                    (roster.event.kind !== 'assessment' || eventStage === 'results') &&
+                    roster.event.state === 'scheduled' &&
+                    (!groupAvailable || !presentCount) ? (
+                      <View style={styles.card}>
+                        <Text style={styles.cardTitle}>{l('Finish event', 'إنهاء الموعد')}</Text>
+                        {completionProblems.map((problem) => (
+                          <Text key={t(problem)} style={styles.hint}>
+                            {t(problem)}
+                          </Text>
+                        ))}
+                        {pending.length ? (
+                          <Text style={styles.hint}>
+                            {pending.length} {t('saved change(s) awaiting confirmation.')}{' '}
+                          </Text>
+                        ) : null}
+                        {snapshot.drafts.length ? (
+                          <Text style={styles.hint}>
+                            {' '}
+                            {t('Submit or discard')} {snapshot.drafts.length}{' '}
+                            {t('score draft(s) before completing.')}{' '}
+                          </Text>
+                        ) : null}
+                        <Button
+                          title={
+                            finishing
+                              ? l('Waiting for confirmation…', 'بانتظار التأكيد…')
+                              : l('Finish event', 'إنهاء الموعد')
+                          }
+                          onPress={finish}
+                          styles={styles}
+                          primary
+                          disabled={
+                            busy ||
+                            saving ||
+                            draftSaving ||
+                            closing ||
+                            institutionPaused ||
+                            snapshot.roster.blocked ||
+                            !!pending.length ||
+                            !!snapshot.drafts.length ||
+                            !!completionProblems.length ||
+                            beforeStart
+                          }
+                        />
+                      </View>
+                    ) : null}
+                    {snapshot ? (
+                      <View>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityState={{ expanded: showDeviceOptions }}
+                          onPress={() => setShowDeviceOptions((open) => !open)}
+                          style={{ minHeight: 44, justifyContent: 'center' }}
+                        >
+                          <Text style={styles.link}>
+                            {showDeviceOptions
+                              ? l('Hide device options', 'إخفاء خيارات الجهاز')
+                              : l('Device copy options', 'خيارات النسخة المحفوظة')}
+                          </Text>
+                        </Pressable>
+                        {showDeviceOptions ? (
+                          <Button
+                            title={l(
+                              'Remove device copy / discard pending work',
+                              'حذف نسخة الجهاز / تجاهل العمل المعلّق',
+                            )}
+                            disabled={
+                              busy ||
+                              saving ||
+                              draftSaving ||
+                              closing ||
+                              pending.some((c) => c.state === 'sending')
+                            }
+                            onPress={removeCopy}
+                            styles={styles}
+                            danger
+                          />
+                        ) : null}
+                      </View>
+                    ) : null}
+                  </>
                 ) : null}
               </>
             ) : busy ? (
@@ -1263,13 +1675,93 @@ export function InstitutionScreen({
             )}
           </>
         )}
-        <Text style={styles.hint}>
-          {' '}
-          {t(
-            'Only this account’s explicitly opened rosters are stored on this device. Sync runs while the app is active.',
-          )}{' '}
-        </Text>
       </ScrollView>
+      <Modal
+        transparent
+        visible={filtersOpen}
+        animationType="slide"
+        onRequestClose={() => setFiltersOpen(false)}
+      >
+        <View style={styles.sheetBackdrop}>
+          <ScrollView
+            style={{ maxHeight: '85%' }}
+            contentContainerStyle={styles.filterSheet}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.cardTitle}>{l('Schedule filters', 'تصفية الجدول')}</Text>
+            <Text style={styles.label}>{l('Date', 'التاريخ')}</Text>
+            <TextInput
+              accessibilityLabel={l('Date YYYY-MM-DD', 'التاريخ بصيغة YYYY-MM-DD')}
+              value={draftDay}
+              onChangeText={setDraftDay}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={styles.hint.color}
+              style={styles.input}
+            />
+            <Button
+              title={l('Today', 'اليوم')}
+              onPress={() => setDraftDay(localDate(new Date()))}
+              styles={styles}
+            />
+            <Text style={styles.label}>{l('Show', 'عرض')}</Text>
+            <View style={styles.actions}>
+              {(
+                [
+                  ['all', l('All', 'الكل')],
+                  ['training', l('Training', 'التدريب')],
+                  ['assessment', l('Assessments', 'التقييمات')],
+                ] as const
+              ).map(([kind, label]) => (
+                <Button
+                  key={kind}
+                  title={label}
+                  primary={draftRecordFilter === kind}
+                  onPress={() => setDraftRecordFilter(kind)}
+                  styles={styles}
+                />
+              ))}
+            </View>
+            <Text style={styles.label}>{l('Order', 'الترتيب')}</Text>
+            <View style={styles.actions}>
+              <Button
+                title={l('Earliest first', 'الأبكر أولاً')}
+                primary={!draftLatestFirst}
+                onPress={() => setDraftLatestFirst(false)}
+                styles={styles}
+              />
+              <Button
+                title={l('Latest first', 'الأحدث أولاً')}
+                primary={draftLatestFirst}
+                onPress={() => setDraftLatestFirst(true)}
+                styles={styles}
+              />
+            </View>
+            <View style={styles.actions}>
+              <Button
+                title={l('Apply', 'تطبيق')}
+                primary
+                disabled={refreshingSchedule}
+                onPress={() => applyScheduleFilters(draftDay)}
+                styles={styles}
+              />
+              <Button
+                title={l('Clear', 'مسح')}
+                onPress={() => {
+                  setDraftRecordFilter('all')
+                  setDraftLatestFirst(false)
+                  setDraftDay(localDate(new Date()))
+                }}
+                styles={styles}
+              />
+              <Button
+                title={l('Close', 'إغلاق')}
+                onPress={() => setFiltersOpen(false)}
+                styles={styles}
+              />
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   )
 }
