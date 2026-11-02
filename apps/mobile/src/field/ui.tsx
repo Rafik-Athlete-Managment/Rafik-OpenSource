@@ -40,6 +40,33 @@ export function Button({
   )
 }
 
+/** Compact navigation tab; selection is announced separately from the button label. */
+export function Tab({
+  title,
+  selected,
+  disabled = false,
+  onPress,
+  styles,
+}: {
+  title: string
+  selected: boolean
+  disabled?: boolean
+  onPress: () => void
+  styles: Styles
+}) {
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.tab, selected && styles.tabSelected, disabled && styles.disabled]}
+    >
+      <Text style={[styles.tabText, selected && styles.tabTextSelected]}>{title}</Text>
+    </Pressable>
+  )
+}
+
 /** Formats a date for display in the selected phone language. */
 export const displayDate = (date: string, language: Language = 'en') =>
   new Date(date).toLocaleString(language === 'ar' ? 'ar' : 'en')
@@ -61,7 +88,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
   const muted = light ? '#455e58' : '#b1c6be'
   const accent = light ? '#08674f' : '#a0dfc8'
   return StyleSheet.create({
-    safe: { direction, flex: 1, backgroundColor: light ? '#f2f7f4' : '#101b1d' },
+    safe: { direction, flex: 1, backgroundColor: light ? '#edf3f0' : '#0d1718' },
     toolbar: {
       direction,
       flexDirection: 'row',
@@ -72,6 +99,56 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingVertical: 10,
     },
     heading: { flexGrow: 1, flexShrink: 1 },
+    topbar: {
+      direction,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: light ? '#d6e1db' : '#2c423d',
+    },
+    accountButton: {
+      borderWidth: 1,
+      borderColor: light ? '#bdcfc5' : '#486159',
+      borderRadius: 12,
+      minHeight: 44,
+      paddingHorizontal: 14,
+      justifyContent: 'center',
+    },
+    accountMenu: {
+      marginHorizontal: 18,
+      marginTop: 8,
+      marginBottom: 4,
+      backgroundColor: light ? '#fff' : '#1b2b2c',
+      borderColor: light ? '#d6e1db' : '#3b514b',
+      borderWidth: 1,
+      borderRadius: 16,
+      padding: 14,
+      gap: 10,
+    },
+    tabBar: {
+      direction,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 18,
+      paddingTop: 8,
+      paddingBottom: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: light ? '#d6e1db' : '#2c423d',
+    },
+    tab: {
+      minHeight: 44,
+      paddingHorizontal: 14,
+      justifyContent: 'center',
+      borderBottomWidth: 3,
+      borderBottomColor: 'transparent',
+    },
+    tabSelected: { borderBottomColor: accent },
+    tabText: { color: muted, fontSize: 14, fontWeight: '600', textAlign: 'center' },
+    tabTextSelected: { color: text },
     content: {
       direction,
       flexGrow: 1,
@@ -79,7 +156,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       maxWidth: 800,
       alignSelf: 'center',
       padding: 18,
-      gap: 16,
+      gap: 14,
       paddingBottom: 40,
     },
     kicker: {
@@ -110,17 +187,19 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     },
     card: {
       direction,
-      backgroundColor: light ? '#fff' : '#1a292b',
+      backgroundColor: light ? '#fff' : '#1a2b2d',
       borderRadius: 16,
-      padding: 18,
+      borderWidth: 1,
+      borderColor: light ? '#d8e4dd' : '#36504a',
+      padding: 16,
       gap: 10,
     },
     dangerButton: { borderColor: light ? '#b42332' : '#ffadb4' },
     dangerText: { color: light ? '#b42332' : '#ffadb4' },
     completedCard: {
-      borderWidth: 2,
+      borderWidth: 1,
       borderColor: accent,
-      backgroundColor: light ? '#e4f4ed' : '#193c34',
+      backgroundColor: light ? '#ddf2e9' : '#174236',
     },
     historyRow: { gap: 8, borderTopWidth: 1, borderTopColor: muted, paddingTop: 14, marginTop: 8 },
     label: {
@@ -187,6 +266,17 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       fontSize: 15,
       fontWeight: '600',
     },
+    setCheck: {
+      alignSelf: 'flex-start',
+      minHeight: 44,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: light ? '#6a8c80' : '#54736b',
+      paddingHorizontal: 14,
+      justifyContent: 'center',
+    },
+    setCheckDone: { backgroundColor: '#116c54', borderColor: '#116c54' },
+    setCheckDoneText: { color: '#fff' },
     primary: { backgroundColor: '#116c54', borderColor: '#116c54' },
     primaryText: { color: '#fff' },
     disabled: { opacity: 0.5 },

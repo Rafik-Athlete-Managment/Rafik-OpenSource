@@ -30,7 +30,7 @@ import {
 } from './model'
 import type { FieldStore } from './store'
 import { AttendanceSync } from './sync'
-import { Button, displayDate, localDate, type Styles } from './ui'
+import { Button, Tab, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
@@ -75,6 +75,7 @@ export function InstitutionScreen({
   const [workoutView, setWorkoutView] = useState(false)
   const [groupEvent, setGroupEvent] = useState<string | null>(null)
   const [groupOpened, setGroupOpened] = useState<string | null>(null)
+  const [groupAvailable, setGroupAvailable] = useState(false)
   const [workoutsOpened, setWorkoutsOpened] = useState(false)
   const [workoutPersisting, setWorkoutPersisting] = useState(false)
   const [groupPersisting, setGroupPersisting] = useState(false)
@@ -254,6 +255,7 @@ export function InstitutionScreen({
     setSelected(id)
     setSnapshot(null)
     setOnlineRoster(null)
+    setGroupAvailable(false)
     setSearch('')
     setReviewing(false)
     setEditor(null)
@@ -261,6 +263,7 @@ export function InstitutionScreen({
       const saved = await store.snapshot(owner, id)
       if (!alive.current || selectedRef.current !== id) return
       setSnapshot(saved)
+      setGroupAvailable((await store.workouts.groupList(owner, id)).length > 0)
       if (saved && !refreshRoster) {
         setMessage(
           'Saved event opened from this device. Refresh roster online for the latest data.',
@@ -286,6 +289,7 @@ export function InstitutionScreen({
         try {
           const group = await downloadGroupEvent(client, store, owner, id)
           if (group.group) {
+            setGroupAvailable(true)
             groupMessage = group.errors.length
               ? l(
                   `Attendance roster saved, but ${group.errors.length} workout sheet(s) could not be updated: ${group.errors[0]}`,
@@ -463,12 +467,46 @@ export function InstitutionScreen({
       (p) =>
         p.duty === 'trainee' && p.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
     ) || []
+  const attendanceReady =
+    !!roster &&
+    roster.people.some((person) => person.duty === 'trainee' && person.attendance === 'present') &&
+    roster.people.every(
+      (person) => person.duty !== 'trainee' || !person.active || person.attendance !== 'unmarked',
+    ) &&
+    !pending.some((command) => command.payload.action === 'attendance')
+  async function openGroupSheets() {
+    if (!roster || !selected || !attendanceReady) {
+      setMessage(
+        l(
+          'Mark and confirm attendance before recording group workouts.',
+          'سجّل الحضور وأكّده قبل تسجيل تمارين المجموعة.',
+        ),
+      )
+      return
+    }
+    try {
+      const savedSheets = await store.workouts.groupList(owner, roster.event.id)
+      if (!savedSheets.length) {
+        const group = await downloadGroupEvent(client, store, owner, roster.event.id)
+        if (!group.group) {
+          setMessage(l('This event has no group workout.', 'لا يتضمن هذا الموعد تمريناً جماعياً.'))
+          return
+        }
+        if (group.errors.length) setMessage(group.errors[0])
+      }
+      setWorkoutView(false)
+      setGroupOpened(roster.event.id)
+      setGroupEvent(roster.event.id)
+    } catch (error) {
+      setMessage(failureText(error))
+    }
+  }
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.toolbar}>
-        <Button
-          title={l('Schedule', 'الجدول')}
-          primary={!workoutView && !groupEvent}
+      <View accessibilityRole="tablist" style={styles.tabBar}>
+        <Tab
+          title={selected ? l('Attendance', 'الحضور') : l('Schedule', 'الجدول')}
+          selected={!workoutView && !groupEvent}
           disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
           onPress={() => {
             setWorkoutView(false)
@@ -476,9 +514,25 @@ export function InstitutionScreen({
           }}
           styles={styles}
         />
-        <Button
-          title={l('Individual workouts', 'التمارين الفردية')}
-          primary={workoutView}
+        {selected && groupAvailable ? (
+          <Tab
+            title={l('Workout sheets', 'سجلات التمرين')}
+            selected={!!groupEvent}
+            disabled={
+              saving ||
+              draftSaving ||
+              workoutPersisting ||
+              groupPersisting ||
+              closing ||
+              !attendanceReady
+            }
+            onPress={() => void openGroupSheets()}
+            styles={styles}
+          />
+        ) : null}
+        <Tab
+          title={l('Individual', 'الفردية')}
+          selected={workoutView}
           disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
           onPress={() => {
             setGroupEvent(null)
@@ -515,6 +569,7 @@ export function InstitutionScreen({
             active={groupEvent === groupOpened}
             groupEvent={groupOpened}
             groupTitle={roster?.event.title}
+            onBackToEvent={() => setGroupEvent(null)}
           />
         </View>
       ) : null}
@@ -696,49 +751,13 @@ export function InstitutionScreen({
             />
             {roster ? (
               <>
-                {roster.event.kind === 'training' ? (
-                  <Button
-                    title={l('Open group workout sheets', 'فتح سجلات التمرين الجماعي')}
-                    disabled={
-                      busy ||
-                      saving ||
-                      draftSaving ||
-                      closing ||
-                      workoutPersisting ||
-                      groupPersisting
-                    }
-                    onPress={() => {
-                      void (async () => {
-                        try {
-                          const savedSheets = await store.workouts.groupList(owner, roster.event.id)
-                          if (!savedSheets.length) {
-                            const group = await downloadGroupEvent(
-                              client,
-                              store,
-                              owner,
-                              roster.event.id,
-                            )
-                            if (!group.group) {
-                              setMessage(
-                                l(
-                                  'This event has no group workout.',
-                                  'لا يتضمن هذا الموعد تمريناً جماعياً.',
-                                ),
-                              )
-                              return
-                            }
-                            if (group.errors.length) setMessage(group.errors[0])
-                          }
-                          setWorkoutView(false)
-                          setGroupOpened(roster.event.id)
-                          setGroupEvent(roster.event.id)
-                        } catch (error) {
-                          setMessage(failureText(error))
-                        }
-                      })()
-                    }}
-                    styles={styles}
-                  />
+                {groupAvailable && !attendanceReady ? (
+                  <Text style={styles.hint}>
+                    {l(
+                      'Mark every athlete present, absent or excused, then confirm attendance to open workout sheets.',
+                      'حدّد حضور كل رياضي أو غيابه أو إعفاءه، ثم أكّد الحضور لفتح سجلات التمرين.',
+                    )}
+                  </Text>
                 ) : null}
                 <Text style={styles.hint}>
                   {displayDate(roster.event.starts_at, language)} {t('·')} {t(roster.event.kind)}{' '}

@@ -650,7 +650,7 @@ test('an uncertain score retries unchanged and rejects a mismatched receipt befo
   }
 })
 
-test('offline workout start and completion survive disk restart; lost acknowledgments replay exact payloads without losing newer edits', async () => {
+test('offline progress then finish survive restart and replay in order after a lost start acknowledgment', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'rafik-workout-')),
     file = join(directory, 'workouts.db')
   let sqlite = new DatabaseSync(file),
@@ -711,7 +711,8 @@ test('offline workout start and completion survive disk restart; lost acknowledg
     await store.workouts.start(scope, p.id, id, start)
     const entries = p.entries.map((e) => ({ ...e, completed: true }))
     await store.workouts.edit(scope, p.id, entries, 'captured offline')
-    await store.workouts.save(scope, p.id, true, randomUUID())
+    await store.workouts.save(scope, p.id, false, randomUUID())
+    await store.workouts.queueFinish(scope, p.id, randomUUID())
     await assert.rejects(store.workouts.put(scope, p), /Resolve/)
     assert.equal((await store.workouts.list({ ...scope, user: 'other' })).length, 0)
     await store.workouts.state(scope, p.id, start, 'sending')
@@ -720,6 +721,7 @@ test('offline workout start and completion survive disk restart; lost acknowledg
     store = new FieldStore(adapter(sqlite))
     await store.initialize()
     assert.equal((await store.workouts.get(scope, p.id)).pending?.state, 'uncertain')
+    assert.equal((await store.workouts.get(scope, p.id)).completionIntent?.complete, true)
     let calls: string[] = [],
       lost = true
     const send = async (_path: string, body: string) => {
@@ -731,7 +733,7 @@ test('offline workout start and completion survive disk restart; lost acknowledg
       }
       return {
         id,
-        version: command.action === 'start' ? 1 : 2,
+        version: command.action === 'start' ? 1 : Number(command.revision) + 1,
         completed_at: command.complete ? '2026-10-31T10:00:00Z' : null,
       }
     }
@@ -741,12 +743,17 @@ test('offline workout start and completion survive disk restart; lost acknowledg
     assert.equal((await store.workouts.get(scope, p.id)).pending?.state, 'uncertain')
     await new WorkoutSync(store.workouts, scope, send).run()
     assert.equal(calls[0], calls[1])
-    assert.equal(calls.length, 3)
+    assert.equal(calls.length, 4)
+    assert.deepEqual(
+      calls.slice(2).map((body) => JSON.parse(body).complete),
+      [false, true],
+    )
     const saved = await store.workouts.get(scope, p.id)
     assert.equal(saved.pending, null)
     assert.equal(saved.intent, null)
+    assert.equal(saved.completionIntent, null)
     assert.equal(saved.entries[0].load, 0)
-    assert.equal(saved.session?.version, 2)
+    assert.equal(saved.session?.version, 3)
     assert.ok(saved.session?.completed_at)
     assert.equal(saved.note, 'captured offline')
     assert.equal(saved.localRevision, saved.syncedRevision)
@@ -1058,7 +1065,7 @@ test('group participant sheets use separate local identities and the group start
       new WorkoutSync(store.workouts, scope, send).run(),
     ])
     await store.workouts.edit(scope, id, [{ ...entry, completed: true }], 'Recorded on field')
-    await store.workouts.save(scope, id, true, randomUUID())
+    await store.workouts.queueFinish(scope, id, randomUUID())
     await new WorkoutSync(store.workouts, scope, send).run()
     assert.deepEqual(routes, ['/institution/group-workouts', '/institution/sessions'])
     assert.equal((await store.workouts.get(scope, id)).session?.version, 2)

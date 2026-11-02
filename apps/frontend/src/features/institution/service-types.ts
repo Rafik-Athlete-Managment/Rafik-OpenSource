@@ -66,6 +66,7 @@ export type AssessmentResult = {
   recorded_by: string
 }
 export type EventDetail = {
+  can_reschedule: boolean
   historyNext: number | null
   event: CalendarEvent
   people: EventPerson[]

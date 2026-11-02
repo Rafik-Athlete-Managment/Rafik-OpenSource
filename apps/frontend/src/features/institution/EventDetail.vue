@@ -136,6 +136,12 @@ function localInput(instant: string, tz: string) {
   const v = (type: string) => parts.find((p) => p.type === type)!.value
   return `${v('year')}-${v('month')}-${v('day')}T${v('hour')}:${v('minute')}`
 }
+function openReschedule() {
+  previewTimes.value = []
+  if (data.value?.event.starts_at && new Date(data.value.event.starts_at).getTime() <= Date.now())
+    local.value = localInput(new Date(Date.now() + 86400000).toISOString(), zone.value)
+  editingTime.value = true
+}
 const label = (value: string) =>
   new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-AE' : 'en-GB', {
     year: 'numeric',
@@ -406,11 +412,11 @@ onMounted(load)
       </div>
       <div v-if="changeable" class="actions event-actions">
         <button
-          v-if="!started"
+          v-if="data?.can_reschedule"
           type="button"
           class="button secondary"
           :disabled="locked"
-          @click="editingTime = true"
+          @click="openReschedule"
         >
           {{ l('Reschedule', 'إعادة الجدولة') }}
         </button>

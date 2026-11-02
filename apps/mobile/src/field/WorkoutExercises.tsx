@@ -1,10 +1,10 @@
-import { Text, TextInput, View } from 'react-native'
+import { Pressable, Text, TextInput, View } from 'react-native'
 import { useLanguage } from './Language'
-import { Button, type Styles } from './ui'
+import type { Styles } from './ui'
 import type { FieldWorkoutEntry, FieldWorkoutPackage } from './workout-model'
 import type { WorkoutMeasure } from './workout-input'
 
-/** Controlled presentation only: drafts, persistence and replay remain in WorkoutsScreen. */
+/** Shows exercise sets without owning drafts, persistence or server commands. */
 export function WorkoutExercises({
   workout,
   entries,
@@ -27,107 +27,122 @@ export function WorkoutExercises({
   onToggle: (index: number) => void
 }) {
   const { l, language } = useLanguage()
-  const fieldLabel = (field: WorkoutMeasure, unit: string) =>
+  const targets = new Map(
+    (workout.targets || workout.entries || []).map((entry) => [
+      entry.exercise_key + ':' + entry.set_index,
+      entry,
+    ]),
+  )
+  const label = (field: WorkoutMeasure, unit: string) =>
     field === 'load'
-      ? l('Load', 'الحمل') + ' (' + unit + ')'
+      ? `${l('Load', 'الحمل')} (${unit})`
       : field === 'reps'
         ? l('Reps', 'تكرارات')
         : field === 'seconds'
           ? l('Seconds', 'ثوانٍ')
           : field === 'metres'
             ? l('Metres', 'أمتار')
-            : l('Effort (RPE, optional)', 'الجهد (اختياري)')
-  const targetMap = new Map(
-    (workout.targets || workout.entries || []).map((e) => [e.exercise_key + ':' + e.set_index, e]),
-  )
-  const targetFor = (e: FieldWorkoutEntry) => targetMap.get(e.exercise_key + ':' + e.set_index) || e
+            : l('Effort (optional)', 'الجهد (اختياري)')
 
-  return (
-    <>
-      {workout.exercises.map((ex) => (
-        <View key={ex.key} style={styles.card}>
-          <Text style={styles.cardTitle}>
-            {language === 'ar' && ex.name_ar ? ex.name_ar : ex.name}
-          </Text>
-          {ex.note ? <Text style={styles.hint}>{ex.note}</Text> : null}
-          {entries.map((e, index) =>
-            e.exercise_key !== ex.key ? null : (
-              <View key={index} style={{ gap: 8, paddingVertical: 10 }}>
+  return workout.exercises.map((exercise) => {
+    const exerciseName = language === 'ar' && exercise.name_ar ? exercise.name_ar : exercise.name
+    const fields: WorkoutMeasure[] =
+      exercise.kind === 'strength'
+        ? ['load', 'reps']
+        : exercise.kind === 'timed'
+          ? ['seconds', 'effort']
+          : ['metres', 'effort']
+    return (
+      <View key={exercise.key} style={styles.card}>
+        <Text style={styles.cardTitle}>{exerciseName}</Text>
+        {exercise.note ? <Text style={styles.hint}>{exercise.note}</Text> : null}
+        <Text style={styles.hint}>
+          {l('Rest', 'الراحة')}: {exercise.rest} {l('sec', 'ثانية')}
+        </Text>
+        {entries.map((entry, index) => {
+          if (entry.exercise_key !== exercise.key) return null
+          const target = targets.get(entry.exercise_key + ':' + entry.set_index) || entry
+          const targetText =
+            exercise.kind === 'strength'
+              ? `${target.reps} × ${target.load} ${entry.unit}`
+              : exercise.kind === 'timed'
+                ? `${target.seconds ?? '—'} ${l('sec', 'ثانية')}`
+                : `${target.metres ?? '—'} ${l('m', 'م')}`
+          return (
+            <View
+              key={`${entry.exercise_key}:${entry.set_index}`}
+              style={{
+                gap: 8,
+                paddingVertical: 10,
+                borderTopWidth: 1,
+                borderTopColor: styles.input.borderColor,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
                 <Text style={styles.label}>
-                  {l('Set', 'مجموعة')} {e.set_index + 1}
+                  {l('Set', 'مجموعة')} {entry.set_index + 1}
                 </Text>
+                <Text style={[styles.hint, { flexShrink: 1 }]}>
+                  {l('Target', 'الهدف')}: {targetText}
+                </Text>
+              </View>
+              {entry.exercise_id ? (
                 <Text style={styles.hint}>
-                  {workout.targets || !workout.session
-                    ? l('Prescribed target', 'الهدف الموصوف')
-                    : l('Downloaded reference', 'القيم المنزّلة')}
-                  :{' '}
-                  {ex.kind === 'strength'
-                    ? `${targetFor(e).reps} × ${targetFor(e).load} ${e.unit}`
-                    : ex.kind === 'timed'
-                      ? `${targetFor(e).seconds ?? '—'} ${l('seconds', 'ثانية')}`
-                      : `${targetFor(e).metres ?? '—'} ${l('metres', 'متر')}`}
+                  {l('Previously chosen alternative retained', 'يُحتفظ بالبديل المختار سابقاً')}
                 </Text>
-                {e.exercise_id ? (
-                  <Text style={styles.hint}>
-                    {l(
-                      'Previously selected exercise alternative is retained.',
-                      'يُحفظ بديل التمرين المحدد مسبقاً.',
-                    )}
-                  </Text>
-                ) : null}
-                {(ex.kind === 'strength'
-                  ? (['load', 'reps'] as const)
-                  : ex.kind === 'timed'
-                    ? (['seconds', 'effort'] as const)
-                    : (['metres', 'effort'] as const)
-                ).map((field) => (
-                  <View key={field} style={{ gap: 6 }}>
-                    <Text style={styles.label}>
-                      {field === 'load'
-                        ? l('Load', 'الحمل') + ' (' + e.unit + ')'
-                        : field === 'reps'
-                          ? l('Reps', 'تكرارات')
-                          : field === 'seconds'
-                            ? l('Seconds', 'ثوانٍ')
-                            : field === 'metres'
-                              ? l('Metres', 'أمتار')
-                              : l('Effort (RPE, optional)', 'الجهد (اختياري)')}
-                    </Text>
+              ) : null}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {fields.map((field) => (
+                  <View
+                    key={field}
+                    style={{ flexGrow: 1, flexBasis: field === 'effort' ? 120 : 100, gap: 5 }}
+                  >
+                    <Text style={styles.label}>{label(field, entry.unit)}</Text>
                     <TextInput
-                      accessibilityLabel={
-                        (language === 'ar' && ex.name_ar ? ex.name_ar : ex.name) +
-                        ' ' +
-                        (e.set_index + 1) +
-                        ' ' +
-                        fieldLabel(field, e.unit)
-                      }
+                      accessibilityLabel={`${exerciseName}, ${l('set', 'مجموعة')} ${entry.set_index + 1}, ${label(field, entry.unit)}`}
                       style={styles.input}
                       keyboardType="decimal-pad"
                       editable={editable && !busy}
                       value={
-                        raw[index + ':' + field] ?? (e[field] === null ? '' : String(e[field]))
+                        raw[index + ':' + field] ??
+                        (entry[field] === null ? '' : String(entry[field]))
                       }
                       onChangeText={(value) => onMeasure(index, field, value)}
                     />
                   </View>
                 ))}
-                <Button
-                  title={
-                    e.completed ? l('Done ✓', 'تم ✓') : l('Mark set done', 'تأكيد إتمام المجموعة')
-                  }
-                  disabled={!editable || busy || invalidInput}
-                  primary={e.completed}
-                  onPress={() => onToggle(index)}
-                  styles={styles}
-                />
               </View>
-            ),
-          )}
-          <Text style={styles.hint}>
-            {l('Rest (seconds)', 'الراحة (ثوانٍ)')}: {ex.rest}
-          </Text>
-        </View>
-      ))}
-    </>
-  )
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{
+                  checked: entry.completed,
+                  disabled: !editable || busy || invalidInput,
+                }}
+                disabled={!editable || busy || invalidInput}
+                onPress={() => onToggle(index)}
+                style={[
+                  styles.setCheck,
+                  entry.completed && styles.setCheckDone,
+                  (!editable || busy || invalidInput) && styles.disabled,
+                ]}
+              >
+                <Text style={[styles.buttonText, entry.completed && styles.setCheckDoneText]}>
+                  {entry.completed
+                    ? l('✓ Set done', '✓ اكتملت المجموعة')
+                    : l('Mark set done', 'تأكيد إتمام المجموعة')}
+                </Text>
+              </Pressable>
+            </View>
+          )
+        })}
+      </View>
+    )
+  })
 }

@@ -178,6 +178,14 @@ export type WorkoutRecord = {
     localRevision: number
     operation: string
   } | null
+  /** A finished sheet queued behind an earlier unsent progress save. */
+  completionIntent?: {
+    entries: FieldWorkoutEntry[]
+    note: string
+    complete: true
+    localRevision: number
+    operation: string
+  } | null
   blocked: boolean
   error: string
   saved_at: string

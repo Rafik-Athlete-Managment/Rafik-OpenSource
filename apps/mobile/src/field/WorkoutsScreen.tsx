@@ -7,6 +7,7 @@ import {
   BackHandler,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   Share,
   Text,
   TextInput,
@@ -40,6 +41,7 @@ export function WorkoutsScreen({
   active,
   groupEvent,
   groupTitle,
+  onBackToEvent,
 }: {
   client: NativeClient
   store: FieldStore
@@ -50,6 +52,7 @@ export function WorkoutsScreen({
   active: boolean
   groupEvent?: string
   groupTitle?: string
+  onBackToEvent?: () => void
 }) {
   const { l, t, language } = useLanguage()
   const [saved, setSaved] = useState<WorkoutRecord[]>([]),
@@ -72,6 +75,8 @@ export function WorkoutsScreen({
     [error, setError] = useState(''),
     [notice, setNotice] = useState('')
   const [onlineLoading, setOnlineLoading] = useState(false)
+  const [showConnection, setShowConnection] = useState(false)
+  const [showRecovery, setShowRecovery] = useState(false)
   const [groupPackages, setGroupPackages] = useState<FieldWorkoutPackage[]>([])
   const [groupOpen, setGroupOpen] = useState(true)
   const [raw, setRaw] = useState<Record<string, string>>({}),
@@ -93,7 +98,14 @@ export function WorkoutsScreen({
   closingRef.current = closing
   const activeRef = useRef(active),
     backAction = useRef(() => {})
+  const page = useRef<ScrollViewInstance>(null)
   activeRef.current = active
+  useEffect(() => {
+    if (record?.session?.completed_at) {
+      setNotice('')
+      page.current?.scrollTo({ y: 0, animated: true })
+    }
+  }, [record?.session?.completed_at])
   useEffect(() => {
     if (!active || !selected) return
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -132,14 +144,31 @@ export function WorkoutsScreen({
     setSavedIds(ids)
     if (selection.current === activeId) setRecord(active)
   }
-  async function sync() {
+  async function sync(manual = false) {
     try {
+      const queued = manual ? await store.workouts.next(owner) : null
       await runner.current?.run(() => {
         void refreshLocal().catch((e) => {
           if (alive.current) setError(failureText(e))
         })
       })
       await refreshLocal()
+      if (manual && alive.current) {
+        const latest = queued ? await store.workouts.get(owner, queued.package.id) : null
+        setNotice(
+          !queued
+            ? l('No queued workout changes to sync.', 'لا توجد تغييرات تمرين في قائمة المزامنة.')
+            : latest?.pending
+              ? l(
+                  'Still saved on this device. Check the connection or review the message below.',
+                  'ما زال محفوظاً على هذا الجهاز. تحقق من الاتصال أو راجع الرسالة أدناه.',
+                )
+              : l(
+                  'Workout changes confirmed by your institution.',
+                  'أكدت المؤسسة تغييرات التمرين.',
+                ),
+        )
+      }
     } catch (e) {
       if (alive.current) setError(failureText(e))
     }
@@ -286,7 +315,6 @@ export function WorkoutsScreen({
         const saved = await store.workouts.edit(owner, id, nextEntries, nextNote)
         if (alive.current && serial === editSerial.current) {
           setStorageFailed(false)
-          setNotice(l('Saved on this device.', 'حُفظ على هذا الجهاز.'))
           if (selection.current === id) setRecord(saved)
         }
       })
@@ -321,7 +349,8 @@ export function WorkoutsScreen({
         if (!current.session) throw Error('Download this workout online first.')
         const doc = await client.request(`/workouts/${current.session.id}?view=trainer`)
         await store.workouts.restoreAccess(owner, id, doc)
-      } else await store.workouts.save(owner, id, action === 'finish', operationId())
+      } else if (action === 'finish') await store.workouts.queueFinish(owner, id, operationId())
+      else await store.workouts.save(owner, id, false, operationId())
       await refreshLocal()
       if (action !== 'access')
         setNotice(
@@ -546,10 +575,15 @@ export function WorkoutsScreen({
     !record.blocked &&
     !record.session.completed_at &&
     !record.intent?.complete &&
+    !record.completionIntent &&
     !record.pending?.payload.complete &&
     (record.package.can_record || record.session.version === 0)
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      ref={page}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>
         {groupEvent
           ? groupTitle || l('Group workout', 'التمرين الجماعي')
@@ -575,7 +609,11 @@ export function WorkoutsScreen({
           styles={styles}
         />
       ) : null}
-      <Text style={[styles.hint, { minHeight: 20 }]}>{notice || ' '}</Text>
+      {notice ? (
+        <Text accessibilityLiveRegion="polite" style={styles.hint}>
+          {notice}
+        </Text>
+      ) : null}
       {busy || (onlineLoading && !selected) ? (
         <ActivityIndicator
           accessibilityLabel={l('Loading workout data', 'جارٍ تحميل بيانات التمرين')}
@@ -587,7 +625,7 @@ export function WorkoutsScreen({
             title={
               groupOpen
                 ? l('Hide athlete list', 'إخفاء قائمة الرياضيين')
-                : l('Show athlete list', 'إظهار قائمة الرياضيين')
+                : l('Change athlete ▾', 'تغيير الرياضي ▾')
             }
             onPress={() => setGroupOpen((value) => !value)}
             styles={styles}
@@ -670,20 +708,36 @@ export function WorkoutsScreen({
               ) : null}
             </>
           ) : null}
-          <Button
-            title={l('Refresh event download', 'تحديث تنزيل الموعد')}
-            disabled={
-              busy || onlineLoading || closing || persisting || invalidInput || storageFailed
-            }
-            onPress={() => void load()}
-            styles={styles}
-          />
-          <Button
-            title={l('Sync saved sheets', 'مزامنة السجلات المحفوظة')}
-            disabled={busy || closing}
-            onPress={() => void sync()}
-            styles={styles}
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showConnection }}
+            onPress={() => setShowConnection((open) => !open)}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={styles.link}>
+              {showConnection
+                ? l('Hide connection options', 'إخفاء خيارات الاتصال')
+                : l('Connection options ▾', 'خيارات الاتصال ▾')}
+            </Text>
+          </Pressable>
+          {showConnection ? (
+            <View style={styles.actions}>
+              <Button
+                title={l('Update event download', 'تحديث بيانات الموعد')}
+                disabled={
+                  busy || onlineLoading || closing || persisting || invalidInput || storageFailed
+                }
+                onPress={() => void load()}
+                styles={styles}
+              />
+              <Button
+                title={l('Sync now', 'المزامنة الآن')}
+                disabled={busy || closing}
+                onPress={() => void sync(true)}
+                styles={styles}
+              />
+            </View>
+          ) : null}
         </View>
       ) : null}
       {!selected && !groupEvent ? (
@@ -710,12 +764,26 @@ export function WorkoutsScreen({
             onPress={() => void load()}
             styles={styles}
           />
-          <Button
-            title={l('Sync saved workouts', 'مزامنة التمارين المحفوظة')}
-            disabled={busy || closing}
-            onPress={() => void sync()}
-            styles={styles}
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showConnection }}
+            onPress={() => setShowConnection((open) => !open)}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={styles.link}>
+              {showConnection
+                ? l('Hide connection options', 'إخفاء خيارات الاتصال')
+                : l('Connection options ▾', 'خيارات الاتصال ▾')}
+            </Text>
+          </Pressable>
+          {showConnection ? (
+            <Button
+              title={l('Sync now', 'المزامنة الآن')}
+              disabled={busy || closing}
+              onPress={() => void sync(true)}
+              styles={styles}
+            />
+          ) : null}
           <Text style={styles.label}>{l('Saved on this device', 'المحفوظ على هذا الجهاز')}</Text>
           {saved.length ? (
             saved.map((r) => (
@@ -834,16 +902,14 @@ export function WorkoutsScreen({
         </>
       ) : record ? (
         <>
-          <Button
-            title={
-              groupEvent
-                ? l('Back to athlete list', 'العودة لقائمة الرياضيين')
-                : l('Back to workouts', 'العودة للتمارين')
-            }
-            disabled={busy || persisting}
-            onPress={() => void back()}
-            styles={styles}
-          />
+          {!groupEvent ? (
+            <Button
+              title={l('Back to workouts', 'العودة للتمارين')}
+              disabled={busy || persisting}
+              onPress={() => void back()}
+              styles={styles}
+            />
+          ) : null}
           <Text style={styles.hint}>
             {record.package.member_name} · {record.package.title}
           </Text>
@@ -887,7 +953,9 @@ export function WorkoutsScreen({
             <Text style={styles.label}>
               {record.session.completed_at
                 ? l('Completed · server confirmed', 'مكتمل · أكده الخادم')
-                : record.intent?.complete || record.pending?.payload.complete
+                : record.intent?.complete ||
+                    record.completionIntent ||
+                    record.pending?.payload.complete
                   ? l(
                       'Finished on device · awaiting server confirmation',
                       'انتهى على الجهاز · بانتظار تأكيد الخادم',
@@ -917,6 +985,37 @@ export function WorkoutsScreen({
                       )}
             </Text>
           ) : null}
+          {record.session?.completed_at ? (
+            <View style={[styles.card, styles.completedCard]}>
+              <Text style={styles.cardTitle}>{l('Workout complete', 'اكتمل التمرين')}</Text>
+              <Text style={styles.hint}>
+                {l(
+                  'Confirmed by your institution. Review the recorded sets below.',
+                  'أكدته مؤسستك. راجع المجموعات المسجلة أدناه.',
+                )}
+              </Text>
+              <Button
+                title={
+                  groupEvent
+                    ? l('Back to attendance', 'العودة إلى الحضور')
+                    : l('Back to workouts', 'العودة إلى التمارين')
+                }
+                onPress={() => (groupEvent ? onBackToEvent?.() : void back())}
+                styles={styles}
+                primary
+              />
+            </View>
+          ) : null}
+          <Text style={styles.label}>{l('Workout note', 'ملاحظة التمرين')}</Text>
+          <TextInput
+            accessibilityLabel={l('Workout note', 'ملاحظة التمرين')}
+            multiline
+            maxLength={2000}
+            value={note}
+            editable={editable && !busy}
+            onChangeText={(value) => edit(drafts.current.entries, value)}
+            style={styles.input}
+          />
           <WorkoutExercises
             workout={record.package}
             entries={entries}
@@ -928,46 +1027,60 @@ export function WorkoutsScreen({
             onMeasure={changeMeasure}
             onToggle={toggleSet}
           />
-          <Text style={styles.label}>{l('Workout note', 'ملاحظة التمرين')}</Text>
-          <TextInput
-            accessibilityLabel={l('Workout note', 'ملاحظة التمرين')}
-            multiline
-            maxLength={2000}
-            value={note}
-            editable={editable && !busy}
-            onChangeText={(value) => edit(drafts.current.entries, value)}
-            style={styles.input}
-          />
           {record.session && !record.session.completed_at ? (
-            <View style={styles.toolbar}>
-              <Button
-                title={l('Save progress for sync', 'حفظ التقدم للمزامنة')}
-                disabled={
-                  busy ||
-                  persisting ||
-                  invalidInput ||
-                  closing ||
-                  !editable ||
-                  !!record.intent ||
-                  record.pending?.payload.action === 'save'
-                }
-                onPress={() => void act('save')}
-                styles={styles}
-              />
-              <Button
-                title={l('Finish workout for sync', 'إنهاء التمرين للمزامنة')}
-                disabled={
-                  busy ||
-                  persisting ||
-                  closing ||
-                  !editable ||
-                  !!record.intent ||
-                  record.pending?.payload.action === 'save'
-                }
-                onPress={() => void act('finish')}
-                styles={styles}
-                primary
-              />
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{l('Ready to finish?', 'جاهز للإنهاء؟')}</Text>
+              <Text style={styles.hint}>
+                {l(
+                  'Every change is saved on this phone. Finish works offline and sends your results when connected.',
+                  'يُحفظ كل تغيير على هذا الهاتف. يمكنك الإنهاء دون اتصال وستُرسل النتائج عند الاتصال.',
+                )}
+              </Text>
+              <View style={styles.actions}>
+                <Button
+                  title={l('Finish workout', 'إنهاء التمرين')}
+                  disabled={
+                    busy ||
+                    persisting ||
+                    closing ||
+                    !editable ||
+                    !!record.intent?.complete ||
+                    !!record.completionIntent ||
+                    !!record.pending?.payload.complete
+                  }
+                  onPress={() => void act('finish')}
+                  styles={styles}
+                  primary
+                />
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showConnection }}
+                onPress={() => setShowConnection((open) => !open)}
+                style={{ minHeight: 44, justifyContent: 'center' }}
+              >
+                <Text style={styles.link}>
+                  {showConnection
+                    ? l('Hide sync options', 'إخفاء خيارات المزامنة')
+                    : l('Sync unfinished progress ▾', 'مزامنة التقدم غير المكتمل ▾')}
+                </Text>
+              </Pressable>
+              {showConnection ? (
+                <Button
+                  title={l('Send progress now', 'إرسال التقدم الآن')}
+                  disabled={
+                    busy ||
+                    persisting ||
+                    invalidInput ||
+                    closing ||
+                    !editable ||
+                    !!record.intent ||
+                    record.pending?.payload.action === 'save'
+                  }
+                  onPress={() => void act('save')}
+                  styles={styles}
+                />
+              ) : null}
             </View>
           ) : null}
           {record.pending && record.pending.state !== 'sending' ? (
@@ -996,31 +1109,47 @@ export function WorkoutsScreen({
               styles={styles}
             />
           ) : null}
-          <Button
-            title={l('Share recovery copy', 'مشاركة نسخة للاستعادة')}
-            disabled={persisting || busy}
-            onPress={() => void share()}
-            styles={styles}
-          />
-          <Button
-            title={l('Refresh saved workout', 'تحديث التمرين المحفوظ')}
-            disabled={
-              busy ||
-              persisting ||
-              closing ||
-              !!record.pending ||
-              !!record.intent ||
-              record.localRevision !== record.syncedRevision
-            }
-            onPress={() => void refreshSaved()}
-            styles={styles}
-          />
-          <Text style={styles.hint}>
-            {l(
-              'If a conflict or restriction prevents sync, keep this copy and review the workout with authorized staff in the web dashboard. Do not start a replacement workout.',
-              'إذا منع تعارض أو قيد المزامنة، احتفظ بهذه النسخة وراجع التمرين مع الموظفين المخولين في لوحة الويب. لا تبدأ تمريناً بديلاً.',
-            )}
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showRecovery }}
+            onPress={() => setShowRecovery((open) => !open)}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={styles.link}>
+              {showRecovery
+                ? l('Hide recovery options', 'إخفاء خيارات الاستعادة')
+                : l('Recovery options ▾', 'خيارات الاستعادة ▾')}
+            </Text>
+          </Pressable>
+          {showRecovery || record.blocked || record.pending?.state === 'needs_attention' ? (
+            <View style={styles.card}>
+              <Button
+                title={l('Share recovery copy', 'مشاركة نسخة للاستعادة')}
+                disabled={persisting || busy}
+                onPress={() => void share()}
+                styles={styles}
+              />
+              <Button
+                title={l('Refresh saved workout', 'تحديث التمرين المحفوظ')}
+                disabled={
+                  busy ||
+                  persisting ||
+                  closing ||
+                  !!record.pending ||
+                  !!record.intent ||
+                  record.localRevision !== record.syncedRevision
+                }
+                onPress={() => void refreshSaved()}
+                styles={styles}
+              />
+              <Text style={styles.hint}>
+                {l(
+                  'If sync is blocked, keep this copy and review the workout with authorized staff. Do not start a replacement.',
+                  'إذا توقفت المزامنة، احتفظ بهذه النسخة وراجع التمرين مع الموظفين المخولين. لا تبدأ تمريناً بديلاً.',
+                )}
+              </Text>
+            </View>
+          ) : null}
         </>
       ) : null}
     </ScrollView>

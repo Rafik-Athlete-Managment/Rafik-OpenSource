@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   AppState,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -176,7 +177,7 @@ function SignedIn({
   styles: Styles
   signedOut: (revoked: boolean) => void
 }) {
-  const { t, l } = useLanguage()
+  const { t, l, language, setLanguage, preferenceError } = useLanguage()
   const [contexts, setContexts] = useState<CoachContext[]>(client.contexts)
   const [savedInstitutions, setSavedInstitutions] = useState<string[]>([])
   const [institution, setInstitution] = useState(client.contexts[0]?.institution_id || '')
@@ -184,6 +185,7 @@ function SignedIn({
   const [closing, setClosing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [fieldBusy, setFieldBusy] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const alive = useRef(true)
   const loadingRef = useRef(false)
   const accessOffline = useRef(false)
@@ -263,19 +265,56 @@ function SignedIn({
   const options = [...new Set([...contexts.map((c) => c.institution_id), ...savedInstitutions])]
   return (
     <SafeAreaView style={styles.safe}>
-      <LanguageControl styles={styles} />
-      <View style={styles.toolbar}>
+      <View style={styles.topbar}>
         <View style={styles.heading}>
           <Text style={styles.kicker}>{t('RAFIK FIELD')}</Text>
-          <Text style={styles.hint}>{client.user.email}</Text>
         </View>
-        <Button
-          title={closing ? 'Signing out…' : 'Sign out'}
-          disabled={closing || loading || fieldBusy}
-          onPress={() => void logout()}
-          styles={styles}
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={l('Account menu', 'قائمة الحساب')}
+          accessibilityState={{ expanded: accountOpen }}
+          onPress={() => setAccountOpen((open) => !open)}
+          style={styles.accountButton}
+        >
+          <Text style={styles.link}>{l('Account ▾', 'الحساب ▾')}</Text>
+        </Pressable>
       </View>
+      {accountOpen ? (
+        <View style={styles.accountMenu}>
+          <Text style={styles.label}>{l('Signed in as', 'مسجل باسم')}</Text>
+          <Text selectable style={[styles.hint, { writingDirection: 'ltr' }]}>
+            {client.user.email}
+          </Text>
+          <View style={styles.actions}>
+            <Button
+              title="English"
+              primary={language === 'en'}
+              onPress={() => setLanguage('en')}
+              styles={styles}
+            />
+            <Button
+              title="العربية"
+              primary={language === 'ar'}
+              onPress={() => setLanguage('ar')}
+              styles={styles}
+            />
+          </View>
+          {preferenceError ? (
+            <Text style={styles.hint}>
+              {l(
+                'Language preference was not saved. Tap a language to retry.',
+                'لم يُحفظ تفضيل اللغة. اضغط اللغة للمحاولة مرة أخرى.',
+              )}
+            </Text>
+          ) : null}
+          <Button
+            title={closing ? 'Signing out…' : 'Sign out'}
+            disabled={closing || loading || fieldBusy}
+            onPress={() => void logout()}
+            styles={styles}
+          />
+        </View>
+      ) : null}
       {message ? (
         <View style={{ paddingHorizontal: 18 }}>
           <Text accessibilityLiveRegion="polite" style={styles.message}>

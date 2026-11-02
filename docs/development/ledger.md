@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Coach field flow and missed-event recovery — 2 November 2026
+
+The unreleased phone UI now uses compact field tabs and an account menu. Attendance confirmation gates group sheets; the athlete selector and measurement sheet share one screen. Editing saves a local draft, while Finish workout freezes an offline-capable final command; an earlier progress save replays first. Normal capture emphasizes completion and summary, with manual sync/recovery under disclosures. The calendar API now allows staff to reschedule an untouched missed custom or group event to a future time, preserving event ID and audit receipt. Any recorded attendance, results, note, skip or workout session blocks that move. Individual plan workouts retain their separate scheduler. Focused checks and device limits are in verification; founder steps remain only in the canonical walkthrough.
+
 ## Frontend navigation inventory freshness — 1 November 2026
 
 The beta.3 web CI job stopped at `frontend:inventory:check`. Regenerated the maintained navigation reference from current source; its line references had shifted after web edits. No route or UI behavior changed. The focused inventory regression and freshness checks are recorded in verification.

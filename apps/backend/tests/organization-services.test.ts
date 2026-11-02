@@ -188,6 +188,26 @@ test("organization agenda and assessor-led results preserve each participant, co
         ).status,
         200,
       );
+    assert.equal(
+      (
+        await call(
+          admin,
+          `/v1/institution/calendar`,
+          operation("reschedule", {
+            id: event.id,
+            view: "admin",
+            revision: 1,
+            local:
+              new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10) +
+              "T14:00",
+            zone: "UTC",
+            minutes: 60,
+          }),
+        )
+      ).status,
+      400,
+      "attendance already recorded must keep the event's original time",
+    );
     const result = operation("result", {
       id: event.id,
       view: "trainer",
@@ -436,6 +456,60 @@ test("organization agenda and assessor-led results preserve each participant, co
     assert.deepEqual(
       (await call(admin, `/v1/institution/calendar`, reschedule)).data,
       moved.data,
+    );
+    const missed = await call(
+      admin,
+      `/v1/institution/calendar`,
+      operation("create", {
+        id: randomUUID(),
+        view: "admin",
+        title: "Missed training",
+        kind: "training",
+        staff: [staff.id],
+        participants: [a.id],
+        local: tomorrow(),
+        zone: "UTC",
+        minutes: 45,
+        count: 1,
+        every: 7,
+        location: "Field",
+      }),
+    );
+    assert.equal(missed.status, 200, JSON.stringify(missed));
+    const missedId = missed.data[0].id;
+    await db.institution_events.update({
+      where: { id: missedId },
+      data: {
+        starts_at: new Date(Date.now() - 7200000),
+        ends_at: new Date(Date.now() - 3600000),
+      },
+    });
+    assert.equal(
+      (await call(admin, `/v1/institution/calendar?view=admin&id=${missedId}`))
+        .data.can_reschedule,
+      true,
+    );
+    const recoveredDay = new Date(Date.now() + 21 * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const recovered = await call(
+      trainer,
+      `/v1/institution/calendar`,
+      operation("reschedule", {
+        id: missedId,
+        view: "trainer",
+        revision: 1,
+        local: recoveredDay + "T14:00",
+        zone: "UTC",
+        minutes: 45,
+      }),
+    );
+    assert.equal(recovered.status, 200, JSON.stringify(recovered));
+    assert.equal(recovered.data.revision, 2);
+    assert.equal(
+      recovered.data.training_date.slice(0, 10),
+      recoveredDay,
+      "the group workout's local training day follows its new slot",
     );
     const cancel = operation("cancel", {
       id: future.id,

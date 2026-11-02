@@ -10,6 +10,8 @@
 
 `GET /v1/mobile/capabilities` describes supported native contracts for an authenticated account. Protocol 1 advertises timed attendance, assessments, event completion and individual/group workout recording. Day-only appointments in the attendance calendar remain false. Individual plan packages support their own day-only dates. Capability flags never grant institution/event access; every command retains its current authorization checks.
 
+An untouched missed custom or group calendar event can move to a new future slot through the existing reschedule command. The server refuses that move after attendance, session notes, assessment results, group workout skip or a workout session begins. The event identity stays the same, its revision increases and its local training date follows the new slot. Individually bound plan workouts continue to use workout scheduling so their sequence identity remains intact.
+
 The Android schedule offers a collapsed Server compatibility disclosure. Its independent read cannot remount editors, block cached event access, clear permission warnings or modify saved commands. Missing discovery (`404 not_found`), connectivity failures, unsupported responses and session denials remain distinct. Capabilities are not persisted as permissions. No encrypted-store migration occurs in this foundation slice.
 
 ## Workout templates and group results — unreleased beta.3

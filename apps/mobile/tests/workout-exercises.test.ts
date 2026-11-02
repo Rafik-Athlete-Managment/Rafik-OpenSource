@@ -11,9 +11,10 @@ const dataUrl = (source: string) =>
   'data:text/javascript;base64,' + Buffer.from(source).toString('base64')
 const stubs: Record<string, string> = {
   'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
-  'react-native': dataUrl('export const Text="Text", TextInput="TextInput", View="View"'),
+  'react-native': dataUrl(
+    'export const Text="Text", TextInput="TextInput", View="View", Pressable="Pressable"',
+  ),
   './Language': dataUrl('export const useLanguage=()=>({language:"en",l:en=>en})'),
-  './ui': dataUrl('export const Button="Button"'),
 }
 const compiled = ts
   .transpileModule(
@@ -70,7 +71,7 @@ const workout: FieldWorkoutPackage = {
   entries: [entry],
   targets: [entry],
 }
-const styles = { hint: { color: '#fff' } } as Styles
+const styles = { hint: { color: '#fff' }, input: { borderColor: '#444' } } as Styles
 
 test('controlled workout fields preserve raw decimal text and report explicit edits/toggles to their owner', () => {
   const edits: unknown[] = [],
@@ -89,12 +90,14 @@ test('controlled workout fields preserve raw decimal text and report explicit ed
     }),
   )
   const load = nodes.find(
-    (n) => n.type === 'TextInput' && n.props.accessibilityLabel === 'Press 1 Load (kg)',
+    (n) => n.type === 'TextInput' && n.props.accessibilityLabel === 'Press, set 1, Load (kg)',
   )!
   assert.equal(load.props.value, '12.')
   ;(load.props.onChangeText as (value: string) => void)('12.5')
   assert.deepEqual(edits, [[0, 'load', '12.5']])
-  const done = nodes.find((n) => n.type === 'Button' && n.props.title === 'Mark set done')!
+  const done = nodes.find(
+    (n) => n.type === 'Pressable' && n.props.accessibilityRole === 'checkbox',
+  )!
   ;(done.props.onPress as () => void)()
   assert.deepEqual(toggles, [0])
   assert.equal(entry.completed, false, 'presentation must not mutate actuals')
@@ -119,7 +122,9 @@ test('read-only and invalid-input states disable completion without changing pre
         onToggle: () => assert.fail(),
       }),
     )
-    const done = nodes.find((n) => n.type === 'Button' && n.props.title === 'Mark set done')!
+    const done = nodes.find(
+      (n) => n.type === 'Pressable' && n.props.accessibilityRole === 'checkbox',
+    )!
     assert.equal(done.props.disabled, true)
     if (!editable)
       for (const input of nodes.filter((n) => n.type === 'TextInput'))
@@ -150,8 +155,8 @@ test('timed and distance exercise sheets expose their own measure plus optional 
     )
     const inputs = nodes.filter((n) => n.type === 'TextInput')
     assert.equal(inputs.length, 2)
-    assert.equal(inputs[0].props.accessibilityLabel, 'Press 1 ' + label)
+    assert.equal(inputs[0].props.accessibilityLabel, 'Press, set 1, ' + label)
     assert.equal(inputs[0].props.value, value)
-    assert.equal(inputs[1].props.accessibilityLabel, 'Press 1 Effort (RPE, optional)')
+    assert.equal(inputs[1].props.accessibilityLabel, 'Press, set 1, Effort (optional)')
   }
 })

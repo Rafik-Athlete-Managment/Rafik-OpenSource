@@ -170,6 +170,7 @@ export class WorkoutStore {
         !r.session ||
         r.session.completed_at ||
         r.intent?.complete ||
+        r.completionIntent ||
         r.pending?.payload.complete
       )
         throw Error('This workout is read-only until its saved change is resolved.')
@@ -203,6 +204,36 @@ export class WorkoutStore {
         operation,
         localRevision: r.localRevision,
       }
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  /** Queue final results after a prior save, or directly if that save already settled. */
+  queueFinish(owner: Owner, id: string, operation: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (
+        r.blocked ||
+        !r.session ||
+        r.session.completed_at ||
+        r.intent?.complete ||
+        r.completionIntent ||
+        (r.pending?.payload.action === 'save' &&
+          ['needs_attention', 'blocked'].includes(r.pending.state))
+      )
+        throw Error('Resolve the saved workout change first.')
+      validateEntries(r.package, r.entries, true)
+      const final = {
+        entries: copy(r.entries),
+        note: r.note,
+        complete: true as const,
+        localRevision: r.localRevision,
+        operation,
+      }
+      if (r.intent) r.completionIntent = final
+      else if (r.pending?.payload.action === 'save')
+        throw Error('Resolve the saved workout change first.')
+      else r.intent = final
       await this.write(db, owner, r)
       return r
     })
@@ -301,7 +332,8 @@ export class WorkoutStore {
       r.session = { id: doc.id, version: doc.version, completed_at: doc.completed_at || null }
       if (p.payload.action === 'save') {
         r.syncedRevision = r.intent!.localRevision
-        r.intent = null
+        r.intent = r.completionIntent || null
+        r.completionIntent = null
       }
       r.package.can_record = !r.session.completed_at
       r.pending = null

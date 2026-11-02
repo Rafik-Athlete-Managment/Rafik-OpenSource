@@ -266,6 +266,19 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
               skip: historyOffset,
               take: historyMember ? 26 : 101,
             });
+      const fieldWorkStarted =
+        item.institution_event_people.some(
+          (person) =>
+            person.attendance !== "unmarked" ||
+            !!person.checked_in_at ||
+            !!person.session_note ||
+            !!person.workout_skip_reason,
+        ) ||
+        (await tx.assessment_results.count({ where: { event_id: item.id } })) >
+          0 ||
+        (await tx.institution_sessions.count({
+          where: { occurrence_id: item.id },
+        })) > 0;
       return {
         event: {
           ...item,
@@ -273,6 +286,14 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
           institution_event_people: undefined,
         },
         people: people.map(calendarPerson),
+        can_reschedule:
+          view !== "trainee" &&
+          item.state === "scheduled" &&
+          !!item.starts_at &&
+          !fieldWorkStarted &&
+          !(await tx.institution_workout_positions.count({
+            where: { occurrence_id: item.id },
+          })),
         results: await tx.assessment_results.findMany({ where }),
         history: history.slice(0, historyMember ? 25 : 100),
         historyNext:
@@ -597,12 +618,24 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
       )
         throw new ApiError(409, "conflict");
       if (action === "reschedule") {
-        if (
-          !item.starts_at ||
-          item.state !== "scheduled" ||
-          item.starts_at <= new Date()
-        )
+        if (!item.starts_at || item.state !== "scheduled")
           throw new ApiError(400, "event_unavailable");
+        // A missed event may move to a future slot. Once field work has begun, moving its
+        // original time would misrepresent attendance, assessment or workout history.
+        const hasFieldWork =
+          item.institution_event_people.some(
+            (person) =>
+              person.attendance !== "unmarked" ||
+              !!person.checked_in_at ||
+              !!person.session_note ||
+              !!person.workout_skip_reason,
+          ) ||
+          (await tx.assessment_results.count({ where: { event_id: key } })) >
+            0 ||
+          (await tx.institution_sessions.count({
+            where: { occurrence_id: key },
+          })) > 0;
+        if (hasFieldWork) throw new ApiError(400, "event_has_results");
         const times = await preview(tx, { ...input, count: 1, every: 7 }),
           start = new Date(times[0].starts_at),
           end = new Date(times[0].ends_at);
@@ -625,6 +658,9 @@ export async function calendarCommand(actor: Actor, id: string, input: Input) {
           data: {
             starts_at: start,
             ends_at: end,
+            training_date: new Date(
+              times[0].local_start.slice(0, 10) + "T00:00:00Z",
+            ),
             timezone: String(input.zone),
             revision: { increment: 1 },
           },
