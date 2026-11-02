@@ -4,7 +4,7 @@ import PasswordField from '../../components/PasswordField.vue'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, request } from '../../lib/backend'
-import { user, refreshContexts, refreshProfile } from '../../app/auth'
+import { user, logout, refreshContexts, refreshProfile } from '../../app/auth'
 import { language as l, errorMessage } from '../../lib/i18n'
 import { passwordPattern, strongPassword } from '@rafik/shared/password'
 const route = useRoute(),
@@ -48,6 +48,18 @@ async function accept() {
     })
     await refreshContexts()
     await router.push('/dashboard')
+  } catch (e) {
+    error.value = errorMessage(e)
+  } finally {
+    busy.value = false
+  }
+}
+// Stay on this link so the invitee can create or sign in to the invited account instead.
+async function switchAccount() {
+  busy.value = true
+  error.value = ''
+  try {
+    await logout()
   } catch (e) {
     error.value = errorMessage(e)
   } finally {
@@ -102,7 +114,7 @@ async function createAccount() {
           data.roles
             .map((r) =>
               l(
-                { admin: 'Administrator', trainer: 'Trainer', trainee: 'Athlete' }[r] || r,
+                { admin: 'Administrator', trainer: 'Coach', trainee: 'Athlete' }[r] || r,
                 { admin: 'مسؤول', trainer: 'مدرب', trainee: 'رياضي' }[r] || r,
               ),
             )
@@ -121,9 +133,14 @@ async function createAccount() {
         <p>
           {{ l('Signed in as', 'مسجل باسم') }} <strong dir="ltr">{{ user.email }}</strong>
         </p>
-        <button class="button" :disabled="busy" @click="accept">
-          {{ busy ? l('Joining…', 'جارٍ الانضمام…') : l('Accept invitation', 'قبول الدعوة') }}
-        </button>
+        <div class="actions">
+          <button class="button" :disabled="busy" @click="accept">
+            {{ busy ? l('Joining…', 'جارٍ الانضمام…') : l('Accept invitation', 'قبول الدعوة') }}
+          </button>
+          <button class="button secondary" type="button" :disabled="busy" @click="switchAccount">
+            {{ l('Sign out to use another account', 'تسجيل الخروج لاستخدام حساب آخر') }}
+          </button>
+        </div>
       </template>
       <template v-else>
         <form class="form-stack" @submit.prevent="createAccount">

@@ -469,8 +469,8 @@ export function errorMessage(error: unknown): string {
     )
   if (raw.includes('wrong_email'))
     return language(
-      'This invitation belongs to a different email. Sign in with the address your coach invited.',
-      'هذه الدعوة لبريد آخر. سجّل الدخول بالبريد الذي استخدمه مدربك للدعوة.',
+      'This invitation is for a different email address. Sign out to create or use the invited account.',
+      'هذه الدعوة لبريد إلكتروني آخر. سجّل الخروج لإنشاء الحساب المدعو أو استخدامه.',
     )
   if (raw.includes('conflict'))
     return language(

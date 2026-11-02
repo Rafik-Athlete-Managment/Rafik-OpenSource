@@ -103,7 +103,10 @@ async function deleteAccount() {
   }
 }
 onMounted(async () => {
-  const records = await localSessions(user.value!.id)
+  // Sign-out can remount this page after the session is cleared and before navigation finishes.
+  const id = user.value?.id
+  if (!id) return
+  const records = await localSessions(id)
   pending.value = records.filter((r) => r.localRevision > r.syncedRevision || r.pending).length
   diagnostics.value = (await diagnosticEvents())
     .map(({ name, at }) => ({ name, at }))

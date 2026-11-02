@@ -388,7 +388,7 @@ onMounted(load)
           </ul>
         </section>
         <RouterLink class="button" :to="context.base + '/training'">{{
-          l('Open training institution', 'فتح مساحة التدريب')
+          l('Open athlete plans', 'فتح خطط الرياضيين')
         }}</RouterLink>
       </section>
       <form v-else @submit.prevent="review ? deliver() : (review = true)">

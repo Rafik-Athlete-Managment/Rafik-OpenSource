@@ -296,7 +296,10 @@ onMounted(load)
                         ? l('Recovery', 'تعافٍ')
                         : day.minutes + ' ' + l('minutes', 'دقيقة')
                     }}
-                    · {{ day.exercises.length }} {{ l('exercises', 'تمارين') }}</small
+                    · {{ day.exercises.length }}
+                    {{
+                      day.exercises.length === 1 ? l('exercise', 'تمرين') : l('exercises', 'تمارين')
+                    }}</small
                   >
                 </summary>
                 <ol class="plan-day-exercises">

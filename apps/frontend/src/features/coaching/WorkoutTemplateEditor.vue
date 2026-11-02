@@ -30,6 +30,7 @@ const id = ref(isNew ? crypto.randomUUID() : String(route.params.id)),
   loading = ref(true),
   error = ref(''),
   draftError = ref(''),
+  saveHint = ref(''),
   catalog = ref<Exercise[]>([])
 const workout = ref<PlanDay>({
   id: crypto.randomUUID(),
@@ -138,6 +139,11 @@ const locked = computed(
   () => loading.value || !command.state.ready || command.state.busy || !!command.state.pending,
 )
 function save() {
+  // An unchosen row would otherwise surface as a shared-exercise error far above the footer.
+  saveHint.value = workout.value.exercises.some((exercise) => !exercise.exerciseId)
+    ? l('Choose an exercise for every row before saving.', 'اختر تمريناً لكل صف قبل الحفظ.')
+    : ''
+  if (saveHint.value) return
   return command.run('save', {
     operation: crypto.randomUUID(),
     action: 'save',
@@ -289,6 +295,7 @@ onMounted(load)
             </div>
           </section>
           <WorkoutFields v-model="workout" :catalog="catalog" :disabled="locked" />
+          <p v-if="saveHint" class="notice error" role="alert">{{ saveHint }}</p>
           <div class="editor-footer actions">
             <button class="button" :disabled="locked || !workout.exercises.length">
               {{ l('Save workout template', 'حفظ قالب التمرين') }}</button

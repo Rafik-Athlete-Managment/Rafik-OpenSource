@@ -19,7 +19,8 @@
   border-bottom: 1px solid var(--line);
 }
 @media (max-width: 1023px) {
-  .header-actions > .desktop-clock {
+  /* Outrank the clock's scoped display rule, which loads later with equal specificity. */
+  .site-header .header-actions > .desktop-clock {
     display: none;
   }
 }

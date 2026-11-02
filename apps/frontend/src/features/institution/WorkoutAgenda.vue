@@ -541,8 +541,17 @@ const exerciseLabel = (name: string) =>
                   item.preview.minutes
                     ? item.preview.minutes + ' ' + l('min', 'دقيقة') + ' · '
                     : ''
-                }}{{ item.preview.exercise_count }} {{ l('exercises', 'تمارين') }} ·
-                {{ item.preview.prescribed_sets }} {{ l('sets', 'مجموعات') }}</small
+                }}{{ item.preview.exercise_count }}
+                {{
+                  item.preview.exercise_count === 1
+                    ? l('exercise', 'تمرين')
+                    : l('exercises', 'تمارين')
+                }}
+                ·
+                {{ item.preview.prescribed_sets }}
+                {{
+                  item.preview.prescribed_sets === 1 ? l('set', 'مجموعة') : l('sets', 'مجموعات')
+                }}</small
               >
               <small v-if="item.blocked">{{ blockedLabel(item) }}</small>
               <small v-else-if="item.state === 'scheduled'">{{
