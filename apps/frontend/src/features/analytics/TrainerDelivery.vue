@@ -22,6 +22,7 @@ defineProps<{
         items.map((x) => ({ label: x.name, value: x.completed_sessions, href: base + '/schedule' }))
       "
       :unit="l('sessions', 'جلسة')"
+      :unit-one="l('session', 'جلسة')"
     />
     <details>
       <summary>{{ l('Attendance by coach', 'الحضور حسب المدرب') }}</summary>

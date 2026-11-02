@@ -79,6 +79,7 @@ const summary = (items: Rated, noun: 'sessions' | 'coaches') => {
       "
       :items="ratingsOrEmpty(report.client.filter((x) => x.source === source))"
       :unit="l('responses', 'إجابة')"
+      :unit-one="l('response', 'إجابة')"
     />
     <MetricChart
       v-if="report.workplace"
@@ -93,6 +94,7 @@ const summary = (items: Rated, noun: 'sessions' | 'coaches') => {
       "
       :items="ratingsOrEmpty(report.workplace)"
       :unit="l('coaches', 'مدرب')"
+      :unit-one="l('coach', 'مدرب')"
     />
   </div>
 </template>

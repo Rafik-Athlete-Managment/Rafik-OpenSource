@@ -164,6 +164,7 @@ const previousAgenda = useCommand(
             "
             :items="trend"
             :unit="l('workouts', 'تمرين')"
+            :unit-one="l('workout', 'تمرين')"
           />
           <MetricChart
             counts
@@ -177,6 +178,7 @@ const previousAgenda = useCommand(
             "
             :items="attendance"
             :unit="l('entries', 'سجل')"
+            :unit-one="l('entry', 'سجل')"
           />
         </div>
       </template>

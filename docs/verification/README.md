@@ -17,12 +17,15 @@ An API matrix confirmed that athletes are refused administrator and coach views 
 
 Commit `675875f` fixes the defects found: a phone header overlap (the clock's scoped style outranked its hide rule, so header actions wrapped over the page), a null-user error when signing out from Settings, invitation copy ("Trainer", and a wrong-account message that blamed "your coach") plus a missing sign-out action, an "Open training institution" link label, a misleading off-screen error when saving a workout template without a chosen exercise, and singular exercise/set counts. Each fix was rebuilt and rechecked on the instance.
 
+A follow-up commit fixed three further observations:
+
+- **Count charts:** they now take a singular unit, so a value of 1 reads "1 workout" or "1 record". The deployed bundle contains the singular strings. A rendered value of exactly 1 was not observed, because the instance then had two completions.
+- **Workout-template empty states:** they distinguish "No workout templates yet" from "No matching workout templates". The search case was checked live.
+- **Program editor URL:** the first save or publish of a new program moves to its `/plans/:id` URL and clears the shared new-program draft. Live: the heading became "Edit program", and the next New program started blank. Before this change, a saved draft remained under the new-program key and was restored into the next New program.
+
 Open observations:
 
-- Chart units and the attendance donut still read "1 workouts" and "1 records".
-- An individually scheduled workout that the coach completed counts as an unmarked event-attendance entry on the overview.
-- After publishing, the program editor stays at `/plans/new` with the "Create a program" heading.
-- The workout-template empty state says "No matching workout templates" before any search.
+- An individually scheduled workout that the coach completed counts as an unmarked event-attendance entry on the overview. This follows the documented counting rule but can read as a missed session.
 - After a deploy, open tabs keep the previous build until every tab closes (by design).
 
 Not checked: nutrition, athlete health consent, assessments, notifications, groups, resources and uploads, WebKit, restore, update/rollback and native Android against this instance.

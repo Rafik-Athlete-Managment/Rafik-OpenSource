@@ -139,7 +139,9 @@ onMounted(load)
             :title="
               archived
                 ? l('No archived workout templates', 'لا توجد قوالب تمارين مؤرشفة')
-                : l('No matching workout templates', 'لا توجد قوالب تمارين مطابقة')
+                : search.trim()
+                  ? l('No matching workout templates', 'لا توجد قوالب تمارين مطابقة')
+                  : l('No workout templates yet', 'لا توجد قوالب تمارين بعد')
             "
             :description="
               archived

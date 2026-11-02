@@ -291,6 +291,7 @@ const live = useLiveSearch(search, () => load())
               "
               :items="trend"
               :unit="l('sessions', 'حصة')"
+              :unit-one="l('session', 'حصة')"
               timeline
             />
             <MetricChart

@@ -31,6 +31,7 @@ const route = useRoute(),
 const context = programContext(route)
 const editable = ref(context.view !== 'trainee')
 const isNew = !!props.assignedPlan || route.params.id === 'new'
+const origin = route.fullPath
 const id = ref(isNew ? crypto.randomUUID() : String(route.params.id))
 const title = ref(language('New program', 'برنامج جديد'))
 const blankPrescription = (): Prescription => ({
@@ -242,6 +243,14 @@ const command = useCommand<'save' | 'publish'>(
             'Draft saved. Current assignments are unchanged.',
             'حُفظت المسودة. التعيينات الحالية لم تتغير.',
           )
+    // A saved new program gets its own URL so reloads and the next New program start cleanly.
+    if (isNew && route.fullPath === origin) {
+      await removeDraft(key)
+      await router.replace({
+        path: context.base + '/plans/' + id.value,
+        query: route.query.member ? { member: route.query.member } : {},
+      })
+    }
   },
   (action, args) =>
     props.assignedPlan

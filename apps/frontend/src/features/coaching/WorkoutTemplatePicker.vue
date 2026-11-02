@@ -133,12 +133,21 @@ function page(value: number) {
       ><EmptyState
         v-if="!items.length"
         compact
-        :title="l('No matching workout templates', 'لا توجد قوالب تمارين مطابقة')"
+        :title="
+          search.trim()
+            ? l('No matching workout templates', 'لا توجد قوالب تمارين مطابقة')
+            : l('No workout templates yet', 'لا توجد قوالب تمارين بعد')
+        "
         :description="
-          l(
-            'Try another name or create a reusable workout.',
-            'جرّب اسماً آخر أو أنشئ تمريناً قابلاً لإعادة الاستخدام.',
-          )
+          search.trim()
+            ? l(
+                'Try another name or create a reusable workout.',
+                'جرّب اسماً آخر أو أنشئ تمريناً قابلاً لإعادة الاستخدام.',
+              )
+            : l(
+                'Create a reusable workout to use here.',
+                'أنشئ تمريناً قابلاً لإعادة الاستخدام لاستخدامه هنا.',
+              )
         "
       />
       <div v-else class="template-choices">
