@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Audit every Rafik Field screen and refine the unreleased phone UI: one Lucide icon family, near-black shared dark surfaces, denser cards and set entry, directly available assessment results, and fewer routine save/sync notices. Header Refresh handles routine retries; detailed workout recovery moves to an options sheet and event recovery opens only on request, while blocked work keeps a compact review link. Offline commands and server authority remain intact. The new SVG dependency requires a native development-client rebuild; published beta.2 remains unchanged. Device rendering and offline acceptance are pending.
+
 - Combine the coach phone's day schedule and individual workouts into one entry surface. Event and workout cards open directly without internal buttons; a filter icon opens a bottom sheet, and full-screen Settings closes without losing an open draft. Use compact refresh/saved-work notices and quieter light/dark surfaces. A trainer-only `day` filter reuses the existing workout agenda projection; general workout browsing remains reachable. Native rendering and physical offline acceptance remain pending.
 
 - Refine the unreleased coach phone workspace: one compact app bar, a day-scoped five-card schedule with a filter sheet, a concise event preview, attendance rows with details on demand, a separate assessment-results step, and a fixed athlete switcher above group recording. Attendance saves offline; the next recording step waits for confirmation so dependent commands preserve order. Workout completion shows a device-only summary before sync and a confirmed summary after acknowledgment. No API, schema or native dependency changed; physical rendering and offline acceptance remain open.

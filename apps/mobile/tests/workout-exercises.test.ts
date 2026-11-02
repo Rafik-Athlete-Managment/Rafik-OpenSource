@@ -15,6 +15,7 @@ const stubs: Record<string, string> = {
     'export const Text="Text", TextInput="TextInput", View="View", Pressable="Pressable"',
   ),
   './Language': dataUrl('export const useLanguage=()=>({language:"en",l:en=>en})'),
+  './ui': dataUrl('export const Icon=()=>null'),
 }
 const compiled = ts
   .transpileModule(

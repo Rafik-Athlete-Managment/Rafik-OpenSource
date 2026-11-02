@@ -19,6 +19,8 @@ npm run mobile:android
 
 This command uses the maintained launcher in `scripts/android.mjs`. Windows builds get shorter CMake staging paths, object-path hashing and limited native/Gradle concurrency. Use `npm run mobile:android -- --device` to choose a device, or `npm run mobile:android -- --prepare-only` to configure without building. See the [Windows setup and troubleshooting guide](../../docs/development/android.md#windows-laptop-startup-and-rebuilds). The launcher does not update Ninja or change emulator settings. Once installed, normal JavaScript/UI work uses `npm run mobile:start`.
 
+The unreleased phone refinement adds `react-native-svg` for one Lucide icon family. Existing development installs need one native rebuild with `npm run mobile:android` before Metro can load this source; later JavaScript edits use `npm run mobile:start`. A standalone beta.3 release APK must likewise be built with this dependency included. The published beta.2 APK is unchanged.
+
 This app enables SQLCipher and requires a native development build; Expo Go does not include that native configuration. On an Android emulator, use the host's emulator address (commonly `http://10.0.2.2:55331`) for the local API. For a physical phone and local HTTP backend, use [USB forwarding](../../docs/operations/android-release.md#connect-without-a-domain) and `http://127.0.0.1:55331`; LAN HTTP is not allowed. Remote institutions must use HTTPS.
 
 The canonical [Android development guide](../../docs/development/android.md) explains instance URLs, coach setup, attendance/scores, completion, sync states, account isolation and recovery. The app requests current workspace roles and a bounded 14-day schedule; non-trainer roles see no coach workflow.

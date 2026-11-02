@@ -31,7 +31,7 @@ import {
 } from './model'
 import type { FieldStore } from './store'
 import { AttendanceSync } from './sync'
-import { Button, FilterIcon, displayDate, localDate, type Styles } from './ui'
+import { Button, Icon, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
@@ -50,6 +50,7 @@ export function InstitutionScreen({
   accountOpen,
   onAccountPress,
   onEventOpen,
+  externalNotice,
 }: {
   client: NativeClient
   store: FieldStore
@@ -60,6 +61,7 @@ export function InstitutionScreen({
   accountOpen: boolean
   onAccountPress: () => void
   onEventOpen: () => void
+  externalNotice?: boolean
 }) {
   const { t, l, language } = useLanguage()
   const [owner] = useState<Owner>(() => ({
@@ -445,17 +447,13 @@ export function InstitutionScreen({
       await store.enqueue(owner, payload)
       if (alive.current) {
         await reloadLocal()
-        setRefreshNotice(
-          payload.action === 'finish'
-            ? l(
-                'Event saved on this phone. Waiting to send.',
-                'حُفظ الموعد على هذا الهاتف. بانتظار الإرسال.',
-              )
-            : l(
-                'Results saved on this phone. Waiting to send.',
-                'حُفظت النتائج على هذا الهاتف. بانتظار الإرسال.',
-              ),
-        )
+        if (payload.action === 'finish')
+          setRefreshNotice(
+            l(
+              'Event saved on this phone. Waiting to send.',
+              'حُفظ الموعد على هذا الهاتف. بانتظار الإرسال.',
+            ),
+          )
       }
       await sync()
       return true
@@ -692,11 +690,16 @@ export function InstitutionScreen({
       } else void refresh()
       return
     }
-    if (pending.length || snapshot?.drafts.length) {
+    if (pending.length) {
+      setRefreshNotice('')
+      void sync()
+      return
+    }
+    if (snapshot?.drafts.length) {
       setRefreshNotice(
         l(
-          'Send or review saved changes before refreshing.',
-          'أرسل التغييرات المحفوظة أو راجعها قبل التحديث.',
+          'Review saved changes before replacing this event copy.',
+          'راجع التغييرات المحفوظة قبل استبدال نسخة هذا الموعد.',
         ),
       )
       return
@@ -744,7 +747,7 @@ export function InstitutionScreen({
                 {refreshingSchedule || headerRefreshing ? (
                   <ActivityIndicator size="small" />
                 ) : (
-                  <Text style={styles.link}>↻</Text>
+                  <Icon name="refresh" styles={styles} />
                 )}
               </Pressable>
               <Pressable
@@ -754,7 +757,7 @@ export function InstitutionScreen({
                 onPress={onAccountPress}
                 style={styles.headerIcon}
               >
-                <Text style={styles.link}>⚙</Text>
+                <Icon name="settings" styles={styles} />
               </Pressable>
             </View>
           </View>
@@ -775,7 +778,7 @@ export function InstitutionScreen({
             onPress={refreshCurrent}
             style={styles.headerIcon}
           >
-            <Text style={styles.link}>↻</Text>
+            <Icon name="refresh" styles={styles} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -789,7 +792,7 @@ export function InstitutionScreen({
             }}
             style={styles.headerIcon}
           >
-            <Text style={styles.link}>✕</Text>
+            <Icon name="close" styles={styles} />
           </Pressable>
         </View>
       ) : (
@@ -828,7 +831,7 @@ export function InstitutionScreen({
               }
               style={styles.headerIcon}
             >
-              <Text style={styles.link}>‹</Text>
+              <Icon name="back" styles={styles} rtl={language === 'ar'} />
             </Pressable>
           ) : null}
           <Pressable
@@ -849,7 +852,7 @@ export function InstitutionScreen({
             {busy || headerRefreshing ? (
               <ActivityIndicator size="small" />
             ) : (
-              <Text style={styles.link}>↻</Text>
+              <Icon name="refresh" styles={styles} />
             )}
           </Pressable>
           <Pressable
@@ -862,13 +865,13 @@ export function InstitutionScreen({
               saving || draftSaving || workoutPersisting || groupPersisting || busy || closing
             }
             onPress={leaveEvent}
-            style={styles.accountButton}
+            style={styles.headerIcon}
           >
-            <Text style={styles.link}>{l('Close ×', 'إغلاق ×')}</Text>
+            <Icon name="close" styles={styles} />
           </Pressable>
         </View>
       )}
-      {refreshNotice ? (
+      {refreshNotice && !message && !externalNotice ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={l('Dismiss refresh warning', 'إخفاء تنبيه التحديث')}
@@ -878,10 +881,10 @@ export function InstitutionScreen({
           <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
             {refreshNotice}
           </Text>
-          <Text style={styles.link}>×</Text>
+          <Icon name="close" styles={styles} size={18} />
         </Pressable>
       ) : null}
-      {selected && message ? (
+      {selected && message && !externalNotice ? (
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded: showMessageDetails }}
@@ -895,7 +898,7 @@ export function InstitutionScreen({
           >
             {t(message)}
           </Text>
-          <Text style={styles.link}>{showMessageDetails ? '⌃' : '⌄'}</Text>
+          <Icon name={showMessageDetails ? 'collapse' : 'down'} styles={styles} size={18} />
         </Pressable>
       ) : null}
       {/* Keep this editor mounted while hidden so switching views preserves selection and device drafts. */}
@@ -1076,11 +1079,11 @@ export function InstitutionScreen({
               }}
               style={styles.headerIcon}
             >
-              <FilterIcon styles={styles} />
+              <Icon name="filter" styles={styles} />
             </Pressable>
           </View>
         ) : null}
-        {!selected && message ? (
+        {!selected && message && !externalNotice ? (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ expanded: showMessageDetails }}
@@ -1094,7 +1097,7 @@ export function InstitutionScreen({
             >
               {t(message)}
             </Text>
-            <Text style={styles.link}>{showMessageDetails ? '⌃' : '⌄'}</Text>
+            <Icon name={showMessageDetails ? 'collapse' : 'down'} styles={styles} size={18} />
           </Pressable>
         ) : null}
         {institutionPaused && queueHead.event_id !== selected ? (
@@ -1111,7 +1114,7 @@ export function InstitutionScreen({
               {cached.find((c) => c.event.id === queueHead.event_id)?.event.title ||
                 l('Earlier event', 'موعد سابق')}
             </Text>
-            <Text style={styles.link}>›</Text>
+            <Icon name="forward" styles={styles} size={18} />
           </Pressable>
         ) : null}
         {!selected ? (
@@ -1130,7 +1133,15 @@ export function InstitutionScreen({
                     entry.event.state === 'completed' && styles.completedCard,
                   ]}
                 >
-                  <Text style={styles.cardTitle}>{entry.event.title}</Text>
+                  <View style={[styles.actions, { alignItems: 'center' }]}>
+                    <Icon
+                      name={entry.event.kind === 'assessment' ? 'assessment' : 'event'}
+                      styles={styles}
+                      size={18}
+                      muted
+                    />
+                    <Text style={[styles.cardTitle, { flex: 1 }]}>{entry.event.title}</Text>
+                  </View>
                   <Text style={styles.hint}>
                     {displayDate(entry.event.starts_at, language)} ·{' '}
                     {entry.event.kind === 'assessment'
@@ -1166,11 +1177,14 @@ export function InstitutionScreen({
                   }}
                   style={styles.card}
                 >
-                  <Text style={styles.cardTitle}>
-                    {language === 'ar' && entry.workout.day_name_ar
-                      ? entry.workout.day_name_ar
-                      : entry.workout.day_name}
-                  </Text>
+                  <View style={[styles.actions, { alignItems: 'center' }]}>
+                    <Icon name="workout" styles={styles} size={18} muted />
+                    <Text style={[styles.cardTitle, { flex: 1 }]}>
+                      {language === 'ar' && entry.workout.day_name_ar
+                        ? entry.workout.day_name_ar
+                        : entry.workout.day_name}
+                    </Text>
+                  </View>
                   <Text style={styles.hint}>
                     {entry.workout.member_name} · {entry.workout.title}
                   </Text>
@@ -1228,7 +1242,7 @@ export function InstitutionScreen({
                     'تعذّر تحديث التمارين. النسخ المحفوظة ما زالت متاحة.',
                   )}
                 </Text>
-                <Text style={styles.link}>✕</Text>
+                <Icon name="close" styles={styles} size={18} />
               </Pressable>
             ) : null}
             <Pressable
@@ -1244,7 +1258,10 @@ export function InstitutionScreen({
               }}
               style={{ minHeight: 44, justifyContent: 'center' }}
             >
-              <Text style={styles.link}>{l('Browse other workouts ›', 'تصفح تمارين أخرى ›')}</Text>
+              <View style={[styles.actions, { alignItems: 'center' }]}>
+                <Text style={styles.link}>{l('Browse other workouts', 'تصفح تمارين أخرى')}</Text>
+                <Icon name="forward" styles={styles} size={18} />
+              </View>
             </Pressable>
             {otherSaved.length ? (
               <>
@@ -1254,10 +1271,13 @@ export function InstitutionScreen({
                   onPress={() => setShowOtherSaved((open) => !open)}
                   style={{ minHeight: 44, justifyContent: 'center' }}
                 >
-                  <Text style={styles.link}>
-                    {l('Other events saved on this phone', 'مواعيد أخرى محفوظة على الهاتف')} (
-                    {otherSaved.length}) {showOtherSaved ? '⌃' : '⌄'}
-                  </Text>
+                  <View style={[styles.actions, { alignItems: 'center' }]}>
+                    <Text style={styles.link}>
+                      {l('Other events saved on this phone', 'مواعيد أخرى محفوظة على الهاتف')} (
+                      {otherSaved.length})
+                    </Text>
+                    <Icon name={showOtherSaved ? 'collapse' : 'down'} styles={styles} size={18} />
+                  </View>
                 </Pressable>
                 {showOtherSaved
                   ? otherSaved.map((item) => (
@@ -1282,10 +1302,17 @@ export function InstitutionScreen({
               onPress={() => setShowCompatibility((value) => !value)}
               style={{ minHeight: 44, justifyContent: 'center' }}
             >
-              <Text style={styles.hint}>
-                {l('App connection details', 'تفاصيل اتصال التطبيق')}{' '}
-                {showCompatibility ? '⌃' : '⌄'}
-              </Text>
+              <View style={[styles.actions, { alignItems: 'center' }]}>
+                <Text style={styles.hint}>
+                  {l('App connection details', 'تفاصيل اتصال التطبيق')}
+                </Text>
+                <Icon
+                  name={showCompatibility ? 'collapse' : 'down'}
+                  styles={styles}
+                  size={18}
+                  muted
+                />
+              </View>
             </Pressable>
             {showCompatibility ? (
               <View style={styles.card}>
@@ -1428,7 +1455,26 @@ export function InstitutionScreen({
                     )}{' '}
                   </Text>
                 ) : null}
-                {snapshot && (paused || snapshot.roster.blocked || reviewing) ? (
+                {snapshot &&
+                (paused || snapshot.roster.blocked || pending.length || snapshot.drafts.length) ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      expanded: reviewing,
+                      disabled: busy || saving || draftSaving || closing,
+                    }}
+                    onPress={() => setReviewing((value) => !value)}
+                    disabled={busy || saving || draftSaving || closing}
+                    style={{ minHeight: 44, justifyContent: 'center' }}
+                  >
+                    <Text style={styles.link}>
+                      {reviewing
+                        ? l('Hide saved-work details', 'إخفاء تفاصيل العمل المحفوظ')
+                        : l('Review saved work', 'مراجعة العمل المحفوظ')}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                {snapshot && reviewing ? (
                   <RecoveryPanel
                     key={roster.event.id}
                     owner={owner}
@@ -1444,13 +1490,6 @@ export function InstitutionScreen({
                       pending.some((c) => c.state === 'sending')
                     }
                     onDenied={() => accessDenied(roster.event.id)}
-                  />
-                ) : snapshot && (pending.length || snapshot.drafts.length) ? (
-                  <Button
-                    title={l('Review saved work', 'مراجعة العمل المحفوظ')}
-                    onPress={() => setReviewing(true)}
-                    styles={styles}
-                    disabled={busy || saving || draftSaving || closing}
                   />
                 ) : null}
                 {!completed && roster.event.state === 'scheduled' ? (
@@ -1574,133 +1613,122 @@ export function InstitutionScreen({
                             </View>
                           ) : null}
                           {expandedPerson === person.member_id ? (
+                            <EventHistory
+                              key={`${roster.event.id}:${person.member_id}`}
+                              client={client}
+                              institution={institution}
+                              event={roster.event.id}
+                              member={person.member_id}
+                              name={person.name}
+                              definition={roster.definition}
+                              assessment={roster.event.kind === 'assessment'}
+                              styles={styles}
+                              disabled={busy || saving || draftSaving || closing}
+                              onDenied={() => accessDenied(roster.event.id)}
+                            />
+                          ) : null}
+                          {roster.event.kind === 'assessment' && eventStage === 'results' ? (
                             <>
-                              <EventHistory
-                                key={`${roster.event.id}:${person.member_id}`}
-                                client={client}
-                                institution={institution}
-                                event={roster.event.id}
-                                member={person.member_id}
-                                name={person.name}
-                                definition={roster.definition}
-                                assessment={roster.event.kind === 'assessment'}
-                                styles={styles}
-                                disabled={busy || saving || draftSaving || closing}
-                                onDenied={() => accessDenied(roster.event.id)}
-                              />
-                              {roster.event.kind === 'assessment' && eventStage === 'results' ? (
-                                <>
-                                  {result ? (
-                                    <View style={{ gap: 6 }}>
-                                      <Text style={styles.label}>
-                                        {' '}
-                                        {t('Confirmed assessment · revision')} {result.revision}
-                                      </Text>
-                                      {roster.definition?.map((drill) => (
-                                        <Text key={drill.key} style={styles.hint}>
-                                          {drill.name}
-                                          {t(':')} {result.values[drill.key] ?? t('Not recorded')}
-                                          {drill.unit ? ` ${drill.unit}` : ''}
-                                        </Text>
-                                      ))}
-                                      {result.note ? (
-                                        <Text style={styles.hint}>
-                                          {t('Assessor note:')} {result.note}
-                                        </Text>
-                                      ) : null}
-                                    </View>
-                                  ) : null}
-                                  {resultCommand ? (
+                              {result ? (
+                                <View style={{ gap: 6 }}>
+                                  <Text style={styles.label}>
+                                    {' '}
+                                    {t('Confirmed assessment · revision')} {result.revision}
+                                  </Text>
+                                  {roster.definition?.map((drill) => (
+                                    <Text key={drill.key} style={styles.hint}>
+                                      {drill.name}
+                                      {t(':')} {result.values[drill.key] ?? t('Not recorded')}
+                                      {drill.unit ? ` ${drill.unit}` : ''}
+                                    </Text>
+                                  ))}
+                                  {result.note ? (
                                     <Text style={styles.hint}>
-                                      {' '}
-                                      {t('Scores:')} {t(stateText[resultCommand.state])}
-                                      {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
+                                      {t('Assessor note:')} {result.note}
                                     </Text>
                                   ) : null}
-                                  {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
-                                    <Text style={styles.hint}>
-                                      {t('Score draft saved on device')}
-                                    </Text>
-                                  ) : null}
-                                  {!completed &&
-                                  roster.definition?.length &&
-                                  (value === 'present' ||
-                                    result ||
-                                    queuedResult ||
-                                    snapshot?.drafts.some((d) => d.member === person.member_id)) ? (
-                                    <Button
-                                      title={
-                                        editor === person.member_id
-                                          ? 'Scores editor open'
-                                          : queuedResult
-                                            ? 'Review saved scores'
-                                            : result
-                                              ? 'Review / correct scores'
-                                              : 'Record assessment scores'
-                                      }
-                                      disabled={
-                                        completed ||
-                                        beforeStart ||
-                                        editor === person.member_id ||
-                                        saving ||
-                                        draftSaving ||
-                                        busy ||
-                                        closing
-                                      }
-                                      onPress={() => setEditor(person.member_id)}
-                                      styles={styles}
-                                    />
-                                  ) : null}
-                                  {editor === person.member_id &&
-                                  snapshot &&
-                                  roster.definition?.length ? (
-                                    <ScoreEditor
-                                      key={`${roster.event.id}:${person.member_id}:${result?.revision || 0}`}
-                                      owner={owner}
-                                      event={roster.event.id}
-                                      member={person.member_id}
-                                      name={person.name}
-                                      definition={roster.definition}
-                                      result={result}
-                                      queuedResult={queuedResult}
-                                      savedDraft={snapshot.drafts.find(
-                                        (d) => d.member === person.member_id,
-                                      )}
-                                      store={store}
-                                      styles={styles}
-                                      locked={
-                                        saving ||
-                                        busy ||
-                                        closing ||
-                                        snapshot.roster.blocked ||
-                                        institutionPaused ||
-                                        paused ||
-                                        finishing ||
-                                        !!queuedResult ||
-                                        !person.active ||
-                                        value !== 'present' ||
-                                        roster.event.state !== 'scheduled' ||
-                                        beforeStart
-                                      }
-                                      onPersisting={setDraftSaving}
-                                      onDraftSaved={async (discarded) => {
-                                        await reloadLocal()
-                                        if (discarded && alive.current)
-                                          setRefreshNotice(
-                                            l(
-                                              'Device draft discarded.',
-                                              'حُذفت المسودة من الجهاز.',
-                                            ),
-                                          )
-                                      }}
-                                      onError={(message) => {
-                                        if (alive.current) setMessage(message)
-                                      }}
-                                      onSubmit={submitCommand}
-                                      onClose={() => setEditor(null)}
-                                    />
-                                  ) : null}
-                                </>
+                                </View>
+                              ) : null}
+                              {resultCommand ? (
+                                <Text style={styles.hint}>
+                                  {' '}
+                                  {t('Scores:')} {t(stateText[resultCommand.state])}
+                                  {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
+                                </Text>
+                              ) : null}
+                              {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
+                                <Text style={styles.hint}>{t('Score draft saved on device')}</Text>
+                              ) : null}
+                              {!completed &&
+                              roster.definition?.length &&
+                              (value === 'present' ||
+                                result ||
+                                queuedResult ||
+                                snapshot?.drafts.some((d) => d.member === person.member_id)) ? (
+                                <Button
+                                  title={
+                                    editor === person.member_id
+                                      ? 'Scores editor open'
+                                      : queuedResult
+                                        ? 'Review saved scores'
+                                        : result
+                                          ? 'Review / correct scores'
+                                          : 'Record assessment scores'
+                                  }
+                                  disabled={
+                                    completed ||
+                                    beforeStart ||
+                                    editor === person.member_id ||
+                                    saving ||
+                                    draftSaving ||
+                                    busy ||
+                                    closing
+                                  }
+                                  onPress={() => setEditor(person.member_id)}
+                                  styles={styles}
+                                />
+                              ) : null}
+                              {editor === person.member_id &&
+                              snapshot &&
+                              roster.definition?.length ? (
+                                <ScoreEditor
+                                  key={`${roster.event.id}:${person.member_id}:${result?.revision || 0}`}
+                                  owner={owner}
+                                  event={roster.event.id}
+                                  member={person.member_id}
+                                  name={person.name}
+                                  definition={roster.definition}
+                                  result={result}
+                                  queuedResult={queuedResult}
+                                  savedDraft={snapshot.drafts.find(
+                                    (d) => d.member === person.member_id,
+                                  )}
+                                  store={store}
+                                  styles={styles}
+                                  locked={
+                                    saving ||
+                                    busy ||
+                                    closing ||
+                                    snapshot.roster.blocked ||
+                                    institutionPaused ||
+                                    paused ||
+                                    finishing ||
+                                    !!queuedResult ||
+                                    !person.active ||
+                                    value !== 'present' ||
+                                    roster.event.state !== 'scheduled' ||
+                                    beforeStart
+                                  }
+                                  onPersisting={setDraftSaving}
+                                  onDraftSaved={async () => {
+                                    await reloadLocal()
+                                  }}
+                                  onError={(message) => {
+                                    if (alive.current) setMessage(message)
+                                  }}
+                                  onSubmit={submitCommand}
+                                  onClose={() => setEditor(null)}
+                                />
                               ) : null}
                             </>
                           ) : null}
@@ -1718,9 +1746,7 @@ export function InstitutionScreen({
                               <Text style={styles.link}>
                                 {expandedPerson === person.member_id
                                   ? l('Hide details', 'إخفاء التفاصيل')
-                                  : eventStage === 'results' && value === 'present'
-                                    ? l('Record or review results', 'تسجيل النتائج أو مراجعتها')
-                                    : l('History and corrections', 'السجل والتصحيحات')}
+                                  : l('History and corrections', 'السجل والتصحيحات')}
                               </Text>
                             </Pressable>
                           ) : null}

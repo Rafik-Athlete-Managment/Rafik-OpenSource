@@ -76,7 +76,7 @@ export function ScoreEditor({
     setError('')
     setPersisting(true)
     onPersisting(true)
-    setStatus('Saving score draft on this device…')
+    setStatus('')
     const version = ++sequence.current
     const write = store.saveDraft(owner, event, next)
     flight.current = write
@@ -144,7 +144,7 @@ export function ScoreEditor({
     }
   }
   return (
-    <View style={styles.card}>
+    <View style={{ gap: 10, paddingTop: 8 }}>
       <Text style={styles.cardTitle}>
         {name} {t('· Assessment scores')}
       </Text>

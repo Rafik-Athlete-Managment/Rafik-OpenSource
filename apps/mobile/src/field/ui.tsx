@@ -1,19 +1,66 @@
 import { useLanguage } from './Language'
 import type { Language } from './translations'
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text } from 'react-native'
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  CircleCheck,
+  ClipboardCheck,
+  Dumbbell,
+  Ellipsis,
+  RefreshCw,
+  Settings,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react-native'
 
 export type Styles = ReturnType<typeof makeStyles>
-/** Small filter glyph drawn with native views so no new icon or native dependency is needed. */
-export function FilterIcon({ styles }: { styles: Styles }) {
+const icons = {
+  back: ArrowLeft,
+  check: Check,
+  close: X,
+  collapse: ChevronUp,
+  completion: CircleCheck,
+  down: ChevronDown,
+  assessment: ClipboardCheck,
+  event: CalendarDays,
+  filter: SlidersHorizontal,
+  forward: ChevronRight,
+  more: Ellipsis,
+  refresh: RefreshCw,
+  settings: Settings,
+  workout: Dumbbell,
+} as const
+
+/** One icon family and stroke scale across field screens; the parent labels icon-only actions. */
+export function Icon({
+  name,
+  styles,
+  size = 20,
+  muted = false,
+  inverse = false,
+  rtl = false,
+}: {
+  name: keyof typeof icons
+  styles: Styles
+  size?: number
+  muted?: boolean
+  inverse?: boolean
+  rtl?: boolean
+}) {
+  const Component = rtl && name === 'back' ? ArrowRight : icons[name]
   return (
-    <View accessible={false} style={{ width: 22, gap: 4 }}>
-      {[5, 14, 9].map((offset) => (
-        <View key={offset} style={{ height: 4, justifyContent: 'center' }}>
-          <View style={styles.filterLine} />
-          <View style={[styles.filterKnob, { left: offset }]} />
-        </View>
-      ))}
-    </View>
+    <Component
+      size={size}
+      strokeWidth={2}
+      color={inverse ? '#fff' : muted ? styles.hint.color : styles.link.color}
+      accessible={false}
+    />
   )
 }
 /** Renders the shared phone action button with primary, danger and disabled states. */
@@ -70,11 +117,18 @@ export function makeStyles(light: boolean, language: Language = 'en') {
         ? ('right' as const)
         : ('left' as const)
   const direction = language === 'ar' ? ('rtl' as const) : ('ltr' as const)
-  const text = light ? '#24312d' : '#edf3ef'
-  const muted = light ? '#52635b' : '#b7c4bd'
+  const text = light ? '#24312d' : '#f5f5f5'
+  const muted = light ? '#52635b' : '#b5b5bd'
   const accent = light ? '#176249' : '#a4cfba'
+  const dark = {
+    background: '#080809',
+    surface: '#171719',
+    raised: '#212124',
+    input: '#29292d',
+    border: '#303034',
+  }
   return StyleSheet.create({
-    safe: { direction, flex: 1, backgroundColor: light ? '#f3f5f3' : '#151b1b' },
+    safe: { direction, flex: 1, backgroundColor: light ? '#f3f5f3' : dark.background },
     toolbar: {
       direction,
       flexDirection: 'row',
@@ -85,7 +139,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingVertical: 10,
     },
     heading: { flexGrow: 1, flexShrink: 1 },
-    appBar: { borderBottomWidth: 1, borderBottomColor: light ? '#dce4df' : '#394641' },
+    appBar: { borderBottomWidth: 1, borderBottomColor: light ? '#dce4df' : dark.border },
     topbar: {
       direction,
       flexDirection: 'row',
@@ -94,11 +148,11 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingHorizontal: 18,
       paddingVertical: 10,
       borderBottomWidth: 1,
-      borderBottomColor: light ? '#dce4df' : '#394641',
+      borderBottomColor: light ? '#dce4df' : dark.border,
     },
     accountButton: {
       borderWidth: 1,
-      borderColor: light ? '#bdcbc2' : '#58665e',
+      borderColor: light ? '#bdcbc2' : dark.border,
       borderRadius: 12,
       minHeight: 44,
       paddingHorizontal: 14,
@@ -112,23 +166,13 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingHorizontal: 18,
       paddingVertical: 10,
       borderBottomWidth: 1,
-      borderBottomColor: light ? '#dce4df' : '#394641',
+      borderBottomColor: light ? '#dce4df' : dark.border,
     },
     headerIcon: {
       minWidth: 44,
       minHeight: 44,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    filterLine: { height: 2, width: 20, borderRadius: 1, backgroundColor: accent },
-    filterKnob: {
-      position: 'absolute',
-      width: 5,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: light ? '#f3f5f3' : '#151b1b',
-      borderWidth: 1.5,
-      borderColor: accent,
     },
     noticeToast: {
       marginHorizontal: 18,
@@ -138,7 +182,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       borderRadius: 10,
       borderWidth: 1,
       borderColor: light ? '#b8a27c' : '#8b775a',
-      backgroundColor: light ? '#f4eee3' : '#302d27',
+      backgroundColor: light ? '#f4eee3' : dark.raised,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -152,7 +196,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       borderRadius: 10,
       borderWidth: 1,
       borderColor: light ? '#b8a27c' : '#8b775a',
-      backgroundColor: light ? '#f4eee3' : '#302d27',
+      backgroundColor: light ? '#f4eee3' : dark.raised,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
@@ -161,9 +205,9 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       marginHorizontal: 18,
       marginTop: 8,
       borderWidth: 1,
-      borderColor: light ? '#dce4df' : '#42514a',
+      borderColor: light ? '#dce4df' : dark.border,
       borderRadius: 12,
-      backgroundColor: light ? '#fff' : '#232b29',
+      backgroundColor: light ? '#fff' : dark.surface,
       paddingHorizontal: 12,
     },
     content: {
@@ -172,8 +216,8 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       width: '100%',
       maxWidth: 800,
       alignSelf: 'center',
-      padding: 18,
-      gap: 14,
+      padding: 16,
+      gap: 12,
       paddingBottom: 40,
     },
     kicker: {
@@ -204,19 +248,19 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     },
     card: {
       direction,
-      backgroundColor: light ? '#fff' : '#232b29',
+      backgroundColor: light ? '#fff' : dark.surface,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: light ? '#dce4df' : '#42514a',
-      padding: 16,
-      gap: 10,
+      borderColor: light ? '#dce4df' : dark.border,
+      padding: 14,
+      gap: 8,
     },
     attendanceRow: {
       direction,
-      backgroundColor: light ? '#fff' : '#232b29',
+      backgroundColor: light ? '#fff' : dark.surface,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: light ? '#dce4df' : '#42514a',
+      borderColor: light ? '#dce4df' : dark.border,
       padding: 12,
       gap: 6,
     },
@@ -225,7 +269,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     completedCard: {
       borderWidth: 1,
       borderColor: accent,
-      backgroundColor: light ? '#e8f0ea' : '#293d34',
+      backgroundColor: light ? '#e8f0ea' : '#1b2821',
     },
     assessmentCard: { borderLeftWidth: 3, borderLeftColor: light ? '#4774a8' : '#8fb7eb' },
     sheetBackdrop: {
@@ -240,7 +284,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     },
     filterSheet: {
       direction,
-      backgroundColor: light ? '#fff' : '#232b29',
+      backgroundColor: light ? '#fff' : dark.raised,
       borderTopLeftRadius: 18,
       borderTopRightRadius: 18,
       padding: 18,
@@ -285,17 +329,18 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       writingDirection: direction,
       direction,
       borderWidth: 1,
-      borderColor: light ? '#859b93' : '#54736b',
+      borderColor: light ? '#859b93' : '#55555b',
       borderRadius: 12,
-      minHeight: 50,
+      minHeight: 48,
       paddingHorizontal: 12,
+      backgroundColor: light ? '#fff' : dark.input,
       color: text,
       fontSize: 16,
     },
     actions: { direction, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     button: {
       borderWidth: 1,
-      borderColor: light ? '#6a8c80' : '#54736b',
+      borderColor: light ? '#6a8c80' : '#55555b',
       borderRadius: 12,
       minHeight: 48,
       justifyContent: 'center',
@@ -317,7 +362,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       minHeight: 44,
       borderRadius: 10,
       borderWidth: 1,
-      borderColor: light ? '#6a8c80' : '#54736b',
+      borderColor: light ? '#6a8c80' : '#55555b',
       paddingHorizontal: 14,
       justifyContent: 'center',
     },

@@ -1,6 +1,6 @@
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { useLanguage } from './Language'
-import type { Styles } from './ui'
+import { Icon, type Styles } from './ui'
 import type { FieldWorkoutEntry, FieldWorkoutPackage } from './workout-model'
 import type { WorkoutMeasure } from './workout-input'
 
@@ -133,11 +133,14 @@ export function WorkoutExercises({
                   (!editable || busy || invalidInput) && styles.disabled,
                 ]}
               >
-                <Text style={[styles.buttonText, entry.completed && styles.setCheckDoneText]}>
-                  {entry.completed
-                    ? l('✓ Set done', '✓ اكتملت المجموعة')
-                    : l('Mark set done', 'تأكيد إتمام المجموعة')}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {entry.completed ? <Icon name="check" styles={styles} size={18} inverse /> : null}
+                  <Text style={[styles.buttonText, entry.completed && styles.setCheckDoneText]}>
+                    {entry.completed
+                      ? l('Set done', 'اكتملت المجموعة')
+                      : l('Mark set done', 'تأكيد إتمام المجموعة')}
+                  </Text>
+                </View>
               </Pressable>
             </View>
           )

@@ -16,7 +16,7 @@ import { NativeClient, privateStore, type CoachContext } from './native'
 import { ConnectionFailure, failureText } from './model'
 import { selectedInstitution } from './access'
 import type { FieldStore } from './store'
-import { Button, makeStyles, type Styles } from './ui'
+import { Button, Icon, makeStyles, type Styles } from './ui'
 import { InstitutionScreen } from './InstitutionScreen'
 
 type Runtime = { client: NativeClient; store: FieldStore }
@@ -279,7 +279,7 @@ function SignedIn({
           onPress={() => setAccountOpen(false)}
           style={styles.headerIcon}
         >
-          <Text style={styles.link}>✕</Text>
+          <Icon name="close" styles={styles} />
         </Pressable>
       </View>
       <Text style={styles.label}>{l('Account', 'الحساب')}</Text>
@@ -346,7 +346,7 @@ function SignedIn({
             onPress={() => setAccountOpen((open) => !open)}
             style={styles.accountButton}
           >
-            <Text style={styles.link}>⚙</Text>
+            <Icon name="settings" styles={styles} />
           </Pressable>
         </View>
       ) : null}
@@ -366,7 +366,7 @@ function SignedIn({
             onPress={() => void refreshAccess(true)}
             style={styles.headerIcon}
           >
-            <Text style={styles.link}>↻</Text>
+            <Icon name="refresh" styles={styles} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -374,7 +374,7 @@ function SignedIn({
             onPress={() => setNoticeDismissed(true)}
             style={styles.headerIcon}
           >
-            <Text style={styles.link}>✕</Text>
+            <Icon name="close" styles={styles} />
           </Pressable>
         </View>
       ) : null}
@@ -391,6 +391,7 @@ function SignedIn({
             accountOpen={accountOpen}
             onAccountPress={() => setAccountOpen((open) => !open)}
             onEventOpen={() => setAccountOpen(false)}
+            externalNotice={!!message && !noticeDismissed}
           />
         </View>
       ) : (

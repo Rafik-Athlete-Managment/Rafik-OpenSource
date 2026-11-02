@@ -8,6 +8,7 @@ This page is the index for maintained Rafik documentation. The root [README](../
 
 - [Design system](DESIGN_SYSTEM.md): approved brand, group recording workspace, campaign-to-product mapping, typography, spacing, component, responsive, accessibility and RTL standards; implementation status is tracked in the audit.
 - [Web UI/UX audit and rollout plan](known-issues/ui-ux-audit.md): categorized findings, root causes, coverage/evidence limits and prioritized implementation slices. Includes the round7 campaign/native alignment findings; Android rendered acceptance remains follow-up scope.
+- [Phone UI audit](known-issues/mobile-ui-audit.md): beta.3 source screen inventory, disclosure and notice findings, refinement rules and device-validation limits.
 
 - [Requirements and staged plan](requirements/README.md): goals, scope, constraints, acceptance criteria and current stage gates.
 - [Beta.3 sessions and backend consolidation](requirements/beta3-sessions.md): accepted individual/group rules, implemented storage/fixed-time API status, pending offline Android scope and remaining migration/release acceptance.

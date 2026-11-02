@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Phone UI source audit and refinement — 2 November 2026
+
+Audited the sign-in, schedule, Settings, event preview/attendance, assessment, group and individual recording, history/recovery and shared styles. Findings, priorities and deliberate disclosures are in the [phone UI audit](../known-issues/mobile-ui-audit.md). Applied shared near-black dark surfaces and Lucide icons, exposed assessment result entry without opening history, removed redundant download/result/draft-save notices, and kept one visible notice per field screen. Header Refresh now handles routine queued work; detailed workout recovery lives in an options sheet and blocked event recovery opens through a compact link. The new native SVG dependency means the development client must be rebuilt before physical rendering; exact offline queues and server rules were not changed. Code checks and device limits are in [verification](../verification/README.md).
+
 ## Single coach phone schedule and quieter controls — 2 November 2026
 
 The unreleased phone source now combines day-filtered individual plan workouts, events and assessments into one Schedule. Cards open directly; the filter icon opens a bottom sheet and full-screen Settings preserves mounted field state. A compact notice replaces the large refresh alert, and saved-work recovery uses a small row. The trainer-only agenda `day` query selects unresolved positions without changing allocation or command authority. General browsing remains for work outside the selected day. Updated the canonical phone walkthrough and paired landing guidance. Focused code/API checks and unvalidated physical rendering are recorded in [verification](../verification/README.md).
