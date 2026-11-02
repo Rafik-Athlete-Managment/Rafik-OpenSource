@@ -243,8 +243,9 @@ const command = useCommand<'save' | 'publish'>(
             'Draft saved. Current assignments are unchanged.',
             'حُفظت المسودة. التعيينات الحالية لم تتغير.',
           )
-    // A saved new program gets its own URL so reloads and the next New program start cleanly.
-    if (isNew && route.fullPath === origin) {
+    // A saved new draft gets its own URL so reloads and the next New program start cleanly.
+    // Publishing stays here so its confirmation and Assign this plan link remain visible.
+    if (action === 'save' && isNew && route.fullPath === origin) {
       await removeDraft(key)
       await router.replace({
         path: context.base + '/plans/' + id.value,
@@ -505,7 +506,7 @@ function removeDay() {
               ? language('Adapt athlete plan', 'تعديل خطة الرياضي')
               : route.query.source
                 ? language('Create a program copy', 'إنشاء نسخة من البرنامج')
-                : isNew
+                : isNew && !published
                   ? language('Create a program', 'إنشاء برنامج')
                   : editable
                     ? language('Edit program', 'تعديل البرنامج')
