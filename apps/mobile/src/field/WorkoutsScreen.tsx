@@ -42,6 +42,9 @@ export function WorkoutsScreen({
   groupEvent,
   groupTitle,
   presentAthletes,
+  initialPackage,
+  closeSignal,
+  onBackToSchedule,
   refreshSignal,
   onRefreshComplete,
   onBackToEvent,
@@ -60,6 +63,9 @@ export function WorkoutsScreen({
   groupEvent?: string
   groupTitle?: string
   presentAthletes?: string[]
+  initialPackage?: FieldWorkoutPackage | null
+  closeSignal?: number
+  onBackToSchedule?: () => void
   refreshSignal?: number
   onRefreshComplete?: () => void
   onBackToEvent?: () => void
@@ -236,6 +242,11 @@ export function WorkoutsScreen({
   useEffect(() => {
     if (active && refreshSignal) void load().finally(onRefreshComplete)
   }, [refreshSignal])
+  // The recorder stays mounted under Schedule so its draft survives navigation.
+  // Fetch the browse list when the coach opens it without a selected day workout.
+  useEffect(() => {
+    if (active && !initialPackage && !groupEvent && !selected && !available.length) void load()
+  }, [active, initialPackage?.id, groupEvent])
   useEffect(() => {
     alive.current = true
     const active = new WorkoutSync(store.workouts, owner, async (path, body, group) => {
@@ -246,7 +257,6 @@ export function WorkoutsScreen({
     void refreshLocal()
       .then(() => {
         void sync()
-        void load()
       })
       .catch((e) => {
         if (alive.current) setError(failureText(e))
@@ -289,6 +299,20 @@ export function WorkoutsScreen({
     setNotice('')
     setError('')
   }
+  useEffect(() => {
+    if (!active || !initialPackage || groupEvent || onlineLoading) return
+    void store.workouts
+      .ids(owner)
+      .then((ids) =>
+        ids.includes(initialPackage.id) ? open(initialPackage.id) : download(initialPackage),
+      )
+      .catch((error) => {
+        if (alive.current) setError(failureText(error))
+      })
+  }, [active, initialPackage?.id, groupEvent, onlineLoading])
+  useEffect(() => {
+    if (closeSignal) void back()
+  }, [closeSignal])
   async function download(p: FieldWorkoutPackage) {
     if (flight.current) return
     flight.current = true
@@ -395,6 +419,7 @@ export function WorkoutsScreen({
       setRecord(null)
       setError('')
       await refreshLocal()
+      if (initialPackage && !groupEvent) onBackToSchedule?.()
     } catch (e) {
       setError(failureText(e))
     }
@@ -816,7 +841,13 @@ export function WorkoutsScreen({
             <Text style={styles.label}>{l('Saved on this device', 'المحفوظ على هذا الجهاز')}</Text>
             {saved.length ? (
               saved.map((r) => (
-                <View key={r.package.id} style={styles.card}>
+                <Pressable
+                  key={r.package.id}
+                  style={styles.card}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${l('Open workout', 'فتح التمرين')} ${dayName(r.package)}`}
+                  onPress={() => void open(r.package.id).catch((e) => setError(failureText(e)))}
+                >
                   <Text style={styles.cardTitle}>{dayName(r.package)}</Text>
                   <Text style={styles.hint}>
                     {r.package.member_name} · {r.package.title}
@@ -830,19 +861,7 @@ export function WorkoutsScreen({
                           ? l('Device draft · not sent', 'مسودة الجهاز · لم ترسل')
                           : l('Downloaded', 'تم التنزيل')}
                   </Text>
-                  <Button
-                    title={l('Open saved workout', 'فتح التمرين المحفوظ')}
-                    onPress={() => void open(r.package.id).catch((e) => setError(failureText(e)))}
-                    styles={styles}
-                  />
-                  <Button
-                    title={l('Remove downloaded copy', 'إزالة النسخة المنزّلة')}
-                    danger
-                    disabled={!!r.pending || !!r.intent || r.localRevision !== r.syncedRevision}
-                    onPress={() => remove(r.package.id)}
-                    styles={styles}
-                  />
-                </View>
+                </Pressable>
               ))
             ) : (
               <Text style={styles.hint}>
@@ -885,7 +904,14 @@ export function WorkoutsScreen({
             {available
               .filter((p) => !savedIds.includes(p.id))
               .map((p) => (
-                <View key={p.id} style={styles.card}>
+                <Pressable
+                  key={p.id}
+                  style={styles.card}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${l('Download workout', 'تنزيل التمرين')} ${dayName(p)}`}
+                  disabled={busy || onlineLoading || closing}
+                  onPress={() => void download(p)}
+                >
                   <Text style={styles.cardTitle}>{dayName(p)}</Text>
                   <Text style={styles.hint}>
                     {p.member_name} · {p.title}
@@ -895,13 +921,8 @@ export function WorkoutsScreen({
                       ? displayDate(p.starts_at, language)
                       : p.training_date + ' · ' + p.timezone}
                   </Text>
-                  <Button
-                    title={l('Download workout', 'تنزيل التمرين')}
-                    disabled={busy || onlineLoading || closing}
-                    onPress={() => void download(p)}
-                    styles={styles}
-                  />
-                </View>
+                  <Text style={styles.link}>{l('Tap to download', 'اضغط للتنزيل')}</Text>
+                </Pressable>
               ))}
             {!available.length && !busy ? (
               <Text style={styles.hint}>
@@ -933,7 +954,11 @@ export function WorkoutsScreen({
           <>
             {!groupEvent ? (
               <Button
-                title={l('Back to workouts', 'العودة للتمارين')}
+                title={
+                  initialPackage
+                    ? l('Back to schedule', 'العودة إلى الجدول')
+                    : l('Back to workouts', 'العودة للتمارين')
+                }
                 disabled={busy || persisting}
                 onPress={() => void back()}
                 styles={styles}
@@ -1016,44 +1041,50 @@ export function WorkoutsScreen({
               </Text>
             ) : null}
             {record.session?.completed_at ? (
-              <View style={[styles.card, styles.completedCard]}>
-                <Text style={styles.cardTitle}>{l('✓ Workout complete', '✓ اكتمل التمرين')}</Text>
-                <Text style={styles.hint}>
-                  {displayDate(record.session.completed_at, language)} ·{' '}
-                  {record.package.member_name}
-                  {' · '}
-                  {entries.filter((entry) => entry.completed).length}/{entries.length}{' '}
-                  {l('sets recorded', 'مجموعات مسجلة')}
-                </Text>
-                <Text style={styles.hint}>
-                  {l('Confirmed by your institution.', 'أكدته مؤسستك.')}
-                </Text>
+              <>
+                <View style={[styles.card, styles.completedCard]}>
+                  <Text style={styles.cardTitle}>{l('✓ Workout complete', '✓ اكتمل التمرين')}</Text>
+                  <Text style={styles.hint}>
+                    {displayDate(record.session.completed_at, language)} ·{' '}
+                    {record.package.member_name}
+                    {' · '}
+                    {entries.filter((entry) => entry.completed).length}/{entries.length}{' '}
+                    {l('sets recorded', 'مجموعات مسجلة')}
+                  </Text>
+                  <Text style={styles.hint}>
+                    {l('Confirmed by your institution.', 'أكدته مؤسستك.')}
+                  </Text>
+                </View>
                 <Button
                   title={
                     groupEvent
                       ? l('Back to attendance', 'العودة إلى الحضور')
-                      : l('Back to workouts', 'العودة إلى التمارين')
+                      : initialPackage
+                        ? l('Back to schedule', 'العودة إلى الجدول')
+                        : l('Back to workouts', 'العودة إلى التمارين')
                   }
                   onPress={() => (groupEvent ? onBackToEvent?.() : void back())}
                   styles={styles}
                   primary
                 />
-              </View>
+              </>
             ) : null}
             {!record.session?.completed_at &&
             (record.intent?.complete ||
               record.completionIntent ||
               record.pending?.payload.complete) ? (
-              <View style={[styles.card, styles.completedCard]}>
-                <Text style={styles.cardTitle}>
-                  {l('✓ Finished on this device', '✓ انتهى على هذا الجهاز')}
-                </Text>
-                <Text style={styles.hint}>
-                  {entries.filter((entry) => entry.completed).length}/{entries.length}{' '}
-                  {l('sets recorded', 'مجموعات مسجلة')}
-                  {' · '}
-                  {l('Awaiting server confirmation', 'بانتظار تأكيد الخادم')}
-                </Text>
+              <>
+                <View style={[styles.card, styles.completedCard]}>
+                  <Text style={styles.cardTitle}>
+                    {l('✓ Finished on this device', '✓ انتهى على هذا الجهاز')}
+                  </Text>
+                  <Text style={styles.hint}>
+                    {entries.filter((entry) => entry.completed).length}/{entries.length}{' '}
+                    {l('sets recorded', 'مجموعات مسجلة')}
+                    {' · '}
+                    {l('Awaiting server confirmation', 'بانتظار تأكيد الخادم')}
+                  </Text>
+                </View>
                 <Button
                   title={
                     groupEvent
@@ -1064,7 +1095,7 @@ export function WorkoutsScreen({
                   styles={styles}
                   primary
                 />
-              </View>
+              </>
             ) : null}
             <WorkoutExercises
               workout={record.package}
@@ -1090,7 +1121,7 @@ export function WorkoutsScreen({
               style={styles.input}
             />
             {record.session && !record.session.completed_at ? (
-              <View style={styles.card}>
+              <View style={{ gap: 8 }}>
                 <Text style={styles.cardTitle}>{l('Ready to finish?', 'جاهز للإنهاء؟')}</Text>
                 <Text style={styles.hint}>
                   {l(
@@ -1186,7 +1217,7 @@ export function WorkoutsScreen({
               </Text>
             </Pressable>
             {showRecovery || record.blocked || record.pending?.state === 'needs_attention' ? (
-              <View style={styles.card}>
+              <View style={{ gap: 8 }}>
                 <Button
                   title={l('Share recovery copy', 'مشاركة نسخة للاستعادة')}
                   disabled={persisting || busy}
@@ -1206,6 +1237,22 @@ export function WorkoutsScreen({
                   onPress={() => void refreshSaved()}
                   styles={styles}
                 />
+                {!groupEvent ? (
+                  <Button
+                    title={l('Remove downloaded copy', 'إزالة النسخة المنزّلة')}
+                    danger
+                    disabled={
+                      busy ||
+                      persisting ||
+                      closing ||
+                      !!record.pending ||
+                      !!record.intent ||
+                      record.localRevision !== record.syncedRevision
+                    }
+                    onPress={() => remove(record.package.id)}
+                    styles={styles}
+                  />
+                ) : null}
                 <Text style={styles.hint}>
                   {l(
                     'If sync is blocked, keep this copy and review the workout with authorized staff. Do not start a replacement.',
@@ -1217,7 +1264,7 @@ export function WorkoutsScreen({
           </>
         ) : null}
         {groupEvent && !eventCompleted ? (
-          <View style={styles.card}>
+          <View style={{ gap: 8 }}>
             <Text style={styles.cardTitle}>
               {l('Ready to close this event?', 'جاهز لإنهاء هذا الموعد؟')}
             </Text>

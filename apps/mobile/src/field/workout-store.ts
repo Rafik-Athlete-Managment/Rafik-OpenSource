@@ -44,6 +44,18 @@ export class WorkoutStore {
       ).map((x) => JSON.parse(x.payload) as WorkoutRecord),
     )
   }
+  /** Saved solo workouts for one schedule day remain visible without a server connection. */
+  dayList(owner: Owner, day: string) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL AND json_extract(payload,'$.package.training_date')=? ORDER BY id",
+          ownerKey(owner),
+          day,
+        )
+      ).map((item) => JSON.parse(item.payload) as WorkoutRecord),
+    )
+  }
   /** Saved participant sheets remain discoverable when the event cannot be fetched. */
   groupList(owner: Owner, event: string) {
     return this.lane(async (db) =>

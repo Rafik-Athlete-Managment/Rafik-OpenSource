@@ -1,8 +1,21 @@
 import { useLanguage } from './Language'
 import type { Language } from './translations'
-import { Platform, Pressable, StyleSheet, Text } from 'react-native'
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 
 export type Styles = ReturnType<typeof makeStyles>
+/** Small filter glyph drawn with native views so no new icon or native dependency is needed. */
+export function FilterIcon({ styles }: { styles: Styles }) {
+  return (
+    <View accessible={false} style={{ width: 22, gap: 4 }}>
+      {[5, 14, 9].map((offset) => (
+        <View key={offset} style={{ height: 4, justifyContent: 'center' }}>
+          <View style={styles.filterLine} />
+          <View style={[styles.filterKnob, { left: offset }]} />
+        </View>
+      ))}
+    </View>
+  )
+}
 /** Renders the shared phone action button with primary, danger and disabled states. */
 export function Button({
   title,
@@ -40,33 +53,6 @@ export function Button({
   )
 }
 
-/** Compact navigation tab; selection is announced separately from the button label. */
-export function Tab({
-  title,
-  selected,
-  disabled = false,
-  onPress,
-  styles,
-}: {
-  title: string
-  selected: boolean
-  disabled?: boolean
-  onPress: () => void
-  styles: Styles
-}) {
-  return (
-    <Pressable
-      accessibilityRole="tab"
-      accessibilityState={{ selected, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.tab, selected && styles.tabSelected, disabled && styles.disabled]}
-    >
-      <Text style={[styles.tabText, selected && styles.tabTextSelected]}>{title}</Text>
-    </Pressable>
-  )
-}
-
 /** Formats a date for display in the selected phone language. */
 export const displayDate = (date: string, language: Language = 'en') =>
   new Date(date).toLocaleString(language === 'ar' ? 'ar' : 'en')
@@ -84,11 +70,11 @@ export function makeStyles(light: boolean, language: Language = 'en') {
         ? ('right' as const)
         : ('left' as const)
   const direction = language === 'ar' ? ('rtl' as const) : ('ltr' as const)
-  const text = light ? '#182c2a' : '#f2f7f4'
-  const muted = light ? '#455e58' : '#b1c6be'
-  const accent = light ? '#08674f' : '#a0dfc8'
+  const text = light ? '#24312d' : '#edf3ef'
+  const muted = light ? '#52635b' : '#b7c4bd'
+  const accent = light ? '#176249' : '#a4cfba'
   return StyleSheet.create({
-    safe: { direction, flex: 1, backgroundColor: light ? '#edf3f0' : '#0d1718' },
+    safe: { direction, flex: 1, backgroundColor: light ? '#f3f5f3' : '#151b1b' },
     toolbar: {
       direction,
       flexDirection: 'row',
@@ -99,7 +85,7 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingVertical: 10,
     },
     heading: { flexGrow: 1, flexShrink: 1 },
-    appBar: { borderBottomWidth: 1, borderBottomColor: light ? '#d6e1db' : '#2c423d' },
+    appBar: { borderBottomWidth: 1, borderBottomColor: light ? '#dce4df' : '#394641' },
     topbar: {
       direction,
       flexDirection: 'row',
@@ -108,26 +94,15 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingHorizontal: 18,
       paddingVertical: 10,
       borderBottomWidth: 1,
-      borderBottomColor: light ? '#d6e1db' : '#2c423d',
+      borderBottomColor: light ? '#dce4df' : '#394641',
     },
     accountButton: {
       borderWidth: 1,
-      borderColor: light ? '#bdcfc5' : '#486159',
+      borderColor: light ? '#bdcbc2' : '#58665e',
       borderRadius: 12,
       minHeight: 44,
       paddingHorizontal: 14,
       justifyContent: 'center',
-    },
-    accountMenu: {
-      marginHorizontal: 18,
-      marginTop: 8,
-      marginBottom: 4,
-      backgroundColor: light ? '#fff' : '#1b2b2c',
-      borderColor: light ? '#d6e1db' : '#3b514b',
-      borderWidth: 1,
-      borderRadius: 16,
-      padding: 14,
-      gap: 10,
     },
     eventHeader: {
       direction,
@@ -137,13 +112,23 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingHorizontal: 18,
       paddingVertical: 10,
       borderBottomWidth: 1,
-      borderBottomColor: light ? '#d6e1db' : '#2c423d',
+      borderBottomColor: light ? '#dce4df' : '#394641',
     },
     headerIcon: {
       minWidth: 44,
       minHeight: 44,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    filterLine: { height: 2, width: 20, borderRadius: 1, backgroundColor: accent },
+    filterKnob: {
+      position: 'absolute',
+      width: 5,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: light ? '#f3f5f3' : '#151b1b',
+      borderWidth: 1.5,
+      borderColor: accent,
     },
     noticeToast: {
       marginHorizontal: 18,
@@ -152,43 +137,35 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingVertical: 8,
       borderRadius: 10,
       borderWidth: 1,
-      borderColor: light ? '#9c7542' : '#d7ad68',
-      backgroundColor: light ? '#fff3dd' : '#3c3020',
+      borderColor: light ? '#b8a27c' : '#8b775a',
+      backgroundColor: light ? '#f4eee3' : '#302d27',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 10,
     },
+    compactNotice: {
+      direction,
+      minHeight: 48,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: light ? '#b8a27c' : '#8b775a',
+      backgroundColor: light ? '#f4eee3' : '#302d27',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
     athleteSwitcher: {
       marginHorizontal: 18,
       marginTop: 8,
       borderWidth: 1,
-      borderColor: light ? '#d8e4dd' : '#36504a',
+      borderColor: light ? '#dce4df' : '#42514a',
       borderRadius: 12,
-      backgroundColor: light ? '#fff' : '#1a2b2d',
+      backgroundColor: light ? '#fff' : '#232b29',
       paddingHorizontal: 12,
     },
-    tabBar: {
-      direction,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: 18,
-      paddingTop: 8,
-      paddingBottom: 4,
-      borderBottomWidth: 1,
-      borderBottomColor: light ? '#d6e1db' : '#2c423d',
-    },
-    tab: {
-      minHeight: 44,
-      paddingHorizontal: 14,
-      justifyContent: 'center',
-      borderBottomWidth: 3,
-      borderBottomColor: 'transparent',
-    },
-    tabSelected: { borderBottomColor: accent },
-    tabText: { color: muted, fontSize: 14, fontWeight: '600', textAlign: 'center' },
-    tabTextSelected: { color: text },
     content: {
       direction,
       flexGrow: 1,
@@ -227,19 +204,19 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     },
     card: {
       direction,
-      backgroundColor: light ? '#fff' : '#1a2b2d',
+      backgroundColor: light ? '#fff' : '#232b29',
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: light ? '#d8e4dd' : '#36504a',
+      borderColor: light ? '#dce4df' : '#42514a',
       padding: 16,
       gap: 10,
     },
     attendanceRow: {
       direction,
-      backgroundColor: light ? '#fff' : '#1a2b2d',
+      backgroundColor: light ? '#fff' : '#232b29',
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: light ? '#d8e4dd' : '#36504a',
+      borderColor: light ? '#dce4df' : '#42514a',
       padding: 12,
       gap: 6,
     },
@@ -248,13 +225,22 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     completedCard: {
       borderWidth: 1,
       borderColor: accent,
-      backgroundColor: light ? '#ddf2e9' : '#174236',
+      backgroundColor: light ? '#e8f0ea' : '#293d34',
     },
     assessmentCard: { borderLeftWidth: 3, borderLeftColor: light ? '#4774a8' : '#8fb7eb' },
-    sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0008' },
+    sheetBackdrop: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 20,
+      justifyContent: 'flex-end',
+      backgroundColor: '#0009',
+    },
     filterSheet: {
       direction,
-      backgroundColor: light ? '#fff' : '#1a2b2d',
+      backgroundColor: light ? '#fff' : '#232b29',
       borderTopLeftRadius: 18,
       borderTopRightRadius: 18,
       padding: 18,

@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Single coach phone schedule and quieter controls — 2 November 2026
+
+The unreleased phone source now combines day-filtered individual plan workouts, events and assessments into one Schedule. Cards open directly; the filter icon opens a bottom sheet and full-screen Settings preserves mounted field state. A compact notice replaces the large refresh alert, and saved-work recovery uses a small row. The trainer-only agenda `day` query selects unresolved positions without changing allocation or command authority. General browsing remains for work outside the selected day. Updated the canonical phone walkthrough and paired landing guidance. Focused code/API checks and unvalidated physical rendering are recorded in [verification](../verification/README.md).
+
 ## Phone daily workspace and progressive logging — 2 November 2026
 
 The unreleased beta.3 phone source now leads with a day-scoped Schedule: five cards at a time, a date/type/order filter sheet, compact home tabs and account menu. An event opens into a preview, then compact attendance rows. Assessments move to a results step; group workouts open one shared preview and keep the selected athlete's sheet under a fixed, collapsible switcher. The phone saves attendance offline, then waits for server confirmation before opening dependent recording steps or finishing the event. A completed workout shows device-only status until exact replay is acknowledged, then a read-only summary with time and set count. No backend or native dependency changed. The canonical [phone walkthrough](../testing/instance-validation.md#phone-daily-workspace-and-event-steps--unreleased-beta3) requests physical validation; current code checks are in [verification](../verification/README.md).

@@ -186,6 +186,7 @@ function SignedIn({
   const [loading, setLoading] = useState(true)
   const [fieldBusy, setFieldBusy] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
   const alive = useRef(true)
   const loadingRef = useRef(false)
   const accessOffline = useRef(false)
@@ -263,12 +264,29 @@ function SignedIn({
     }
   }
   const options = [...new Set([...contexts.map((c) => c.institution_id), ...savedInstitutions])]
-  const accountMenu = accountOpen ? (
-    <View style={styles.accountMenu}>
-      <Text style={styles.label}>{l('Signed in as', 'مسجل باسم')}</Text>
+  useEffect(() => setNoticeDismissed(false), [message])
+  const settings = (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.topbar}>
+        <Text style={styles.title}>{l('Settings', 'الإعدادات')}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={l('Close settings', 'إغلاق الإعدادات')}
+          onPress={() => setAccountOpen(false)}
+          style={styles.headerIcon}
+        >
+          <Text style={styles.link}>✕</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.label}>{l('Account', 'الحساب')}</Text>
       <Text selectable style={[styles.hint, { writingDirection: 'ltr' }]}>
         {client.user.email}
       </Text>
+      <Text style={styles.label}>{l('Language', 'اللغة')}</Text>
       <View style={styles.actions}>
         <Button
           title="English"
@@ -291,12 +309,7 @@ function SignedIn({
           )}
         </Text>
       ) : null}
-      <Button
-        title={closing ? 'Signing out…' : 'Sign out'}
-        disabled={closing || loading || fieldBusy}
-        onPress={() => void logout()}
-        styles={styles}
-      />
+      {options.length > 1 ? <Text style={styles.label}>{l('Institution', 'المؤسسة')}</Text> : null}
       {options.length > 1
         ? options.map((id) => (
             <Button
@@ -312,54 +325,79 @@ function SignedIn({
             />
           ))
         : null}
-    </View>
-  ) : null
+      <Button
+        title={closing ? 'Signing out…' : 'Sign out'}
+        disabled={closing || loading || fieldBusy}
+        onPress={() => void logout()}
+        styles={styles}
+        danger
+      />
+    </ScrollView>
+  )
   return (
     <SafeAreaView style={styles.safe}>
-      {!institution || loading ? (
+      {(!institution || loading) && !accountOpen ? (
         <View style={styles.topbar}>
           <Text style={styles.kicker}>{t('RAFIK FIELD')}</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={l('Account menu', 'قائمة الحساب')}
+            accessibilityLabel={l('Open settings', 'فتح الإعدادات')}
             accessibilityState={{ expanded: accountOpen }}
             onPress={() => setAccountOpen((open) => !open)}
             style={styles.accountButton}
           >
-            <Text style={styles.link}>{l('Account ▾', 'الحساب ▾')}</Text>
+            <Text style={styles.link}>⚙</Text>
           </Pressable>
         </View>
       ) : null}
-      {(!institution || loading) && accountMenu}
-      {message ? (
-        <View style={{ paddingHorizontal: 18 }}>
-          <Text accessibilityLiveRegion="polite" style={styles.message}>
+      {message && !noticeDismissed && !accountOpen ? (
+        <View style={styles.noticeToast}>
+          <Text
+            accessibilityLiveRegion="polite"
+            numberOfLines={2}
+            style={[styles.hint, { flex: 1 }]}
+          >
             {t(message)}
           </Text>
-          <Button
-            title="Refresh access"
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Refresh access', 'تحديث الصلاحية')}
             disabled={closing || loading || fieldBusy}
             onPress={() => void refreshAccess(true)}
-            styles={styles}
-          />
+            style={styles.headerIcon}
+          >
+            <Text style={styles.link}>↻</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Dismiss notice', 'إخفاء التنبيه')}
+            onPress={() => setNoticeDismissed(true)}
+            style={styles.headerIcon}
+          >
+            <Text style={styles.link}>✕</Text>
+          </Pressable>
         </View>
       ) : null}
       {institution && !loading ? (
-        <InstitutionScreen
-          key={institution}
-          client={client}
-          store={store}
-          institution={institution}
-          styles={styles}
-          closing={closing}
-          onPersisting={setFieldBusy}
-          accountOpen={accountOpen}
-          onAccountPress={() => setAccountOpen((open) => !open)}
-          accountMenu={accountMenu}
-          onEventOpen={() => setAccountOpen(false)}
-        />
+        <View style={{ flex: 1, display: accountOpen ? 'none' : 'flex' }}>
+          <InstitutionScreen
+            key={institution}
+            client={client}
+            store={store}
+            institution={institution}
+            styles={styles}
+            closing={closing}
+            onPersisting={setFieldBusy}
+            accountOpen={accountOpen}
+            onAccountPress={() => setAccountOpen((open) => !open)}
+            onEventOpen={() => setAccountOpen(false)}
+          />
+        </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          style={{ display: accountOpen ? 'none' : 'flex' }}
+          contentContainerStyle={styles.content}
+        >
           {loading ? (
             <ActivityIndicator accessibilityLabel={t('Checking coach access')} />
           ) : (
@@ -370,6 +408,7 @@ function SignedIn({
           )}
         </ScrollView>
       )}
+      {accountOpen ? settings : null}
     </SafeAreaView>
   )
 }

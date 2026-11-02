@@ -2,12 +2,11 @@ import { RecoveryPanel } from './RecoveryPanel'
 import { EventHistory } from './EventHistory'
 import { useLanguage } from './Language'
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   AppState,
-  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -32,12 +31,13 @@ import {
 } from './model'
 import type { FieldStore } from './store'
 import { AttendanceSync } from './sync'
-import { Button, Tab, displayDate, localDate, type Styles } from './ui'
+import { Button, FilterIcon, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
 import { downloadGroupEvent } from './group-download'
-import type { FieldWorkoutPackage } from './workout-model'
+import type { FieldWorkoutPackage, WorkoutRecord } from './workout-model'
+import type { WorkoutAgenda } from '@rafik/shared/contracts'
 
 /** Main field screen: loads event rosters, records attendance and syncs changes. */
 export function InstitutionScreen({
@@ -49,7 +49,6 @@ export function InstitutionScreen({
   onPersisting,
   accountOpen,
   onAccountPress,
-  accountMenu,
   onEventOpen,
 }: {
   client: NativeClient
@@ -60,7 +59,6 @@ export function InstitutionScreen({
   onPersisting: (busy: boolean) => void
   accountOpen: boolean
   onAccountPress: () => void
-  accountMenu: ReactNode
   onEventOpen: () => void
 }) {
   const { t, l, language } = useLanguage()
@@ -83,7 +81,17 @@ export function InstitutionScreen({
   const [draftSaving, setDraftSaving] = useState(false)
   const [editor, setEditor] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [showMessageDetails, setShowMessageDetails] = useState(false)
+  useEffect(() => setShowMessageDetails(false), [message])
   const [workoutView, setWorkoutView] = useState(false)
+  const [soloPackage, setSoloPackage] = useState<FieldWorkoutPackage | null>(null)
+  const [soloCloseSignal, setSoloCloseSignal] = useState(0)
+  const [dayWorkouts, setDayWorkouts] = useState<FieldWorkoutPackage[]>([])
+  const [savedDayWorkouts, setSavedDayWorkouts] = useState<WorkoutRecord[]>([])
+  const [workoutTotal, setWorkoutTotal] = useState(0)
+  const [workoutFetched, setWorkoutFetched] = useState(0)
+  const [workoutLoading, setWorkoutLoading] = useState(false)
+  const [workoutError, setWorkoutError] = useState('')
   const [groupEvent, setGroupEvent] = useState<string | null>(null)
   const [groupOpened, setGroupOpened] = useState<string | null>(null)
   const [groupAvailable, setGroupAvailable] = useState(false)
@@ -96,10 +104,20 @@ export function InstitutionScreen({
   const [selectedDay, setSelectedDay] = useState(() => localDate(new Date()))
   const [draftDay, setDraftDay] = useState(selectedDay)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [recordFilter, setRecordFilter] = useState<'all' | 'training' | 'assessment'>('all')
-  const [draftRecordFilter, setDraftRecordFilter] = useState<'all' | 'training' | 'assessment'>(
+  const sheetY = useRef(new Animated.Value(420)).current
+  useEffect(() => {
+    if (!filtersOpen) return
+    sheetY.setValue(420)
+    const motion = Animated.timing(sheetY, { toValue: 0, duration: 220, useNativeDriver: true })
+    motion.start()
+    return () => motion.stop()
+  }, [filtersOpen, sheetY])
+  const [recordFilter, setRecordFilter] = useState<'all' | 'training' | 'assessment' | 'workout'>(
     'all',
   )
+  const [draftRecordFilter, setDraftRecordFilter] = useState<
+    'all' | 'training' | 'assessment' | 'workout'
+  >('all')
   const [latestFirst, setLatestFirst] = useState(false)
   const [draftLatestFirst, setDraftLatestFirst] = useState(false)
   const [visibleCount, setVisibleCount] = useState(5)
@@ -135,6 +153,8 @@ export function InstitutionScreen({
   const selectedRef = useRef<string | null>(null)
   const busyRef = useRef(false)
   const refreshingRef = useRef(false)
+  const workoutFlight = useRef(false)
+  const dayRef = useRef(selectedDay)
   const savingRef = useRef(false)
   const closingRef = useRef(closing)
   closingRef.current = closing
@@ -182,6 +202,45 @@ export function InstitutionScreen({
       if (alive.current) setMessage(failureText(error))
     }
   }
+  async function refreshSavedDay(day = dayRef.current) {
+    const saved = await store.workouts.dayList(owner, day)
+    if (alive.current && dayRef.current === day) setSavedDayWorkouts(saved)
+  }
+  async function refreshWorkouts(day: string, offset = 0) {
+    if (workoutFlight.current || closingRef.current) return
+    workoutFlight.current = true
+    setWorkoutLoading(true)
+    try {
+      await refreshSavedDay(day)
+      const agenda = await client.request<WorkoutAgenda>(
+        `/institution/workout-scheduling?view=trainer&fieldPackages=true&day=${day}&offset=${offset}&limit=100`,
+      )
+      if (!alive.current || dayRef.current !== day) return
+      const packages = agenda.items.flatMap((item) =>
+        item.field_workout ? [item.field_workout] : [],
+      )
+      setDayWorkouts((prior) =>
+        offset
+          ? [...prior, ...packages.filter((item) => !prior.some((known) => known.id === item.id))]
+          : packages,
+      )
+      setWorkoutTotal(agenda.total)
+      setWorkoutFetched(offset + agenda.items.length)
+      setWorkoutError('')
+    } catch (error) {
+      if (error instanceof ApiFailure && error.status === 403) {
+        await store.workouts.block(owner)
+        if (alive.current && dayRef.current === day) {
+          setDayWorkouts([])
+          await refreshSavedDay(day)
+        }
+      }
+      if (alive.current && dayRef.current === day) setWorkoutError(failureText(error))
+    } finally {
+      workoutFlight.current = false
+      if (alive.current) setWorkoutLoading(false)
+    }
+  }
   async function refresh(offset = 0, background = false, day = selectedDay) {
     if (!alive.current || busyRef.current || refreshingRef.current || closingRef.current) return
     refreshingRef.current = true
@@ -221,6 +280,7 @@ export function InstitutionScreen({
       if (alive.current && !selectedRef.current)
         setMessage(`${failureText(error)} Previously opened events remain below.`)
     } finally {
+      if (!offset) await refreshWorkouts(day)
       refreshingRef.current = false
       if (alive.current) setRefreshingSchedule(false)
       if (!background) {
@@ -244,6 +304,9 @@ export function InstitutionScreen({
       if (AppState.currentState === 'active') {
         setNow(Date.now())
         void sync()
+        void refreshSavedDay().catch((error) => {
+          if (alive.current) setWorkoutError(failureText(error))
+        })
       }
     }
     const subscription = AppState.addEventListener('change', foreground)
@@ -489,15 +552,39 @@ export function InstitutionScreen({
     ...cached.filter((c) => !events.some((e) => e.id === c.event.id)).map((c) => c.event),
   ]
   const onSelectedDay = (event: FieldEvent) => localDate(new Date(event.starts_at)) === selectedDay
-  const list = availableEvents
-    .filter(
-      (event) => onSelectedDay(event) && (recordFilter === 'all' || event.kind === recordFilter),
-    )
-    .sort((a, b) =>
-      latestFirst
-        ? Date.parse(b.starts_at) - Date.parse(a.starts_at)
-        : Date.parse(a.starts_at) - Date.parse(b.starts_at),
-    )
+  const eventList = availableEvents.filter(
+    (event) =>
+      onSelectedDay(event) &&
+      (recordFilter === 'all' ||
+        (recordFilter === 'training' && event.kind === 'training') ||
+        (recordFilter === 'assessment' && event.kind === 'assessment')),
+  )
+  const savedWorkoutIds = new Set(savedDayWorkouts.map((item) => item.package.id))
+  const workoutList =
+    recordFilter === 'all' || recordFilter === 'workout'
+      ? [
+          ...savedDayWorkouts
+            .map((item) => item.package)
+            .filter((item) => item.training_date === selectedDay),
+          ...dayWorkouts.filter(
+            (item) => item.training_date === selectedDay && !savedWorkoutIds.has(item.id),
+          ),
+        ]
+      : []
+  const list = [
+    ...eventList.map((event) => ({
+      kind: 'event' as const,
+      id: event.id,
+      at: Date.parse(event.starts_at),
+      event,
+    })),
+    ...workoutList.map((workout) => ({
+      kind: 'workout' as const,
+      id: workout.id,
+      at: workout.starts_at ? Date.parse(workout.starts_at) : Number.MAX_SAFE_INTEGER,
+      workout,
+    })),
+  ].sort((a, b) => (latestFirst ? b.at - a.at : a.at - b.at))
   const otherSaved = cached.filter((item) => !onSelectedDay(item.event))
   const filtered =
     roster?.people.filter(
@@ -633,6 +720,7 @@ export function InstitutionScreen({
       return
     }
     setSelectedDay(day)
+    dayRef.current = day
     setRecordFilter(draftRecordFilter)
     setLatestFirst(draftLatestFirst)
     setVisibleCount(5)
@@ -641,7 +729,7 @@ export function InstitutionScreen({
   }
   return (
     <View style={{ flex: 1 }}>
-      {!selected ? (
+      {!selected && !workoutView ? (
         <View style={styles.appBar}>
           <View style={styles.topbar}>
             <Text style={styles.kicker}>{l('RAFIK FIELD', 'رفيق الميداني')}</Text>
@@ -661,38 +749,48 @@ export function InstitutionScreen({
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={l('Account menu', 'قائمة الحساب')}
+                accessibilityLabel={l('Open settings', 'فتح الإعدادات')}
                 accessibilityState={{ expanded: accountOpen }}
                 onPress={onAccountPress}
                 style={styles.headerIcon}
               >
-                <Text style={styles.link}>⋯</Text>
+                <Text style={styles.link}>⚙</Text>
               </Pressable>
             </View>
           </View>
-          <View accessibilityRole="tablist" style={styles.tabBar}>
-            <Tab
-              title={l('Schedule', 'الجدول')}
-              selected={!workoutView}
-              disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
-              onPress={() => {
-                setWorkoutView(false)
-                setGroupEvent(null)
-              }}
-              styles={styles}
-            />
-            <Tab
-              title={l('Solo workouts', 'التمارين الفردية')}
-              selected={workoutView}
-              disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
-              onPress={() => {
-                setGroupEvent(null)
-                setWorkoutsOpened(true)
-                setWorkoutView(true)
-              }}
-              styles={styles}
-            />
-          </View>
+        </View>
+      ) : workoutView ? (
+        <View style={styles.eventHeader}>
+          <Text style={[styles.cardTitle, { flex: 1 }]} numberOfLines={2}>
+            {soloPackage
+              ? language === 'ar' && soloPackage.day_name_ar
+                ? soloPackage.day_name_ar
+                : soloPackage.day_name
+              : l('Workouts', 'التمارين')}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Refresh workouts', 'تحديث التمارين')}
+            disabled={headerRefreshing || workoutPersisting || closing}
+            onPress={refreshCurrent}
+            style={styles.headerIcon}
+          >
+            <Text style={styles.link}>↻</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Close workouts', 'إغلاق التمارين')}
+            disabled={workoutPersisting || closing}
+            onPress={() => {
+              setWorkoutView(false)
+              setSoloPackage(null)
+              setSoloCloseSignal((n) => n + 1)
+              void refreshSavedDay()
+            }}
+            style={styles.headerIcon}
+          >
+            <Text style={styles.link}>✕</Text>
+          </Pressable>
         </View>
       ) : (
         <View style={styles.eventHeader}>
@@ -770,7 +868,6 @@ export function InstitutionScreen({
           </Pressable>
         </View>
       )}
-      {!selected ? accountMenu : null}
       {refreshNotice ? (
         <Pressable
           accessibilityRole="button"
@@ -778,17 +875,28 @@ export function InstitutionScreen({
           onPress={() => setRefreshNotice('')}
           style={styles.noticeToast}
         >
-          <Text style={styles.hint}>{refreshNotice}</Text>
+          <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
+            {refreshNotice}
+          </Text>
           <Text style={styles.link}>×</Text>
         </Pressable>
       ) : null}
       {selected && message ? (
-        <Text
-          accessibilityLiveRegion="polite"
-          style={[styles.message, { marginHorizontal: 18, marginTop: 8 }]}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showMessageDetails }}
+          onPress={() => setShowMessageDetails((open) => !open)}
+          style={[styles.compactNotice, { marginHorizontal: 18, marginTop: 8 }]}
         >
-          {t(message)}
-        </Text>
+          <Text
+            accessibilityLiveRegion="polite"
+            numberOfLines={showMessageDetails ? undefined : 2}
+            style={[styles.hint, { flex: 1 }]}
+          >
+            {t(message)}
+          </Text>
+          <Text style={styles.link}>{showMessageDetails ? '⌃' : '⌄'}</Text>
+        </Pressable>
       ) : null}
       {/* Keep this editor mounted while hidden so switching views preserves selection and device drafts. */}
       {workoutsOpened ? (
@@ -801,6 +909,13 @@ export function InstitutionScreen({
             closing={closing}
             onPersisting={setWorkoutPersisting}
             active={workoutView}
+            initialPackage={soloPackage}
+            closeSignal={soloCloseSignal}
+            onBackToSchedule={() => {
+              setWorkoutView(false)
+              setSoloPackage(null)
+              void refreshSavedDay()
+            }}
             refreshSignal={refreshSignal}
             onRefreshComplete={() => setHeaderRefreshing(false)}
           />
@@ -944,7 +1059,10 @@ export function InstitutionScreen({
                     }).format(new Date(`${selectedDay}T12:00:00`))}
               </Text>
               <Text style={styles.hint}>
-                {l('Your training and assessments for this day.', 'تدريباتك وتقييماتك لهذا اليوم.')}
+                {l(
+                  'Workouts, events and assessments for this day.',
+                  'تمارين ومواعيد وتقييمات هذا اليوم.',
+                )}
               </Text>
             </View>
             <Pressable
@@ -958,83 +1076,134 @@ export function InstitutionScreen({
               }}
               style={styles.headerIcon}
             >
-              <Text style={styles.link}>☷</Text>
+              <FilterIcon styles={styles} />
             </Pressable>
           </View>
         ) : null}
         {!selected && message ? (
-          <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {t(message)}
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showMessageDetails }}
+            onPress={() => setShowMessageDetails((open) => !open)}
+            style={styles.compactNotice}
+          >
+            <Text
+              accessibilityLiveRegion="polite"
+              numberOfLines={showMessageDetails ? undefined : 2}
+              style={[styles.hint, { flex: 1 }]}
+            >
+              {t(message)}
+            </Text>
+            <Text style={styles.link}>{showMessageDetails ? '⌃' : '⌄'}</Text>
+          </Pressable>
         ) : null}
         {institutionPaused && queueHead.event_id !== selected ? (
-          <View style={styles.card}>
-            <Text style={styles.label}>{t('Saved attendance needs review')}</Text>
-            <Text style={styles.hint}>
-              {' '}
-              {t('Sending is paused at')}{' '}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Review saved attendance', 'مراجعة الحضور المحفوظ')}
+            disabled={busy || saving || closing}
+            onPress={() => void openEvent(queueHead.event_id)}
+            style={styles.compactNotice}
+          >
+            <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
+              {l('Saved attendance needs review', 'يلزم مراجعة الحضور المحفوظ')}
+              {' · '}
               {cached.find((c) => c.event.id === queueHead.event_id)?.event.title ||
-                t('an earlier event')}{' '}
-              {t('. Resolve it before sending more changes.')}{' '}
+                l('Earlier event', 'موعد سابق')}
             </Text>
-            <Button
-              title="Review saved change"
-              disabled={busy || saving || closing}
-              onPress={() => void openEvent(queueHead.event_id)}
-              styles={styles}
-            />
-          </View>
+            <Text style={styles.link}>›</Text>
+          </Pressable>
         ) : null}
         {!selected ? (
           <>
-            {list.slice(0, visibleCount).map((event) => (
-              <Pressable
-                key={event.id}
-                accessibilityRole="button"
-                disabled={busy || closing}
-                accessibilityLabel={`${l('Open', 'فتح')} ${event.title}`}
-                onPress={() => void openEvent(event.id)}
-                style={[
-                  styles.card,
-                  event.kind === 'assessment' && styles.assessmentCard,
-                  event.state === 'completed' && styles.completedCard,
-                ]}
-              >
-                <Text style={styles.cardTitle}>{event.title}</Text>
-                <Text style={styles.hint}>
-                  {displayDate(event.starts_at, language)} ·{' '}
-                  {event.kind === 'assessment' ? l('Assessment', 'تقييم') : l('Training', 'تدريب')}{' '}
-                  ·{' '}
-                  {l(
-                    event.state,
-                    event.state === 'completed'
-                      ? 'مكتمل'
-                      : event.state === 'cancelled'
-                        ? 'ملغى'
-                        : 'مجدول',
-                  )}
-                </Text>
-                {event.location ? <Text style={styles.hint}>{event.location}</Text> : null}
-                {cached.some((c) => c.event.id === event.id) ? (
-                  <Text style={styles.link}>{l('Available offline', 'متاح دون اتصال')}</Text>
-                ) : null}
-              </Pressable>
-            ))}
-            {visibleCount < list.length || next !== null ? (
+            {list.slice(0, visibleCount).map((entry) =>
+              entry.kind === 'event' ? (
+                <Pressable
+                  key={`event:${entry.id}`}
+                  accessibilityRole="button"
+                  disabled={busy || closing}
+                  accessibilityLabel={`${l('Open', 'فتح')} ${entry.event.title}`}
+                  onPress={() => void openEvent(entry.id)}
+                  style={[
+                    styles.card,
+                    entry.event.kind === 'assessment' && styles.assessmentCard,
+                    entry.event.state === 'completed' && styles.completedCard,
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>{entry.event.title}</Text>
+                  <Text style={styles.hint}>
+                    {displayDate(entry.event.starts_at, language)} ·{' '}
+                    {entry.event.kind === 'assessment'
+                      ? l('Assessment', 'تقييم')
+                      : l('Event', 'موعد')}{' '}
+                    ·{' '}
+                    {l(
+                      entry.event.state,
+                      entry.event.state === 'completed'
+                        ? 'مكتمل'
+                        : entry.event.state === 'cancelled'
+                          ? 'ملغى'
+                          : 'مجدول',
+                    )}
+                  </Text>
+                  {entry.event.location ? (
+                    <Text style={styles.hint}>{entry.event.location}</Text>
+                  ) : null}
+                  {cached.some((c) => c.event.id === entry.id) ? (
+                    <Text style={styles.link}>{l('Available offline', 'متاح دون اتصال')}</Text>
+                  ) : null}
+                </Pressable>
+              ) : (
+                <Pressable
+                  key={`workout:${entry.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${l('Open workout', 'فتح التمرين')} ${entry.workout.day_name}`}
+                  disabled={busy || closing || workoutPersisting}
+                  onPress={() => {
+                    setSoloPackage(entry.workout)
+                    setWorkoutsOpened(true)
+                    setWorkoutView(true)
+                  }}
+                  style={styles.card}
+                >
+                  <Text style={styles.cardTitle}>
+                    {language === 'ar' && entry.workout.day_name_ar
+                      ? entry.workout.day_name_ar
+                      : entry.workout.day_name}
+                  </Text>
+                  <Text style={styles.hint}>
+                    {entry.workout.member_name} · {entry.workout.title}
+                  </Text>
+                  <Text style={styles.hint}>
+                    {entry.workout.starts_at
+                      ? displayDate(entry.workout.starts_at, language)
+                      : l('No fixed time', 'دون وقت محدد')}
+                    {' · '}
+                    {l('Workout', 'تمرين')}
+                    {savedWorkoutIds.has(entry.id)
+                      ? ` · ${l('Saved on device', 'محفوظ على الجهاز')}`
+                      : ''}
+                  </Text>
+                </Pressable>
+              ),
+            )}
+            {visibleCount < list.length || next !== null || workoutFetched < workoutTotal ? (
               <Button
                 title={l('Load more', 'عرض المزيد')}
-                disabled={busy || refreshingSchedule || closing}
+                disabled={busy || refreshingSchedule || workoutLoading || closing}
                 onPress={() =>
                   visibleCount < list.length
                     ? setVisibleCount((count) => count + 5)
                     : next !== null
                       ? void refresh(next)
-                      : undefined
+                      : workoutFetched < workoutTotal
+                        ? void refreshWorkouts(selectedDay, workoutFetched)
+                        : undefined
                 }
                 styles={styles}
               />
             ) : null}
-            {!list.length && !busy ? (
+            {!list.length && !busy && !workoutLoading && !workoutError && !message ? (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>
                   {l('Nothing scheduled for this day', 'لا توجد مواعيد لهذا اليوم')}
@@ -1047,6 +1216,36 @@ export function InstitutionScreen({
                 </Text>
               </View>
             ) : null}
+            {workoutError ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setWorkoutError('')}
+                style={styles.compactNotice}
+              >
+                <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
+                  {l(
+                    'Workouts could not refresh. Saved copies remain available.',
+                    'تعذّر تحديث التمارين. النسخ المحفوظة ما زالت متاحة.',
+                  )}
+                </Text>
+                <Text style={styles.link}>✕</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={l(
+                'Browse saved and other workouts',
+                'تصفح التمارين المحفوظة والأخرى',
+              )}
+              onPress={() => {
+                setSoloPackage(null)
+                setWorkoutsOpened(true)
+                setWorkoutView(true)
+              }}
+              style={{ minHeight: 44, justifyContent: 'center' }}
+            >
+              <Text style={styles.link}>{l('Browse other workouts ›', 'تصفح تمارين أخرى ›')}</Text>
+            </Pressable>
             {otherSaved.length ? (
               <>
                 <Pressable
@@ -1583,7 +1782,7 @@ export function InstitutionScreen({
                     (roster.event.kind !== 'assessment' || eventStage === 'results') &&
                     roster.event.state === 'scheduled' &&
                     (!groupAvailable || !presentCount) ? (
-                      <View style={styles.card}>
+                      <View style={{ gap: 8 }}>
                         <Text style={styles.cardTitle}>{l('Finish event', 'إنهاء الموعد')}</Text>
                         {completionProblems.map((problem) => (
                           <Text key={t(problem)} style={styles.hint}>
@@ -1676,92 +1875,95 @@ export function InstitutionScreen({
           </>
         )}
       </ScrollView>
-      <Modal
-        transparent
-        visible={filtersOpen}
-        animationType="slide"
-        onRequestClose={() => setFiltersOpen(false)}
-      >
+      {filtersOpen ? (
         <View style={styles.sheetBackdrop}>
-          <ScrollView
-            style={{ maxHeight: '85%' }}
-            contentContainerStyle={styles.filterSheet}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Text style={styles.cardTitle}>{l('Schedule filters', 'تصفية الجدول')}</Text>
-            <Text style={styles.label}>{l('Date', 'التاريخ')}</Text>
-            <TextInput
-              accessibilityLabel={l('Date YYYY-MM-DD', 'التاريخ بصيغة YYYY-MM-DD')}
-              value={draftDay}
-              onChangeText={setDraftDay}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={styles.hint.color}
-              style={styles.input}
-            />
-            <Button
-              title={l('Today', 'اليوم')}
-              onPress={() => setDraftDay(localDate(new Date()))}
-              styles={styles}
-            />
-            <Text style={styles.label}>{l('Show', 'عرض')}</Text>
-            <View style={styles.actions}>
-              {(
-                [
-                  ['all', l('All', 'الكل')],
-                  ['training', l('Training', 'التدريب')],
-                  ['assessment', l('Assessments', 'التقييمات')],
-                ] as const
-              ).map(([kind, label]) => (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Close filters', 'إغلاق التصفية')}
+            onPress={() => setFiltersOpen(false)}
+            style={{ flex: 1 }}
+          />
+          <Animated.View style={{ maxHeight: '85%', transform: [{ translateY: sheetY }] }}>
+            <ScrollView
+              contentContainerStyle={styles.filterSheet}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.cardTitle}>{l('Schedule filters', 'تصفية الجدول')}</Text>
+              <Text style={styles.label}>{l('Date', 'التاريخ')}</Text>
+              <TextInput
+                accessibilityLabel={l('Date YYYY-MM-DD', 'التاريخ بصيغة YYYY-MM-DD')}
+                value={draftDay}
+                onChangeText={setDraftDay}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={styles.hint.color}
+                style={styles.input}
+              />
+              <Button
+                title={l('Today', 'اليوم')}
+                onPress={() => setDraftDay(localDate(new Date()))}
+                styles={styles}
+              />
+              <Text style={styles.label}>{l('Show', 'عرض')}</Text>
+              <View style={styles.actions}>
+                {(
+                  [
+                    ['all', l('All', 'الكل')],
+                    ['training', l('Events', 'المواعيد')],
+                    ['assessment', l('Assessments', 'التقييمات')],
+                    ['workout', l('Workouts', 'التمارين')],
+                  ] as const
+                ).map(([kind, label]) => (
+                  <Button
+                    key={kind}
+                    title={label}
+                    primary={draftRecordFilter === kind}
+                    onPress={() => setDraftRecordFilter(kind)}
+                    styles={styles}
+                  />
+                ))}
+              </View>
+              <Text style={styles.label}>{l('Order', 'الترتيب')}</Text>
+              <View style={styles.actions}>
                 <Button
-                  key={kind}
-                  title={label}
-                  primary={draftRecordFilter === kind}
-                  onPress={() => setDraftRecordFilter(kind)}
+                  title={l('Earliest first', 'الأبكر أولاً')}
+                  primary={!draftLatestFirst}
+                  onPress={() => setDraftLatestFirst(false)}
                   styles={styles}
                 />
-              ))}
-            </View>
-            <Text style={styles.label}>{l('Order', 'الترتيب')}</Text>
-            <View style={styles.actions}>
-              <Button
-                title={l('Earliest first', 'الأبكر أولاً')}
-                primary={!draftLatestFirst}
-                onPress={() => setDraftLatestFirst(false)}
-                styles={styles}
-              />
-              <Button
-                title={l('Latest first', 'الأحدث أولاً')}
-                primary={draftLatestFirst}
-                onPress={() => setDraftLatestFirst(true)}
-                styles={styles}
-              />
-            </View>
-            <View style={styles.actions}>
-              <Button
-                title={l('Apply', 'تطبيق')}
-                primary
-                disabled={refreshingSchedule}
-                onPress={() => applyScheduleFilters(draftDay)}
-                styles={styles}
-              />
-              <Button
-                title={l('Clear', 'مسح')}
-                onPress={() => {
-                  setDraftRecordFilter('all')
-                  setDraftLatestFirst(false)
-                  setDraftDay(localDate(new Date()))
-                }}
-                styles={styles}
-              />
-              <Button
-                title={l('Close', 'إغلاق')}
-                onPress={() => setFiltersOpen(false)}
-                styles={styles}
-              />
-            </View>
-          </ScrollView>
+                <Button
+                  title={l('Latest first', 'الأحدث أولاً')}
+                  primary={draftLatestFirst}
+                  onPress={() => setDraftLatestFirst(true)}
+                  styles={styles}
+                />
+              </View>
+              <View style={styles.actions}>
+                <Button
+                  title={l('Apply', 'تطبيق')}
+                  primary
+                  disabled={refreshingSchedule || workoutLoading}
+                  onPress={() => applyScheduleFilters(draftDay)}
+                  styles={styles}
+                />
+                <Button
+                  title={l('Clear', 'مسح')}
+                  onPress={() => {
+                    setDraftRecordFilter('all')
+                    setDraftLatestFirst(false)
+                    setDraftDay(localDate(new Date()))
+                  }}
+                  styles={styles}
+                />
+                <Button
+                  title={l('Close', 'إغلاق')}
+                  onPress={() => setFiltersOpen(false)}
+                  styles={styles}
+                />
+              </View>
+            </ScrollView>
+          </Animated.View>
         </View>
-      </Modal>
+      ) : null}
     </View>
   )
 }

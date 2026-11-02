@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Combine the coach phone's day schedule and individual workouts into one entry surface. Event and workout cards open directly without internal buttons; a filter icon opens a bottom sheet, and full-screen Settings closes without losing an open draft. Use compact refresh/saved-work notices and quieter light/dark surfaces. A trainer-only `day` filter reuses the existing workout agenda projection; general workout browsing remains reachable. Native rendering and physical offline acceptance remain pending.
+
 - Refine the unreleased coach phone workspace: one compact app bar, a day-scoped five-card schedule with a filter sheet, a concise event preview, attendance rows with details on demand, a separate assessment-results step, and a fixed athlete switcher above group recording. Attendance saves offline; the next recording step waits for confirmation so dependent commands preserve order. Workout completion shows a device-only summary before sync and a confirmed summary after acknowledgment. No API, schema or native dependency changed; physical rendering and offline acceptance remain open.
 
 - Keep a coach inside an open phone event: show attendance first, then a clear Next action for group workouts. Move app navigation out of the event, provide an explicit Close action that retains saved work, and place Finish event after the workout step. Use coach-facing labels for the normal event controls.

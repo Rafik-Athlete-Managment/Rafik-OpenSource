@@ -107,11 +107,38 @@ test("native individual download, provisional offline start and exact replay com
     assert.equal("clinical_note" in p, false);
     assert.equal(p.assignment_id, assignment);
     assert.equal(p.session, null);
+    const scheduleDay = await request(
+      `/institution/workout-scheduling?view=trainer&fieldPackages=true&day=${p.training_date}`,
+    );
+    assert.ok(
+      scheduleDay.items.some(
+        (item: { assignment_id: string }) => item.assignment_id === assignment,
+      ),
+    );
+    const differentDay = new Date(p.training_date + "T00:00:00Z");
+    differentDay.setUTCDate(differentDay.getUTCDate() + 1);
+    const otherDay = await request(
+      `/institution/workout-scheduling?view=trainer&fieldPackages=true&day=${differentDay.toISOString().slice(0, 10)}`,
+    );
+    assert.ok(
+      !otherDay.items.some(
+        (item: { assignment_id: string }) => item.assignment_id === assignment,
+      ),
+    );
+    await assert.rejects(
+      () =>
+        request("/institution/workout-scheduling?view=trainer&day=2026-02-30"),
+      (error: unknown) => error instanceof ApiFailure && error.status === 400,
+    );
     const store = new FieldStore(adapter);
     await store.initialize();
     const owner = { instance: apiOrigin, user, institution },
       id = randomUUID();
     await store.workouts.put(owner, p);
+    assert.equal(
+      (await store.workouts.dayList(owner, p.training_date))[0]?.package.id,
+      p.id,
+    );
     await store.workouts.start(owner, p.id, id, randomUUID());
     const entries = p.entries.map((e) => ({
       ...e,

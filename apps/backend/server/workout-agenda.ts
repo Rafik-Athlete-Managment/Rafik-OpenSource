@@ -35,6 +35,15 @@ export async function workoutAgenda(
   );
   return scoped(actor, institution, [view], async (tx, self) => {
     const search = (query.get("search") || "").trim().slice(0, 100);
+    const dayFilter = query.get("day");
+    if (
+      dayFilter &&
+      (!/^\d{4}-\d{2}-\d{2}$/.test(dayFilter) ||
+        Number.isNaN(Date.parse(dayFilter + "T00:00:00Z")) ||
+        new Date(dayFilter + "T00:00:00Z").toISOString().slice(0, 10) !==
+          dayFilter)
+    )
+      throw new ApiError(400, "invalid_request");
     const today = localDay(profile?.timezone || "UTC", now);
     const dueDays = await tx.$queryRaw<
       { id: string }[]
@@ -143,6 +152,18 @@ export async function workoutAgenda(
                   ]
                 : []),
             ],
+          }
+        : {}),
+      ...(dayFilter
+        ? {
+            institution_workout_positions: {
+              some: {
+                state: { in: ["pending", "paused"] },
+                institution_events: {
+                  training_date: new Date(dayFilter + "T00:00:00Z"),
+                },
+              },
+            },
           }
         : {}),
     };
