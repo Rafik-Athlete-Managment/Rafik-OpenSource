@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Fix the self-hosted web image build: install the Linux native rolldown, Tailwind oxide and lightningcss bindings at the exact versions in the lockfile instead of hand-written pins. The stale rolldown 1.2.9 pin no longer matched rolldown 1.2.15 and made Vite fail while loading its config. Also serve the service worker and hashed assets with the same `nosniff`, frame and referrer headers as the rest of the app; their own `Cache-Control` headers had dropped them. Verified by a clean `docker compose build web` and live header checks on a DigitalOcean test instance.
+- Fix the self-hosted web image build: install the Linux native rolldown, Tailwind oxide and lightningcss bindings at the exact versions in the lockfile instead of hand-written pins. The stale rolldown 1.2.9 pin no longer matched rolldown 1.2.15 and made Vite fail while loading its config. Also serve the service worker and hashed assets with the same `nosniff`, frame and referrer headers as the rest of the app; their own `Cache-Control` headers had dropped them. Verified by a clean `docker compose build web` and live header checks on a DigitalOcean test instance. The infrastructure guide now lists host prerequisites (size and swap, ports, DNS before first start, `ACME_EMAIL`), healthy service states and the update command.
 
 - Refresh the generated frontend navigation reference after source line numbers changed so the web CI freshness gate passes.
 
