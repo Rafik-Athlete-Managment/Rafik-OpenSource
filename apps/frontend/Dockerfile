@@ -6,13 +6,15 @@ COPY scripts/tooling-security.mjs scripts/tooling-security-patches.json ./script
 COPY apps/backend/package.json apps/backend/package.json
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/shared/package.json packages/shared/package.json
+# Native bindings must match their JavaScript packages exactly, so read versions from the lockfile.
 RUN npm ci --workspace @rafik/frontend --workspace @rafik/shared \
+    && lock_version() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; } \
     && binding_arch="$(node -p 'process.arch === "arm64" ? "linux-arm64-gnu" : "linux-x64-gnu"')" \
-    && npm install --prefix /tmp/rolldown-native --no-save --package-lock=false --ignore-scripts "@rolldown/binding-${binding_arch}@1.2.9" \
-    && npm install --prefix /tmp/tailwind-native --no-save --package-lock=false --ignore-scripts "@tailwindcss/oxide-${binding_arch}@4.3.3" \
+    && npm install --prefix /tmp/rolldown-native --no-save --package-lock=false --ignore-scripts "@rolldown/binding-${binding_arch}@$(lock_version rolldown)" \
+    && npm install --prefix /tmp/tailwind-native --no-save --package-lock=false --ignore-scripts "@tailwindcss/oxide-${binding_arch}@$(lock_version @tailwindcss/oxide)" \
     && lightning_arch="$(node -p 'process.arch === "arm64" ? "linux-arm64-gnu" : "linux-x64-gnu"')" \
-    && npm install --prefix /tmp/lightningcss-132 --no-save --package-lock=false --ignore-scripts "lightningcss-${lightning_arch}@1.32.0" \
-    && npm install --prefix /tmp/lightningcss-133 --no-save --package-lock=false --ignore-scripts "lightningcss-${lightning_arch}@1.33.0" \
+    && npm install --prefix /tmp/lightningcss-132 --no-save --package-lock=false --ignore-scripts "lightningcss-${lightning_arch}@$(lock_version @tailwindcss/node/node_modules/lightningcss)" \
+    && npm install --prefix /tmp/lightningcss-133 --no-save --package-lock=false --ignore-scripts "lightningcss-${lightning_arch}@$(lock_version lightningcss)" \
     && mkdir -p node_modules/@rolldown node_modules/@tailwindcss node_modules/@tailwindcss/node/node_modules node_modules \
     && cp -a "/tmp/rolldown-native/node_modules/@rolldown/binding-${binding_arch}" node_modules/@rolldown/ \
     && cp -a "/tmp/tailwind-native/node_modules/@tailwindcss/oxide-${binding_arch}" node_modules/@tailwindcss/ \

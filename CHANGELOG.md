@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix the self-hosted web image build: install the Linux native rolldown, Tailwind oxide and lightningcss bindings at the exact versions in the lockfile instead of hand-written pins. The stale rolldown 1.2.9 pin no longer matched rolldown 1.2.15 and made Vite fail while loading its config. Also serve the service worker and hashed assets with the same `nosniff`, frame and referrer headers as the rest of the app; their own `Cache-Control` headers had dropped them. Verified by a clean `docker compose build web` and live header checks on a DigitalOcean test instance.
+
 - Refresh the generated frontend navigation reference after source line numbers changed so the web CI freshness gate passes.
 
 - Add source-level Android group workout sheets for designated event coaches: opening or refreshing an event online saves its attendance roster and participant sheets in one action, with partial failures reported and unsent device work protected. The collapsible searchable participant list supports measured per-athlete logging and exact group-start/session-save replay. Group packages retain frozen event/roster identities and share the encrypted owner-scoped store; an atomic queue claim prevents duplicate dispatch from mounted views. The matching backend advertises group capability and projects minimal native sheets. Physical-device, rendered UI and signed-upgrade acceptance remain pending; web still handles participant adaptation and explicit skip.
