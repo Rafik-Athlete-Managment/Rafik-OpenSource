@@ -4,6 +4,29 @@
 
 The `selfhost` Compose profile from branch `codex/single-institution-cleanup` was deployed to a DigitalOcean droplet (Ubuntu 24.04 x86-64, 1 vCPU, 2 GB RAM plus 4 GB swap, Docker 29.9.2, Compose 5.6.1) at a test subdomain with a Let's Encrypt certificate. At `5f32a10` the web image failed to build: the Dockerfile pinned the rolldown native binding at 1.2.9 while the lockfile resolves rolldown 1.2.15, so Vite could not load its config. `main` carries the same pin. Commit `4ddadba` reads binding versions from the lockfile; a no-cache `docker compose build web` and a full `deploy.sh` from the clean checkout then succeeded. `db`, `api` and `web` reported healthy, `migrate` exited 0 and Caddy obtained the certificate. Live HTTPS checks returned 200 for `/`, `/setup`, `/sign-in`, an unknown deep route (SPA fallback), `/sw.js`, `/api/v1/openapi.json` and `/api/v1/docs`, and HTTP redirected to HTTPS with 308. The same checks found `/sw.js` and `/assets/` missing `nosniff`, frame and referrer headers because their location-level `Cache-Control` replaced the server-level headers; after the nginx fix all three paths return them. In a desktop Chromium pane, `/` routed to the unclaimed first-run setup page, every request returned 200, the console was empty and the service worker registered. Not checked: setup submission and signed-in role workflows, Arabic/RTL, phones, WebKit, backup/restore, update/rollback, ARM64 hosts and builds without swap. No HSTS or Content-Security-Policy header is configured, and none is currently specified.
 
+After the founder claimed the instance, a role walkthrough ran with synthetic accounts: one administrator, one assigned coach, one unassigned coach and two athletes (one with a long name). Desktop Chromium was used for every role; Arabic/RTL, light theme and a 375 px phone emulation were checked on the athlete dashboard. Passed:
+
+- **Setup and invitations:** sports/specialty setup; four invitations through People & access (form closes, link stays visible); redemption through the create-account form and the API, with wrong-email and reused links refused.
+- **Primary coach:** assignment saves immediately and survives a reload.
+- **Programs and individual workouts:** program publish and explicit assignment; coach dashboard scheduling (the workout moved from Needs scheduling to Workouts to record without a reload); partial save with reload persistence; finish to the same record's review; review with empty feedback; plan advancement; athlete history; completion markers in the month calendar; Activity log entries and overview counts.
+- **Messaging:** the composer is focused on open, Enter sends once, and contacts are limited to the assigned coach.
+- **Group workout:** template creation, the scheduling wizard (past start times rejected), one-action attendance for both athletes, recording, skip with reason, completion blocked until each present athlete was resolved, then completion.
+- **Paired backup:** about 10 seconds of API downtime, checksums verified, 59 tables of data in the dump.
+
+An API matrix confirmed that athletes are refused administrator and coach views and each other's records, the unassigned coach is refused the athletes' profile, plans, history, nutrition and group results, coaches are refused administrator views, and each athlete's group-workout view contains only their own participant record. Staff-only routes return athletes to their dashboard.
+
+Commit `675875f` fixes the defects found: a phone header overlap (the clock's scoped style outranked its hide rule, so header actions wrapped over the page), a null-user error when signing out from Settings, invitation copy ("Trainer", and a wrong-account message that blamed "your coach") plus a missing sign-out action, an "Open training institution" link label, a misleading off-screen error when saving a workout template without a chosen exercise, and singular exercise/set counts. Each fix was rebuilt and rechecked on the instance.
+
+Open observations:
+
+- Chart units and the attendance donut still read "1 workouts" and "1 records".
+- An individually scheduled workout that the coach completed counts as an unmarked event-attendance entry on the overview.
+- After publishing, the program editor stays at `/plans/new` with the "Create a program" heading.
+- The workout-template empty state says "No matching workout templates" before any search.
+- After a deploy, open tabs keep the previous build until every tab closes (by design).
+
+Not checked: nutrition, athlete health consent, assessments, notifications, groups, resources and uploads, WebKit, restore, update/rollback and native Android against this instance.
+
 ## Frontend navigation inventory freshness — 1 November 2026
 
 The web job in GitHub Checks run 41324368707 failed at `frontend:inventory:check`; subsequent web steps were skipped. Local reproduction reported stale `navigation.md`. Regenerated the inventory from source. `frontend:inventory:check`, `format:check` and `docs:check` passed locally. This is reference freshness only; no rendered web behavior was checked for this correction. The remote web job must still run on the corrected commit.
