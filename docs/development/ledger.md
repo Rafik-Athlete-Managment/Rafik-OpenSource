@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Focused phone event flow — 2 November 2026
+
+An open event now owns its own header and Close action; app-level Schedule/My athletes tabs appear only outside events. Group attendance leads to **Next: record workouts** after all active athletes have confirmed attendance and at least one is present. The coach can return to attendance from the recording step, or leave and continue later without deleting saved work. The group **Finish event** action sits after the workout sheets and still uses the server's existing completion rules; if nobody is present, completion remains on the attendance step. An open assessment score editor warns before leaving because unsaved text would be lost. This is a source UI correction; physical phone rendering remains pending.
+
 ## Coach field flow and missed-event recovery — 2 November 2026
 
 The unreleased phone UI now uses compact field tabs and an account menu. Attendance confirmation gates group sheets; the athlete selector and measurement sheet share one screen. Editing saves a local draft, while Finish workout freezes an offline-capable final command; an earlier progress save replays first. Normal capture emphasizes completion and summary, with manual sync/recovery under disclosures. The calendar API now allows staff to reschedule an untouched missed custom or group event to a future time, preserving event ID and audit receipt. Any recorded attendance, results, note, skip or workout session blocks that move. Individual plan workouts retain their separate scheduler. Focused checks and device limits are in verification; founder steps remain only in the canonical walkthrough.

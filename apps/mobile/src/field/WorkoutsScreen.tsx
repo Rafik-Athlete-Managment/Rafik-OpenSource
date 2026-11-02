@@ -42,6 +42,10 @@ export function WorkoutsScreen({
   groupEvent,
   groupTitle,
   onBackToEvent,
+  onFinishEvent,
+  eventCanFinish,
+  eventFinishing,
+  eventCompleted,
 }: {
   client: NativeClient
   store: FieldStore
@@ -53,6 +57,10 @@ export function WorkoutsScreen({
   groupEvent?: string
   groupTitle?: string
   onBackToEvent?: () => void
+  onFinishEvent?: () => void
+  eventCanFinish?: boolean
+  eventFinishing?: boolean
+  eventCompleted?: boolean
 }) {
   const { l, t, language } = useLanguage()
   const [saved, setSaved] = useState<WorkoutRecord[]>([]),
@@ -586,7 +594,7 @@ export function WorkoutsScreen({
     >
       <Text style={styles.title}>
         {groupEvent
-          ? groupTitle || l('Group workout', 'التمرين الجماعي')
+          ? l('Record workouts', 'تسجيل التمارين')
           : selected
             ? record
               ? dayName(record.package)
@@ -594,7 +602,15 @@ export function WorkoutsScreen({
             : l('Individual workouts', 'التمارين الفردية')}
       </Text>
       {groupEvent ? (
-        <Text style={styles.hint}>{l('Participant workout sheets', 'سجلات تمارين المشاركين')}</Text>
+        <>
+          <Text style={styles.hint}>{groupTitle}</Text>
+          <Button
+            title={l('Back to attendance', 'العودة إلى الحضور')}
+            disabled={busy || persisting || invalidInput || storageFailed || closing}
+            onPress={() => onBackToEvent?.()}
+            styles={styles}
+          />
+        </>
       ) : null}
       {error ? (
         <Text accessibilityLiveRegion="polite" style={styles.message}>
@@ -1151,6 +1167,30 @@ export function WorkoutsScreen({
             </View>
           ) : null}
         </>
+      ) : null}
+      {groupEvent && !eventCompleted ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            {l('Ready to close this event?', 'جاهز لإنهاء هذا الموعد؟')}
+          </Text>
+          <Text style={styles.hint}>
+            {l(
+              'Finish each present athlete’s workout and wait for confirmation before closing the event. You can leave and continue later at any time.',
+              'أكمل تمرين كل رياضي حاضر وانتظر التأكيد قبل إنهاء الموعد. يمكنك المغادرة والمتابعة لاحقاً في أي وقت.',
+            )}
+          </Text>
+          <Button
+            title={
+              eventFinishing
+                ? l('Closing event…', 'جارٍ إنهاء الموعد…')
+                : l('Finish event', 'إنهاء الموعد')
+            }
+            disabled={!eventCanFinish || busy || persisting || closing}
+            onPress={() => onFinishEvent?.()}
+            styles={styles}
+            primary
+          />
+        </View>
       ) : null}
     </ScrollView>
   )

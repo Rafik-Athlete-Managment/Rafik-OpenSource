@@ -146,6 +146,7 @@ export function InstitutionScreen({
           if (selectedRef.current === completed.event.id) {
             setOnlineRoster(completed)
             setEditor(null)
+            setGroupEvent(null)
           }
         }
         if (alive.current)
@@ -253,6 +254,8 @@ export function InstitutionScreen({
     setMessage('')
     selectedRef.current = id
     setSelected(id)
+    setWorkoutView(false)
+    setGroupEvent(null)
     setSnapshot(null)
     setOnlineRoster(null)
     setGroupAvailable(false)
@@ -388,14 +391,20 @@ export function InstitutionScreen({
     if (!snapshot || savingRef.current || busyRef.current || closingRef.current) return
     const event = snapshot.roster.event
     Alert.alert(
-      t('Complete this event?'),
-      t(
-        'All attendance and assessment results must already be confirmed. Completing clears the saved event package from this device.',
-      ),
+      l('Finish this event?', 'إنهاء هذا الموعد؟'),
+      groupAvailable
+        ? l(
+            'Finish only after every present athlete has a confirmed workout, or a coach has recorded a skip on the web. Your offline copy will be removed after confirmation.',
+            'أنهِ الموعد بعد تأكيد تمرين كل رياضي حاضر، أو تسجيل تخطيه عبر الويب. ستُزال النسخة المحفوظة بعد التأكيد.',
+          )
+        : l(
+            'Make sure attendance and results are confirmed. Your offline copy will be removed after confirmation.',
+            'تأكد من تأكيد الحضور والنتائج. ستُزال النسخة المحفوظة بعد التأكيد.',
+          ),
       [
-        { text: t('Keep event open'), style: 'cancel' },
+        { text: l('Keep working', 'متابعة العمل'), style: 'cancel' },
         {
-          text: t('Complete event'),
+          text: l('Finish event', 'إنهاء الموعد'),
           onPress: () => {
             if (!alive.current || selectedRef.current !== event.id) return
             void submitCommand({
@@ -467,13 +476,17 @@ export function InstitutionScreen({
       (p) =>
         p.duty === 'trainee' && p.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
     ) || []
-  const attendanceReady =
+  const presentCount =
+    roster?.people.filter(
+      (person) => person.duty === 'trainee' && person.active && person.attendance === 'present',
+    ).length || 0
+  const allAttendanceConfirmed =
     !!roster &&
-    roster.people.some((person) => person.duty === 'trainee' && person.attendance === 'present') &&
     roster.people.every(
       (person) => person.duty !== 'trainee' || !person.active || person.attendance !== 'unmarked',
     ) &&
     !pending.some((command) => command.payload.action === 'attendance')
+  const attendanceReady = allAttendanceConfirmed && presentCount > 0
   async function openGroupSheets() {
     if (!roster || !selected || !attendanceReady) {
       setMessage(
@@ -501,47 +514,99 @@ export function InstitutionScreen({
       setMessage(failureText(error))
     }
   }
+  function leaveEvent() {
+    if (saving || draftSaving || workoutPersisting || groupPersisting || busy || closing) return
+    if (editor) {
+      Alert.alert(
+        l('Leave this event?', 'مغادرة هذا الموعد؟'),
+        l(
+          'Save or submit the open assessment entry first. Work already saved on this phone will stay available.',
+          'احفظ أو أرسل نتيجة التقييم المفتوحة أولاً. سيبقى العمل المحفوظ على الهاتف متاحاً.',
+        ),
+        [
+          { text: l('Keep working', 'متابعة العمل'), style: 'cancel' },
+          { text: l('Leave anyway', 'المغادرة رغم ذلك'), onPress: closeEvent },
+        ],
+      )
+      return
+    }
+    closeEvent()
+  }
+  function closeEvent() {
+    selectedRef.current = null
+    setSelected(null)
+    setGroupEvent(null)
+    setGroupAvailable(false)
+    setEditor(null)
+    setSnapshot(null)
+    setOnlineRoster(null)
+    setSearch('')
+    setMessage('')
+  }
   return (
     <View style={{ flex: 1 }}>
-      <View accessibilityRole="tablist" style={styles.tabBar}>
-        <Tab
-          title={selected ? l('Attendance', 'الحضور') : l('Schedule', 'الجدول')}
-          selected={!workoutView && !groupEvent}
-          disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
-          onPress={() => {
-            setWorkoutView(false)
-            setGroupEvent(null)
-          }}
-          styles={styles}
-        />
-        {selected && groupAvailable ? (
+      {!selected ? (
+        <View accessibilityRole="tablist" style={styles.tabBar}>
           <Tab
-            title={l('Workout sheets', 'سجلات التمرين')}
-            selected={!!groupEvent}
-            disabled={
-              saving ||
-              draftSaving ||
-              workoutPersisting ||
-              groupPersisting ||
-              closing ||
-              !attendanceReady
-            }
-            onPress={() => void openGroupSheets()}
+            title={l('Schedule', 'الجدول')}
+            selected={!workoutView}
+            disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
+            onPress={() => {
+              setWorkoutView(false)
+              setGroupEvent(null)
+            }}
             styles={styles}
           />
-        ) : null}
-        <Tab
-          title={l('Individual', 'الفردية')}
-          selected={workoutView}
-          disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
-          onPress={() => {
-            setGroupEvent(null)
-            setWorkoutsOpened(true)
-            setWorkoutView(true)
-          }}
-          styles={styles}
-        />
-      </View>
+          <Tab
+            title={l('Solo workouts', 'التمارين الفردية')}
+            selected={workoutView}
+            disabled={saving || draftSaving || workoutPersisting || groupPersisting || closing}
+            onPress={() => {
+              setGroupEvent(null)
+              setWorkoutsOpened(true)
+              setWorkoutView(true)
+            }}
+            styles={styles}
+          />
+        </View>
+      ) : (
+        <View style={styles.eventHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {roster?.event.title || l('Event', 'الموعد')}
+            </Text>
+            <Text style={styles.hint}>
+              {groupAvailable
+                ? groupEvent
+                  ? l('Step 2 of 2 · Workouts', 'الخطوة ٢ من ٢ · التمارين')
+                  : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')
+                : l('Attendance and results', 'الحضور والنتائج')}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l(
+              'Leave event and continue later',
+              'مغادرة الموعد والمتابعة لاحقاً',
+            )}
+            disabled={
+              saving || draftSaving || workoutPersisting || groupPersisting || busy || closing
+            }
+            onPress={leaveEvent}
+            style={styles.accountButton}
+          >
+            <Text style={styles.link}>{l('Close ×', 'إغلاق ×')}</Text>
+          </Pressable>
+        </View>
+      )}
+      {selected && message ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[styles.message, { marginHorizontal: 18, marginTop: 8 }]}
+        >
+          {t(message)}
+        </Text>
+      ) : null}
       {/* Keep this editor mounted while hidden so switching views preserves selection and device drafts. */}
       {workoutsOpened ? (
         <View style={{ flex: 1, display: workoutView ? 'flex' : 'none' }}>
@@ -570,6 +635,23 @@ export function InstitutionScreen({
             groupEvent={groupOpened}
             groupTitle={roster?.event.title}
             onBackToEvent={() => setGroupEvent(null)}
+            onFinishEvent={finish}
+            eventCanFinish={
+              !!snapshot &&
+              roster?.event.state === 'scheduled' &&
+              !busy &&
+              !saving &&
+              !draftSaving &&
+              !closing &&
+              !institutionPaused &&
+              !snapshot.roster.blocked &&
+              !pending.length &&
+              !snapshot.drafts.length &&
+              !completionProblems.length &&
+              !beforeStart
+            }
+            eventFinishing={finishing}
+            eventCompleted={completed}
           />
         </View>
       ) : null}
@@ -581,7 +663,7 @@ export function InstitutionScreen({
         <Text style={styles.title}>
           {selected ? roster?.event.title || t('Event attendance') : t('Coach schedule')}
         </Text>
-        {message ? (
+        {!selected && message ? (
           <Text accessibilityLiveRegion="polite" style={styles.message}>
             {t(message)}
           </Text>
@@ -736,26 +818,20 @@ export function InstitutionScreen({
           </>
         ) : (
           <>
-            <Button
-              title="Back to schedule"
-              disabled={saving || draftSaving || busy || closing}
-              onPress={() => {
-                selectedRef.current = null
-                setSelected(null)
-                setSnapshot(null)
-                setOnlineRoster(null)
-                setSearch('')
-                setMessage('')
-              }}
-              styles={styles}
-            />
             {roster ? (
               <>
-                {groupAvailable && !attendanceReady ? (
+                {groupAvailable && !allAttendanceConfirmed ? (
                   <Text style={styles.hint}>
                     {l(
-                      'Mark every athlete present, absent or excused, then confirm attendance to open workout sheets.',
-                      'حدّد حضور كل رياضي أو غيابه أو إعفاءه، ثم أكّد الحضور لفتح سجلات التمرين.',
+                      'Mark everyone present, absent or excused. When attendance is confirmed, continue to workouts.',
+                      'حدّد حضور الجميع أو غيابهم أو إعفاءهم. بعد تأكيد الحضور، انتقل إلى التمارين.',
+                    )}
+                  </Text>
+                ) : groupAvailable && allAttendanceConfirmed && !presentCount ? (
+                  <Text style={styles.hint}>
+                    {l(
+                      'No athletes are present. You can finish the event here.',
+                      'لا يوجد رياضيون حاضرون. يمكنك إنهاء الموعد هنا.',
                     )}
                   </Text>
                 ) : null}
@@ -842,21 +918,22 @@ export function InstitutionScreen({
                 ) : null}
                 {!completed && roster.event.state === 'scheduled' ? (
                   <View style={styles.actions}>
+                    {pending.length ? (
+                      <Button
+                        title={l('Send saved changes', 'إرسال التغييرات المحفوظة')}
+                        disabled={
+                          busy ||
+                          saving ||
+                          closing ||
+                          paused ||
+                          pending.some((c) => c.state === 'sending')
+                        }
+                        onPress={() => void sync()}
+                        styles={styles}
+                      />
+                    ) : null}
                     <Button
-                      title="Sync saved field work"
-                      disabled={
-                        busy ||
-                        saving ||
-                        closing ||
-                        paused ||
-                        pending.some((c) => c.state === 'sending')
-                      }
-                      onPress={() => void sync()}
-                      styles={styles}
-                      primary
-                    />
-                    <Button
-                      title="Refresh roster"
+                      title={l('Update attendance list', 'تحديث قائمة الحضور')}
                       disabled={
                         busy ||
                         saving ||
@@ -947,7 +1024,13 @@ export function InstitutionScreen({
                           {(['present', 'absent', 'excused'] as const).map((mark) => (
                             <Button
                               key={mark}
-                              title={mark.charAt(0).toUpperCase() + mark.slice(1)}
+                              title={
+                                mark === 'present'
+                                  ? l('Present', 'حاضر')
+                                  : mark === 'absent'
+                                    ? l('Absent', 'غائب')
+                                    : l('Excused', 'معذور')
+                              }
                               styles={styles}
                               primary={value === mark}
                               disabled={locked || value === mark}
@@ -1091,9 +1174,27 @@ export function InstitutionScreen({
                     {t(search ? 'No athletes match this name.' : 'This event has no athletes.')}
                   </Text>
                 ) : null}
-                {snapshot && roster.event.state === 'scheduled' ? (
+                {groupAvailable && roster.event.state === 'scheduled' && presentCount > 0 ? (
+                  <Button
+                    title={l('Next: record workouts', 'التالي: تسجيل التمارين')}
+                    onPress={() => void openGroupSheets()}
+                    styles={styles}
+                    primary
+                    disabled={
+                      !attendanceReady ||
+                      busy ||
+                      saving ||
+                      draftSaving ||
+                      groupPersisting ||
+                      closing
+                    }
+                  />
+                ) : null}
+                {snapshot &&
+                roster.event.state === 'scheduled' &&
+                (!groupAvailable || !presentCount) ? (
                   <View style={styles.card}>
-                    <Text style={styles.cardTitle}>{t('Complete event')}</Text>
+                    <Text style={styles.cardTitle}>{l('Finish event', 'إنهاء الموعد')}</Text>
                     {completionProblems.map((problem) => (
                       <Text key={t(problem)} style={styles.hint}>
                         {t(problem)}
@@ -1113,7 +1214,9 @@ export function InstitutionScreen({
                     ) : null}
                     <Button
                       title={
-                        finishing ? 'Completion waiting for confirmation' : t('Complete event')
+                        finishing
+                          ? l('Waiting for confirmation…', 'بانتظار التأكيد…')
+                          : l('Finish event', 'إنهاء الموعد')
                       }
                       onPress={finish}
                       styles={styles}

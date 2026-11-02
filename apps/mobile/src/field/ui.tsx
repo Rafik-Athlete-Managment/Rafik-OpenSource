@@ -128,6 +128,16 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       padding: 14,
       gap: 10,
     },
+    eventHeader: {
+      direction,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: light ? '#d6e1db' : '#2c423d',
+    },
     tabBar: {
       direction,
       flexDirection: 'row',
