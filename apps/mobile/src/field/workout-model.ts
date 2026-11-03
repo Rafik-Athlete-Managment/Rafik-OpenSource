@@ -191,6 +191,26 @@ export type WorkoutRecord = {
   saved_at: string
 }
 
+/** Only an unsent or definitively rejected invalid Finish can return to editing. */
+export function canResumeIncompleteFinish(record: WorkoutRecord) {
+  if (!record.session || record.session.completed_at || record.blocked) return false
+  if (!record.package.can_record && record.session.version > 0) return false
+  const final = record.completionIntent || (record.intent?.complete ? record.intent : null)
+  if (!final) return false
+  try {
+    validateEntries(record.package, final.entries, true)
+    return false
+  } catch {
+    if (!record.pending || record.pending.payload.complete !== true) return true
+    return (
+      record.pending.state === 'needs_attention' &&
+      /incomplete_entries|no_completed_sets|invalid_entry|Check the workout results and completion checks/i.test(
+        record.error,
+      )
+    )
+  }
+}
+
 // Project only transport fields; never persist extra properties from a response.
 function projectEntry(e: FieldWorkoutEntry): FieldWorkoutEntry {
   return {

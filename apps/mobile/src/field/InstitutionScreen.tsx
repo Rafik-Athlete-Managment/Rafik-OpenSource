@@ -38,6 +38,7 @@ import { ScoreEditor } from './ScoreEditor'
 import { WorkoutsScreen } from './WorkoutsScreen'
 import { FieldBottomNav, type FieldTab } from './FieldBottomNav'
 import { FieldEmptyState } from './FieldEmptyState'
+import { FieldDatePicker } from './FieldDatePicker'
 import { ConnectionStatus } from './ConnectionStatus'
 import { downloadGroupEvent } from './group-download'
 import type { FieldWorkoutPackage, WorkoutRecord } from './workout-model'
@@ -1156,6 +1157,7 @@ export function InstitutionScreen({
                 onPress={() => setEventStage('attendance')}
                 styles={styles}
                 primary
+                fill
               />
               {beforeStart && !completed ? (
                 <Text style={styles.hint}>
@@ -1831,6 +1833,7 @@ export function InstitutionScreen({
                         }}
                         styles={styles}
                         primary
+                        fill
                         disabled={busy || saving || draftSaving || closing}
                       />
                     ) : null}
@@ -1843,6 +1846,7 @@ export function InstitutionScreen({
                         onPress={() => void openGroupSheets()}
                         styles={styles}
                         primary
+                        fill
                         disabled={busy || saving || draftSaving || groupPersisting || closing}
                       />
                     ) : null}
@@ -1878,6 +1882,7 @@ export function InstitutionScreen({
                           onPress={finish}
                           styles={styles}
                           primary
+                          fill
                           disabled={
                             busy ||
                             saving ||
@@ -2090,20 +2095,26 @@ export function InstitutionScreen({
               contentContainerStyle={styles.filterSheet}
               keyboardShouldPersistTaps="handled"
             >
-              <Text style={styles.cardTitle}>{l('Schedule filters', 'تصفية الجدول')}</Text>
+              <View
+                style={[styles.actions, { alignItems: 'center', justifyContent: 'space-between' }]}
+              >
+                <Text style={styles.cardTitle}>{l('Schedule filters', 'تصفية الجدول')}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={l('Close filters', 'إغلاق التصفية')}
+                  onPress={() => setFiltersOpen(false)}
+                  style={styles.headerIcon}
+                >
+                  <Icon name="close" styles={styles} />
+                </Pressable>
+              </View>
               <Text style={styles.label}>{l('Date', 'التاريخ')}</Text>
-              <TextInput
-                accessibilityLabel={l('Date YYYY-MM-DD', 'التاريخ بصيغة YYYY-MM-DD')}
-                value={draftDay}
-                onChangeText={setDraftDay}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={styles.hint.color}
-                style={styles.input}
-              />
+              <FieldDatePicker selected={draftDay} onChange={setDraftDay} styles={styles} />
               <Button
                 title={l('Today', 'اليوم')}
                 onPress={() => setDraftDay(localDate(new Date()))}
                 styles={styles}
+                fill
               />
               <Text style={styles.label}>{l('Show', 'عرض')}</Text>
               <View style={styles.actions}>
@@ -2139,28 +2150,29 @@ export function InstitutionScreen({
                   styles={styles}
                 />
               </View>
-              <View style={styles.actions}>
-                <Button
-                  title={l('Apply', 'تطبيق')}
-                  primary
-                  disabled={refreshingSchedule || workoutLoading}
-                  onPress={() => applyScheduleFilters(draftDay)}
-                  styles={styles}
-                />
-                <Button
-                  title={l('Clear', 'مسح')}
-                  onPress={() => {
-                    setDraftRecordFilter('all')
-                    setDraftLatestFirst(false)
-                    setDraftDay(localDate(new Date()))
-                  }}
-                  styles={styles}
-                />
-                <Button
-                  title={l('Close', 'إغلاق')}
-                  onPress={() => setFiltersOpen(false)}
-                  styles={styles}
-                />
+              <View style={styles.actionRow}>
+                <View style={styles.actionCell}>
+                  <Button
+                    title={l('Apply', 'تطبيق')}
+                    primary
+                    fill
+                    disabled={refreshingSchedule || workoutLoading}
+                    onPress={() => applyScheduleFilters(draftDay)}
+                    styles={styles}
+                  />
+                </View>
+                <View style={styles.actionCell}>
+                  <Button
+                    title={l('Clear', 'مسح')}
+                    fill
+                    onPress={() => {
+                      setDraftRecordFilter('all')
+                      setDraftLatestFirst(false)
+                      setDraftDay(localDate(new Date()))
+                    }}
+                    styles={styles}
+                  />
+                </View>
               </View>
             </ScrollView>
           </Animated.View>

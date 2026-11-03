@@ -202,22 +202,30 @@ export function ScoreEditor({
           {t(error)}
         </Text>
       ) : null}
+      <View style={styles.actionRow}>
+        <View style={styles.actionCell}>
+          <Button
+            title={submitting ? 'Saving scores…' : result ? 'Save score correction' : 'Save scores'}
+            disabled={locked || persisting || submitting}
+            onPress={() => void submit()}
+            styles={styles}
+            primary
+            fill
+          />
+        </View>
+        <View style={styles.actionCell}>
+          <Button
+            title="Close editor"
+            disabled={persisting || submitting}
+            onPress={() => {
+              void flight.current.then(onClose).catch((e) => setError(failureText(e)))
+            }}
+            styles={styles}
+            fill
+          />
+        </View>
+      </View>
       <View style={styles.actions}>
-        <Button
-          title={submitting ? 'Saving scores…' : result ? 'Save score correction' : 'Save scores'}
-          disabled={locked || persisting || submitting}
-          onPress={() => void submit()}
-          styles={styles}
-          primary
-        />
-        <Button
-          title="Close editor"
-          disabled={persisting || submitting}
-          onPress={() => {
-            void flight.current.then(onClose).catch((e) => setError(failureText(e)))
-          }}
-          styles={styles}
-        />
         {savedDraft || sequence.current > 0 ? (
           <Button
             title="Discard draft"

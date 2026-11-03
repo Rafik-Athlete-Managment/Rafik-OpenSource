@@ -1,5 +1,9 @@
 # Rafik Field UI audit — 2 November 2026
 
+## Workout and filter follow-up — 3 November 2026
+
+The founder observed a saved workout that needed Refresh before Start and an incomplete Finish that appeared paused and inaccessible. Source tracing found the local open was coupled to the online browse loading state. Phone storage already rejected incomplete Finish, but the server SQL validator accepted any single completed set and web finish controls allowed partial completion. The phone also gave no clear path to resume an invalid final intent left by an older build. The local open is now independent, the completion threshold is shared by phone/web/SQL, and recovery is limited to unsent or definitively rejected invalid final intents. A server-paused plan position after assignment closure is a separate, deliberate state and is not automatically resumed. The Schedule's typed date filter became a visual bilingual calendar; primary and paired phone actions use shared widths. Physical-device layout, RTL, month/year interaction, saved offline start, and recovery of the founder's exact record remain to be checked in the [canonical walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3).
+
 This is a source and interaction audit of the unreleased beta.3 phone app. It covers every local TSX screen/component in `apps/mobile/src/field/` and the Expo entry route. The installed phone app has not been rebuilt from this source, so this document does not claim rendered-device acceptance. The [instance walkthrough](../testing/instance-validation.md#phone-daily-workspace-and-event-steps--unreleased-beta3) is the single manual validation guide.
 
 ## Screen inventory and findings

@@ -39,7 +39,6 @@ const error = ref('')
 const selected = ref(0)
 const working = ref(false)
 const syncing = ref(false)
-const finishConfirm = ref(false)
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 let mutation = Promise.resolve()
@@ -282,12 +281,11 @@ function units(event: Event) {
 }
 async function finish() {
   if (hasInvalid.value) return
-  if (doneCount.value === 0) {
-    error.value = errorMessage(new Error('no_completed_sets'))
-    return
-  }
-  if (doneCount.value < total.value && !finishConfirm.value) {
-    finishConfirm.value = true
+  if (doneCount.value < total.value) {
+    error.value = language(
+      'Check every prescribed set before finishing. Your progress stays saved.',
+      'حدد كل مجموعة موصوفة قبل الإنهاء. يبقى تقدمك محفوظاً.',
+    )
     return
   }
   working.value = true
@@ -298,7 +296,6 @@ async function finish() {
   row.value = await editLocalSession(id, (r) => {
     r.restUntil = undefined
   })
-  finishConfirm.value = false
   correcting.value = false
   working.value = false
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -372,7 +369,6 @@ onUnmounted(() => {
 })
 function correctSets() {
   correcting.value = true
-  finishConfirm.value = false
 }
 </script>
 <template>
@@ -697,39 +693,22 @@ function correctSets() {
               <p>
                 {{
                   language(
-                    'Finish when you are done. Unrecorded sets stay uncompleted.',
-                    'أنهِ الحصة عند الانتهاء. تبقى المجموعات غير المسجلة غير مكتملة.',
+                    'Check every prescribed set before finishing. Your progress stays saved until then.',
+                    'حدد كل مجموعة موصوفة قبل الإنهاء. يبقى تقدمك محفوظاً حتى ذلك الحين.',
                   )
                 }}
               </p>
             </div>
             <button
               class="button"
-              :disabled="working || doneCount === 0 || row.conflict || hasInvalid"
+              :disabled="working || doneCount !== total || row.conflict || hasInvalid"
               @click="finish"
             >
               {{ correcting ? language('Save correction', 'حفظ التصحيح') : t('finish')
               }}<PhCheckCircle :size="20" aria-hidden="true" />
             </button>
           </div>
-          <div v-if="finishConfirm" class="notice">
-            <p>
-              {{
-                language(
-                  `Finish with ${total - doneCount} unrecorded sets?`,
-                  `إنهاء الحصة مع ${total - doneCount} مجموعات غير مسجلة؟`,
-                )
-              }}
-            </p>
-            <div class="actions">
-              <button class="button small" @click="finish">
-                {{ language('Finish with recorded sets', 'إنهاء بالمجموعات المسجلة') }}</button
-              ><button class="button small secondary" @click="finishConfirm = false">
-                {{ language('Keep training', 'متابعة التمرين') }}
-              </button>
-            </div>
-          </div></template
-        >
+        </template>
         <section v-else class="completion-layout">
           <div class="completion-main">
             <div class="completion-icon">

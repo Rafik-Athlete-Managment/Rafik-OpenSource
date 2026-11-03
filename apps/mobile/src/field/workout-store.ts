@@ -2,6 +2,7 @@ import type { Database } from './store.ts'
 import { ApiFailure, ownerKey, type Owner } from './model.ts'
 import {
   workoutPackage,
+  canResumeIncompleteFinish,
   validateEntries,
   startTimeReached,
   type FieldWorkoutEntry,
@@ -172,15 +173,14 @@ export class WorkoutStore {
     return this.lane(async (db) => {
       const r = await this.read(db, owner, id),
         p = r.package
-      if (
-        r.blocked ||
-        !p.allow_provisional_start ||
-        !p.occurrence_id ||
-        r.session ||
-        r.pending ||
-        !startTimeReached(p)
-      )
-        throw Error('This downloaded workout cannot be started yet. Refresh it online.')
+      if (r.blocked || r.session || r.pending)
+        throw Error('Review this saved workout before starting it again.')
+      if (!p.occurrence_id || !p.allow_provisional_start)
+        throw Error(
+          'This workout was not authorized to start when downloaded. Update it online first.',
+        )
+      if (!startTimeReached(p))
+        throw Error('Recording opens at the scheduled workout time or date.')
       r.session = { id: session, version: 0, completed_at: null }
       r.pending = {
         state: 'queued',
@@ -282,6 +282,22 @@ export class WorkoutStore {
       else r.intent = final
       await this.write(db, owner, r)
       return r
+    })
+  }
+  /** Thaw only a provably invalid Finish; keep measured values and any earlier start/progress request. */
+  resumeIncompleteFinish(owner: Owner, id: string) {
+    return this.lane(async (db) => {
+      const record = await this.read(db, owner, id)
+      if (!canResumeIncompleteFinish(record))
+        throw Error('This workout needs review before recording can resume.')
+      if (record.pending?.payload.complete === true) {
+        record.pending = null
+        record.error = ''
+      }
+      if (record.completionIntent) record.completionIntent = null
+      else record.intent = null
+      await this.write(db, owner, record)
+      return record
     })
   }
   next(owner: Owner) {

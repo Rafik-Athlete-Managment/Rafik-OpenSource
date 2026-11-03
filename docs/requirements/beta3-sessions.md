@@ -1,5 +1,7 @@
 # Beta.3 — sessions, workouts and backend consolidation
 
+An individual or group participant workout may save partial measured progress, and closing its recorder leaves that work resumable. Completing it requires every prescribed set to be checked with a valid actual result; an explicit whole-workout or participant skip is a separate terminal action. The same completion rule applies in the phone store, web controls and database validator. An unknown offline upload is never treated as a rejected write merely because the screen was closed.
+
 ## Native individual capture — source implemented 31 October 2026, acceptance pending
 
 Coaches can download occurrence-bound individual workouts, start provisionally offline, record measured actuals and explicitly finish for sync. The encrypted queue uses existing authoritative session commands/receipts; cached permissions and device times never override current server checks. Saved/online directories use ten-record pages and athlete search. Unknown results retain exact requests; rejected saves have explicit current-server review/replacement; recovery sharing warns about private athlete content. Existing selected alternative IDs are retained, while native alternative selection and media download are not added. Historical unlinked recordings remain in web recovery. See [ADR 0036](../decisions/ADR-0036-provisional-native-individual-workouts.md) and the [canonical walkthrough](../testing/instance-validation.md).

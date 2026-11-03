@@ -8,10 +8,11 @@ import { FieldStore, type Database } from '../src/field/store.ts'
 import { AttendanceSync } from '../src/field/sync.ts'
 import { WorkoutSync } from '../src/field/workout-sync.ts'
 import { downloadGroupEvent } from '../src/field/group-download.ts'
-import type { FieldWorkoutPackage } from '../src/field/workout-model.ts'
+import { canResumeIncompleteFinish, type FieldWorkoutPackage } from '../src/field/workout-model.ts'
 import { randomUUID } from 'node:crypto'
 import {
   ApiFailure,
+  ownerKey,
   fieldRoster,
   scoreValues,
   type FieldCommand,
@@ -709,6 +710,52 @@ test('offline progress then finish survive restart and replay in order after a l
     const id = randomUUID(),
       start = randomUUID()
     await store.workouts.start(scope, p.id, id, start)
+    const partial = p.entries.map((e, index) => ({ ...e, completed: index === 0 }))
+    await store.workouts.edit(scope, p.id, partial, 'partial work stays on device')
+    await assert.rejects(
+      store.workouts.queueFinish(scope, p.id, randomUUID()),
+      /Mark every set done/,
+    )
+    assert.equal((await store.workouts.get(scope, p.id)).session?.completed_at, null)
+    // Simulate an older build leaving an invalid, unsent Finish behind a queued start.
+    const stuck = await store.workouts.get(scope, p.id)
+    stuck.intent = {
+      entries: partial,
+      note: stuck.note,
+      complete: true,
+      localRevision: stuck.localRevision,
+      operation: randomUUID(),
+    }
+    sqlite
+      .prepare('UPDATE field_workouts SET payload=? WHERE owner=? AND id=?')
+      .run(JSON.stringify(stuck), ownerKey(scope), p.id)
+    assert.equal(canResumeIncompleteFinish(await store.workouts.get(scope, p.id)), true)
+    const uncertain = structuredClone(stuck)
+    uncertain.pending = {
+      ...stuck.pending!,
+      state: 'uncertain',
+      payload: { ...stuck.pending!.payload, action: 'save', complete: true },
+    }
+    assert.equal(
+      canResumeIncompleteFinish(uncertain),
+      false,
+      'an uncertain final write must be reviewed',
+    )
+    const rejected = structuredClone(uncertain)
+    rejected.pending!.state = 'needs_attention'
+    rejected.error = 'incomplete_entries'
+    assert.equal(
+      canResumeIncompleteFinish(rejected),
+      true,
+      'a definitive rejection can be reopened',
+    )
+    assert.equal(canResumeIncompleteFinish({ ...stuck, blocked: true }), false)
+    await store.workouts.resumeIncompleteFinish(scope, p.id)
+    const resumed = await store.workouts.get(scope, p.id)
+    assert.equal(resumed.intent, null)
+    assert.equal(resumed.pending?.payload.action, 'start', 'the exact start remains queued')
+    assert.equal(resumed.entries[0].completed, true)
+    assert.equal(resumed.note, 'partial work stays on device')
     const entries = p.entries.map((e) => ({ ...e, completed: true }))
     await store.workouts.edit(scope, p.id, entries, 'captured offline')
     await store.workouts.save(scope, p.id, false, randomUUID())
@@ -757,6 +804,8 @@ test('offline progress then finish survive restart and replay in order after a l
     assert.ok(saved.session?.completed_at)
     assert.equal(saved.note, 'captured offline')
     assert.equal(saved.localRevision, saved.syncedRevision)
+    assert.equal(canResumeIncompleteFinish(saved), false)
+    await assert.rejects(store.workouts.resumeIncompleteFinish(scope, p.id), /needs review/)
     await assert.rejects(store.workouts.edit(scope, p.id, entries, 'after completion'), /read-only/)
   } finally {
     sqlite.close()

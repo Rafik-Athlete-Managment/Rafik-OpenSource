@@ -21,6 +21,7 @@ import { ApiFailure, ConnectionFailure, failureText, type Owner } from './model'
 import {
   startTimeReached,
   validateEntries,
+  canResumeIncompleteFinish,
   type FieldWorkoutEntry,
   type FieldWorkoutPackage,
   type WorkoutRecord,
@@ -116,6 +117,7 @@ export function WorkoutsScreen({
   const alive = useRef(true),
     selection = useRef(''),
     flight = useRef(false),
+    downloadFlight = useRef(false),
     reads = useRef(0),
     runner = useRef<WorkoutSync | null>(null)
   const drafts = useRef({ entries: [] as FieldWorkoutEntry[], note: '' }),
@@ -343,7 +345,7 @@ export function WorkoutsScreen({
     setError('')
   }
   useEffect(() => {
-    if (!active || !initialPackage || groupEvent || onlineLoading) return
+    if (!active || !initialPackage || groupEvent) return
     void store.workouts
       .ids(owner)
       .then((ids) =>
@@ -352,13 +354,13 @@ export function WorkoutsScreen({
       .catch((error) => {
         if (alive.current) setError(failureText(error))
       })
-  }, [active, initialPackage?.id, groupEvent, onlineLoading])
+  }, [active, initialPackage?.id, groupEvent])
   useEffect(() => {
     if (closeSignal) void back()
   }, [closeSignal])
   async function download(p: FieldWorkoutPackage) {
-    if (flight.current) return
-    flight.current = true
+    if (downloadFlight.current) return
+    downloadFlight.current = true
     setBusy(true)
     setError('')
     try {
@@ -370,7 +372,7 @@ export function WorkoutsScreen({
     } catch (e) {
       if (alive.current) setError(failureText(e))
     } finally {
-      flight.current = false
+      downloadFlight.current = false
       if (alive.current) setBusy(false)
     }
   }
@@ -653,6 +655,16 @@ export function WorkoutsScreen({
     !record.completionIntent &&
     !record.pending?.payload.complete &&
     (record.package.can_record || record.session.version === 0)
+  const remainingSets = entries.filter((entry) => !entry.completed).length
+  let finishReady = false
+  if (record && entries.length > 0 && entries.length === record.entries.length) {
+    try {
+      validateEntries(record.package, entries, true)
+      finishReady = true
+    } catch {
+      // Keep the final action hidden while a measured result is incomplete.
+    }
+  }
   const groupItems = [
     ...groupPackages,
     ...saved
@@ -719,6 +731,7 @@ export function WorkoutsScreen({
           onPress={() => void beginGroupRecording()}
           styles={styles}
           primary
+          fill
         />
       </ScrollView>
     )
@@ -985,6 +998,19 @@ export function WorkoutsScreen({
               {record.package.member_name} · {record.package.title}
             </Text>
             {record.error ? <Text style={styles.message}>{t(record.error)}</Text> : null}
+            {canResumeIncompleteFinish(record) ? (
+              <Button
+                title={l('Continue incomplete workout', 'متابعة التمرين غير المكتمل')}
+                onPress={() =>
+                  void store.workouts
+                    .resumeIncompleteFinish(owner, record.package.id)
+                    .then(() => open(record.package.id))
+                    .catch((cause) => setError(failureText(cause)))
+                }
+                styles={styles}
+                fill
+              />
+            ) : null}
             {record.blocked ? (
               <Text style={styles.message}>
                 {l(
@@ -1001,10 +1027,20 @@ export function WorkoutsScreen({
                     : record.package.training_date + ' · ' + record.package.timezone}
                 </Text>
                 <Text style={styles.hint}>
-                  {l(
-                    'Start opens at this workout’s scheduled time/date. An offline start will be rechecked during sync.',
-                    'يتاح البدء في وقت أو تاريخ التمرين المحدد. يُتحقق من البدء دون اتصال عند المزامنة.',
-                  )}
+                  {!record.package.allow_provisional_start
+                    ? l(
+                        'This saved copy was not authorized to start when downloaded. Update it online before recording.',
+                        'لم يكن بدء هذه النسخة المحفوظة مسموحاً عند تنزيلها. حدّثها أثناء الاتصال قبل التسجيل.',
+                      )
+                    : !startTimeReached(record.package)
+                      ? l(
+                          'Recording opens at the scheduled time or date.',
+                          'يتاح التسجيل عند الوقت أو التاريخ المحدد.',
+                        )
+                      : l(
+                          'Ready to start on this device, including offline. The server rechecks permission when syncing.',
+                          'يمكنك البدء على هذا الجهاز حتى دون اتصال. يتحقق الخادم من الصلاحية عند المزامنة.',
+                        )}
                 </Text>
                 <Button
                   title={l('Start on this device', 'البدء على هذا الجهاز')}
@@ -1018,6 +1054,7 @@ export function WorkoutsScreen({
                   onPress={() => void act('start')}
                   styles={styles}
                   primary
+                  fill
                 />
               </>
             ) : (
@@ -1086,6 +1123,7 @@ export function WorkoutsScreen({
                   onPress={() => (groupEvent ? onBackToEvent?.() : void back())}
                   styles={styles}
                   primary
+                  fill
                 />
               </>
             ) : null}
@@ -1117,6 +1155,7 @@ export function WorkoutsScreen({
                   onPress={() => (groupEvent ? onBackToEvent?.() : void back())}
                   styles={styles}
                   primary
+                  fill
                 />
               </>
             ) : null}
@@ -1145,19 +1184,35 @@ export function WorkoutsScreen({
             />
             {record.session && !record.session.completed_at ? (
               <View style={{ gap: 8 }}>
-                <Text style={styles.cardTitle}>{l('Ready to finish?', 'جاهز للإنهاء؟')}</Text>
-                <Text style={styles.hint}>
-                  {l(
-                    'Every change is saved on this phone. Finish works offline and sends your results when connected.',
-                    'يُحفظ كل تغيير على هذا الهاتف. يمكنك الإنهاء دون اتصال وستُرسل النتائج عند الاتصال.',
-                  )}
+                <Text style={styles.cardTitle}>
+                  {finishReady
+                    ? l('Ready to finish?', 'جاهز للإنهاء؟')
+                    : l('Keep recording', 'واصل التسجيل')}
                 </Text>
-                <View style={styles.actions}>
+                <Text style={styles.hint}>
+                  {finishReady
+                    ? l(
+                        'Every change is saved on this phone. Finish works offline and sends your results when connected.',
+                        'يُحفظ كل تغيير على هذا الهاتف. يمكنك الإنهاء دون اتصال وستُرسل النتائج عند الاتصال.',
+                      )
+                    : remainingSets
+                      ? l(
+                          `${remainingSets} set(s) left. You can close and return later without losing progress.`,
+                          `تبقّت ${remainingSets} مجموعة. يمكنك الإغلاق والعودة لاحقاً دون فقد التقدم.`,
+                        )
+                      : l(
+                          'Review the recorded values before finishing. Your progress remains saved.',
+                          'راجع القيم المسجلة قبل الإنهاء. يبقى تقدمك محفوظاً.',
+                        )}
+                </Text>
+                {finishReady ? (
                   <Button
                     title={l('Finish workout', 'إنهاء التمرين')}
                     disabled={
                       busy ||
                       persisting ||
+                      invalidInput ||
+                      storageFailed ||
                       closing ||
                       !editable ||
                       !!record.intent?.complete ||
@@ -1167,8 +1222,9 @@ export function WorkoutsScreen({
                     onPress={() => void act('finish')}
                     styles={styles}
                     primary
+                    fill
                   />
-                </View>
+                ) : null}
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showConnection }}
@@ -1232,6 +1288,7 @@ export function WorkoutsScreen({
               onPress={() => onFinishEvent?.()}
               styles={styles}
               primary
+              fill
             />
           </View>
         ) : null}

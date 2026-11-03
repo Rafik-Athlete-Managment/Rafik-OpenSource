@@ -87,6 +87,7 @@ export function Button({
   styles,
   primary = false,
   danger = false,
+  fill = false,
 }: {
   title: string
   onPress: () => void
@@ -94,6 +95,7 @@ export function Button({
   styles: Styles
   primary?: boolean
   danger?: boolean
+  fill?: boolean
 }) {
   const { t } = useLanguage()
   return (
@@ -104,6 +106,7 @@ export function Button({
       onPress={onPress}
       style={[
         styles.button,
+        fill && styles.buttonFill,
         primary && styles.primary,
         danger && styles.dangerButton,
         disabled && styles.disabled,
@@ -427,6 +430,24 @@ export function makeStyles(light: boolean, language: Language = 'en') {
       paddingVertical: 10,
       paddingHorizontal: 14,
       flexShrink: 1,
+    },
+    buttonFill: { width: '100%' },
+    actionRow: { direction, flexDirection: 'row', gap: 8, alignItems: 'stretch' },
+    actionCell: { flex: 1, minWidth: 0 },
+    calendarSurface: {
+      borderWidth: 1,
+      borderColor: light ? '#dce4df' : dark.border,
+      borderRadius: 16,
+      backgroundColor: light ? '#fff' : dark.surface,
+      padding: 8,
+    },
+    calendarYearAction: {
+      flex: 1,
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
     },
     buttonText: {
       textAlign: 'center',

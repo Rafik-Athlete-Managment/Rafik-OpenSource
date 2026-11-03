@@ -1,5 +1,7 @@
 # Operations
 
+Unreleased beta.3 workout completion requires the forward migration `202611031200_require_complete_workout_sets` before deploying the matching API and phone/web clients. It replaces the SQL completion validator while retaining existing session IDs, history and partial progress. Apply it through the normal migration deployment after the existing database backup procedure. It does not retroactively reopen completed records; rollback uses the matching backed-up application/database, not a manual deletion of workout data.
+
 ## Native individual workout source rollout — unreleased beta.3
 
 The matching backend advertises individual recording and supplies trainer-only field packages; older/unsupported servers pause native workout replay. No PostgreSQL migration, new credential, signing change or cache reset is required by this slice. The existing encrypted database creates an additive workout table on startup and preserves attendance/assessment records and owner keys. Keep the matching application/database/files backup and the existing coordinated beta.3 upgrade process; do not downgrade to an unsupported backend while workout requests are pending. Export/review unresolved work rather than deleting the encrypted cache. No new release APK or tag is produced by source implementation alone.

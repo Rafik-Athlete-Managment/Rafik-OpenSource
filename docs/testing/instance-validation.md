@@ -1,5 +1,17 @@
 # Instance validation walkthrough
 
+## Phone workout recovery and controls — unreleased beta.3
+
+Use a matching source app/backend on the founder's physical phone, a synthetic coach with one scheduled individual workout containing at least two sets, and a separate group event with two present athletes. Keep Wi-Fi/mobile data and USB forwarding off for the offline steps. Published beta.2 cannot run this source flow; do not reset the instance or use real athlete data.
+
+1. In English, open Schedule filters. Choose another month and year visually, select a date and tap **Apply**. The Schedule heading/cards must use that exact calendar day. Reopen filters, tap **Clear**, then **Apply**; today should return. Repeat in Arabic and both themes. At narrow width, confirm all dates, arrows, Apply/Clear and the bottom navigation remain reachable, with sensible RTL order and no overlap.
+2. While online, download the scheduled solo workout. Turn off Wi-Fi/mobile data and USB forwarding, then open it from **Saved**. It should load its locally stored exercises immediately without a manual Refresh. If the server-issued start permission was true and its time/date has arrived, **Start on this device** should work offline. A copy without that permission must explain that it needs an online update; an early appointment must explain its time gate.
+3. Record one set and a note, close the recorder, reopen the same saved workout and confirm the values remain. **Finish workout** must not appear with required sets incomplete. Refresh while offline and confirm the draft remains. Complete every prescribed set, then Finish offline. It should say finished on device and await server confirmation; after reconnect, the same exact request should produce one read-only confirmed summary on phone and web.
+4. For an older affected local record with an invalid *unsent or definitively rejected* incomplete Finish, expect **Continue incomplete workout**. Use it and confirm the original start ID, attendance where applicable, measured sets and note remain; finish after logging the remaining sets. An unknown/sending upload, blocked record, completed session or server-paused assignment must stay under explicit review rather than reopening silently. Report the record state if the founder's specific stuck workout does not meet the safe recovery conditions.
+5. Repeat partial logging on one group participant sheet. Attendance must be server-confirmed before the group recording step, and switching athletes must retain each draft. No group participant or event is completed by leaving the screen. In the assessment results step, verify Save/Close are balanced and closing preserves a device draft. Compare the primary and paired actions on a short phone screen in English/Arabic and light/dark.
+
+Report source app/backend revisions, phone/Android version, role, language/theme, workout or event ID, network and USB state, exact step, expected/actual result and error text. Do not share private results or credentials. These are required device checks, not source-validation claims.
+
 ## Tonight's validation route
 
 Use this guide with the same source branch/backend as the app you are testing. The published beta APK does not include unreleased beta.3 changes. No step requires resetting or reseeding the database.

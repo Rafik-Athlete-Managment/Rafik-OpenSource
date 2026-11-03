@@ -59,6 +59,28 @@ after(async () => {
   await db.$disconnect();
 });
 
+test("completed workouts require every prescribed set while progress saves can stay partial", async () => {
+  const day = {
+    exercises: [
+      { key: "bench", exerciseId: "bench", kind: "strength", sets: 2 },
+    ],
+  };
+  const entries = [0, 1].map((set_index) => ({
+    exercise_key: "bench",
+    set_index,
+    reps: 5,
+    load: 20,
+    unit: "kg",
+    completed: set_index === 0,
+  }));
+  const check = (completed: boolean) =>
+    db.$queryRaw`SELECT public.validate_session_actuals(${JSON.stringify(day)}::jsonb,${JSON.stringify(entries)}::jsonb,${""},${completed})::text`;
+  await check(false);
+  await assert.rejects(check(true), /incomplete_entries/);
+  entries[1]!.completed = true;
+  await check(true);
+});
+
 test("individual sequence: concurrent binding, independent plans, exact resolution, correction, repeat, restrictions and end policy", async () => {
   const auth = await cookie("11000000-0000-4000-8000-000000000002");
   const athleteAuth = await cookie("11000000-0000-4000-8000-000000000003");
@@ -177,7 +199,9 @@ test("individual sequence: concurrent binding, independent plans, exact resoluti
     operation("schedule-workout", {
       assignment_id: other.id,
       cursor: 0,
-      ...slot(1),
+      // The seed has a group session tomorrow at 09:00–10:00 UTC; avoid a
+      // time-of-day-dependent collision when this test runs during that hour.
+      ...slot(2),
     }),
   );
   assert.equal(independent.status, 200, JSON.stringify(independent));

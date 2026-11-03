@@ -201,6 +201,13 @@ watch(
 )
 const save = (complete: boolean) => {
   if (staleDraft.value || locked.value) return
+  if (complete && entries.value.some((entry) => !entry.completed)) {
+    setError.value = l(
+      'Check every prescribed set before finishing. Save progress to return later.',
+      'حدد كل مجموعة موصوفة قبل الإنهاء. احفظ التقدم للعودة لاحقاً.',
+    )
+    return
+  }
   if (
     entries.value.some(
       (e) =>
@@ -451,7 +458,7 @@ onMounted(load)
               @click="save(false)"
             >
               {{ l('Save progress', 'حفظ التقدم') }}</button
-            ><button class="button small" :disabled="locked || !entries.some((e) => e.completed)">
+            ><button class="button small" :disabled="locked || setsDone !== entries.length">
               {{ l('Finish session', 'إنهاء الحصة') }}
             </button>
           </div>
