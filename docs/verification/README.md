@@ -1,5 +1,9 @@
 # Verification record
 
+## Phone schedule and completed-download source checks — 3 November 2026
+
+The focused workout-scheduler integration suite passed 4/4 against a disposable Docker database, including the phone calendar's plan-occurrence exclusion while the web calendar keeps its existing view. The mobile SQLite queue suite passed 23/23, including cleanup isolation for pending work, an active group event and another account. Mobile and backend TypeScript passed; the OpenAPI viewer suite passed 2/2. Documentation validation passed two fixtures, 2,324 local links and 722 heading links. Physical phone rendering, tap flow, offline restart and actual clearing on the founder's device remain pending; no Android rebuild or browser suite was run.
+
 ## Completed-workout CI regression — 3 November 2026
 
 GitHub Checks for `8a16ab7` passed the web job and failed two backend integration steps: `test:programming` and `test:delegated-sessions`, both returning `incomplete_entries` for fixtures that attempted to finish with unchecked sets. After updating those cases, the focused local Docker suites passed: programming 4/4 and delegated sessions 1/1. These results cover the affected backend paths; the new GitHub run remains to be checked after push.

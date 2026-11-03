@@ -410,6 +410,15 @@ test("weekly and opt-in automatic preparation preserve one unresolved position, 
   assert.ok(
     (await web.json()).items.some((e: any) => e.id === automatic.occurrence_id),
   );
+  const fieldSchedule = await fetch(
+    apiOrigin +
+      `/v1/institution/calendar?includeDayOnly=true&excludePlanWorkouts=true&view=trainer&from=${autoDay}&to=${autoDay}`,
+    { headers: { Cookie: auth } },
+  );
+  assert.equal(fieldSchedule.status, 200);
+  assert.ok(
+    !(await fieldSchedule.json()).items.some((e: any) => e.id === automatic.occurrence_id),
+  );
   const restPrescription = structuredClone(sourceVersion.prescription) as any;
   const resting = restPrescription.days.find((d: any) => !d.restDay);
   resting.restDay = true;

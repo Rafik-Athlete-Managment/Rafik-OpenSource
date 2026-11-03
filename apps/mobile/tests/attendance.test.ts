@@ -1037,6 +1037,61 @@ test('a start acknowledged with another session needs review and does not block 
   }
 })
 
+test('clear completed downloads keeps pending work, active groups and other accounts', async () => {
+  const sqlite = new DatabaseSync(':memory:')
+  const store = new FieldStore(adapter(sqlite))
+  const scope = { ...owner, institution: randomUUID() }
+  const event = randomUUID()
+  const p: FieldWorkoutPackage = {
+    id: randomUUID(),
+    institution_id: scope.institution,
+    assignment_id: randomUUID(),
+    member_id: randomUUID(),
+    member_name: 'Synthetic athlete',
+    occurrence_id: randomUUID(),
+    title: 'Strength plan',
+    day_id: randomUUID(),
+    day_name: 'Field work',
+    starts_at: '2020-01-01T10:00:00Z',
+    training_date: '2020-01-01',
+    timezone: 'UTC',
+    allow_provisional_start: true,
+    can_record: false,
+    exercises: [{ key: 'run', name: 'Run', name_ar: 'جري', kind: 'timed', rest: 30, note: '' }],
+    entries: [{
+      exercise_key: 'run', set_index: 0, reps: 0, load: 0, unit: 'kg',
+      seconds: 45, metres: null, effort: null, completed: true,
+    }],
+    session: { id: randomUUID(), version: 2, note: '', completed_at: '2020-01-01T11:00:00Z' },
+  }
+  try {
+    await store.initialize()
+    await store.workouts.put(scope, p)
+    const pending = { ...p, id: randomUUID(), can_record: true, session: null }
+    await store.workouts.put(scope, pending)
+    await store.workouts.start(scope, pending.id, randomUUID(), randomUUID())
+    const other = { ...scope, user: 'other-coach' }
+    await store.workouts.put(other, { ...p, id: randomUUID() })
+    const grouped = {
+      ...p,
+      id: randomUUID(),
+      assignment_id: null,
+      occurrence_id: event,
+      group: { event_id: event, roster_revision: 1 },
+    }
+    await store.workouts.put(scope, grouped)
+    await store.saveRoster(scope, { ...roster, event: { ...roster.event, id: event } })
+    assert.equal(await store.workouts.clearCompleted(scope), 1)
+    assert.equal(await store.workouts.countAll(scope), 2)
+    assert.equal(await store.workouts.countAll(other), 1)
+    await store.remove(scope, event)
+    assert.equal(await store.workouts.clearCompleted(scope), 1)
+    assert.equal(await store.workouts.countAll(scope), 1)
+  } finally {
+    sqlite.close()
+  }
+})
+
 test('group participant sheets use separate local identities and the group start route', async () => {
   const sqlite = new DatabaseSync(':memory:')
   const store = new FieldStore(adapter(sqlite))

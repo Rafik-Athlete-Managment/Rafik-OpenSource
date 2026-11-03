@@ -1,5 +1,7 @@
 # Rafik architecture
 
+The phone schedule reads timed calendar events and plan-workout packages separately. A plan workout has a calendar occurrence for timing and collision authority, but the phone's calendar request excludes those occurrences so the workout package is its sole recording entry. The web calendar may still show the occurrence for planning. Device cleanup removes only acknowledged completed workout copies without pending edits; it never deletes server records.
+
 ## Native individual workouts — unreleased beta.3
 
 Completion now has one invariant across device, web and SQL validation: every prescribed set must be checked with a valid actual result before a session can become complete. Partial progress saves and closing a recorder leave the session editable. The phone can clear an invalid final intent only when it was never sent or the server definitively rejected that exact incomplete write; uncertain/sending writes, blocked records and confirmed completions are not silently reopened. The new forward migration replaces `validate_session_actuals` without changing stored session IDs or historical results. Downloaded copies still require the server-issued provisional-start permission and the scheduled time/date; opening an existing local copy does not require a browse refresh.

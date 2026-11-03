@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Phone schedule deduplication and completed downloads — 3 November 2026
+
+An individual plan position creates a calendar occurrence for timing and collision authority. The phone had displayed that occurrence as a training event alongside the workout package, leading to two incompatible recording paths. Its calendar feed now excludes plan occurrences; a matching saved workout also hides an older cached event copy. The workout package remains the one recording entry. Settings → Connection & Sync now offers a confirmed local cleanup for server-completed sheets. Pending/uncertain edits, incomplete sessions, active group event sheets and other account scopes stay untouched. See [Android development](android.md), [validation](../testing/instance-validation.md) and [verification](../verification/README.md).
+
 ## Completed-workout CI regression — 3 November 2026
 
 The beta.3 backend CI job failed in the programming and delegated-session integration suites because older cases completed sessions with unchecked entries. The cases now assert the intended rejection, then finish and correct workouts with every prescribed set complete. The web CI job was already green; no web behavior changed. See [verification](../verification/README.md).

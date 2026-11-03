@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show a scheduled individual plan workout only once in the coach phone Schedule, as a workout sheet rather than a separately loggable event. Connection & Sync can clear server-confirmed completed device sheets while retaining pending edits, active group events and other accounts' records.
+
 - Align backend programming and delegated-workout integration cases with the completed-set rule. They now prove that an incomplete Finish is rejected while complete records, history and corrections still work. No product behavior changed.
 
 - Align workout completion across the phone, web and database: all prescribed sets must be recorded before Finish, while partial progress remains editable and can be resumed. Safely reopen only an unsent or definitively rejected incomplete phone Finish; uncertain uploads and confirmed completions still require review. Opening a saved phone workout now reads its local copy without waiting for the online browser, and the Schedule filter uses a bilingual visual calendar. Shared phone action layouts make primary actions full width and paired actions balanced. Physical-device layout and offline acceptance remain pending.

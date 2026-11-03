@@ -312,6 +312,9 @@ export async function calendar(actor: Actor, id: string, q: URLSearchParams) {
     >`SELECT ${from}::date::timestamp AT TIME ZONE ${zone} AS start,(${to}::date+1)::timestamp AT TIME ZONE ${zone} AS end`;
     const where = {
       institution_id: id,
+      ...(q.get("excludePlanWorkouts") === "true"
+        ? { institution_workout_positions: { is: null } }
+        : {}),
       OR: [
         {
           timing_mode: "timed",

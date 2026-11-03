@@ -3,6 +3,7 @@ import { useLanguage } from './Language'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   AppState,
   BackHandler,
   Pressable,
@@ -190,6 +191,9 @@ function SignedIn({
   const [accountOpen, setAccountOpen] = useState(false)
   const [settingsPage, setSettingsPage] = useState<'main' | 'connection'>('main')
   const [syncSignal, setSyncSignal] = useState(0)
+  const [savedRefreshSignal, setSavedRefreshSignal] = useState(0)
+  const [clearingCompleted, setClearingCompleted] = useState(false)
+  const [clearResult, setClearResult] = useState('')
   const [connectionInfo, setConnectionInfo] = useState<CapabilityCheck | null>(null)
   const [connectionError, setConnectionError] = useState('')
   const [savedEventCount, setSavedEventCount] = useState(0)
@@ -319,6 +323,42 @@ function SignedIn({
       if (alive.current) setConnectionError(failureText(error))
     }
   }
+  function confirmClearCompleted() {
+    if (!institution || clearingCompleted) return
+    Alert.alert(
+      l('Clear completed downloads?', 'مسح السجلات المكتملة المحمّلة؟'),
+      l(
+        'Only server-confirmed completed workout sheets with no unsent changes will be removed from this phone. Active group events stay available.',
+        'ستُمسح من هذا الهاتف سجلات التمارين المكتملة والمؤكدة من الخادم فقط، إذا لم تتضمن تغييرات غير مرسلة. ستبقى المواعيد الجماعية النشطة متاحة.',
+      ),
+      [
+        { text: l('Cancel', 'إلغاء'), style: 'cancel' },
+        {
+          text: l('Clear', 'مسح'),
+          style: 'destructive',
+          onPress: () => {
+            setClearingCompleted(true)
+            setClearResult('')
+            const owner = { instance: client.instance, user: client.user.id, institution }
+            void store.workouts
+              .clearCompleted(owner)
+              .then(async (count) => {
+                setClearResult(
+                  l(
+                    `${count} completed sheets cleared.`,
+                    `تم مسح ${count} من سجلات التمارين المكتملة.`,
+                  ),
+                )
+                setSavedRefreshSignal((value) => value + 1)
+                await refreshConnection()
+              })
+              .catch((error) => setClearResult(failureText(error)))
+              .finally(() => setClearingCompleted(false))
+          },
+        },
+      ],
+    )
+  }
   useEffect(() => {
     if (accountOpen && settingsPage === 'connection') void refreshConnection()
   }, [accountOpen, settingsPage, institution])
@@ -416,6 +456,18 @@ function SignedIn({
               'تبقى عملية الإرسال الفاشلة على هذا الجهاز للمراجعة. لا يحذف التحديث العمل المسجل.',
             )}
           </Text>
+          <Button
+            title={
+              clearingCompleted
+                ? l('Clearing…', 'جارٍ المسح…')
+                : l('Clear completed downloads', 'مسح السجلات المكتملة')
+            }
+            disabled={clearingCompleted || fieldBusy || closing || loading}
+            onPress={confirmClearCompleted}
+            styles={styles}
+            danger
+          />
+          {clearResult ? <Text style={styles.hint}>{clearResult}</Text> : null}
         </>
       ) : (
         <>
@@ -575,6 +627,7 @@ function SignedIn({
             connectionState={connectionState}
             onConnectivity={setConnectionState}
             settingsSyncSignal={syncSignal}
+            savedRefreshSignal={savedRefreshSignal}
             onSettingsSyncComplete={() => {
               setSyncRequested(false)
               if (accountOpen && settingsPage === 'connection') void refreshConnection()

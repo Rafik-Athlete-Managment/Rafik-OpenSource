@@ -228,7 +228,7 @@
       "get": {
         "tags": ["Coach field work"],
         "summary": "Read a bounded schedule or one authorized event",
-        "description": "Send view=trainer and a bounded from/to calendar-date window, or supply id to read one authorized event detail. A detail includes can_reschedule: true only for a scheduled, timed, unrecorded event that is not bound to an individual plan workout; a missed event may move to a new future slot through the web workflow. The server checks current assignment and membership. For online-only correction history, send id, historyOnly=true, historyMember, historyKind (attendance or results) and historyOffset. Each read rechecks event authority; the selected athlete must be an event participant. History returns up to 25 items and next offset, including the original entry and later corrections with recorded actor, timestamp and submitted values. Unreleased beta.3 adds explicit includeDayOnly opt-in; published beta.2 Android clients retain timed-only attendance reads and need a matching beta.3 upgrade for workout capture.",
+        "description": "Send view=trainer and a bounded from/to calendar-date window, or supply id to read one authorized event detail. A detail includes can_reschedule: true only for a scheduled, timed, unrecorded event that is not bound to an individual plan workout; a missed event may move to a new future slot through the web workflow. The server checks current assignment and membership. For online-only correction history, send id, historyOnly=true, historyMember, historyKind (attendance or results) and historyOffset. Each read rechecks event authority; the selected athlete must be an event participant. History returns up to 25 items and next offset, including the original entry and later corrections with recorded actor, timestamp and submitted values. Unreleased beta.3 adds explicit includeDayOnly opt-in and excludePlanWorkouts for the phone event feed; published beta.2 Android clients retain timed-only attendance reads and need a matching beta.3 upgrade for workout capture.",
         "parameters": [
           {
             "name": "view",
@@ -322,6 +322,15 @@
               "default": false
             },
             "description": "Opt in to day-only training events. Their starts_at/ends_at are null; use training_date/timezone. Without this flag lists remain timed-only; requesting a day-only detail returns day_only_event_requires_update."
+          },
+          {
+            "name": "excludePlanWorkouts",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "On calendar lists, omit plan workout occurrences so a phone client can show their workout packages as the sole recording entry. Detail reads and default web calendar lists are unchanged."
           }
         ],
         "responses": {

@@ -57,6 +57,7 @@ export function InstitutionScreen({
   onEventOpen,
   externalNotice,
   settingsSyncSignal,
+  savedRefreshSignal,
   onSettingsSyncComplete,
   connectionState,
   onConnectivity,
@@ -72,6 +73,7 @@ export function InstitutionScreen({
   onEventOpen: () => void
   externalNotice?: boolean
   settingsSyncSignal?: number
+  savedRefreshSignal?: number
   onSettingsSyncComplete?: () => void
   connectionState: 'unknown' | 'online' | 'offline'
   onConnectivity: (state: 'online' | 'offline') => void
@@ -233,6 +235,12 @@ export function InstitutionScreen({
         .catch((error) => setSavedError(failureText(error)))
     }
   }, [homeTab, workoutView, selected, savedLimit])
+  useEffect(() => {
+    if (!savedRefreshSignal) return
+    void Promise.all([refreshSavedDay(), refreshSavedLibrary()]).catch((error) =>
+      setSavedError(failureText(error)),
+    )
+  }, [savedRefreshSignal])
   async function refreshWorkouts(day: string, offset = 0) {
     if (workoutFlight.current || closingRef.current) return
     workoutFlight.current = true
@@ -284,6 +292,7 @@ export function InstitutionScreen({
         zone,
         view: 'trainer',
         offset: String(offset),
+        excludePlanWorkouts: 'true',
       })
       const result = await client.request<{ items: unknown[]; next: number | null }>(
         `/institution/calendar?${query}`,
@@ -577,13 +586,6 @@ export function InstitutionScreen({
     ...cached.filter((c) => !events.some((e) => e.id === c.event.id)).map((c) => c.event),
   ]
   const onSelectedDay = (event: FieldEvent) => localDate(new Date(event.starts_at)) === selectedDay
-  const eventList = availableEvents.filter(
-    (event) =>
-      onSelectedDay(event) &&
-      (recordFilter === 'all' ||
-        (recordFilter === 'training' && event.kind === 'training') ||
-        (recordFilter === 'assessment' && event.kind === 'assessment')),
-  )
   const savedWorkoutIds = new Set(savedDayWorkouts.map((item) => item.package.id))
   const workoutList =
     recordFilter === 'all' || recordFilter === 'workout'
@@ -596,8 +598,21 @@ export function InstitutionScreen({
           ),
         ]
       : []
+  // A plan workout also has a calendar occurrence for collision checks. Show its workout sheet once.
+  const workoutOccurrenceIds = new Set([
+    ...savedDayWorkouts.map((item) => item.package.occurrence_id),
+    ...dayWorkouts.map((item) => item.occurrence_id),
+  ])
+  const eventList = availableEvents.filter(
+    (event) =>
+      !workoutOccurrenceIds.has(event.id) &&
+      onSelectedDay(event) &&
+      (recordFilter === 'all' ||
+        (recordFilter === 'training' && event.kind === 'training') ||
+        (recordFilter === 'assessment' && event.kind === 'assessment')),
+  )
   const hasDayActivities =
-    availableEvents.some(onSelectedDay) ||
+    availableEvents.some((event) => !workoutOccurrenceIds.has(event.id) && onSelectedDay(event)) ||
     savedDayWorkouts.some((item) => item.package.training_date === selectedDay) ||
     dayWorkouts.some((item) => item.training_date === selectedDay)
   const list = [

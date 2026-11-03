@@ -69,6 +69,27 @@ export class WorkoutStore {
         )?.n || 0,
     )
   }
+  /** Removes only server-confirmed finishes with no unsent edits or active group event. */
+  clearCompleted(owner: Owner) {
+    return this.lane(async (db) => {
+      const key = ownerKey(owner)
+      const result = (await db.runAsync(
+        `DELETE FROM field_workouts WHERE owner=?
+         AND json_type(payload,'$.session.completed_at')='text'
+         AND json_extract(payload,'$.pending') IS NULL
+         AND json_extract(payload,'$.intent') IS NULL
+         AND json_extract(payload,'$.completionIntent') IS NULL
+         AND json_extract(payload,'$.blocked')=0
+         AND json_extract(payload,'$.localRevision')=json_extract(payload,'$.syncedRevision')
+         AND NOT EXISTS (
+           SELECT 1 FROM attendance_events e WHERE e.owner=field_workouts.owner
+           AND e.id=json_extract(field_workouts.payload,'$.package.group.event_id')
+         )`,
+        key,
+      )) as { changes: number }
+      return result.changes
+    })
+  }
   groupEventIds(owner: Owner) {
     return this.lane(async (db) =>
       (
