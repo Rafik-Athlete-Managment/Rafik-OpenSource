@@ -44,6 +44,40 @@ export class WorkoutStore {
       ).map((x) => JSON.parse(x.payload) as WorkoutRecord),
     )
   }
+  /** Lists every locally downloaded sheet for Saved, including group participants. */
+  listAll(owner: Owner, offset = 0, limit = 20) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? ORDER BY json_extract(payload,'$.package.training_date') DESC, id LIMIT ? OFFSET ?",
+          ownerKey(owner),
+          limit,
+          offset,
+        )
+      ).map((item) => JSON.parse(item.payload) as WorkoutRecord),
+    )
+  }
+  countAll(owner: Owner) {
+    return this.lane(
+      async (db) =>
+        (
+          await db.getFirstAsync<{ n: number }>(
+            'SELECT count(*) AS n FROM field_workouts WHERE owner=?',
+            ownerKey(owner),
+          )
+        )?.n || 0,
+    )
+  }
+  groupEventIds(owner: Owner) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ event_id: string }>(
+          "SELECT DISTINCT json_extract(payload,'$.package.group.event_id') AS event_id FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group.event_id')='text'",
+          ownerKey(owner),
+        )
+      ).map((row) => row.event_id),
+    )
+  }
   /** Saved solo workouts for one schedule day remain visible without a server connection. */
   dayList(owner: Owner, day: string) {
     return this.lane(async (db) =>

@@ -7,6 +7,7 @@ import {
   Alert,
   Animated,
   AppState,
+  BackHandler,
   Pressable,
   ScrollView,
   Text,
@@ -16,6 +17,7 @@ import {
 import { NativeClient, operationId } from './native'
 import {
   ApiFailure,
+  ConnectionFailure,
   failureText,
   fieldEvent,
   fieldRoster,
@@ -33,8 +35,10 @@ import type { FieldStore } from './store'
 import { AttendanceSync } from './sync'
 import { Button, Icon, displayDate, localDate, type Styles } from './ui'
 import { ScoreEditor } from './ScoreEditor'
-import { checkCapabilities, type CapabilityCheck } from './capabilities'
 import { WorkoutsScreen } from './WorkoutsScreen'
+import { FieldBottomNav, type FieldTab } from './FieldBottomNav'
+import { FieldEmptyState } from './FieldEmptyState'
+import { ConnectionStatus } from './ConnectionStatus'
 import { downloadGroupEvent } from './group-download'
 import type { FieldWorkoutPackage, WorkoutRecord } from './workout-model'
 import type { WorkoutAgenda } from '@rafik/shared/contracts'
@@ -51,6 +55,10 @@ export function InstitutionScreen({
   onAccountPress,
   onEventOpen,
   externalNotice,
+  settingsSyncSignal,
+  onSettingsSyncComplete,
+  connectionState,
+  onConnectivity,
 }: {
   client: NativeClient
   store: FieldStore
@@ -62,6 +70,10 @@ export function InstitutionScreen({
   onAccountPress: () => void
   onEventOpen: () => void
   externalNotice?: boolean
+  settingsSyncSignal?: number
+  onSettingsSyncComplete?: () => void
+  connectionState: 'unknown' | 'online' | 'offline'
+  onConnectivity: (state: 'online' | 'offline') => void
 }) {
   const { t, l, language } = useLanguage()
   const [owner] = useState<Owner>(() => ({
@@ -86,10 +98,21 @@ export function InstitutionScreen({
   const [showMessageDetails, setShowMessageDetails] = useState(false)
   useEffect(() => setShowMessageDetails(false), [message])
   const [workoutView, setWorkoutView] = useState(false)
+  const [workoutDetail, setWorkoutDetail] = useState(false)
+  const [homeTab, setHomeTab] = useState<FieldTab>('schedule')
   const [soloPackage, setSoloPackage] = useState<FieldWorkoutPackage | null>(null)
   const [soloCloseSignal, setSoloCloseSignal] = useState(0)
   const [dayWorkouts, setDayWorkouts] = useState<FieldWorkoutPackage[]>([])
   const [savedDayWorkouts, setSavedDayWorkouts] = useState<WorkoutRecord[]>([])
+  const [savedRecords, setSavedRecords] = useState<WorkoutRecord[]>([])
+  const [savedRecordTotal, setSavedRecordTotal] = useState(0)
+  const [savedGroupIds, setSavedGroupIds] = useState<string[]>([])
+  const [savedReady, setSavedReady] = useState(false)
+  const [savedError, setSavedError] = useState('')
+  const [savedLimit, setSavedLimit] = useState(20)
+  const [savedFilter, setSavedFilter] = useState<'all' | 'workouts' | 'events' | 'assessments'>(
+    'all',
+  )
   const [workoutTotal, setWorkoutTotal] = useState(0)
   const [workoutFetched, setWorkoutFetched] = useState(0)
   const [workoutLoading, setWorkoutLoading] = useState(false)
@@ -123,31 +146,10 @@ export function InstitutionScreen({
   const [latestFirst, setLatestFirst] = useState(false)
   const [draftLatestFirst, setDraftLatestFirst] = useState(false)
   const [visibleCount, setVisibleCount] = useState(5)
-  const [showOtherSaved, setShowOtherSaved] = useState(false)
-  const [showDeviceOptions, setShowDeviceOptions] = useState(false)
   const [workoutsOpened, setWorkoutsOpened] = useState(false)
+  const [showDeviceOptions, setShowDeviceOptions] = useState(false)
   const [workoutPersisting, setWorkoutPersisting] = useState(false)
   const [groupPersisting, setGroupPersisting] = useState(false)
-  const [compatibility, setCompatibility] = useState<CapabilityCheck | null>(null)
-  const [compatibilityError, setCompatibilityError] = useState('')
-  const [showCompatibility, setShowCompatibility] = useState(false)
-  const [compatibilityAttempt, setCompatibilityAttempt] = useState(0)
-  useEffect(() => {
-    let active = true
-    setCompatibility(null)
-    setCompatibilityError('')
-    void checkCapabilities((path) => client.request(path)).then(
-      (result) => {
-        if (active) setCompatibility(result)
-      },
-      (error) => {
-        if (active) setCompatibilityError(failureText(error))
-      },
-    )
-    return () => {
-      active = false
-    }
-  }, [client, compatibilityAttempt])
   const [search, setSearch] = useState('')
   const [reviewing, setReviewing] = useState(false)
   const [now, setNow] = useState(Date.now)
@@ -201,13 +203,35 @@ export function InstitutionScreen({
           setMessage(remaining ? `${stateText[remaining.state]}. ${remaining.error || ''}` : '')
       }
     } catch (error) {
-      if (alive.current) setMessage(failureText(error))
+      if (error instanceof ConnectionFailure) onConnectivity('offline')
+      else if (alive.current) setMessage(failureText(error))
     }
   }
   async function refreshSavedDay(day = dayRef.current) {
     const saved = await store.workouts.dayList(owner, day)
     if (alive.current && dayRef.current === day) setSavedDayWorkouts(saved)
   }
+  async function refreshSavedLibrary(limit = savedLimit) {
+    const [records, total, groupIds] = await Promise.all([
+      store.workouts.listAll(owner, 0, limit),
+      store.workouts.countAll(owner),
+      store.workouts.groupEventIds(owner),
+    ])
+    if (alive.current) {
+      setSavedRecords(records)
+      setSavedRecordTotal(total)
+      setSavedGroupIds(groupIds)
+    }
+  }
+  useEffect(() => {
+    if (homeTab === 'saved' && !workoutView && !selected) {
+      setSavedError('')
+      void reloadLocal()
+        .then(() => refreshSavedLibrary())
+        .then(() => setSavedReady(true))
+        .catch((error) => setSavedError(failureText(error)))
+    }
+  }, [homeTab, workoutView, selected, savedLimit])
   async function refreshWorkouts(day: string, offset = 0) {
     if (workoutFlight.current || closingRef.current) return
     workoutFlight.current = true
@@ -237,7 +261,8 @@ export function InstitutionScreen({
           await refreshSavedDay(day)
         }
       }
-      if (alive.current && dayRef.current === day) setWorkoutError(failureText(error))
+      if (error instanceof ConnectionFailure) onConnectivity('offline')
+      else if (alive.current && dayRef.current === day) setWorkoutError(failureText(error))
     } finally {
       workoutFlight.current = false
       if (alive.current) setWorkoutLoading(false)
@@ -279,7 +304,8 @@ export function InstitutionScreen({
         }
         await reloadLocal()
       }
-      if (alive.current && !selectedRef.current)
+      if (error instanceof ConnectionFailure) onConnectivity('offline')
+      else if (alive.current && !selectedRef.current)
         setMessage(`${failureText(error)} Previously opened events remain below.`)
     } finally {
       if (!offset) await refreshWorkouts(day)
@@ -569,6 +595,10 @@ export function InstitutionScreen({
           ),
         ]
       : []
+  const hasDayActivities =
+    availableEvents.some(onSelectedDay) ||
+    savedDayWorkouts.some((item) => item.package.training_date === selectedDay) ||
+    dayWorkouts.some((item) => item.training_date === selectedDay)
   const list = [
     ...eventList.map((event) => ({
       kind: 'event' as const,
@@ -583,7 +613,52 @@ export function InstitutionScreen({
       workout,
     })),
   ].sort((a, b) => (latestFirst ? b.at - a.at : a.at - b.at))
-  const otherSaved = cached.filter((item) => !onSelectedDay(item.event))
+  // A group event is one Saved card even though its participant sheets have separate device records.
+  const groupSheets = savedRecords.filter((record) => !!record.package.group)
+  const groupIds = new Set(savedGroupIds)
+  const savedCards = [
+    ...cached.map((item) => ({
+      kind: 'event' as const,
+      id: item.event.id,
+      at: Date.parse(item.event.starts_at),
+      category: (item.event.kind === 'assessment'
+        ? 'assessments'
+        : groupIds.has(item.event.id)
+          ? 'workouts'
+          : 'events') as 'assessments' | 'workouts' | 'events',
+      event: item,
+    })),
+    ...savedRecords
+      .filter((record) => !record.package.group)
+      .map((record) => ({
+        kind: 'workout' as const,
+        id: record.package.id,
+        at: record.package.starts_at
+          ? Date.parse(record.package.starts_at)
+          : Date.parse(`${record.package.training_date}T12:00:00`),
+        category: 'workouts' as const,
+        record,
+      })),
+    ...groupSheets
+      .filter(
+        (record, index) =>
+          !cached.some((item) => item.event.id === record.package.group!.event_id) &&
+          groupSheets.findIndex(
+            (item) => item.package.group!.event_id === record.package.group!.event_id,
+          ) === index,
+      )
+      .map((record) => ({
+        kind: 'group' as const,
+        id: record.package.group!.event_id,
+        at: record.package.starts_at
+          ? Date.parse(record.package.starts_at)
+          : Date.parse(`${record.package.training_date}T12:00:00`),
+        category: 'workouts' as const,
+        record,
+      })),
+  ]
+    .filter((item) => savedFilter === 'all' || item.category === savedFilter)
+    .sort((a, b) => b.at - a.at)
   const filtered =
     roster?.people.filter(
       (p) =>
@@ -672,6 +747,27 @@ export function InstitutionScreen({
     setMessage('')
     setRefreshNotice('')
   }
+  useEffect(() => {
+    if (!selected || groupEvent || workoutView || accountOpen) return
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (eventStage === 'results') setEventStage('attendance')
+      else if (eventStage === 'attendance') setEventStage('preview')
+      else leaveEvent()
+      return true
+    })
+    return () => listener.remove()
+  }, [
+    selected,
+    groupEvent,
+    workoutView,
+    accountOpen,
+    eventStage,
+    editor,
+    saving,
+    draftSaving,
+    busy,
+    closing,
+  ])
   function refreshCurrent() {
     if (
       busy ||
@@ -684,7 +780,13 @@ export function InstitutionScreen({
     )
       return
     if (!selected) {
-      if (workoutView) {
+      if (homeTab === 'saved' && !workoutView) {
+        void sync()
+        setRefreshSignal((value) => value + 1)
+        void reloadLocal()
+          .then(() => refreshSavedLibrary())
+          .catch((error) => setMessage(failureText(error)))
+      } else if (workoutView) {
         setHeaderRefreshing(true)
         setRefreshSignal((value) => value + 1)
       } else void refresh()
@@ -730,13 +832,36 @@ export function InstitutionScreen({
     setFiltersOpen(false)
     void refresh(0, false, day)
   }
+  function switchTab(tab: FieldTab) {
+    if (tab === homeTab || workoutPersisting || groupPersisting) return
+    setHomeTab(tab)
+    setWorkoutView(tab === 'workouts')
+    if (tab === 'workouts') setWorkoutsOpened(true)
+  }
+  useEffect(() => {
+    if (selected || workoutDetail || homeTab === 'schedule') return
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      switchTab('schedule')
+      return true
+    })
+    return () => listener.remove()
+  }, [selected, workoutDetail, homeTab, workoutPersisting, groupPersisting])
+  useEffect(() => {
+    if (!settingsSyncSignal) return
+    void sync().finally(() => {
+      setWorkoutsOpened(true)
+      setRefreshSignal((value) => value + 1)
+      void refreshSavedLibrary().catch((error) => setMessage(failureText(error)))
+    })
+  }, [settingsSyncSignal])
   return (
     <View style={{ flex: 1 }}>
-      {!selected && !workoutView ? (
+      {!selected && (!workoutView || (!workoutDetail && !soloPackage)) ? (
         <View style={styles.appBar}>
           <View style={styles.topbar}>
             <Text style={styles.kicker}>{l('RAFIK FIELD', 'رفيق الميداني')}</Text>
             <View style={styles.actions}>
+              <ConnectionStatus state={connectionState} styles={styles} />
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={l('Refresh', 'تحديث')}
@@ -771,6 +896,7 @@ export function InstitutionScreen({
                 : soloPackage.day_name
               : l('Workouts', 'التمارين')}
           </Text>
+          <ConnectionStatus state={connectionState} styles={styles} compact />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={l('Refresh workouts', 'تحديث التمارين')}
@@ -785,10 +911,11 @@ export function InstitutionScreen({
             accessibilityLabel={l('Close workouts', 'إغلاق التمارين')}
             disabled={workoutPersisting || closing}
             onPress={() => {
-              setWorkoutView(false)
+              setWorkoutView(homeTab === 'workouts')
               setSoloPackage(null)
               setSoloCloseSignal((n) => n + 1)
               void refreshSavedDay()
+              if (homeTab === 'saved') void refreshSavedLibrary()
             }}
             style={styles.headerIcon}
           >
@@ -815,6 +942,7 @@ export function InstitutionScreen({
                     : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')}
             </Text>
           </View>
+          <ConnectionStatus state={connectionState} styles={styles} compact />
           {groupEvent || eventStage !== 'preview' ? (
             <Pressable
               accessibilityRole="button"
@@ -874,7 +1002,7 @@ export function InstitutionScreen({
       {refreshNotice && !message && !externalNotice ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={l('Dismiss refresh warning', 'إخفاء تنبيه التحديث')}
+          accessibilityLabel={l('Dismiss notice', 'إخفاء التنبيه')}
           onPress={() => setRefreshNotice('')}
           style={styles.noticeToast}
         >
@@ -915,12 +1043,19 @@ export function InstitutionScreen({
             initialPackage={soloPackage}
             closeSignal={soloCloseSignal}
             onBackToSchedule={() => {
-              setWorkoutView(false)
+              setWorkoutView(homeTab === 'workouts')
               setSoloPackage(null)
               void refreshSavedDay()
+              if (homeTab === 'saved') void refreshSavedLibrary()
             }}
+            onDetailChange={setWorkoutDetail}
+            onConnectivity={onConnectivity}
+            connectionState={connectionState}
             refreshSignal={refreshSignal}
-            onRefreshComplete={() => setHeaderRefreshing(false)}
+            onRefreshComplete={() => {
+              setHeaderRefreshing(false)
+              onSettingsSyncComplete?.()
+            }}
           />
         </View>
       ) : null}
@@ -965,6 +1100,8 @@ export function InstitutionScreen({
             }
             eventFinishing={finishing}
             eventCompleted={completed}
+            onConnectivity={onConnectivity}
+            connectionState={connectionState}
           />
         </View>
       ) : null}
@@ -1037,9 +1174,14 @@ export function InstitutionScreen({
       <ScrollView
         style={{
           display:
-            workoutView || groupEvent || (selected && eventStage === 'preview') ? 'none' : 'flex',
+            (homeTab !== 'schedule' && !selected) ||
+            workoutView ||
+            groupEvent ||
+            (selected && eventStage === 'preview')
+              ? 'none'
+              : 'flex',
         }}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, !selected && { paddingBottom: 96 }]}
         keyboardShouldPersistTaps="handled"
       >
         {!selected ? (
@@ -1218,17 +1360,50 @@ export function InstitutionScreen({
               />
             ) : null}
             {!list.length && !busy && !workoutLoading && !workoutError && !message ? (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>
-                  {l('Nothing scheduled for this day', 'لا توجد مواعيد لهذا اليوم')}
-                </Text>
-                <Text style={styles.hint}>
-                  {l(
-                    'Choose another date or refresh when connected.',
-                    'اختر يوماً آخر أو حدّث عند الاتصال.',
-                  )}
-                </Text>
-              </View>
+              <FieldEmptyState
+                icon="event"
+                title={
+                  connectionState === 'offline' && !hasDayActivities
+                    ? l('No saved activities for this day', 'لا توجد أنشطة محفوظة لهذا اليوم')
+                    : hasDayActivities && recordFilter !== 'all'
+                      ? l('No activities match this filter', 'لا توجد أنشطة تطابق هذه التصفية')
+                      : l('Nothing scheduled for this day', 'لا توجد مواعيد لهذا اليوم')
+                }
+                description={
+                  connectionState === 'offline' && !hasDayActivities
+                    ? l(
+                        'Your full schedule will return when connected.',
+                        'سيظهر جدولك الكامل عند الاتصال.',
+                      )
+                    : hasDayActivities && recordFilter !== 'all'
+                      ? l(
+                          'Show another activity type or all activities.',
+                          'اعرض نوعاً آخر أو كل الأنشطة.',
+                        )
+                      : l(
+                          'Choose another date to see your field activities.',
+                          'اختر يوماً آخر لعرض أنشطتك الميدانية.',
+                        )
+                }
+                action={
+                  connectionState === 'offline' && !hasDayActivities
+                    ? undefined
+                    : hasDayActivities && recordFilter !== 'all'
+                      ? l('Change filter', 'تغيير التصفية')
+                      : l('Choose a date', 'اختر تاريخاً')
+                }
+                onAction={
+                  connectionState === 'offline' && !hasDayActivities
+                    ? undefined
+                    : () => {
+                        setDraftDay(selectedDay)
+                        setDraftRecordFilter(recordFilter)
+                        setDraftLatestFirst(latestFirst)
+                        setFiltersOpen(true)
+                      }
+                }
+                styles={styles}
+              />
             ) : null}
             {workoutError ? (
               <Pressable
@@ -1244,139 +1419,6 @@ export function InstitutionScreen({
                 </Text>
                 <Icon name="close" styles={styles} size={18} />
               </Pressable>
-            ) : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={l(
-                'Browse saved and other workouts',
-                'تصفح التمارين المحفوظة والأخرى',
-              )}
-              onPress={() => {
-                setSoloPackage(null)
-                setWorkoutsOpened(true)
-                setWorkoutView(true)
-              }}
-              style={{ minHeight: 44, justifyContent: 'center' }}
-            >
-              <View style={[styles.actions, { alignItems: 'center' }]}>
-                <Text style={styles.link}>{l('Browse other workouts', 'تصفح تمارين أخرى')}</Text>
-                <Icon name="forward" styles={styles} size={18} />
-              </View>
-            </Pressable>
-            {otherSaved.length ? (
-              <>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: showOtherSaved }}
-                  onPress={() => setShowOtherSaved((open) => !open)}
-                  style={{ minHeight: 44, justifyContent: 'center' }}
-                >
-                  <View style={[styles.actions, { alignItems: 'center' }]}>
-                    <Text style={styles.link}>
-                      {l('Other events saved on this phone', 'مواعيد أخرى محفوظة على الهاتف')} (
-                      {otherSaved.length})
-                    </Text>
-                    <Icon name={showOtherSaved ? 'collapse' : 'down'} styles={styles} size={18} />
-                  </View>
-                </Pressable>
-                {showOtherSaved
-                  ? otherSaved.map((item) => (
-                      <Pressable
-                        key={item.event.id}
-                        accessibilityRole="button"
-                        onPress={() => void openEvent(item.event.id)}
-                        style={styles.card}
-                      >
-                        <Text style={styles.cardTitle}>{item.event.title}</Text>
-                        <Text style={styles.hint}>
-                          {displayDate(item.event.starts_at, language)}
-                        </Text>
-                      </Pressable>
-                    ))
-                  : null}
-              </>
-            ) : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showCompatibility }}
-              onPress={() => setShowCompatibility((value) => !value)}
-              style={{ minHeight: 44, justifyContent: 'center' }}
-            >
-              <View style={[styles.actions, { alignItems: 'center' }]}>
-                <Text style={styles.hint}>
-                  {l('App connection details', 'تفاصيل اتصال التطبيق')}
-                </Text>
-                <Icon
-                  name={showCompatibility ? 'collapse' : 'down'}
-                  styles={styles}
-                  size={18}
-                  muted
-                />
-              </View>
-            </Pressable>
-            {showCompatibility ? (
-              <View style={styles.card}>
-                <Text style={styles.label}>{l('Field app features', 'ميزات تطبيق الميدان')}</Text>
-                {compatibilityError ? (
-                  <Text style={styles.message}>{t(compatibilityError)}</Text>
-                ) : compatibility?.state === 'legacy' ? (
-                  <Text style={styles.hint}>
-                    {l(
-                      'This server does not report field capabilities. Ask your institution to check the app and server versions. Saved work is retained.',
-                      'لا يعرض هذا الخادم إمكانات تطبيق الميدان. اطلب من مؤسستك التحقق من إصداري التطبيق والخادم. يبقى العمل المحفوظ محفوظاً.',
-                    )}
-                  </Text>
-                ) : compatibility?.state === 'available' ? (
-                  <>
-                    {(
-                      [
-                        ['attendance', l('Attendance', 'الحضور')],
-                        ['assessments', l('Assessment results', 'نتائج التقييم')],
-                        ['event_completion', l('Event completion', 'إنهاء الموعد')],
-                        [
-                          'individual_workout_recording',
-                          l('Individual workout recording', 'تسجيل التمرين الفردي'),
-                        ],
-                        [
-                          'group_workout_recording',
-                          l('Group workout recording', 'تسجيل التمرين الجماعي'),
-                        ],
-                        [
-                          'day_only_calendar',
-                          l('Day-only appointments in Schedule', 'مواعيد بتاريخ فقط في الجدول'),
-                        ],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <Text key={key} style={styles.hint}>
-                        {label}
-                        {': '}
-                        {compatibility.value.features[key]
-                          ? l('Supported', 'مدعوم')
-                          : l('Not available in the field app', 'غير متاح في تطبيق الميدان')}
-                      </Text>
-                    ))}
-                    <Text style={styles.hint}>
-                      {l(
-                        'Server support does not change your account permissions. Open a group training event to download participant sheets.',
-                        'دعم الخادم لا يغيّر صلاحيات حسابك. افتح موعد تدريب جماعي لتنزيل سجلات المشاركين.',
-                      )}
-                    </Text>
-                  </>
-                ) : (
-                  <ActivityIndicator
-                    accessibilityLabel={l(
-                      'Checking server compatibility',
-                      'جارٍ التحقق من توافق الخادم',
-                    )}
-                  />
-                )}
-                <Button
-                  title={l('Check again', 'تحقق مجدداً')}
-                  disabled={!compatibility && !compatibilityError}
-                  onPress={() => setCompatibilityAttempt((value) => value + 1)}
-                  styles={styles}
-                />
-              </View>
             ) : null}
           </>
         ) : (
@@ -1901,6 +1943,140 @@ export function InstitutionScreen({
           </>
         )}
       </ScrollView>
+      <ScrollView
+        style={{ display: homeTab === 'saved' && !selected && !workoutView ? 'flex' : 'none' }}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>{l('Saved', 'المحفوظات')}</Text>
+        <Text style={styles.hint}>
+          {l(
+            'Downloaded activities stay available on this device. Recorded changes may still need to sync.',
+            'تبقى الأنشطة المنزّلة متاحة على هذا الجهاز. قد تحتاج التغييرات المسجلة إلى مزامنة.',
+          )}
+        </Text>
+        <View style={styles.actions} accessibilityRole="tablist">
+          {(
+            [
+              ['all', l('All', 'الكل')],
+              ['workouts', l('Workouts', 'التمارين')],
+              ['events', l('Events', 'المواعيد')],
+              ['assessments', l('Assessments', 'التقييمات')],
+            ] as const
+          ).map(([value, label]) => (
+            <Pressable
+              key={value}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: savedFilter === value }}
+              onPress={() => setSavedFilter(value)}
+              style={[styles.filterChip, savedFilter === value && styles.filterChipActive]}
+            >
+              <Text style={savedFilter === value ? styles.link : styles.hint}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {savedCards.map((item) => {
+          const event = item.kind === 'event' ? item.event.event : null
+          const record = item.kind === 'event' ? null : item.record
+          const title = event
+            ? event.title
+            : item.kind === 'group'
+              ? record!.package.title
+              : language === 'ar' && record!.package.day_name_ar
+                ? record!.package.day_name_ar
+                : record!.package.day_name
+          const awaiting =
+            item.kind === 'event'
+              ? item.event.blocked || queueHead?.event_id === item.id
+              : !!record?.pending ||
+                !!record?.intent ||
+                !!record?.completionIntent ||
+                (!!record && record.localRevision !== record.syncedRevision)
+          return (
+            <Pressable
+              key={`${item.kind}:${item.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${l('Open saved', 'فتح المحفوظ')} ${title}`}
+              onPress={() => {
+                if (item.kind === 'workout') {
+                  setSoloPackage(item.record.package)
+                  setWorkoutsOpened(true)
+                  setWorkoutView(true)
+                } else void openEvent(item.id)
+              }}
+              style={styles.card}
+            >
+              <View style={[styles.actions, { alignItems: 'center' }]}>
+                <Icon
+                  name={
+                    item.category === 'workouts'
+                      ? 'workout'
+                      : item.category === 'assessments'
+                        ? 'assessment'
+                        : 'event'
+                  }
+                  styles={styles}
+                  size={18}
+                  muted
+                />
+                <Text style={[styles.cardTitle, { flex: 1 }]}>{title}</Text>
+              </View>
+              <Text style={styles.hint}>
+                {item.category === 'workouts'
+                  ? l('Workout', 'تمرين')
+                  : item.category === 'assessments'
+                    ? l('Assessment', 'تقييم')
+                    : l('Event', 'موعد')}
+                {' · '}
+                {event
+                  ? displayDate(event.starts_at, language)
+                  : record!.package.starts_at
+                    ? displayDate(record!.package.starts_at, language)
+                    : record!.package.training_date}
+              </Text>
+              <Text style={styles.link}>
+                {awaiting
+                  ? l(
+                      'Available offline · needs review or sync',
+                      'متاح دون اتصال · يحتاج مراجعة أو مزامنة',
+                    )
+                  : l('Available offline', 'متاح دون اتصال')}
+              </Text>
+            </Pressable>
+          )
+        })}
+        {!savedReady && !savedError ? (
+          <ActivityIndicator accessibilityLabel={l('Loading saved work', 'جارٍ تحميل المحفوظات')} />
+        ) : null}
+        {savedError ? <Text style={styles.message}>{savedError}</Text> : null}
+        {!savedCards.length && savedReady && !savedError ? (
+          <FieldEmptyState
+            icon="saved"
+            title={l('Nothing saved here yet', 'لا توجد محفوظات هنا بعد')}
+            description={l(
+              'Open an event or download a workout while connected.',
+              'افتح موعداً أو نزّل تمريناً أثناء الاتصال.',
+            )}
+            action={
+              savedFilter === 'all'
+                ? l('Browse workouts', 'تصفح التمارين')
+                : l('Show all saved', 'عرض كل المحفوظات')
+            }
+            onAction={() => (savedFilter === 'all' ? switchTab('workouts') : setSavedFilter('all'))}
+            styles={styles}
+          />
+        ) : null}
+        {savedLimit < savedRecordTotal ? (
+          <Button
+            title={l('Load more saved workouts', 'عرض مزيد من التمارين المحفوظة')}
+            onPress={() => setSavedLimit((limit) => limit + 20)}
+            styles={styles}
+          />
+        ) : null}
+      </ScrollView>
+      {!selected && (!workoutView || (!workoutDetail && !soloPackage)) ? (
+        <FieldBottomNav current={homeTab} onChange={switchTab} styles={styles} />
+      ) : null}
       {filtersOpen ? (
         <View style={styles.sheetBackdrop}>
           <Pressable

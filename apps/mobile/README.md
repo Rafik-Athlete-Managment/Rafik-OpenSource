@@ -23,7 +23,7 @@ The unreleased phone refinement adds `react-native-svg` for one Lucide icon fami
 
 This app enables SQLCipher and requires a native development build; Expo Go does not include that native configuration. On an Android emulator, use the host's emulator address (commonly `http://10.0.2.2:55331`) for the local API. For a physical phone and local HTTP backend, use [USB forwarding](../../docs/operations/android-release.md#connect-without-a-domain) and `http://127.0.0.1:55331`; LAN HTTP is not allowed. Remote institutions must use HTTPS.
 
-The canonical [Android development guide](../../docs/development/android.md) explains instance URLs, coach setup, attendance/scores, completion, sync states, account isolation and recovery. The app requests current workspace roles and a bounded 14-day schedule; non-trainer roles see no coach workflow.
+The canonical [Android development guide](../../docs/development/android.md) explains instance URLs, coach setup, attendance/scores, completion, sync states, account isolation and recovery. The unreleased source opens on Schedule and has Workouts and Saved destinations in a floating bottom bar; Settings contains Connection & Sync. The app requests current institution roles and a bounded schedule; non-trainer roles see no coach workflow.
 
 ## API contract
 

@@ -7,15 +7,23 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ChevronUp,
   CircleCheck,
   ClipboardCheck,
+  Cloud,
   Dumbbell,
+  Download,
   Ellipsis,
+  Languages,
+  LogOut,
   RefreshCw,
   Settings,
   SlidersHorizontal,
+  UserRound,
+  Wifi,
+  WifiOff,
   X,
 } from 'lucide-react-native'
 
@@ -28,10 +36,17 @@ const icons = {
   completion: CircleCheck,
   down: ChevronDown,
   assessment: ClipboardCheck,
+  account: UserRound,
+  connection: Cloud,
   event: CalendarDays,
+  saved: Download,
   filter: SlidersHorizontal,
   forward: ChevronRight,
   more: Ellipsis,
+  language: Languages,
+  logout: LogOut,
+  online: Wifi,
+  offline: WifiOff,
   refresh: RefreshCw,
   settings: Settings,
   workout: Dumbbell,
@@ -53,7 +68,8 @@ export function Icon({
   inverse?: boolean
   rtl?: boolean
 }) {
-  const Component = rtl && name === 'back' ? ArrowRight : icons[name]
+  const Component =
+    rtl && name === 'back' ? ArrowRight : rtl && name === 'forward' ? ChevronLeft : icons[name]
   return (
     <Component
       size={size}
@@ -129,6 +145,69 @@ export function makeStyles(light: boolean, language: Language = 'en') {
   }
   return StyleSheet.create({
     safe: { direction, flex: 1, backgroundColor: light ? '#f3f5f3' : dark.background },
+    bottomNav: {
+      position: 'absolute',
+      bottom: 12,
+      left: 18,
+      right: 18,
+      zIndex: 10,
+      flexDirection: 'row',
+      borderRadius: 28,
+      borderWidth: 1,
+      borderColor: light ? '#dce4df' : dark.border,
+      backgroundColor: light ? '#fff' : dark.raised,
+      padding: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: light ? 0.12 : 0.3,
+      shadowRadius: 14,
+      elevation: 8,
+    },
+    bottomNavItem: {
+      flex: 1,
+      minHeight: 52,
+      borderRadius: 23,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
+    bottomNavActive: { backgroundColor: light ? '#e4eee8' : '#27372f' },
+    bottomNavText: { color: muted, fontSize: 11, fontWeight: '600' },
+    bottomNavTextActive: { color: accent },
+    filterChip: {
+      minHeight: 44,
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: light ? '#dce4df' : dark.border,
+      borderRadius: 22,
+      paddingHorizontal: 14,
+      backgroundColor: light ? '#fff' : dark.surface,
+    },
+    filterChipActive: { borderColor: accent, backgroundColor: light ? '#e4eee8' : '#27372f' },
+    settingsGroup: {
+      backgroundColor: light ? '#fff' : dark.surface,
+      borderWidth: 1,
+      borderColor: light ? '#dce4df' : dark.border,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+    },
+    settingsRow: {
+      minHeight: 54,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: light ? '#dce4df' : dark.border,
+    },
+    connectionPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      borderRadius: 12,
+      backgroundColor: light ? '#e4eee8' : dark.surface,
+      paddingHorizontal: 8,
+      minHeight: 28,
+    },
     toolbar: {
       direction,
       flexDirection: 'row',

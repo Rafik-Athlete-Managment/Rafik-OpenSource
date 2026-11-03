@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   AppState,
+  BackHandler,
   Pressable,
   ScrollView,
   Text,
@@ -18,6 +19,7 @@ import { selectedInstitution } from './access'
 import type { FieldStore } from './store'
 import { Button, Icon, makeStyles, type Styles } from './ui'
 import { InstitutionScreen } from './InstitutionScreen'
+import { checkCapabilities, type CapabilityCheck } from './capabilities'
 
 type Runtime = { client: NativeClient; store: FieldStore }
 /** Signs in the coach, selects the institution connection and opens the field tools. */
@@ -186,12 +188,35 @@ function SignedIn({
   const [loading, setLoading] = useState(true)
   const [fieldBusy, setFieldBusy] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [settingsPage, setSettingsPage] = useState<'main' | 'connection'>('main')
+  const [syncSignal, setSyncSignal] = useState(0)
+  const [connectionInfo, setConnectionInfo] = useState<CapabilityCheck | null>(null)
+  const [connectionError, setConnectionError] = useState('')
+  const [savedEventCount, setSavedEventCount] = useState(0)
+  const [savedWorkoutCount, setSavedWorkoutCount] = useState(0)
+  const [uploadsWaiting, setUploadsWaiting] = useState(false)
+  const [syncRequested, setSyncRequested] = useState(false)
+  const [connectionState, setConnectionState] = useState<'unknown' | 'online' | 'offline'>(
+    'unknown',
+  )
   const [noticeDismissed, setNoticeDismissed] = useState(false)
   const alive = useRef(true)
   const loadingRef = useRef(false)
   const accessOffline = useRef(false)
   const closingRef = useRef(closing)
   closingRef.current = closing
+  useEffect(() => {
+    if (!accountOpen) setSettingsPage('main')
+  }, [accountOpen])
+  useEffect(() => {
+    if (!accountOpen) return
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (settingsPage === 'connection') setSettingsPage('main')
+      else setAccountOpen(false)
+      return true
+    })
+    return () => listener.remove()
+  }, [accountOpen, settingsPage])
 
   async function refreshAccess(background = false) {
     if (loadingRef.current || closingRef.current || !alive.current) return
@@ -214,6 +239,7 @@ function SignedIn({
       }
       if (!alive.current) return
       setContexts(available)
+      setConnectionState('online')
       setSavedInstitutions(retained)
       accessOffline.current = false
       setInstitution((current) => selectedInstitution(current, available, retained))
@@ -224,10 +250,14 @@ function SignedIn({
       )
     } catch (error) {
       accessOffline.current = error instanceof ConnectionFailure
-      if (alive.current)
-        setMessage(
-          `${failureText(error)} Previously opened events remain available for this account.`,
-        )
+      if (alive.current) {
+        if (error instanceof ConnectionFailure) {
+          setConnectionState('offline')
+          setMessage((current) =>
+            current.includes('Previously opened events remain available') ? '' : current,
+          )
+        } else setMessage(failureText(error))
+      }
     } finally {
       loadingRef.current = false
       if (alive.current) setLoading(false)
@@ -238,7 +268,10 @@ function SignedIn({
     const retryAccess = () => {
       if (AppState.currentState === 'active' && accessOffline.current) void refreshAccess(true)
     }
-    const unsubscribe = client.onAuthorizedResponse(retryAccess)
+    const unsubscribe = client.onAuthorizedResponse(() => {
+      if (alive.current) setConnectionState('online')
+      retryAccess()
+    })
     const foreground = AppState.addEventListener('change', retryAccess)
     const timer = setInterval(retryAccess, 30_000)
     void refreshAccess()
@@ -265,6 +298,30 @@ function SignedIn({
   }
   const options = [...new Set([...contexts.map((c) => c.institution_id), ...savedInstitutions])]
   useEffect(() => setNoticeDismissed(false), [message])
+  async function refreshConnection() {
+    if (!institution) return
+    const owner = { instance: client.instance, user: client.user.id, institution }
+    try {
+      const [capabilities, events, workouts, eventPending, workoutPending] = await Promise.all([
+        checkCapabilities((path) => client.request(path)),
+        store.list(owner),
+        store.workouts.countAll(owner),
+        store.next(owner),
+        store.workouts.next(owner),
+      ])
+      if (!alive.current) return
+      setConnectionInfo(capabilities)
+      setSavedEventCount(events.length)
+      setSavedWorkoutCount(workouts)
+      setUploadsWaiting(!!eventPending || !!workoutPending)
+      setConnectionError('')
+    } catch (error) {
+      if (alive.current) setConnectionError(failureText(error))
+    }
+  }
+  useEffect(() => {
+    if (accountOpen && settingsPage === 'connection') void refreshConnection()
+  }, [accountOpen, settingsPage, institution])
   const settings = (
     <ScrollView
       style={{ flex: 1 }}
@@ -272,7 +329,21 @@ function SignedIn({
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.topbar}>
-        <Text style={styles.title}>{l('Settings', 'الإعدادات')}</Text>
+        {settingsPage === 'connection' ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={l('Back to settings', 'العودة إلى الإعدادات')}
+            onPress={() => setSettingsPage('main')}
+            style={styles.headerIcon}
+          >
+            <Icon name="back" styles={styles} rtl={language === 'ar'} />
+          </Pressable>
+        ) : null}
+        <Text style={[styles.title, { flex: 1 }]}>
+          {settingsPage === 'connection'
+            ? l('Connection & Sync', 'الاتصال والمزامنة')
+            : l('Settings', 'الإعدادات')}
+        </Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={l('Close settings', 'إغلاق الإعدادات')}
@@ -282,56 +353,174 @@ function SignedIn({
           <Icon name="close" styles={styles} />
         </Pressable>
       </View>
-      <Text style={styles.label}>{l('Account', 'الحساب')}</Text>
-      <Text selectable style={[styles.hint, { writingDirection: 'ltr' }]}>
-        {client.user.email}
-      </Text>
-      <Text style={styles.label}>{l('Language', 'اللغة')}</Text>
-      <View style={styles.actions}>
-        <Button
-          title="English"
-          primary={language === 'en'}
-          onPress={() => setLanguage('en')}
-          styles={styles}
-        />
-        <Button
-          title="العربية"
-          primary={language === 'ar'}
-          onPress={() => setLanguage('ar')}
-          styles={styles}
-        />
-      </View>
-      {preferenceError ? (
-        <Text style={styles.hint}>
-          {l(
-            'Language preference was not saved. Tap a language to retry.',
-            'لم يُحفظ تفضيل اللغة. اضغط اللغة للمحاولة مرة أخرى.',
-          )}
-        </Text>
-      ) : null}
-      {options.length > 1 ? <Text style={styles.label}>{l('Institution', 'المؤسسة')}</Text> : null}
-      {options.length > 1
-        ? options.map((id) => (
-            <Button
-              key={id}
-              title={contexts.find((c) => c.institution_id === id)?.name || t('Saved institution')}
-              disabled={closing || loading || fieldBusy}
-              onPress={() => {
-                setInstitution(id)
-                setAccountOpen(false)
-              }}
-              styles={styles}
-              primary={institution === id}
-            />
-          ))
-        : null}
-      <Button
-        title={closing ? 'Signing out…' : 'Sign out'}
-        disabled={closing || loading || fieldBusy}
-        onPress={() => void logout()}
-        styles={styles}
-        danger
-      />
+      {settingsPage === 'connection' ? (
+        <>
+          <Text style={styles.hint}>
+            {l(
+              'Check the institution connection and work still saved on this phone.',
+              'تحقق من اتصال المؤسسة والعمل الذي ما زال محفوظاً على هذا الهاتف.',
+            )}
+          </Text>
+          <View style={styles.settingsGroup}>
+            <View style={styles.settingsRow}>
+              <Icon name="connection" styles={styles} muted />
+              <Text style={[styles.label, { flex: 1 }]}>{l('Server', 'الخادم')}</Text>
+              <Text style={styles.hint}>
+                {connectionError
+                  ? l('Could not confirm', 'تعذر التأكد')
+                  : connectionInfo?.state === 'available'
+                    ? l('Reached on last check', 'تم الوصول في آخر تحقق')
+                    : connectionInfo?.state === 'legacy'
+                      ? l('Compatibility unknown', 'التوافق غير معروف')
+                      : l('Checking…', 'جارٍ التحقق…')}
+              </Text>
+            </View>
+            <View style={styles.settingsRow}>
+              <Icon name="saved" styles={styles} muted />
+              <Text style={[styles.label, { flex: 1 }]}>
+                {l('Saved on device', 'المحفوظ على الجهاز')}
+              </Text>
+              <Text style={styles.hint}>
+                {savedEventCount} {l('events', 'مواعيد')} · {savedWorkoutCount}{' '}
+                {l('sheets', 'سجلات')}
+              </Text>
+            </View>
+            <View style={[styles.settingsRow, { borderBottomWidth: 0 }]}>
+              <Icon name="refresh" styles={styles} muted />
+              <Text style={[styles.label, { flex: 1 }]}>{l('Uploads', 'عمليات الإرسال')}</Text>
+              <Text style={styles.hint}>
+                {uploadsWaiting
+                  ? l('Saved work waiting', 'عمل محفوظ بانتظار الإرسال')
+                  : l('No queued upload', 'لا توجد عملية معلقة')}
+              </Text>
+            </View>
+          </View>
+          {connectionError ? <Text style={styles.message}>{connectionError}</Text> : null}
+          <Button
+            title={
+              syncRequested
+                ? l('Syncing…', 'جارٍ المزامنة…')
+                : l('Refresh and sync', 'تحديث ومزامنة')
+            }
+            disabled={!institution || syncRequested || closing || loading || fieldBusy}
+            onPress={() => {
+              setSyncRequested(true)
+              setSyncSignal((value) => value + 1)
+              void refreshAccess(true)
+            }}
+            styles={styles}
+          />
+          <Text style={styles.hint}>
+            {l(
+              'A failed upload stays on this device for review. Refresh never discards recorded work.',
+              'تبقى عملية الإرسال الفاشلة على هذا الجهاز للمراجعة. لا يحذف التحديث العمل المسجل.',
+            )}
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={styles.label}>{l('Account', 'الحساب')}</Text>
+          <View style={styles.settingsGroup}>
+            <View style={[styles.settingsRow, { borderBottomWidth: 0 }]}>
+              <Icon name="account" styles={styles} muted />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>{l('Signed in as', 'الحساب الحالي')}</Text>
+                <Text selectable style={[styles.hint, { writingDirection: 'ltr' }]}>
+                  {client.user.email}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <Text style={styles.label}>{l('Preferences', 'التفضيلات')}</Text>
+          <View style={styles.settingsGroup}>
+            <View
+              style={[
+                styles.settingsRow,
+                { borderBottomWidth: 0, flexWrap: 'wrap', paddingVertical: 8 },
+              ]}
+            >
+              <Icon name="language" styles={styles} muted />
+              <Text style={[styles.label, { flex: 1 }]}>{l('Language', 'اللغة')}</Text>
+              <View style={styles.actions}>
+                <Button
+                  title="English"
+                  primary={language === 'en'}
+                  onPress={() => setLanguage('en')}
+                  styles={styles}
+                />
+                <Button
+                  title="العربية"
+                  primary={language === 'ar'}
+                  onPress={() => setLanguage('ar')}
+                  styles={styles}
+                />
+              </View>
+            </View>
+          </View>
+          {preferenceError ? (
+            <Text style={styles.hint}>
+              {l(
+                'Language preference was not saved. Tap again to retry.',
+                'لم يُحفظ تفضيل اللغة. اضغط مجدداً للمحاولة.',
+              )}
+            </Text>
+          ) : null}
+          <Text style={styles.label}>{l('Application', 'التطبيق')}</Text>
+          <View style={styles.settingsGroup}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSettingsPage('connection')}
+              style={[styles.settingsRow, { borderBottomWidth: 0 }]}
+            >
+              <Icon name="connection" styles={styles} muted />
+              <Text style={[styles.label, { flex: 1 }]}>
+                {l('Connection & Sync', 'الاتصال والمزامنة')}
+              </Text>
+              <Icon name="forward" styles={styles} rtl={language === 'ar'} muted size={18} />
+            </Pressable>
+          </View>
+          {options.length > 1 ? (
+            <Text style={styles.label}>{l('Institution', 'المؤسسة')}</Text>
+          ) : null}
+          {options.length > 1 ? (
+            <View style={styles.settingsGroup}>
+              {options.map((id) => (
+                <Pressable
+                  key={id}
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: institution === id,
+                    disabled: closing || loading || fieldBusy,
+                  }}
+                  disabled={closing || loading || fieldBusy}
+                  onPress={() => {
+                    setInstitution(id)
+                    setAccountOpen(false)
+                  }}
+                  style={styles.settingsRow}
+                >
+                  <Icon name="account" styles={styles} muted />
+                  <Text style={[styles.label, { flex: 1 }]}>
+                    {contexts.find((c) => c.institution_id === id)?.name || t('Saved institution')}
+                  </Text>
+                  {institution === id ? <Icon name="check" styles={styles} size={18} /> : null}
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            disabled={closing || loading || fieldBusy}
+            onPress={() => void logout()}
+            style={[styles.settingsRow, { marginTop: 12, borderBottomWidth: 0 }]}
+          >
+            <Icon name="logout" styles={styles} />
+            <Text style={styles.dangerText}>
+              {closing ? l('Signing out…', 'جارٍ تسجيل الخروج…') : l('Sign out', 'تسجيل الخروج')}
+            </Text>
+          </Pressable>
+        </>
+      )}
     </ScrollView>
   )
   return (
@@ -361,15 +550,6 @@ function SignedIn({
           </Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={l('Refresh access', 'تحديث الصلاحية')}
-            disabled={closing || loading || fieldBusy}
-            onPress={() => void refreshAccess(true)}
-            style={styles.headerIcon}
-          >
-            <Icon name="refresh" styles={styles} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
             accessibilityLabel={l('Dismiss notice', 'إخفاء التنبيه')}
             onPress={() => setNoticeDismissed(true)}
             style={styles.headerIcon}
@@ -392,6 +572,13 @@ function SignedIn({
             onAccountPress={() => setAccountOpen((open) => !open)}
             onEventOpen={() => setAccountOpen(false)}
             externalNotice={!!message && !noticeDismissed}
+            connectionState={connectionState}
+            onConnectivity={setConnectionState}
+            settingsSyncSignal={syncSignal}
+            onSettingsSyncComplete={() => {
+              setSyncRequested(false)
+              if (accountOpen && settingsPage === 'connection') void refreshConnection()
+            }}
           />
         </View>
       ) : (

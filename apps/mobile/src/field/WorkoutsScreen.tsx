@@ -17,7 +17,7 @@ import type { WorkoutAgenda } from '@rafik/shared/contracts'
 import { useLanguage } from './Language'
 import { NativeClient, operationId } from './native'
 import type { FieldStore } from './store'
-import { ApiFailure, failureText, type Owner } from './model'
+import { ApiFailure, ConnectionFailure, failureText, type Owner } from './model'
 import {
   startTimeReached,
   validateEntries,
@@ -29,6 +29,7 @@ import { downloadGroupEvent } from './group-download'
 import { WorkoutSync, requireWorkoutSupport } from './workout-sync'
 import { workoutNumber, type WorkoutMeasure } from './workout-input'
 import { Button, Icon, displayDate, type Styles } from './ui'
+import { FieldEmptyState } from './FieldEmptyState'
 
 /** Downloads and records individual workouts, keeping drafts safe while offline or syncing. */
 export function WorkoutsScreen({
@@ -52,6 +53,9 @@ export function WorkoutsScreen({
   eventCanFinish,
   eventFinishing,
   eventCompleted,
+  onDetailChange,
+  onConnectivity,
+  connectionState,
 }: {
   client: NativeClient
   store: FieldStore
@@ -73,6 +77,9 @@ export function WorkoutsScreen({
   eventCanFinish?: boolean
   eventFinishing?: boolean
   eventCompleted?: boolean
+  onDetailChange?: (open: boolean) => void
+  onConnectivity?: (state: 'online' | 'offline') => void
+  connectionState?: 'unknown' | 'online' | 'offline'
 }) {
   const { l, t, language } = useLanguage()
   const [saved, setSaved] = useState<WorkoutRecord[]>([]),
@@ -135,6 +142,7 @@ export function WorkoutsScreen({
     })
     return () => listener.remove()
   }, [active, selected])
+  useEffect(() => onDetailChange?.(!!selected), [selected, onDetailChange])
   async function refreshLocal() {
     // Ignore slower count/page reads when a newer search or local refresh has already started.
     const token = ++localRead.current
@@ -159,7 +167,14 @@ export function WorkoutsScreen({
     const activeId = selection.current
     const active = activeId ? await store.workouts.get(owner, activeId) : null
     if (!alive.current || token !== localRead.current) return
-    setSaved(items)
+    setSaved((prior) =>
+      page
+        ? [
+            ...prior,
+            ...items.filter((item) => !prior.some((known) => known.package.id === item.package.id)),
+          ]
+        : items,
+    )
     setSavedTotal(count)
     setSavedOffset(page)
     setSavedIds(ids)
@@ -189,13 +204,13 @@ export function WorkoutsScreen({
       if (alive.current) setError(failureText(e))
     }
   }
-  async function load(page = 0) {
+  async function load(page = 0, query = search) {
     if (flight.current || closingRef.current) return
     flight.current = true
     setOnlineLoading(true)
     setError('')
     const token = ++reads.current
-    const needle = search.trim().slice(0, 100)
+    const needle = query.trim().slice(0, 100)
     if (needle !== appliedSearch.current) {
       page = 0
       cacheOffset.current = 0
@@ -217,7 +232,15 @@ export function WorkoutsScreen({
           await refreshLocal()
         }
         if (result) {
-          setAvailable(result.items.flatMap((i) => (i.field_workout ? [i.field_workout] : [])))
+          const pageItems = result.items.flatMap((i) => (i.field_workout ? [i.field_workout] : []))
+          setAvailable((prior) =>
+            page
+              ? [
+                  ...prior,
+                  ...pageItems.filter((item) => !prior.some((known) => known.id === item.id)),
+                ]
+              : pageItems,
+          )
           setOffset(result.offset)
           setTotal(result.total)
         }
@@ -228,16 +251,25 @@ export function WorkoutsScreen({
         if (alive.current) setAvailable([])
         await refreshLocal()
       }
-      if (alive.current) setError(failureText(e))
+      if (e instanceof ConnectionFailure) onConnectivity?.('offline')
+      else if (alive.current) setError(failureText(e))
     } finally {
       flight.current = false
       if (alive.current) setOnlineLoading(false)
     }
   }
   useEffect(() => {
-    if (!active || !refreshSignal) return
+    if (!refreshSignal) return
+    if (!active) {
+      if (groupEvent) return
+      void sync(true).finally(onRefreshComplete)
+      return
+    }
     const refreshVisible = async () => {
-      if (groupEvent || !selection.current) return load()
+      if (groupEvent || !selection.current) {
+        await sync(true)
+        return load()
+      }
       const id = selection.current
       await sync(true)
       if (!activeRef.current || selection.current !== id) return
@@ -298,6 +330,7 @@ export function WorkoutsScreen({
     if (!alive.current) return
     selection.current = id
     setSelected(id)
+    onDetailChange?.(true)
     setShowRecovery(false)
     if (groupEvent) setGroupOpen(false)
     setRecord(r)
@@ -419,6 +452,7 @@ export function WorkoutsScreen({
       await writes.current
       selection.current = ''
       setSelected('')
+      onDetailChange?.(false)
       setShowRecovery(false)
       if (groupEvent) setGroupStage('preview')
       setRecord(null)
@@ -764,16 +798,12 @@ export function WorkoutsScreen({
       ) : null}
       <ScrollView
         ref={page}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, !selected && !groupEvent && { paddingBottom: 96 }]}
         keyboardShouldPersistTaps="handled"
       >
         {!groupEvent ? (
           <Text style={styles.title}>
-            {selected
-              ? record
-                ? dayName(record.package)
-                : ''
-              : l('Individual workouts', 'التمارين الفردية')}
+            {selected ? (record ? dayName(record.package) : '') : l('Workouts', 'التمارين')}
           </Text>
         ) : null}
         {record ? (
@@ -824,8 +854,8 @@ export function WorkoutsScreen({
           <>
             <Text style={styles.hint}>
               {l(
-                'Download before going offline. Starts and results remain provisional until the server accepts them. Open a group event from Schedule for participant sheets.',
-                'نزّل التمرين قبل قطع الاتصال. يبقى البدء والنتائج مؤقتين حتى يقبلهما الخادم. افتح موعد المجموعة من الجدول للوصول إلى سجلات المشاركين.',
+                'Browse individual plan workouts. Download one while connected to use it offline.',
+                'تصفح تمارين الخطط الفردية. نزّل التمرين أثناء الاتصال لاستخدامه دون اتصال.',
               )}
             </Text>
             <Text style={styles.label}>{l('Find an athlete', 'ابحث عن رياضي')}</Text>
@@ -844,125 +874,98 @@ export function WorkoutsScreen({
               onPress={() => void load()}
               styles={styles}
             />
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || closing}
-              onPress={() => void sync(true)}
-              style={{ minHeight: 44, justifyContent: 'center' }}
-            >
-              <Text style={styles.link}>{l('Sync saved work', 'مزامنة العمل المحفوظ')}</Text>
-            </Pressable>
-            <Text style={styles.label}>{l('Saved on this device', 'المحفوظ على هذا الجهاز')}</Text>
-            {saved.length ? (
-              saved.map((r) => (
+            {[
+              ...saved.map((record) => ({ record, workout: record.package, downloaded: true })),
+              ...available
+                .filter((workout) => !saved.some((item) => item.package.id === workout.id))
+                .map((workout) => ({
+                  record: null,
+                  workout,
+                  downloaded: savedIds.includes(workout.id),
+                })),
+            ]
+              .sort(
+                (a, b) =>
+                  b.workout.training_date.localeCompare(a.workout.training_date) ||
+                  a.workout.member_name.localeCompare(b.workout.member_name),
+              )
+              .map(({ record: local, workout, downloaded }) => (
                 <Pressable
-                  key={r.package.id}
+                  key={workout.id}
                   style={styles.card}
                   accessibilityRole="button"
-                  accessibilityLabel={`${l('Open workout', 'فتح التمرين')} ${dayName(r.package)}`}
-                  onPress={() => void open(r.package.id).catch((e) => setError(failureText(e)))}
+                  accessibilityLabel={`${downloaded ? l('Open workout', 'فتح التمرين') : l('Download workout', 'تنزيل التمرين')} ${dayName(workout)}`}
+                  disabled={busy || closing}
+                  onPress={() =>
+                    void (downloaded ? open(workout.id) : download(workout)).catch((e) =>
+                      setError(failureText(e)),
+                    )
+                  }
                 >
-                  <Text style={styles.cardTitle}>{dayName(r.package)}</Text>
+                  <Text style={styles.cardTitle}>{dayName(workout)}</Text>
                   <Text style={styles.hint}>
-                    {r.package.member_name} · {r.package.title}
+                    {workout.member_name} · {workout.title}
                   </Text>
                   <Text style={styles.hint}>
-                    {r.session?.completed_at
-                      ? l('Completed · server confirmed', 'مكتمل · أكده الخادم')
-                      : r.pending || r.intent
-                        ? l('Awaiting confirmation', 'بانتظار التأكيد')
-                        : r.localRevision !== r.syncedRevision
-                          ? l('Device draft · not sent', 'مسودة الجهاز · لم ترسل')
-                          : l('Downloaded', 'تم التنزيل')}
+                    {workout.starts_at
+                      ? displayDate(workout.starts_at, language)
+                      : `${workout.training_date} · ${workout.timezone}`}
                   </Text>
-                </Pressable>
-              ))
-            ) : (
-              <Text style={styles.hint}>
-                {l('No workouts downloaded yet.', 'لم تُنزّل تمارين بعد.')}
-              </Text>
-            )}
-            <View style={styles.toolbar}>
-              <Button
-                title={l('Previous saved', 'المحفوظة السابقة')}
-                disabled={savedOffset === 0}
-                onPress={() => {
-                  cacheOffset.current = Math.max(0, savedOffset - 10)
-                  void refreshLocal()
-                }}
-                styles={styles}
-              />
-              <Text style={styles.hint}>
-                {savedTotal ? savedOffset + 1 : 0}–{Math.min(savedOffset + 10, savedTotal)} /{' '}
-                {savedTotal}
-              </Text>
-              <Button
-                title={l('Next saved', 'المحفوظة التالية')}
-                disabled={savedOffset + 10 >= savedTotal}
-                onPress={() => {
-                  cacheOffset.current = savedOffset + 10
-                  void refreshLocal()
-                }}
-                styles={styles}
-              />
-            </View>
-            <Text style={styles.label}>{l('Available to download', 'متاح للتنزيل')}</Text>
-            {available.some((p) => savedIds.includes(p.id)) ? (
-              <Text style={styles.hint}>
-                {l(
-                  'Already downloaded matches appear in the saved list above. Online pagination includes those matches.',
-                  'تظهر النتائج المنزّلة في قائمة المحفوظات أعلاه. تشمل صفحات نتائج الخادم تلك النتائج.',
-                )}
-              </Text>
-            ) : null}
-            {available
-              .filter((p) => !savedIds.includes(p.id))
-              .map((p) => (
-                <Pressable
-                  key={p.id}
-                  style={styles.card}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${l('Download workout', 'تنزيل التمرين')} ${dayName(p)}`}
-                  disabled={busy || onlineLoading || closing}
-                  onPress={() => void download(p)}
-                >
-                  <Text style={styles.cardTitle}>{dayName(p)}</Text>
-                  <Text style={styles.hint}>
-                    {p.member_name} · {p.title}
+                  <Text style={styles.link}>
+                    {local
+                      ? local.session?.completed_at
+                        ? l('Downloaded · complete', 'منزّل · مكتمل')
+                        : local.pending || local.intent || local.completionIntent
+                          ? l('Downloaded · awaiting sync', 'منزّل · بانتظار المزامنة')
+                          : l('Downloaded', 'تم التنزيل')
+                      : downloaded
+                        ? l('Downloaded', 'تم التنزيل')
+                        : l('Not downloaded', 'غير منزّل')}
                   </Text>
-                  <Text style={styles.hint}>
-                    {p.starts_at
-                      ? displayDate(p.starts_at, language)
-                      : p.training_date + ' · ' + p.timezone}
-                  </Text>
-                  <Text style={styles.link}>{l('Tap to download', 'اضغط للتنزيل')}</Text>
                 </Pressable>
               ))}
-            {!available.length && !busy ? (
-              <Text style={styles.hint}>
-                {l(
-                  'No actionable individual workouts match. Coaches schedule plan workouts in the web dashboard.',
-                  'لا توجد تمارين فردية قابلة للتنفيذ تطابق البحث. يجدول المدربون تمارين الخطط في لوحة الويب.',
-                )}
-              </Text>
+            {!saved.length && !available.length && !busy && !onlineLoading && !error ? (
+              <FieldEmptyState
+                icon="workout"
+                title={
+                  connectionState === 'offline' && !search
+                    ? l('No workouts saved on this device', 'لا توجد تمارين محفوظة على هذا الجهاز')
+                    : l('No workouts to show', 'لا توجد تمارين للعرض')
+                }
+                description={
+                  connectionState === 'offline' && !search
+                    ? l('Connect to browse and download workouts.', 'اتصل لتصفح التمارين وتنزيلها.')
+                    : l(
+                        'Try another athlete name. Group sessions remain in Schedule.',
+                        'جرّب اسم رياضي آخر. تبقى المواعيد الجماعية في الجدول.',
+                      )
+                }
+                action={search ? l('Clear search', 'مسح البحث') : undefined}
+                onAction={
+                  search
+                    ? () => {
+                        setSearch('')
+                        void load(0, '')
+                      }
+                    : undefined
+                }
+                styles={styles}
+              />
             ) : null}
-            <View style={styles.toolbar}>
+            {offset + 10 < total || savedOffset + 10 < savedTotal ? (
               <Button
-                title={l('Previous', 'السابق')}
-                disabled={busy || onlineLoading || offset === 0}
-                onPress={() => void load(Math.max(0, offset - 10))}
+                title={l('Load more workouts', 'عرض المزيد من التمارين')}
+                disabled={busy || onlineLoading || closing}
+                onPress={() => {
+                  if (offset + 10 < total) void load(offset + 10)
+                  else {
+                    cacheOffset.current = savedOffset + 10
+                    void refreshLocal()
+                  }
+                }}
                 styles={styles}
               />
-              <Text style={styles.hint}>
-                {total ? offset + 1 : 0}–{Math.min(offset + 10, total)} / {total}
-              </Text>
-              <Button
-                title={l('Next', 'التالي')}
-                disabled={busy || onlineLoading || offset + 10 >= total}
-                onPress={() => void load(offset + 10)}
-                styles={styles}
-              />
-            </View>
+            ) : null}
           </>
         ) : record ? (
           <>

@@ -877,6 +877,10 @@ test('workout denial/conflict preserves exact command and draft; edits during a 
     assert.equal((await store.workouts.list(scope, 0, 'Second page')).length, 10)
     assert.equal((await store.workouts.list(scope, 10, 'Second page')).length, 1)
     assert.equal(await store.workouts.count(scope, 'Second page'), 11)
+    assert.equal(await store.workouts.countAll(scope), 12)
+    assert.equal((await store.workouts.listAll(scope, 0, 10)).length, 10)
+    assert.equal((await store.workouts.listAll(scope, 10, 10)).length, 2)
+    assert.equal(await store.workouts.countAll({ ...scope, user: 'other' }), 0)
     const originalNext = store.workouts.next.bind(store.workouts)
     let injected = false,
       sends = 0
@@ -1046,7 +1050,9 @@ test('group participant sheets use separate local identities and the group start
     } as unknown as Parameters<typeof downloadGroupEvent>[0]
     assert.equal((await downloadGroupEvent(client, store, scope, event)).saved, 1)
     assert.equal((await store.workouts.groupList(scope, event)).length, 1)
+    assert.deepEqual(await store.workouts.groupEventIds(scope), [event])
     assert.equal((await store.workouts.groupList({ ...scope, user: 'other' }, event)).length, 0)
+    assert.deepEqual(await store.workouts.groupEventIds({ ...scope, user: 'other' }), [])
     await store.workouts.start(scope, id, session, randomUUID())
     assert.equal((await downloadGroupEvent(client, store, scope, event)).protected, 1)
     const routes: string[] = []

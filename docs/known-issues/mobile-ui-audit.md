@@ -34,6 +34,17 @@ This is a source and interaction audit of the unreleased beta.3 phone app. It co
 
 The installed application must be rebuilt with `react-native-svg` before testing these source changes. This file describes implementation and source findings, not an accepted visual result.
 
+## Navigation follow-up — 3 November 2026
+
+The source review found three different responsibilities stacked below the daily Schedule: general workout browsing, saved events, and connection diagnostics. The workout browser also put saved and online results in separate sections, which hid downloaded status on the matching online card. These are navigation problems; no new records or API endpoints are needed.
+
+- One reusable floating bar now opens **Schedule**, **Workouts**, and **Saved**. It is hidden during event attendance, assessment results, and workout recording, and while the keyboard is open. The Schedule still includes scheduled individual workouts alongside events, assessments and group workouts. Date, type and order remain in its filter sheet.
+- Workouts uses one date-ordered list of downloaded and available solo workouts, with distinct download and unsent-work labels. Saved combines owner-scoped local rosters and workout sheets in one list, classifying group workout rosters with workouts and offering All/Workouts/Events/Assessments filters. A group event appears once, even though each athlete has a separate local sheet.
+- Full-screen Settings groups account and language controls. **Connection & Sync** shows only values the current store and capability check can establish: last checked server reachability, local event/sheet counts, and whether a queued upload exists. Manual sync requests the same event/workout runners used by refresh. There is no reliable last-success timestamp in the present store, so the UI does not invent one. The app bar labels the state Checking until an authenticated result, then Online or Offline. Routine offline use does not raise repeated sign-in notices. The dismissible notice has no second Refresh icon because the app bar already owns that action.
+- Schedule, Workouts and Saved use one compact empty-state component. Schedule offers a date/filter choice, Saved offers All or Workouts, and Workouts offers Clear search only when a search is active. Errors remain distinct from empty results, avoiding a second prompt to repeat a failed refresh.
+
+A general notifications inbox is deferred. Current messages are transient request errors or blocked local commands without a durable read/unread notification source. Immediate validation and permission failures remain on the active step; persistent upload status is in Connection & Sync and saved records.
+
 ## Evidence and remaining acceptance
 
 The findings above come from the current TSX source and the founder's phone observations and references. Source inspection cannot establish touch behavior, contrast on the actual S20+, short-screen clipping, RTL rendering, or offline replay. After the code pass, test those states using the canonical walkthrough. Record any observed failure there and in [verification](../verification/README.md); do not report a passing device check from TypeScript or JSX inspection alone.
