@@ -112,29 +112,31 @@ export function palette(light: boolean) {
         },
       }
     : {
-        page: '#171e1a',
-        card: '#222925',
-        raised: '#2a312c',
-        soft: '#2d3430',
-        field: '#1b221e',
-        ink: '#e9eee7',
-        muted: '#a6aca5',
-        border: '#343b37',
-        control: '#4d5450',
+        // Near-black green layers: page < card < raised; tracks/insets sit below the card,
+        // fields one step above it so they stay distinct both in cards and in insets.
+        page: '#0a0d0b',
+        card: '#141916',
+        raised: '#1e2521',
+        soft: '#0d110f',
+        field: '#1b211d',
+        ink: '#eef2ec',
+        muted: '#9ea69f',
+        border: '#252c28',
+        control: '#3b443e',
         accent: '#a4cfba',
         accentInk: '#a4cfba',
-        onAccent: '#17211b',
-        tint: '#2a3b32',
+        onAccent: '#10201a',
+        tint: '#1d3328',
         ring: '#a4cfba59',
         shadow: '#000000',
-        scrim: '#000000a6',
+        scrim: '#000000b8',
         tones: {
-          neutral: { ink: '#c3c9c2', bg: '#2d3430', border: '#3c443f' },
-          accent: { ink: '#a4cfba', bg: '#2a3b32', border: '#3d5546' },
-          success: { ink: '#a4e6bd', bg: '#183e2a', border: '#285a3e' },
-          info: { ink: '#a5d4ed', bg: '#21313a', border: '#334a58' },
-          warning: { ink: '#f0cb7a', bg: '#342d1b', border: '#57492a' },
-          danger: { ink: '#ffadb4', bg: '#3e2825', border: '#62393a' },
+          neutral: { ink: '#c3c9c2', bg: '#1c221f', border: '#2e3632' },
+          accent: { ink: '#a4cfba', bg: '#1a2d23', border: '#2f4d3d' },
+          success: { ink: '#a4e6bd', bg: '#11301f', border: '#1f5136' },
+          info: { ink: '#a5d4ed', bg: '#142530', border: '#264153' },
+          warning: { ink: '#f0cb7a', bg: '#282213', border: '#4b3e22' },
+          danger: { ink: '#ffadb4', bg: '#311b1b', border: '#5a3233' },
         },
       }
 }
@@ -589,14 +591,14 @@ export function makeStyles(light: boolean, language: Language = 'en') {
   const lift = {
     shadowColor: c.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: light ? 0.06 : 0.25,
+    shadowOpacity: light ? 0.06 : 0.5,
     shadowRadius: 3,
     elevation: 1,
   }
   const float = {
     shadowColor: c.shadow,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: light ? 0.12 : 0.4,
+    shadowOpacity: light ? 0.12 : 0.6,
     shadowRadius: 20,
     elevation: 10,
   }
@@ -957,7 +959,9 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     },
     buttonSmall: { minHeight: 40, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10 },
     buttonPressed: { backgroundColor: c.soft },
-    secondaryButton: { backgroundColor: c.soft, borderColor: c.soft },
+    secondaryButton: light
+      ? { backgroundColor: c.soft, borderColor: c.soft }
+      : { backgroundColor: c.raised, borderColor: c.border },
     ghostButton: { backgroundColor: 'transparent', borderColor: 'transparent' },
     buttonFill: { width: '100%' },
     actionRow: { direction, flexDirection: 'row', gap: 8, alignItems: 'stretch' },
@@ -1020,7 +1024,8 @@ export function makeStyles(light: boolean, language: Language = 'en') {
     segmentWrap: { flexGrow: 1, flexBasis: 'auto' },
     segmentSelected: {
       backgroundColor: c.raised,
-      borderColor: c.border,
+      // In dark mode the raised segment needs a visible edge against its darker track.
+      borderColor: light ? c.border : c.control,
       ...lift,
     },
     segmentPressed: { backgroundColor: c.border },
