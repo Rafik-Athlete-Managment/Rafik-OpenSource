@@ -11,7 +11,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native'
 import { NativeClient, operationId } from './native'
@@ -33,7 +32,24 @@ import {
 } from './model'
 import type { FieldStore } from './store'
 import { AttendanceSync } from './sync'
-import { Button, Icon, displayDate, localDate, type Styles } from './ui'
+import {
+  ActionBar,
+  Button,
+  Field,
+  Icon,
+  IconButton,
+  Notice,
+  Progress,
+  Segmented,
+  SectionLabel,
+  StatusPill,
+  displayDate,
+  displayTime,
+  localDate,
+  shiftDay,
+  type Styles,
+  type Tone,
+} from './ui'
 import { ScoreEditor } from './ScoreEditor'
 import { WorkoutsScreen } from './WorkoutsScreen'
 import { FieldBottomNav, type FieldTab } from './FieldBottomNav'
@@ -691,6 +707,93 @@ export function InstitutionScreen({
     ) &&
     !pending.some((command) => command.payload.action === 'attendance')
   const attendanceReady = allAttendanceConfirmed && presentCount > 0
+  const trainees = roster?.people.filter((person) => person.duty === 'trainee') || []
+  const markedCount = trainees.filter((person) => person.attendance !== 'unmarked').length
+  // Athletes that still need a mark and have no unsent attendance change of their own.
+  const unmarkedPeople = trainees.filter(
+    (person) =>
+      person.active &&
+      person.attendance === 'unmarked' &&
+      !pending.some(
+        (command) =>
+          command.payload.action === 'attendance' && command.payload.member === person.member_id,
+      ),
+  )
+  const attendanceLocked =
+    saving ||
+    busy ||
+    closing ||
+    !snapshot ||
+    !!snapshot.roster.blocked ||
+    institutionPaused ||
+    paused ||
+    finishing ||
+    draftSaving ||
+    roster?.event.state !== 'scheduled' ||
+    beforeStart
+  const [bulkMarking, setBulkMarking] = useState(false)
+  /** Queues the same per-athlete attendance command for each remaining athlete, in order. */
+  async function markRemainingPresent() {
+    if (bulkMarking || attendanceLocked) return
+    setBulkMarking(true)
+    try {
+      for (const person of unmarkedPeople) {
+        if (!alive.current || closingRef.current) break
+        await record(person.member_id, 'present')
+      }
+    } finally {
+      if (alive.current) setBulkMarking(false)
+    }
+  }
+  const attendanceTone = (value: FieldAttendance): Tone =>
+    value === 'present'
+      ? 'success'
+      : value === 'absent'
+        ? 'danger'
+        : value === 'excused'
+          ? 'warning'
+          : 'neutral'
+  const attendanceLabel = (value: FieldAttendance) =>
+    value === 'present'
+      ? l('Present', 'حاضر')
+      : value === 'absent'
+        ? l('Absent', 'غائب')
+        : value === 'excused'
+          ? l('Excused', 'معذور')
+          : l('Not marked', 'غير محدد')
+  const eventStateTone = (event: FieldEvent): Tone =>
+    event.state === 'completed' ? 'success' : event.state === 'cancelled' ? 'danger' : 'info'
+  const eventStateLabel = (event: FieldEvent) =>
+    event.state === 'completed'
+      ? l('Completed', 'مكتمل')
+      : event.state === 'cancelled'
+        ? l('Cancelled', 'ملغى')
+        : Date.parse(event.starts_at) <= now && Date.parse(event.ends_at) > now
+          ? l('In progress', 'جارٍ الآن')
+          : l('Scheduled', 'مجدول')
+  const scheduleBusy = busy || refreshingSchedule || workoutLoading || closing
+  const isToday = selectedDay === localDate(new Date())
+  const filterActive = recordFilter !== 'all' || latestFirst
+  const filterLabel = [
+    recordFilter === 'training'
+      ? l('Events', 'المواعيد')
+      : recordFilter === 'assessment'
+        ? l('Assessments', 'التقييمات')
+        : recordFilter === 'workout'
+          ? l('Workouts', 'التمارين')
+          : l('All activities', 'كل الأنشطة'),
+    latestFirst ? l('Latest first', 'الأحدث أولاً') : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const initials = (name: string) =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0] || '')
+      .join('')
+      .toLocaleUpperCase()
   async function openGroupSheets() {
     if (!roster || !selected || !attendanceReady) {
       const unmarked =
@@ -730,6 +833,25 @@ export function InstitutionScreen({
     } catch (error) {
       setMessage(failureText(error))
     }
+  }
+  function goToResults() {
+    if (!roster) return
+    if (!allAttendanceConfirmed) {
+      const unmarked = roster.people.filter(
+        (person) => person.duty === 'trainee' && person.active && person.attendance === 'unmarked',
+      ).length
+      setRefreshNotice(
+        unmarked
+          ? l(
+              `${unmarked} athlete(s) still need an attendance mark.`,
+              `لم يُحدَّد حضور ${unmarked} من الرياضيين بعد.`,
+            )
+          : l('Wait for attendance confirmation, then continue.', 'انتظر تأكيد الحضور ثم تابع.'),
+      )
+      return
+    }
+    setExpandedPerson(null)
+    setEventStage('results')
   }
   function leaveEvent() {
     if (saving || draftSaving || workoutPersisting || groupPersisting || busy || closing) return
@@ -828,7 +950,11 @@ export function InstitutionScreen({
       setRefreshSignal((value) => value + 1)
     } else void openEvent(selected, true)
   }
-  function applyScheduleFilters(day: string) {
+  function applyScheduleFilters(
+    day: string,
+    nextFilter = draftRecordFilter,
+    nextLatestFirst = draftLatestFirst,
+  ) {
     const parsed = new Date(`${day}T12:00:00Z`)
     if (
       !/^\d{4}-\d{2}-\d{2}$/.test(day) ||
@@ -841,9 +967,10 @@ export function InstitutionScreen({
       return
     }
     setSelectedDay(day)
+    setDraftDay(day)
     dayRef.current = day
-    setRecordFilter(draftRecordFilter)
-    setLatestFirst(draftLatestFirst)
+    setRecordFilter(nextFilter)
+    setLatestFirst(nextLatestFirst)
     setVisibleCount(5)
     setFiltersOpen(false)
     void refresh(0, false, day)
@@ -875,56 +1002,49 @@ export function InstitutionScreen({
       {!selected && (!workoutView || (!workoutDetail && !soloPackage)) ? (
         <View style={styles.appBar}>
           <View style={styles.topbar}>
-            <Text style={styles.kicker}>{l('RAFIK FIELD', 'رفيق الميداني')}</Text>
-            <View style={styles.actions}>
+            <Text style={styles.brand} accessibilityRole="header">
+              {l('Rafik', 'رفيق')}
+              <Text style={styles.brandDot}>.</Text>
+            </Text>
+            <View style={[styles.actions, { alignItems: 'center', gap: 2 }]}>
               <ConnectionStatus state={connectionState} styles={styles} />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={l('Refresh', 'تحديث')}
-                disabled={busy || refreshingSchedule || headerRefreshing || closing}
-                onPress={refreshCurrent}
-                style={styles.headerIcon}
-              >
-                {refreshingSchedule || headerRefreshing ? (
-                  <ActivityIndicator size="small" />
-                ) : (
-                  <Icon name="refresh" styles={styles} />
-                )}
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={l('Open settings', 'فتح الإعدادات')}
-                accessibilityState={{ expanded: accountOpen }}
+              {refreshingSchedule || headerRefreshing ? (
+                <View style={styles.headerIcon}>
+                  <ActivityIndicator
+                    size="small"
+                    color={styles.link.color}
+                    accessibilityLabel={l('Refreshing', 'جارٍ التحديث')}
+                  />
+                </View>
+              ) : (
+                <IconButton
+                  name="refresh"
+                  label={l('Refresh', 'تحديث')}
+                  disabled={busy || refreshingSchedule || headerRefreshing || closing}
+                  onPress={refreshCurrent}
+                  styles={styles}
+                />
+              )}
+              <IconButton
+                name="settings"
+                label={l('Open settings', 'فتح الإعدادات')}
+                expanded={accountOpen}
                 onPress={onAccountPress}
-                style={styles.headerIcon}
-              >
-                <Icon name="settings" styles={styles} />
-              </Pressable>
+                styles={styles}
+              />
             </View>
           </View>
         </View>
       ) : workoutView ? (
         <View style={styles.eventHeader}>
-          <Text style={[styles.cardTitle, { flex: 1 }]} numberOfLines={2}>
-            {soloPackage
-              ? language === 'ar' && soloPackage.day_name_ar
-                ? soloPackage.day_name_ar
-                : soloPackage.day_name
-              : l('Workouts', 'التمارين')}
-          </Text>
-          <ConnectionStatus state={connectionState} styles={styles} compact />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Refresh workouts', 'تحديث التمارين')}
-            disabled={headerRefreshing || workoutPersisting || closing}
-            onPress={refreshCurrent}
-            style={styles.headerIcon}
-          >
-            <Icon name="refresh" styles={styles} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Close workouts', 'إغلاق التمارين')}
+          <IconButton
+            name={soloPackage || workoutDetail ? 'back' : 'close'}
+            rtl={language === 'ar'}
+            label={
+              soloPackage || workoutDetail
+                ? l('Back', 'رجوع')
+                : l('Close workouts', 'إغلاق التمارين')
+            }
             disabled={workoutPersisting || closing}
             onPress={() => {
               setWorkoutView(homeTab === 'workouts')
@@ -933,36 +1053,38 @@ export function InstitutionScreen({
               void refreshSavedDay()
               if (homeTab === 'saved') void refreshSavedLibrary()
             }}
-            style={styles.headerIcon}
-          >
-            <Icon name="close" styles={styles} />
-          </Pressable>
+            styles={styles}
+          />
+          <View style={{ flex: 1, paddingHorizontal: 4 }}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {soloPackage ? soloPackage.member_name : l('Workouts', 'التمارين')}
+            </Text>
+            {soloPackage ? (
+              <Text style={styles.headerSubtitle} numberOfLines={1}>
+                {language === 'ar' && soloPackage.day_name_ar
+                  ? soloPackage.day_name_ar
+                  : soloPackage.day_name}
+                {' · '}
+                {l('Workout', 'تمرين')}
+              </Text>
+            ) : null}
+          </View>
+          <ConnectionStatus state={connectionState} styles={styles} compact />
+          <IconButton
+            name="refresh"
+            label={l('Refresh workouts', 'تحديث التمارين')}
+            disabled={headerRefreshing || workoutPersisting || closing}
+            onPress={refreshCurrent}
+            styles={styles}
+          />
         </View>
       ) : (
         <View style={styles.eventHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cardTitle} numberOfLines={2}>
-              {roster?.event.title || l('Event', 'الموعد')}
-            </Text>
-            <Text style={styles.hint}>
-              {groupAvailable
-                ? groupEvent
-                  ? l('Step 2 of 2 · Workouts', 'الخطوة ٢ من ٢ · التمارين')
-                  : eventStage === 'preview'
-                    ? l('Event preview', 'معاينة الموعد')
-                    : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')
-                : eventStage === 'preview'
-                  ? l('Event preview', 'معاينة الموعد')
-                  : eventStage === 'results'
-                    ? l('Step 2 of 2 · Results', 'الخطوة ٢ من ٢ · النتائج')
-                    : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')}
-            </Text>
-          </View>
-          <ConnectionStatus state={connectionState} styles={styles} compact />
           {groupEvent || eventStage !== 'preview' ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
+            <IconButton
+              name="back"
+              rtl={language === 'ar'}
+              label={
                 groupEvent || eventStage === 'results'
                   ? l('Back to attendance', 'العودة إلى الحضور')
                   : l('Back to event preview', 'العودة إلى معاينة الموعد')
@@ -973,77 +1095,99 @@ export function InstitutionScreen({
                   ? setGroupEvent(null)
                   : setEventStage(eventStage === 'results' ? 'attendance' : 'preview')
               }
-              style={styles.headerIcon}
-            >
-              <Icon name="back" styles={styles} rtl={language === 'ar'} />
-            </Pressable>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Refresh event', 'تحديث الموعد')}
-            disabled={
-              busy ||
-              headerRefreshing ||
-              saving ||
-              draftSaving ||
-              workoutPersisting ||
-              groupPersisting ||
-              closing
-            }
-            onPress={refreshCurrent}
-            style={styles.headerIcon}
-          >
-            {busy || headerRefreshing ? (
-              <ActivityIndicator size="small" />
-            ) : (
-              <Icon name="refresh" styles={styles} />
-            )}
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l(
-              'Leave event and continue later',
-              'مغادرة الموعد والمتابعة لاحقاً',
-            )}
+              styles={styles}
+            />
+          ) : (
+            <View style={{ width: 8 }} />
+          )}
+          <View style={{ flex: 1, paddingHorizontal: 4 }}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {roster?.event.title || l('Event', 'الموعد')}
+            </Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {groupAvailable
+                ? groupEvent
+                  ? l('Step 2 of 2 · Workouts', 'الخطوة ٢ من ٢ · التمارين')
+                  : eventStage === 'preview'
+                    ? l('Event preview', 'معاينة الموعد')
+                    : l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')
+                : eventStage === 'preview'
+                  ? l('Event preview', 'معاينة الموعد')
+                  : eventStage === 'results'
+                    ? l('Step 2 of 2 · Results', 'الخطوة ٢ من ٢ · النتائج')
+                    : roster?.event.kind === 'assessment'
+                      ? l('Step 1 of 2 · Attendance', 'الخطوة ١ من ٢ · الحضور')
+                      : l('Attendance', 'الحضور')}
+            </Text>
+          </View>
+          <ConnectionStatus state={connectionState} styles={styles} compact />
+          {busy || headerRefreshing ? (
+            <View style={styles.headerIcon}>
+              <ActivityIndicator
+                size="small"
+                color={styles.link.color}
+                accessibilityLabel={l('Refreshing event', 'جارٍ تحديث الموعد')}
+              />
+            </View>
+          ) : (
+            <IconButton
+              name="refresh"
+              label={l('Refresh event', 'تحديث الموعد')}
+              disabled={
+                busy ||
+                headerRefreshing ||
+                saving ||
+                draftSaving ||
+                workoutPersisting ||
+                groupPersisting ||
+                closing
+              }
+              onPress={refreshCurrent}
+              styles={styles}
+            />
+          )}
+          <IconButton
+            name="close"
+            label={l('Leave event and continue later', 'مغادرة الموعد والمتابعة لاحقاً')}
             disabled={
               saving || draftSaving || workoutPersisting || groupPersisting || busy || closing
             }
             onPress={leaveEvent}
-            style={styles.headerIcon}
-          >
-            <Icon name="close" styles={styles} />
-          </Pressable>
+            styles={styles}
+          />
         </View>
       )}
       {refreshNotice && !message && !externalNotice ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={l('Dismiss notice', 'إخفاء التنبيه')}
-          onPress={() => setRefreshNotice('')}
-          style={styles.noticeToast}
-        >
-          <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
-            {refreshNotice}
-          </Text>
-          <Icon name="close" styles={styles} size={18} />
-        </Pressable>
+        <View style={{ marginHorizontal: 16, marginTop: 8 }}>
+          <Notice
+            text={refreshNotice}
+            tone="warning"
+            styles={styles}
+            lines={3}
+            live
+            onPress={() => setRefreshNotice('')}
+            actionIcon="close"
+            actionLabel={l('Dismiss notice', 'إخفاء التنبيه')}
+          />
+        </View>
       ) : null}
       {selected && message && !externalNotice ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: showMessageDetails }}
-          onPress={() => setShowMessageDetails((open) => !open)}
-          style={[styles.compactNotice, { marginHorizontal: 18, marginTop: 8 }]}
-        >
-          <Text
-            accessibilityLiveRegion="polite"
-            numberOfLines={showMessageDetails ? undefined : 2}
-            style={[styles.hint, { flex: 1 }]}
-          >
-            {t(message)}
-          </Text>
-          <Icon name={showMessageDetails ? 'collapse' : 'down'} styles={styles} size={18} />
-        </Pressable>
+        <View style={{ marginHorizontal: 16, marginTop: 8 }}>
+          <Notice
+            text={t(message)}
+            tone="warning"
+            styles={styles}
+            live
+            lines={showMessageDetails ? undefined : 2}
+            onPress={() => setShowMessageDetails((open) => !open)}
+            actionIcon={showMessageDetails ? 'collapse' : 'down'}
+            actionLabel={
+              showMessageDetails
+                ? l('Show less of this notice', 'عرض جزء أقل من التنبيه')
+                : l('Show the full notice', 'عرض التنبيه كاملاً')
+            }
+          />
+        </View>
       ) : null}
       {/* Keep this editor mounted while hidden so switching views preserves selection and device drafts. */}
       {workoutsOpened ? (
@@ -1122,44 +1266,110 @@ export function InstitutionScreen({
         </View>
       ) : null}
       {selected && eventStage === 'preview' && !groupEvent ? (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {roster ? (
-            <>
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>{roster.event.title}</Text>
-                <Text style={styles.hint}>
-                  {displayDate(roster.event.starts_at, language)} ·{' '}
-                  {l(
-                    roster.event.kind === 'assessment' ? 'Assessment' : 'Training',
-                    roster.event.kind === 'assessment' ? 'تقييم' : 'تدريب',
-                  )}
-                </Text>
-                <Text style={styles.hint}>
-                  {roster.people.filter((person) => person.duty === 'trainee').length}{' '}
-                  {l('athletes', 'رياضيين')} ·{' '}
-                  {l(roster.event.state, roster.event.state === 'completed' ? 'مكتمل' : 'مجدول')}
-                </Text>
-              </View>
-              {groupPreview ? (
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {roster ? (
+              <>
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>{l('Workout preview', 'معاينة التمرين')}</Text>
-                  <Text style={styles.hint}>
-                    {language === 'ar' && groupPreview.day_name_ar
-                      ? groupPreview.day_name_ar
-                      : groupPreview.day_name}
-                  </Text>
-                  {groupPreview.exercises.slice(0, 5).map((exercise) => (
-                    <Text key={exercise.key} style={styles.hint}>
-                      • {language === 'ar' && exercise.name_ar ? exercise.name_ar : exercise.name}
-                    </Text>
-                  ))}
-                  {groupPreview.exercises.length > 5 ? (
-                    <Text style={styles.hint}>
-                      +{groupPreview.exercises.length - 5} {l('more', 'أخرى')}
-                    </Text>
-                  ) : null}
+                  <View style={[styles.metaRow, { justifyContent: 'space-between' }]}>
+                    <StatusPill
+                      label={
+                        roster.event.kind === 'assessment'
+                          ? l('Assessment', 'تقييم')
+                          : groupPreview
+                            ? l('Group workout', 'تمرين جماعي')
+                            : l('Training', 'تدريب')
+                      }
+                      icon={roster.event.kind === 'assessment' ? 'assessment' : 'event'}
+                      tone="accent"
+                      styles={styles}
+                    />
+                    <StatusPill
+                      label={eventStateLabel(roster.event)}
+                      tone={eventStateTone(roster.event)}
+                      styles={styles}
+                    />
+                  </View>
+                  <Text style={styles.title}>{roster.event.title}</Text>
+                  <View style={{ gap: 6 }}>
+                    <View style={styles.metaItem}>
+                      <Icon name="time" styles={styles} size={16} muted />
+                      <Text style={styles.hint}>
+                        {displayDate(roster.event.starts_at, language)} –{' '}
+                        {displayTime(roster.event.ends_at, language)}
+                      </Text>
+                    </View>
+                    {roster.event.location ? (
+                      <View style={styles.metaItem}>
+                        <Icon name="location" styles={styles} size={16} muted />
+                        <Text style={styles.hint}>{roster.event.location}</Text>
+                      </View>
+                    ) : null}
+                    <View style={styles.metaItem}>
+                      <Icon name="athletes" styles={styles} size={16} muted />
+                      <Text style={styles.hint}>
+                        {trainees.length} {l('athletes', 'رياضيين')}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              ) : null}
+                {groupPreview ? (
+                  <View style={styles.card}>
+                    <SectionLabel styles={styles}>{l('Workout', 'التمرين')}</SectionLabel>
+                    <Text style={styles.cardTitle}>
+                      {language === 'ar' && groupPreview.day_name_ar
+                        ? groupPreview.day_name_ar
+                        : groupPreview.day_name}
+                    </Text>
+                    <View style={styles.inset}>
+                      {groupPreview.exercises.slice(0, 5).map((exercise) => (
+                        <View
+                          key={exercise.key}
+                          style={[styles.metaRow, { justifyContent: 'space-between' }]}
+                        >
+                          <Text style={[styles.label, { flex: 1 }]} numberOfLines={1}>
+                            {language === 'ar' && exercise.name_ar
+                              ? exercise.name_ar
+                              : exercise.name}
+                          </Text>
+                          <Text style={styles.meta}>
+                            {
+                              groupPreview.entries.filter(
+                                (entry) => entry.exercise_key === exercise.key,
+                              ).length
+                            }{' '}
+                            {l('sets', 'مجموعات')}
+                          </Text>
+                        </View>
+                      ))}
+                      {groupPreview.exercises.length > 5 ? (
+                        <Text style={styles.meta}>
+                          +{groupPreview.exercises.length - 5} {l('more', 'أخرى')}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                ) : null}
+                {beforeStart && !completed ? (
+                  <Notice
+                    text={l(
+                      'Recording opens at the start time. Need a different time? Reschedule it on the web.',
+                      'يبدأ التسجيل عند موعد البدء. هل تحتاج وقتاً آخر؟ أعد جدولته عبر الويب.',
+                    )}
+                    tone="info"
+                    styles={styles}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <ActivityIndicator
+                color={styles.link.color}
+                accessibilityLabel={l('Opening event', 'جارٍ فتح الموعد')}
+              />
+            )}
+          </ScrollView>
+          {roster ? (
+            <ActionBar styles={styles}>
               <Button
                 title={
                   completed
@@ -1174,19 +1384,9 @@ export function InstitutionScreen({
                 primary
                 fill
               />
-              {beforeStart && !completed ? (
-                <Text style={styles.hint}>
-                  {l(
-                    'Need a different time? Reschedule it on the web.',
-                    'هل تحتاج وقتاً آخر؟ أعد جدولته عبر الويب.',
-                  )}
-                </Text>
-              ) : null}
-            </>
-          ) : (
-            <ActivityIndicator accessibilityLabel={l('Opening event', 'جارٍ فتح الموعد')} />
-          )}
-        </ScrollView>
+            </ActionBar>
+          ) : null}
+        </View>
       ) : null}
       <ScrollView
         style={{
@@ -1202,167 +1402,244 @@ export function InstitutionScreen({
         keyboardShouldPersistTaps="handled"
       >
         {!selected ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>
-                {selectedDay === localDate(new Date())
-                  ? l('Today’s schedule', 'جدول اليوم')
-                  : new Intl.DateTimeFormat(language === 'ar' ? 'ar-AE' : 'en-GB', {
-                      weekday: 'short',
-                      day: 'numeric',
-                      month: 'short',
-                    }).format(new Date(`${selectedDay}T12:00:00`))}
-              </Text>
-              <Text style={styles.hint}>
-                {l(
-                  'Workouts, events and assessments for this day.',
-                  'تمارين ومواعيد وتقييمات هذا اليوم.',
-                )}
-              </Text>
+          <View style={{ gap: 10 }}>
+            <View style={[styles.rowHeader, { alignItems: 'flex-start' }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.title} accessibilityRole="header">
+                  {isToday
+                    ? l('Today', 'اليوم')
+                    : new Intl.DateTimeFormat(language === 'ar' ? 'ar-AE' : 'en-GB', {
+                        weekday: 'long',
+                      }).format(new Date(`${selectedDay}T12:00:00`))}
+                </Text>
+                <Text style={styles.hint}>
+                  {new Intl.DateTimeFormat(language === 'ar' ? 'ar-AE' : 'en-GB', {
+                    weekday: isToday ? 'long' : undefined,
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  }).format(new Date(`${selectedDay}T12:00:00`))}
+                </Text>
+              </View>
+              <View>
+                <IconButton
+                  name="filter"
+                  label={l('Filter schedule', 'تصفية الجدول')}
+                  onPress={() => {
+                    setDraftDay(selectedDay)
+                    setDraftRecordFilter(recordFilter)
+                    setDraftLatestFirst(latestFirst)
+                    setFiltersOpen(true)
+                  }}
+                  styles={styles}
+                />
+                {filterActive ? (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      end: 8,
+                      width: 9,
+                      height: 9,
+                      borderRadius: 5,
+                      backgroundColor: styles.colors.accent,
+                    }}
+                  />
+                ) : null}
+              </View>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={l('Filter schedule', 'تصفية الجدول')}
-              onPress={() => {
-                setDraftDay(selectedDay)
-                setDraftRecordFilter(recordFilter)
-                setDraftLatestFirst(latestFirst)
-                setFiltersOpen(true)
-              }}
-              style={styles.headerIcon}
-            >
-              <Icon name="filter" styles={styles} />
-            </Pressable>
+            <View style={[styles.segmented, { alignItems: 'center' }]}>
+              <IconButton
+                name="previous"
+                rtl={language === 'ar'}
+                label={l('Previous day', 'اليوم السابق')}
+                disabled={scheduleBusy}
+                onPress={() =>
+                  applyScheduleFilters(shiftDay(selectedDay, -1), recordFilter, latestFirst)
+                }
+                styles={styles}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={l('Go to today', 'الانتقال إلى اليوم')}
+                accessibilityState={{ disabled: isToday || scheduleBusy }}
+                disabled={isToday || scheduleBusy}
+                onPress={() =>
+                  applyScheduleFilters(localDate(new Date()), recordFilter, latestFirst)
+                }
+                style={[styles.segment, isToday && styles.segmentSelected]}
+              >
+                <Text style={[styles.segmentText, isToday && styles.segmentTextSelected]}>
+                  {l('Today', 'اليوم')}
+                </Text>
+              </Pressable>
+              <IconButton
+                name="forward"
+                rtl={language === 'ar'}
+                label={l('Next day', 'اليوم التالي')}
+                disabled={scheduleBusy}
+                onPress={() =>
+                  applyScheduleFilters(shiftDay(selectedDay, 1), recordFilter, latestFirst)
+                }
+                styles={styles}
+              />
+            </View>
+            {filterActive ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${filterLabel}. ${l('Clear filter', 'مسح التصفية')}`}
+                disabled={scheduleBusy}
+                onPress={() => applyScheduleFilters(selectedDay, 'all', false)}
+                style={[styles.filterChip, styles.filterChipActive, { alignSelf: 'flex-start' }]}
+              >
+                <View style={styles.metaItem}>
+                  <Icon name="filter" styles={styles} size={15} />
+                  <Text style={[styles.link, { fontSize: 14 }]}>{filterLabel}</Text>
+                  <Icon name="close" styles={styles} size={15} />
+                </View>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
         {!selected && message && !externalNotice ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showMessageDetails }}
+          <Notice
+            text={t(message)}
+            tone="warning"
+            styles={styles}
+            live
+            lines={showMessageDetails ? undefined : 2}
             onPress={() => setShowMessageDetails((open) => !open)}
-            style={styles.compactNotice}
-          >
-            <Text
-              accessibilityLiveRegion="polite"
-              numberOfLines={showMessageDetails ? undefined : 2}
-              style={[styles.hint, { flex: 1 }]}
-            >
-              {t(message)}
-            </Text>
-            <Icon name={showMessageDetails ? 'collapse' : 'down'} styles={styles} size={18} />
-          </Pressable>
+            actionIcon={showMessageDetails ? 'collapse' : 'down'}
+            actionLabel={
+              showMessageDetails
+                ? l('Show less of this notice', 'عرض جزء أقل من التنبيه')
+                : l('Show the full notice', 'عرض التنبيه كاملاً')
+            }
+          />
         ) : null}
         {institutionPaused && queueHead.event_id !== selected ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Review saved attendance', 'مراجعة الحضور المحفوظ')}
-            disabled={busy || saving || closing}
-            onPress={() => void openEvent(queueHead.event_id)}
-            style={styles.compactNotice}
-          >
-            <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
-              {l('Saved attendance needs review', 'يلزم مراجعة الحضور المحفوظ')}
-              {' · '}
-              {cached.find((c) => c.event.id === queueHead.event_id)?.event.title ||
-                l('Earlier event', 'موعد سابق')}
-            </Text>
-            <Icon name="forward" styles={styles} size={18} />
-          </Pressable>
+          <Notice
+            text={`${l('Saved attendance needs review', 'يلزم مراجعة الحضور المحفوظ')} · ${
+              cached.find((c) => c.event.id === queueHead.event_id)?.event.title ||
+              l('Earlier event', 'موعد سابق')
+            }`}
+            tone="warning"
+            styles={styles}
+            lines={2}
+            onPress={
+              busy || saving || closing ? undefined : () => void openEvent(queueHead.event_id)
+            }
+            actionIcon="forward"
+            actionLabel={l('Review saved attendance', 'مراجعة الحضور المحفوظ')}
+          />
         ) : null}
         {!selected ? (
           <>
-            {list.slice(0, visibleCount).map((entry) =>
-              entry.kind === 'event' ? (
+            {list.slice(0, visibleCount).map((entry) => {
+              const event = entry.kind === 'event' ? entry.event : null
+              const workout = entry.kind === 'workout' ? entry.workout : null
+              const starts = event ? event.starts_at : workout!.starts_at
+              const offline = event
+                ? cached.some((c) => c.event.id === entry.id)
+                : savedWorkoutIds.has(entry.id)
+              return (
                 <Pressable
-                  key={`event:${entry.id}`}
+                  key={`${entry.kind}:${entry.id}`}
                   accessibilityRole="button"
-                  disabled={busy || closing}
-                  accessibilityLabel={`${l('Open', 'فتح')} ${entry.event.title}`}
-                  onPress={() => void openEvent(entry.id)}
-                  style={[
+                  disabled={busy || closing || (!!workout && workoutPersisting)}
+                  accessibilityLabel={
+                    event
+                      ? `${l('Open', 'فتح')} ${event.title}`
+                      : `${l('Open workout', 'فتح التمرين')} ${workout!.day_name}`
+                  }
+                  onPress={() => {
+                    if (event) void openEvent(entry.id)
+                    else {
+                      setSoloPackage(workout)
+                      setWorkoutsOpened(true)
+                      setWorkoutView(true)
+                    }
+                  }}
+                  style={({ pressed }) => [
                     styles.card,
-                    entry.event.kind === 'assessment' && styles.assessmentCard,
-                    entry.event.state === 'completed' && styles.completedCard,
+                    event?.state === 'completed' && styles.completedCard,
+                    pressed && styles.cardPressed,
                   ]}
                 >
-                  <View style={[styles.actions, { alignItems: 'center' }]}>
-                    <Icon
-                      name={entry.event.kind === 'assessment' ? 'assessment' : 'event'}
-                      styles={styles}
-                      size={18}
-                      muted
-                    />
-                    <Text style={[styles.cardTitle, { flex: 1 }]}>{entry.event.title}</Text>
+                  <View style={styles.cardRow}>
+                    <View style={styles.timeColumn}>
+                      <Text style={styles.timeText} numberOfLines={1}>
+                        {starts ? displayTime(starts, language) : '—'}
+                      </Text>
+                      <Text style={styles.timeSub} numberOfLines={1}>
+                        {event
+                          ? displayTime(event.ends_at, language)
+                          : starts
+                            ? ''
+                            : l('Any time', 'أي وقت')}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <Text style={styles.rowTitle} numberOfLines={2}>
+                        {event ? event.title : workout!.member_name}
+                      </Text>
+                      <View style={styles.metaRow}>
+                        <View style={styles.metaItem}>
+                          <Icon
+                            name={
+                              workout
+                                ? 'workout'
+                                : event!.kind === 'assessment'
+                                  ? 'assessment'
+                                  : 'event'
+                            }
+                            styles={styles}
+                            size={15}
+                            muted
+                          />
+                          <Text style={styles.meta} numberOfLines={1}>
+                            {workout
+                              ? `${language === 'ar' && workout.day_name_ar ? workout.day_name_ar : workout.day_name} · ${workout.title}`
+                              : event!.kind === 'assessment'
+                                ? l('Assessment', 'تقييم')
+                                : l('Event', 'موعد')}
+                          </Text>
+                        </View>
+                        {event?.location ? (
+                          <View style={styles.metaItem}>
+                            <Icon name="location" styles={styles} size={15} muted />
+                            <Text style={styles.meta} numberOfLines={1}>
+                              {event.location}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <View style={styles.metaRow}>
+                        {event ? (
+                          <StatusPill
+                            label={eventStateLabel(event)}
+                            tone={eventStateTone(event)}
+                            styles={styles}
+                          />
+                        ) : null}
+                        {offline ? (
+                          <StatusPill
+                            label={l('Saved on device', 'محفوظ على الجهاز')}
+                            icon="saved"
+                            styles={styles}
+                          />
+                        ) : null}
+                      </View>
+                    </View>
+                    <Icon name="forward" styles={styles} size={18} muted rtl={language === 'ar'} />
                   </View>
-                  <Text style={styles.hint}>
-                    {displayDate(entry.event.starts_at, language)} ·{' '}
-                    {entry.event.kind === 'assessment'
-                      ? l('Assessment', 'تقييم')
-                      : l('Event', 'موعد')}{' '}
-                    ·{' '}
-                    {l(
-                      entry.event.state,
-                      entry.event.state === 'completed'
-                        ? 'مكتمل'
-                        : entry.event.state === 'cancelled'
-                          ? 'ملغى'
-                          : 'مجدول',
-                    )}
-                  </Text>
-                  {entry.event.location ? (
-                    <Text style={styles.hint}>{entry.event.location}</Text>
-                  ) : null}
-                  {cached.some((c) => c.event.id === entry.id) ? (
-                    <Text style={styles.link}>{l('Available offline', 'متاح دون اتصال')}</Text>
-                  ) : null}
                 </Pressable>
-              ) : (
-                <Pressable
-                  key={`workout:${entry.id}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${l('Open workout', 'فتح التمرين')} ${entry.workout.day_name}`}
-                  disabled={busy || closing || workoutPersisting}
-                  onPress={() => {
-                    setSoloPackage(entry.workout)
-                    setWorkoutsOpened(true)
-                    setWorkoutView(true)
-                  }}
-                  style={styles.card}
-                >
-                  <View style={[styles.actions, { alignItems: 'center' }]}>
-                    <Icon name="workout" styles={styles} size={18} muted />
-                    <Text style={[styles.cardTitle, { flex: 1 }]}>
-                      {language === 'ar' && entry.workout.day_name_ar
-                        ? entry.workout.day_name_ar
-                        : entry.workout.day_name}
-                    </Text>
-                  </View>
-                  <Text style={styles.hint}>
-                    {entry.workout.member_name} · {entry.workout.title}
-                  </Text>
-                  <Text style={styles.hint}>
-                    {entry.workout.starts_at
-                      ? displayDate(entry.workout.starts_at, language)
-                      : l('No fixed time', 'دون وقت محدد')}
-                    {' · '}
-                    {l('Workout', 'تمرين')}
-                    {savedWorkoutIds.has(entry.id)
-                      ? ` · ${l('Saved on device', 'محفوظ على الجهاز')}`
-                      : ''}
-                  </Text>
-                </Pressable>
-              ),
-            )}
+              )
+            })}
             {visibleCount < list.length || next !== null || workoutFetched < workoutTotal ? (
               <Button
                 title={l('Load more', 'عرض المزيد')}
+                secondary
                 disabled={busy || refreshingSchedule || workoutLoading || closing}
                 onPress={() =>
                   visibleCount < list.length
@@ -1423,44 +1700,73 @@ export function InstitutionScreen({
               />
             ) : null}
             {workoutError ? (
-              <Pressable
-                accessibilityRole="button"
+              <Notice
+                text={l(
+                  'Workouts could not refresh. Saved copies remain available.',
+                  'تعذّر تحديث التمارين. النسخ المحفوظة ما زالت متاحة.',
+                )}
+                tone="warning"
+                styles={styles}
+                lines={2}
                 onPress={() => setWorkoutError('')}
-                style={styles.compactNotice}
-              >
-                <Text style={[styles.hint, { flex: 1 }]} numberOfLines={2}>
-                  {l(
-                    'Workouts could not refresh. Saved copies remain available.',
-                    'تعذّر تحديث التمارين. النسخ المحفوظة ما زالت متاحة.',
-                  )}
-                </Text>
-                <Icon name="close" styles={styles} size={18} />
-              </Pressable>
+                actionIcon="close"
+                actionLabel={l('Dismiss notice', 'إخفاء التنبيه')}
+              />
             ) : null}
           </>
         ) : (
           <>
             {roster ? (
               <>
-                {groupAvailable && !allAttendanceConfirmed ? (
-                  <Text style={styles.hint}>
-                    {l(
-                      'Mark everyone present, absent or excused. When attendance is confirmed, continue to workouts.',
-                      'حدّد حضور الجميع أو غيابهم أو إعفاءهم. بعد تأكيد الحضور، انتقل إلى التمارين.',
-                    )}
-                  </Text>
-                ) : groupAvailable && allAttendanceConfirmed && !presentCount ? (
-                  <Text style={styles.hint}>
-                    {l(
-                      'No athletes are present. You can finish the event here.',
-                      'لا يوجد رياضيون حاضرون. يمكنك إنهاء الموعد هنا.',
-                    )}
-                  </Text>
+                {eventStage === 'attendance' && !completed && !beforeStart ? (
+                  <View style={styles.card}>
+                    <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
+                      <Text style={styles.cardTitle}>
+                        {markedCount} / {trainees.length} {l('marked', 'محدد')}
+                      </Text>
+                      <StatusPill
+                        label={`${presentCount} ${l('present', 'حاضر')}`}
+                        tone={presentCount ? 'success' : 'neutral'}
+                        styles={styles}
+                      />
+                    </View>
+                    <Progress value={markedCount} total={trainees.length} styles={styles} />
+                    <Text style={styles.hint}>
+                      {groupAvailable && allAttendanceConfirmed && !presentCount
+                        ? l(
+                            'No athletes are present. You can finish the event here.',
+                            'لا يوجد رياضيون حاضرون. يمكنك إنهاء الموعد هنا.',
+                          )
+                        : groupAvailable
+                          ? l(
+                              'Mark everyone present, absent or excused. When attendance is confirmed, continue to workouts.',
+                              'حدّد حضور الجميع أو غيابهم أو إعفاءهم. بعد تأكيد الحضور، انتقل إلى التمارين.',
+                            )
+                          : l(
+                              'Mark everyone present, absent or excused. Each mark is saved on this phone first.',
+                              'حدّد حضور الجميع أو غيابهم أو إعفاءهم. يُحفظ كل تحديد على هذا الهاتف أولاً.',
+                            )}
+                    </Text>
+                    {unmarkedPeople.length && !attendanceLocked ? (
+                      <Button
+                        title={
+                          bulkMarking
+                            ? l('Marking…', 'جارٍ التحديد…')
+                            : l(
+                                `Mark ${unmarkedPeople.length} remaining as present`,
+                                `تحديد ${unmarkedPeople.length} متبقين كحاضرين`,
+                              )
+                        }
+                        icon="check"
+                        secondary
+                        small
+                        disabled={bulkMarking}
+                        onPress={() => void markRemainingPresent()}
+                        styles={styles}
+                      />
+                    ) : null}
+                  </View>
                 ) : null}
-                <Text style={styles.hint}>
-                  {displayDate(roster.event.starts_at, language)} {t('·')} {t(roster.event.kind)}{' '}
-                  {t('·')} {t(roster.event.state)}
-                </Text>
                 {completed ? (
                   <View
                     accessibilityLiveRegion="polite"
@@ -1492,27 +1798,29 @@ export function InstitutionScreen({
                   </View>
                 ) : null}
                 {snapshot && pending.length ? (
-                  <Text style={styles.hint}>
-                    {' '}
-                    {t('Roster downloaded')} {displayDate(snapshot.roster.saved_at, language)}
-                    {t('. Permission is checked again when sending.')}{' '}
-                  </Text>
+                  <Notice
+                    text={`${t('Roster downloaded')} ${displayDate(snapshot.roster.saved_at, language)}${t('. Permission is checked again when sending.')}`}
+                    tone="info"
+                    styles={styles}
+                  />
                 ) : null}
                 {snapshot?.roster.blocked ? (
-                  <Text style={styles.message}>
-                    {' '}
-                    {t(
+                  <Notice
+                    text={t(
                       'Access blocked. Saved work is retained for explicit review or discard; attendance entry is locked.',
-                    )}{' '}
-                  </Text>
+                    )}
+                    tone="danger"
+                    styles={styles}
+                  />
                 ) : null}
                 {paused ? (
-                  <Text style={styles.message}>
-                    {' '}
-                    {t(
+                  <Notice
+                    text={t(
                       'Sending is paused. Review the saved changes against current server records below. Keep or export what you need before explicitly discarding this device copy and reopening online.',
-                    )}{' '}
-                  </Text>
+                    )}
+                    tone="warning"
+                    styles={styles}
+                  />
                 ) : null}
                 {snapshot &&
                 (paused || snapshot.roster.blocked || pending.length || snapshot.drafts.length) ? (
@@ -1570,28 +1878,33 @@ export function InstitutionScreen({
                   </View>
                 ) : null}
                 {roster.event.kind === 'assessment' && !roster.definition?.length ? (
-                  <Text style={styles.message}>
-                    {' '}
-                    {t(
+                  <Notice
+                    text={t(
                       'This older attendance package has no assessment definition. Resolve saved attendance, then refresh online to enter scores.',
-                    )}{' '}
-                  </Text>
+                    )}
+                    tone="warning"
+                    styles={styles}
+                  />
                 ) : null}
                 {!beforeStart || completed || !!pending.length ? (
                   <>
-                    <TextInput
-                      accessibilityLabel={t('Find athlete in this event')}
-                      editable={!draftSaving && !saving}
-                      placeholder={t('Find athlete in this event')}
-                      placeholderTextColor={styles.hint.color}
-                      value={search}
-                      onChangeText={setSearch}
-                      style={styles.input}
-                    />
-                    <Text style={styles.hint}>
-                      {roster.people.filter((p) => p.duty === 'trainee').length}{' '}
-                      {t('athletes in event ·')} {filtered.length} {t('shown')}{' '}
-                    </Text>
+                    {trainees.length > 6 || search ? (
+                      <>
+                        <Field
+                          styles={styles}
+                          icon="search"
+                          accessibilityLabel={t('Find athlete in this event')}
+                          editable={!draftSaving && !saving}
+                          placeholder={t('Find athlete in this event')}
+                          value={search}
+                          onChangeText={setSearch}
+                        />
+                        <Text style={styles.meta}>
+                          {trainees.length} {t('athletes in event ·')} {filtered.length}{' '}
+                          {t('shown')}
+                        </Text>
+                      </>
+                    ) : null}
                     {filtered.map((person) => {
                       const latest = snapshot?.commands
                         .filter(
@@ -1634,17 +1947,47 @@ export function InstitutionScreen({
                         !person.active
                       return (
                         <View key={person.member_id} style={styles.attendanceRow}>
-                          <View style={styles.toolbar}>
-                            <Text style={[styles.cardTitle, { flex: 1 }]} numberOfLines={2}>
-                              {person.name}
-                            </Text>
-                            <Text accessibilityLiveRegion="polite" style={styles.hint}>
-                              {t(value)}
-                              {unsettled ? ` · ${t(stateText[latest.state])}` : ''}
-                            </Text>
+                          <View style={styles.rowHeader}>
+                            <View style={styles.avatar}>
+                              <Text style={styles.avatarText}>{initials(person.name)}</Text>
+                            </View>
+                            <View style={{ flex: 1, gap: 2 }}>
+                              <Text style={styles.rowTitle} numberOfLines={2}>
+                                {person.name}
+                              </Text>
+                              {unsettled ? (
+                                <Text accessibilityLiveRegion="polite" style={styles.meta}>
+                                  {t(stateText[latest.state])}
+                                </Text>
+                              ) : null}
+                            </View>
+                            {eventStage !== 'attendance' || completed ? (
+                              <StatusPill
+                                label={attendanceLabel(value)}
+                                tone={attendanceTone(value)}
+                                styles={styles}
+                              />
+                            ) : null}
+                            {eventStage === 'attendance' || eventStage === 'results' ? (
+                              <IconButton
+                                name={expandedPerson === person.member_id ? 'collapse' : 'history'}
+                                label={
+                                  expandedPerson === person.member_id
+                                    ? l('Hide details', 'إخفاء التفاصيل')
+                                    : `${l('History and corrections', 'السجل والتصحيحات')} · ${person.name}`
+                                }
+                                expanded={expandedPerson === person.member_id}
+                                onPress={() =>
+                                  setExpandedPerson(
+                                    expandedPerson === person.member_id ? null : person.member_id,
+                                  )
+                                }
+                                styles={styles}
+                              />
+                            ) : null}
                           </View>
                           {latest?.error ? (
-                            <Text style={styles.message}>{t(latest.error)}</Text>
+                            <Notice text={t(latest.error)} tone="danger" styles={styles} />
                           ) : null}
                           {!person.active ? (
                             <Text style={styles.hint}>
@@ -1652,24 +1995,18 @@ export function InstitutionScreen({
                             </Text>
                           ) : null}
                           {eventStage === 'attendance' && !completed ? (
-                            <View style={styles.actions}>
-                              {(['present', 'absent', 'excused'] as const).map((mark) => (
-                                <Button
-                                  key={mark}
-                                  title={
-                                    mark === 'present'
-                                      ? l('Present', 'حاضر')
-                                      : mark === 'absent'
-                                        ? l('Absent', 'غائب')
-                                        : l('Excused', 'معذور')
-                                  }
-                                  styles={styles}
-                                  primary={value === mark}
-                                  disabled={locked || value === mark}
-                                  onPress={() => void record(person.member_id, mark)}
-                                />
-                              ))}
-                            </View>
+                            <Segmented
+                              label={`${l('Attendance', 'الحضور')} · ${person.name}`}
+                              value={value === 'unmarked' ? null : value}
+                              disabled={locked || bulkMarking}
+                              onChange={(mark) => void record(person.member_id, mark)}
+                              options={(['present', 'absent', 'excused'] as const).map((mark) => ({
+                                value: mark,
+                                label: attendanceLabel(mark),
+                                tone: attendanceTone(mark),
+                              }))}
+                              styles={styles}
+                            />
                           ) : null}
                           {expandedPerson === person.member_id ? (
                             <EventHistory
@@ -1689,17 +2026,21 @@ export function InstitutionScreen({
                           {roster.event.kind === 'assessment' && eventStage === 'results' ? (
                             <>
                               {result ? (
-                                <View style={{ gap: 6 }}>
-                                  <Text style={styles.label}>
-                                    {' '}
+                                <View style={styles.inset}>
+                                  <Text style={styles.sectionLabel}>
                                     {t('Confirmed assessment · revision')} {result.revision}
                                   </Text>
                                   {roster.definition?.map((drill) => (
-                                    <Text key={drill.key} style={styles.hint}>
-                                      {drill.name}
-                                      {t(':')} {result.values[drill.key] ?? t('Not recorded')}
-                                      {drill.unit ? ` ${drill.unit}` : ''}
-                                    </Text>
+                                    <View
+                                      key={drill.key}
+                                      style={[styles.metaRow, { justifyContent: 'space-between' }]}
+                                    >
+                                      <Text style={[styles.hint, { flex: 1 }]}>{drill.name}</Text>
+                                      <Text style={styles.label}>
+                                        {result.values[drill.key] ?? t('Not recorded')}
+                                        {drill.unit ? ` ${drill.unit}` : ''}
+                                      </Text>
+                                    </View>
                                   ))}
                                   {result.note ? (
                                     <Text style={styles.hint}>
@@ -1709,16 +2050,21 @@ export function InstitutionScreen({
                                 </View>
                               ) : null}
                               {resultCommand ? (
-                                <Text style={styles.hint}>
-                                  {' '}
+                                <Text style={styles.meta}>
                                   {t('Scores:')} {t(stateText[resultCommand.state])}
                                   {resultCommand.error ? ` · ${t(resultCommand.error)}` : ''}
                                 </Text>
                               ) : null}
                               {snapshot?.drafts.some((d) => d.member === person.member_id) ? (
-                                <Text style={styles.hint}>{t('Score draft saved on device')}</Text>
+                                <StatusPill
+                                  label={t('Score draft saved on device')}
+                                  icon="saved"
+                                  tone="info"
+                                  styles={styles}
+                                />
                               ) : null}
                               {!completed &&
+                              editor !== person.member_id &&
                               roster.definition?.length &&
                               (value === 'present' ||
                                 result ||
@@ -1745,6 +2091,8 @@ export function InstitutionScreen({
                                   }
                                   onPress={() => setEditor(person.member_id)}
                                   styles={styles}
+                                  icon="assessment"
+                                  fill
                                 />
                               ) : null}
                               {editor === person.member_id &&
@@ -1791,24 +2139,6 @@ export function InstitutionScreen({
                               ) : null}
                             </>
                           ) : null}
-                          {eventStage === 'attendance' || eventStage === 'results' ? (
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityState={{ expanded: expandedPerson === person.member_id }}
-                              onPress={() =>
-                                setExpandedPerson(
-                                  expandedPerson === person.member_id ? null : person.member_id,
-                                )
-                              }
-                              style={{ minHeight: 44, justifyContent: 'center' }}
-                            >
-                              <Text style={styles.link}>
-                                {expandedPerson === person.member_id
-                                  ? l('Hide details', 'إخفاء التفاصيل')
-                                  : l('History and corrections', 'السجل والتصحيحات')}
-                              </Text>
-                            </Pressable>
-                          ) : null}
                         </View>
                       )
                     })}
@@ -1817,60 +2147,24 @@ export function InstitutionScreen({
                         {t(search ? 'No athletes match this name.' : 'This event has no athletes.')}
                       </Text>
                     ) : null}
-                    {roster.event.kind === 'assessment' &&
-                    eventStage === 'attendance' &&
-                    roster.event.state === 'scheduled' ? (
-                      <Button
-                        title={l('Next: record results', 'التالي: تسجيل النتائج')}
-                        onPress={() => {
-                          if (!allAttendanceConfirmed) {
-                            const unmarked = roster.people.filter(
-                              (person) =>
-                                person.duty === 'trainee' &&
-                                person.active &&
-                                person.attendance === 'unmarked',
-                            ).length
-                            setRefreshNotice(
-                              unmarked
-                                ? l(
-                                    `${unmarked} athlete(s) still need an attendance mark.`,
-                                    `لم يُحدَّد حضور ${unmarked} من الرياضيين بعد.`,
-                                  )
-                                : l(
-                                    'Wait for attendance confirmation, then continue.',
-                                    'انتظر تأكيد الحضور ثم تابع.',
-                                  ),
-                            )
-                            return
-                          }
-                          setExpandedPerson(null)
-                          setEventStage('results')
-                        }}
-                        styles={styles}
-                        primary
-                        fill
-                        disabled={busy || saving || draftSaving || closing}
-                      />
-                    ) : null}
-                    {groupAvailable &&
-                    eventStage === 'attendance' &&
-                    roster.event.state === 'scheduled' &&
-                    (!allAttendanceConfirmed || presentCount > 0) ? (
-                      <Button
-                        title={l('Next: record workouts', 'التالي: تسجيل التمارين')}
-                        onPress={() => void openGroupSheets()}
-                        styles={styles}
-                        primary
-                        fill
-                        disabled={busy || saving || draftSaving || groupPersisting || closing}
-                      />
-                    ) : null}
                     {snapshot &&
                     (roster.event.kind !== 'assessment' || eventStage === 'results') &&
                     roster.event.state === 'scheduled' &&
                     (!groupAvailable || !presentCount) ? (
-                      <View style={{ gap: 8 }}>
-                        <Text style={styles.cardTitle}>{l('Finish event', 'إنهاء الموعد')}</Text>
+                      <View style={styles.card}>
+                        <SectionLabel styles={styles}>
+                          {l('Finish event', 'إنهاء الموعد')}
+                        </SectionLabel>
+                        {!completionProblems.length &&
+                        !pending.length &&
+                        !snapshot.drafts.length ? (
+                          <Text style={styles.hint}>
+                            {l(
+                              'Everything is recorded. Finish the event when you are done.',
+                              'تم تسجيل كل شيء. أنهِ الموعد عند الانتهاء.',
+                            )}
+                          </Text>
+                        ) : null}
                         {completionProblems.map((problem) => (
                           <Text key={t(problem)} style={styles.hint}>
                             {t(problem)}
@@ -1888,29 +2182,6 @@ export function InstitutionScreen({
                             {t('score draft(s) before completing.')}{' '}
                           </Text>
                         ) : null}
-                        <Button
-                          title={
-                            finishing
-                              ? l('Waiting for confirmation…', 'بانتظار التأكيد…')
-                              : l('Finish event', 'إنهاء الموعد')
-                          }
-                          onPress={finish}
-                          styles={styles}
-                          primary
-                          fill
-                          disabled={
-                            busy ||
-                            saving ||
-                            draftSaving ||
-                            closing ||
-                            institutionPaused ||
-                            snapshot.roster.blocked ||
-                            !!pending.length ||
-                            !!snapshot.drafts.length ||
-                            !!completionProblems.length ||
-                            beforeStart
-                          }
-                        />
                       </View>
                     ) : null}
                     {snapshot ? (
@@ -1963,6 +2234,76 @@ export function InstitutionScreen({
           </>
         )}
       </ScrollView>
+      {selected && roster && !groupEvent && !workoutView && eventStage !== 'preview'
+        ? (() => {
+            const nextResults =
+              roster.event.kind === 'assessment' &&
+              eventStage === 'attendance' &&
+              roster.event.state === 'scheduled'
+            const nextWorkouts =
+              groupAvailable &&
+              eventStage === 'attendance' &&
+              roster.event.state === 'scheduled' &&
+              (!allAttendanceConfirmed || presentCount > 0)
+            const canFinishHere =
+              !!snapshot &&
+              (roster.event.kind !== 'assessment' || eventStage === 'results') &&
+              roster.event.state === 'scheduled' &&
+              (!groupAvailable || (!presentCount && allAttendanceConfirmed))
+            if (!nextResults && !nextWorkouts && !canFinishHere) return null
+            return (
+              <ActionBar styles={styles}>
+                {nextResults ? (
+                  <Button
+                    title={l('Next: record results', 'التالي: تسجيل النتائج')}
+                    onPress={goToResults}
+                    styles={styles}
+                    primary
+                    fill
+                    disabled={busy || saving || draftSaving || closing || bulkMarking}
+                  />
+                ) : null}
+                {nextWorkouts ? (
+                  <Button
+                    title={l('Next: record workouts', 'التالي: تسجيل التمارين')}
+                    onPress={() => void openGroupSheets()}
+                    styles={styles}
+                    primary
+                    fill
+                    disabled={
+                      busy || saving || draftSaving || groupPersisting || closing || bulkMarking
+                    }
+                  />
+                ) : null}
+                {canFinishHere && snapshot ? (
+                  <Button
+                    title={
+                      finishing
+                        ? l('Waiting for confirmation…', 'بانتظار التأكيد…')
+                        : l('Finish event', 'إنهاء الموعد')
+                    }
+                    onPress={finish}
+                    styles={styles}
+                    primary={!nextWorkouts}
+                    fill
+                    disabled={
+                      busy ||
+                      saving ||
+                      draftSaving ||
+                      closing ||
+                      institutionPaused ||
+                      snapshot.roster.blocked ||
+                      !!pending.length ||
+                      !!snapshot.drafts.length ||
+                      !!completionProblems.length ||
+                      beforeStart
+                    }
+                  />
+                ) : null}
+              </ActionBar>
+            )
+          })()
+        : null}
       <ScrollView
         style={{ display: homeTab === 'saved' && !selected && !workoutView ? 'flex' : 'none' }}
         contentContainerStyle={[styles.content, { paddingBottom: 96 }]}
@@ -1975,26 +2316,19 @@ export function InstitutionScreen({
             'تبقى الأنشطة المنزّلة متاحة على هذا الجهاز. قد تحتاج التغييرات المسجلة إلى مزامنة.',
           )}
         </Text>
-        <View style={styles.actions} accessibilityRole="tablist">
-          {(
-            [
-              ['all', l('All', 'الكل')],
-              ['workouts', l('Workouts', 'التمارين')],
-              ['events', l('Events', 'المواعيد')],
-              ['assessments', l('Assessments', 'التقييمات')],
-            ] as const
-          ).map(([value, label]) => (
-            <Pressable
-              key={value}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: savedFilter === value }}
-              onPress={() => setSavedFilter(value)}
-              style={[styles.filterChip, savedFilter === value && styles.filterChipActive]}
-            >
-              <Text style={savedFilter === value ? styles.link : styles.hint}>{label}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <Segmented
+          label={l('Saved activity type', 'نوع المحفوظات')}
+          wrap
+          value={savedFilter}
+          onChange={setSavedFilter}
+          options={[
+            { value: 'all', label: l('All', 'الكل') },
+            { value: 'workouts', label: l('Workouts', 'التمارين') },
+            { value: 'events', label: l('Events', 'المواعيد') },
+            { value: 'assessments', label: l('Assessments', 'التقييمات') },
+          ]}
+          styles={styles}
+        />
         {savedCards.map((item) => {
           const event = item.kind === 'event' ? item.event.event : null
           const record = item.kind === 'event' ? null : item.record
@@ -2024,44 +2358,59 @@ export function InstitutionScreen({
                   setWorkoutView(true)
                 } else void openEvent(item.id)
               }}
-              style={styles.card}
+              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
             >
-              <View style={[styles.actions, { alignItems: 'center' }]}>
-                <Icon
-                  name={
-                    item.category === 'workouts'
-                      ? 'workout'
-                      : item.category === 'assessments'
-                        ? 'assessment'
-                        : 'event'
-                  }
-                  styles={styles}
-                  size={18}
-                  muted
-                />
-                <Text style={[styles.cardTitle, { flex: 1 }]}>{title}</Text>
+              <View style={styles.cardRow}>
+                <View style={styles.kindBadge}>
+                  <Icon
+                    name={
+                      item.category === 'workouts'
+                        ? 'workout'
+                        : item.category === 'assessments'
+                          ? 'assessment'
+                          : 'event'
+                    }
+                    styles={styles}
+                    size={18}
+                  />
+                </View>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={styles.rowTitle} numberOfLines={2}>
+                    {item.kind === 'workout' ? record!.package.member_name : title}
+                  </Text>
+                  <Text style={styles.meta} numberOfLines={2}>
+                    {item.kind === 'workout'
+                      ? `${title} · `
+                      : item.category === 'workouts'
+                        ? `${l('Group workout', 'تمرين جماعي')} · `
+                        : item.category === 'assessments'
+                          ? `${l('Assessment', 'تقييم')} · `
+                          : `${l('Event', 'موعد')} · `}
+                    {event
+                      ? displayDate(event.starts_at, language)
+                      : record!.package.starts_at
+                        ? displayDate(record!.package.starts_at, language)
+                        : record!.package.training_date}
+                  </Text>
+                  <View style={styles.metaRow}>
+                    {awaiting ? (
+                      <StatusPill
+                        label={l('Needs review or sync', 'يحتاج مراجعة أو مزامنة')}
+                        tone="warning"
+                        icon="alert"
+                        styles={styles}
+                      />
+                    ) : (
+                      <StatusPill
+                        label={l('Available offline', 'متاح دون اتصال')}
+                        icon="saved"
+                        styles={styles}
+                      />
+                    )}
+                  </View>
+                </View>
+                <Icon name="forward" styles={styles} size={18} muted rtl={language === 'ar'} />
               </View>
-              <Text style={styles.hint}>
-                {item.category === 'workouts'
-                  ? l('Workout', 'تمرين')
-                  : item.category === 'assessments'
-                    ? l('Assessment', 'تقييم')
-                    : l('Event', 'موعد')}
-                {' · '}
-                {event
-                  ? displayDate(event.starts_at, language)
-                  : record!.package.starts_at
-                    ? displayDate(record!.package.starts_at, language)
-                    : record!.package.training_date}
-              </Text>
-              <Text style={styles.link}>
-                {awaiting
-                  ? l(
-                      'Available offline · needs review or sync',
-                      'متاح دون اتصال · يحتاج مراجعة أو مزامنة',
-                    )
-                  : l('Available offline', 'متاح دون اتصال')}
-              </Text>
             </Pressable>
           )
         })}
@@ -2089,6 +2438,7 @@ export function InstitutionScreen({
         {savedLimit < savedRecordTotal ? (
           <Button
             title={l('Load more saved workouts', 'عرض مزيد من التمارين المحفوظة')}
+            secondary
             onPress={() => setSavedLimit((limit) => limit + 20)}
             styles={styles}
           />
@@ -2110,72 +2460,60 @@ export function InstitutionScreen({
               contentContainerStyle={styles.filterSheet}
               keyboardShouldPersistTaps="handled"
             >
-              <View
-                style={[styles.actions, { alignItems: 'center', justifyContent: 'space-between' }]}
-              >
-                <Text style={styles.cardTitle}>{l('Schedule filters', 'تصفية الجدول')}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={l('Close filters', 'إغلاق التصفية')}
+              <View style={styles.sheetHandle} />
+              <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
+                <Text style={styles.cardTitle} accessibilityRole="header">
+                  {l('Schedule filters', 'تصفية الجدول')}
+                </Text>
+                <IconButton
+                  name="close"
+                  label={l('Close filters', 'إغلاق التصفية')}
                   onPress={() => setFiltersOpen(false)}
-                  style={styles.headerIcon}
-                >
-                  <Icon name="close" styles={styles} />
-                </Pressable>
+                  styles={styles}
+                />
               </View>
-              <Text style={styles.label}>{l('Date', 'التاريخ')}</Text>
-              <FieldDatePicker selected={draftDay} onChange={setDraftDay} styles={styles} />
-              <Button
-                title={l('Today', 'اليوم')}
-                onPress={() => setDraftDay(localDate(new Date()))}
+              <SectionLabel
                 styles={styles}
-                fill
+                trailing={
+                  <Button
+                    title={l('Today', 'اليوم')}
+                    small
+                    ghost
+                    disabled={draftDay === localDate(new Date())}
+                    onPress={() => setDraftDay(localDate(new Date()))}
+                    styles={styles}
+                  />
+                }
+              >
+                {l('Date', 'التاريخ')}
+              </SectionLabel>
+              <FieldDatePicker selected={draftDay} onChange={setDraftDay} styles={styles} />
+              <SectionLabel styles={styles}>{l('Show', 'عرض')}</SectionLabel>
+              <Segmented
+                label={l('Show', 'عرض')}
+                wrap
+                value={draftRecordFilter}
+                onChange={setDraftRecordFilter}
+                options={[
+                  { value: 'all', label: l('All', 'الكل') },
+                  { value: 'training', label: l('Events', 'المواعيد') },
+                  { value: 'assessment', label: l('Assessments', 'التقييمات') },
+                  { value: 'workout', label: l('Workouts', 'التمارين') },
+                ]}
+                styles={styles}
               />
-              <Text style={styles.label}>{l('Show', 'عرض')}</Text>
-              <View style={styles.actions}>
-                {(
-                  [
-                    ['all', l('All', 'الكل')],
-                    ['training', l('Events', 'المواعيد')],
-                    ['assessment', l('Assessments', 'التقييمات')],
-                    ['workout', l('Workouts', 'التمارين')],
-                  ] as const
-                ).map(([kind, label]) => (
-                  <Button
-                    key={kind}
-                    title={label}
-                    primary={draftRecordFilter === kind}
-                    onPress={() => setDraftRecordFilter(kind)}
-                    styles={styles}
-                  />
-                ))}
-              </View>
-              <Text style={styles.label}>{l('Order', 'الترتيب')}</Text>
-              <View style={styles.actions}>
-                <Button
-                  title={l('Earliest first', 'الأبكر أولاً')}
-                  primary={!draftLatestFirst}
-                  onPress={() => setDraftLatestFirst(false)}
-                  styles={styles}
-                />
-                <Button
-                  title={l('Latest first', 'الأحدث أولاً')}
-                  primary={draftLatestFirst}
-                  onPress={() => setDraftLatestFirst(true)}
-                  styles={styles}
-                />
-              </View>
-              <View style={styles.actionRow}>
-                <View style={styles.actionCell}>
-                  <Button
-                    title={l('Apply', 'تطبيق')}
-                    primary
-                    fill
-                    disabled={refreshingSchedule || workoutLoading}
-                    onPress={() => applyScheduleFilters(draftDay)}
-                    styles={styles}
-                  />
-                </View>
+              <SectionLabel styles={styles}>{l('Order', 'الترتيب')}</SectionLabel>
+              <Segmented
+                label={l('Order', 'الترتيب')}
+                value={draftLatestFirst ? 'latest' : 'earliest'}
+                onChange={(value) => setDraftLatestFirst(value === 'latest')}
+                options={[
+                  { value: 'earliest', label: l('Earliest first', 'الأبكر أولاً') },
+                  { value: 'latest', label: l('Latest first', 'الأحدث أولاً') },
+                ]}
+                styles={styles}
+              />
+              <View style={[styles.actionRow, { marginTop: 6 }]}>
                 <View style={styles.actionCell}>
                   <Button
                     title={l('Clear', 'مسح')}
@@ -2185,6 +2523,16 @@ export function InstitutionScreen({
                       setDraftLatestFirst(false)
                       setDraftDay(localDate(new Date()))
                     }}
+                    styles={styles}
+                  />
+                </View>
+                <View style={styles.actionCell}>
+                  <Button
+                    title={l('Apply', 'تطبيق')}
+                    primary
+                    fill
+                    disabled={refreshingSchedule || workoutLoading}
+                    onPress={() => applyScheduleFilters(draftDay)}
                     styles={styles}
                   />
                 </View>

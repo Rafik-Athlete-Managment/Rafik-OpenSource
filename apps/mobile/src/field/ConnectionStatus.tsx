@@ -19,15 +19,23 @@ export function ConnectionStatus({
       : state === 'online'
         ? l('Online', 'متصل')
         : l('Checking', 'جارٍ التحقق')
+  const tone =
+    styles.colors.tones[
+      state === 'offline' ? 'warning' : state === 'online' ? 'success' : 'neutral'
+    ]
   return (
-    <View style={styles.connectionPill} accessible accessibilityLabel={label}>
+    <View
+      style={[styles.connectionPill, { backgroundColor: tone.bg, borderColor: tone.border }]}
+      accessible
+      accessibilityLabel={label}
+    >
       <Icon
         name={state === 'unknown' ? 'connection' : state}
         styles={styles}
         size={15}
-        muted={state === 'unknown'}
+        color={tone.ink}
       />
-      {!compact ? <Text style={[styles.hint, { fontSize: 11 }]}>{label}</Text> : null}
+      {!compact ? <Text style={[styles.pillText, { color: tone.ink }]}>{label}</Text> : null}
     </View>
   )
 }

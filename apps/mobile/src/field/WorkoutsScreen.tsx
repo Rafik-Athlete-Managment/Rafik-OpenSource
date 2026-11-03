@@ -10,7 +10,6 @@ import {
   type ScrollViewInstance,
   Share,
   Text,
-  TextInput,
   View,
 } from 'react-native'
 import type { WorkoutAgenda } from '@rafik/shared/contracts'
@@ -29,7 +28,20 @@ import {
 import { downloadGroupEvent } from './group-download'
 import { WorkoutSync, requireWorkoutSupport } from './workout-sync'
 import { workoutNumber, type WorkoutMeasure } from './workout-input'
-import { Button, Icon, displayDate, type Styles } from './ui'
+import {
+  ActionBar,
+  Button,
+  Field,
+  Icon,
+  IconButton,
+  Notice,
+  Progress,
+  SectionLabel,
+  StatusPill,
+  displayDate,
+  type Styles,
+  type Tone,
+} from './ui'
 import { FieldEmptyState } from './FieldEmptyState'
 
 /** Downloads and records individual workouts, keeping drafts safe while offline or syncing. */
@@ -686,54 +698,123 @@ export function WorkoutsScreen({
       setError(failureText(e))
     }
   }
+  const groupDone = groupItems.filter(
+    (item) => saved.find((record) => record.package.id === item.id)?.session?.completed_at,
+  ).length
+  const initials = (name: string) =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0] || '')
+      .join('')
+      .toLocaleUpperCase()
+  const recordState = (
+    item: WorkoutRecord | null | undefined,
+  ): { label: string; tone: Tone } | null =>
+    !item
+      ? null
+      : item.session?.completed_at
+        ? { label: l('Complete', 'مكتمل'), tone: 'success' }
+        : item.blocked || item.pending?.state === 'needs_attention'
+          ? { label: l('Needs review', 'يحتاج مراجعة'), tone: 'danger' }
+          : item.pending || item.intent || item.completionIntent
+            ? { label: l('Awaiting sync', 'بانتظار المزامنة'), tone: 'warning' }
+            : item.session
+              ? { label: l('In progress', 'قيد التسجيل'), tone: 'info' }
+              : { label: l('Downloaded', 'تم التنزيل'), tone: 'neutral' }
   if (groupEvent && groupStage === 'preview')
     return (
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{l('Today’s workout', 'تمرين اليوم')}</Text>
-        <Text style={styles.hint}>{groupTitle}</Text>
-        {error ? (
-          <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {t(error)}
-          </Text>
-        ) : null}
-        {storageFailed ? (
-          <Button
-            title={l('Retry saving on device', 'إعادة الحفظ على الجهاز')}
-            disabled={persisting}
-            onPress={() => edit(drafts.current.entries, drafts.current.note)}
-            styles={styles}
-          />
-        ) : null}
-        {preview ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {language === 'ar' && preview.day_name_ar ? preview.day_name_ar : preview.day_name}
-            </Text>
-            <Text style={styles.hint}>
-              {preview.exercises.length} {l('exercises', 'تمارين')} · {groupItems.length}{' '}
-              {l('athletes', 'رياضيين')}
-            </Text>
-            {preview.exercises.map((exercise) => (
-              <Text key={exercise.key} style={styles.hint}>
-                • {language === 'ar' && exercise.name_ar ? exercise.name_ar : exercise.name}
-                {' · '}
-                {preview.entries.filter((entry) => entry.exercise_key === exercise.key).length}{' '}
-                {l('sets', 'مجموعات')}
-              </Text>
-            ))}
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={{ gap: 2 }}>
+            <Text style={styles.title}>{l('Today’s workout', 'تمرين اليوم')}</Text>
+            <Text style={styles.hint}>{groupTitle}</Text>
           </View>
-        ) : (
-          <Text style={styles.hint}>{l('Loading the workout…', 'جارٍ تحميل التمرين…')}</Text>
-        )}
-        <Button
-          title={l('Open first athlete’s workout', 'افتح تمرين أول رياضي')}
-          disabled={!preview || busy || onlineLoading || persisting || storageFailed || closing}
-          onPress={() => void beginGroupRecording()}
-          styles={styles}
-          primary
-          fill
-        />
-      </ScrollView>
+          {error ? <Notice text={t(error)} tone="danger" styles={styles} live /> : null}
+          {storageFailed ? (
+            <Button
+              title={l('Retry saving on device', 'إعادة الحفظ على الجهاز')}
+              disabled={persisting}
+              onPress={() => edit(drafts.current.entries, drafts.current.note)}
+              styles={styles}
+            />
+          ) : null}
+          {preview ? (
+            <>
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>
+                  {language === 'ar' && preview.day_name_ar
+                    ? preview.day_name_ar
+                    : preview.day_name}
+                </Text>
+                <Text style={styles.meta}>
+                  {preview.exercises.length} {l('exercises', 'تمارين')} · {groupItems.length}{' '}
+                  {l('athletes', 'رياضيين')}
+                </Text>
+                <View style={styles.inset}>
+                  {preview.exercises.map((exercise) => (
+                    <View
+                      key={exercise.key}
+                      style={[styles.rowHeader, { justifyContent: 'space-between' }]}
+                    >
+                      <Text style={[styles.label, { flex: 1 }]} numberOfLines={1}>
+                        {language === 'ar' && exercise.name_ar ? exercise.name_ar : exercise.name}
+                      </Text>
+                      <Text style={styles.meta}>
+                        {
+                          preview.entries.filter((entry) => entry.exercise_key === exercise.key)
+                            .length
+                        }{' '}
+                        {l('sets', 'مجموعات')}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <View style={styles.card}>
+                <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
+                  <SectionLabel styles={styles}>
+                    {l('Present athletes', 'الرياضيون الحاضرون')}
+                  </SectionLabel>
+                  <Text style={styles.label}>
+                    {groupDone}/{groupItems.length}
+                  </Text>
+                </View>
+                <Progress value={groupDone} total={groupItems.length} styles={styles} />
+                {groupItems.map((item) => {
+                  const state = recordState(saved.find((r) => r.package.id === item.id))
+                  return (
+                    <View key={item.id} style={styles.rowHeader}>
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{initials(item.member_name)}</Text>
+                      </View>
+                      <Text style={[styles.label, { flex: 1 }]} numberOfLines={1}>
+                        {item.member_name}
+                      </Text>
+                      {state ? (
+                        <StatusPill label={state.label} tone={state.tone} styles={styles} />
+                      ) : null}
+                    </View>
+                  )
+                })}
+              </View>
+            </>
+          ) : (
+            <Text style={styles.hint}>{l('Loading the workout…', 'جارٍ تحميل التمرين…')}</Text>
+          )}
+        </ScrollView>
+        <ActionBar styles={styles}>
+          <Button
+            title={l('Open first athlete’s workout', 'افتح تمرين أول رياضي')}
+            disabled={!preview || busy || onlineLoading || persisting || storageFailed || closing}
+            onPress={() => void beginGroupRecording()}
+            styles={styles}
+            primary
+            fill
+          />
+        </ActionBar>
+      </View>
     )
   return (
     <View style={{ flex: 1 }}>
@@ -744,27 +825,33 @@ export function WorkoutsScreen({
             accessibilityLabel={l('Change athlete', 'تغيير الرياضي')}
             accessibilityState={{ expanded: groupOpen }}
             onPress={() => setGroupOpen((value) => !value)}
-            style={{
-              minHeight: 48,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
+            style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 10 }}
           >
-            <Text style={styles.label}>
-              {record?.package.member_name || l('Choose an athlete', 'اختر رياضياً')}
-            </Text>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {record ? initials(record.package.member_name) : '·'}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label} numberOfLines={1}>
+                {record?.package.member_name || l('Choose an athlete', 'اختر رياضياً')}
+              </Text>
+              <Text style={styles.meta}>
+                {groupDone}/{groupItems.length} {l('complete', 'مكتمل')} ·{' '}
+                {l('Change athlete', 'تغيير الرياضي')}
+              </Text>
+            </View>
             <Icon name={groupOpen ? 'collapse' : 'down'} styles={styles} size={18} />
           </Pressable>
           {groupOpen ? (
-            <View style={{ maxHeight: 240 }}>
-              <TextInput
+            <View style={{ maxHeight: 300, gap: 8, paddingBottom: 10 }}>
+              <Field
+                styles={styles}
+                icon="search"
                 accessibilityLabel={l('Find an athlete', 'ابحث عن رياضي')}
                 placeholder={l('Search athletes…', 'ابحث عن الرياضيين…')}
-                placeholderTextColor={styles.hint.color}
                 value={search}
                 onChangeText={setSearch}
-                style={styles.input}
               />
               <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
                 {groupItems
@@ -787,21 +874,36 @@ export function WorkoutsScreen({
                           ? open(p.id)
                           : download(p))
                       }
-                      style={{
-                        minHeight: 48,
-                        justifyContent: 'center',
-                        borderTopWidth: 1,
-                        borderColor: styles.input.borderColor,
-                      }}
+                      style={[
+                        styles.settingsRow,
+                        selected === p.id && {
+                          backgroundColor: styles.colors.tint,
+                          borderRadius: 10,
+                          paddingHorizontal: 8,
+                        },
+                      ]}
                     >
-                      <Text style={styles.label}>{p.member_name}</Text>
-                      <Text style={styles.hint}>
-                        {saved.find((item) => item.package.id === p.id)?.session?.completed_at
-                          ? l('Complete', 'مكتمل')
-                          : selected === p.id
-                            ? l('Current athlete', 'الرياضي الحالي')
-                            : l('Open workout', 'فتح التمرين')}
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{initials(p.member_name)}</Text>
+                      </View>
+                      <Text style={[styles.label, { flex: 1 }]} numberOfLines={1}>
+                        {p.member_name}
                       </Text>
+                      {(() => {
+                        const local = saved.find((item) => item.package.id === p.id)
+                        const state = recordState(local)
+                        return selected === p.id ? (
+                          <StatusPill
+                            label={l('Current athlete', 'الرياضي الحالي')}
+                            tone="accent"
+                            styles={styles}
+                          />
+                        ) : state && local?.session ? (
+                          <StatusPill label={state.label} tone={state.tone} styles={styles} />
+                        ) : (
+                          <Text style={styles.meta}>{l('Open workout', 'فتح التمرين')}</Text>
+                        )
+                      })()}
                     </Pressable>
                   ))}
               </ScrollView>
@@ -814,29 +916,37 @@ export function WorkoutsScreen({
         contentContainerStyle={[styles.content, !selected && !groupEvent && { paddingBottom: 96 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {!groupEvent ? (
-          <Text style={styles.title}>
-            {selected ? (record ? dayName(record.package) : '') : l('Workouts', 'التمارين')}
+        {!selected && !groupEvent ? (
+          <Text style={styles.title} accessibilityRole="header">
+            {l('Workouts', 'التمارين')}
           </Text>
         ) : null}
         {record ? (
-          <View style={{ alignItems: 'flex-end' }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={l('Workout options', 'خيارات التمرين')}
-              accessibilityState={{ expanded: showRecovery }}
+          <View style={[styles.rowHeader, { alignItems: 'flex-start' }]}>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={styles.title} accessibilityRole="header">
+                {dayName(record.package)}
+              </Text>
+              <Text style={styles.hint}>
+                {record.package.member_name} · {record.package.title}
+              </Text>
+              {(() => {
+                const state = recordState(record)
+                return state ? (
+                  <StatusPill label={state.label} tone={state.tone} styles={styles} />
+                ) : null
+              })()}
+            </View>
+            <IconButton
+              name="more"
+              label={l('Workout options', 'خيارات التمرين')}
+              expanded={showRecovery}
               onPress={() => setShowRecovery(true)}
-              style={styles.headerIcon}
-            >
-              <Icon name="more" styles={styles} />
-            </Pressable>
+              styles={styles}
+            />
           </View>
         ) : null}
-        {error ? (
-          <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {t(error)}
-          </Text>
-        ) : null}
+        {error ? <Notice text={t(error)} tone="danger" styles={styles} live /> : null}
         {storageFailed ? (
           <Button
             title={l('Retry saving on device', 'إعادة الحفظ على الجهاز')}
@@ -846,20 +956,19 @@ export function WorkoutsScreen({
           />
         ) : null}
         {notice && !error ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Dismiss sync notice', 'إخفاء تنبيه المزامنة')}
+          <Notice
+            text={notice}
+            tone="warning"
+            styles={styles}
+            live
             onPress={() => setNotice('')}
-            style={styles.compactNotice}
-          >
-            <Text accessibilityLiveRegion="polite" style={[styles.hint, { flex: 1 }]}>
-              {notice}
-            </Text>
-            <Icon name="close" styles={styles} size={18} />
-          </Pressable>
+            actionIcon="close"
+            actionLabel={l('Dismiss sync notice', 'إخفاء تنبيه المزامنة')}
+          />
         ) : null}
         {busy || (onlineLoading && !selected) ? (
           <ActivityIndicator
+            color={styles.link.color}
             accessibilityLabel={l('Loading workout data', 'جارٍ تحميل بيانات التمرين')}
           />
         ) : null}
@@ -871,22 +980,28 @@ export function WorkoutsScreen({
                 'تصفح تمارين الخطط الفردية. نزّل التمرين أثناء الاتصال لاستخدامه دون اتصال.',
               )}
             </Text>
-            <Text style={styles.label}>{l('Find an athlete', 'ابحث عن رياضي')}</Text>
-            <TextInput
-              accessibilityLabel={l('Find an athlete', 'ابحث عن رياضي')}
-              placeholder={l('Search athlete names…', 'ابحث بأسماء الرياضيين…')}
-              placeholderTextColor={styles.hint.color}
-              value={search}
-              onChangeText={setSearch}
-              onSubmitEditing={() => void load()}
-              style={styles.input}
-            />
-            <Button
-              title={l('Search and refresh', 'بحث وتحديث')}
-              disabled={busy || onlineLoading || closing}
-              onPress={() => void load()}
-              styles={styles}
-            />
+            <View style={[styles.rowHeader, { gap: 8 }]}>
+              <View style={{ flex: 1 }}>
+                <Field
+                  styles={styles}
+                  icon="search"
+                  accessibilityLabel={l('Find an athlete', 'ابحث عن رياضي')}
+                  placeholder={l('Search athlete names…', 'ابحث بأسماء الرياضيين…')}
+                  value={search}
+                  onChangeText={setSearch}
+                  onSubmitEditing={() => void load()}
+                  returnKeyType="search"
+                />
+              </View>
+              <Button
+                title={l('Search', 'بحث')}
+                accessibilityLabel={l('Search and refresh', 'بحث وتحديث')}
+                disabled={busy || onlineLoading || closing}
+                onPress={() => void load()}
+                styles={styles}
+                secondary
+              />
+            </View>
             {[
               ...saved.map((record) => ({ record, workout: record.package, downloaded: true })),
               ...available
@@ -905,7 +1020,7 @@ export function WorkoutsScreen({
               .map(({ record: local, workout, downloaded }) => (
                 <Pressable
                   key={workout.id}
-                  style={styles.card}
+                  style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
                   accessibilityRole="button"
                   accessibilityLabel={`${downloaded ? l('Open workout', 'فتح التمرين') : l('Download workout', 'تنزيل التمرين')} ${dayName(workout)}`}
                   disabled={busy || closing}
@@ -915,26 +1030,49 @@ export function WorkoutsScreen({
                     )
                   }
                 >
-                  <Text style={styles.cardTitle}>{dayName(workout)}</Text>
-                  <Text style={styles.hint}>
-                    {workout.member_name} · {workout.title}
-                  </Text>
-                  <Text style={styles.hint}>
-                    {workout.starts_at
-                      ? displayDate(workout.starts_at, language)
-                      : `${workout.training_date} · ${workout.timezone}`}
-                  </Text>
-                  <Text style={styles.link}>
-                    {local
-                      ? local.session?.completed_at
-                        ? l('Downloaded · complete', 'منزّل · مكتمل')
-                        : local.pending || local.intent || local.completionIntent
-                          ? l('Downloaded · awaiting sync', 'منزّل · بانتظار المزامنة')
-                          : l('Downloaded', 'تم التنزيل')
-                      : downloaded
-                        ? l('Downloaded', 'تم التنزيل')
-                        : l('Not downloaded', 'غير منزّل')}
-                  </Text>
+                  <View style={styles.cardRow}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>{initials(workout.member_name)}</Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={styles.rowTitle} numberOfLines={1}>
+                        {workout.member_name}
+                      </Text>
+                      <Text style={styles.meta} numberOfLines={1}>
+                        {dayName(workout)} · {workout.title}
+                      </Text>
+                      <View style={styles.metaItem}>
+                        <Icon name="time" styles={styles} size={14} muted />
+                        <Text style={styles.meta}>
+                          {workout.starts_at
+                            ? displayDate(workout.starts_at, language)
+                            : `${workout.training_date} · ${workout.timezone}`}
+                        </Text>
+                      </View>
+                      <View style={styles.metaRow}>
+                        {(() => {
+                          const state = local ? recordState(local) : null
+                          return state ? (
+                            <StatusPill label={state.label} tone={state.tone} styles={styles} />
+                          ) : downloaded ? (
+                            <StatusPill
+                              label={l('Downloaded', 'تم التنزيل')}
+                              icon="saved"
+                              styles={styles}
+                            />
+                          ) : (
+                            <StatusPill
+                              label={l('Tap to download', 'اضغط للتنزيل')}
+                              icon="saved"
+                              tone="accent"
+                              styles={styles}
+                            />
+                          )
+                        })()}
+                      </View>
+                    </View>
+                    <Icon name="forward" styles={styles} size={18} muted rtl={language === 'ar'} />
+                  </View>
                 </Pressable>
               ))}
             {!saved.length && !available.length && !busy && !onlineLoading && !error ? (
@@ -968,6 +1106,7 @@ export function WorkoutsScreen({
             {offset + 10 < total || savedOffset + 10 < savedTotal ? (
               <Button
                 title={l('Load more workouts', 'عرض المزيد من التمارين')}
+                secondary
                 disabled={busy || onlineLoading || closing}
                 onPress={() => {
                   if (offset + 10 < total) void load(offset + 10)
@@ -982,22 +1121,7 @@ export function WorkoutsScreen({
           </>
         ) : record ? (
           <>
-            {!groupEvent ? (
-              <Button
-                title={
-                  initialPackage
-                    ? l('Back to schedule', 'العودة إلى الجدول')
-                    : l('Back to workouts', 'العودة للتمارين')
-                }
-                disabled={busy || persisting}
-                onPress={() => void back()}
-                styles={styles}
-              />
-            ) : null}
-            <Text style={styles.hint}>
-              {record.package.member_name} · {record.package.title}
-            </Text>
-            {record.error ? <Text style={styles.message}>{t(record.error)}</Text> : null}
+            {record.error ? <Notice text={t(record.error)} tone="danger" styles={styles} /> : null}
             {canResumeIncompleteFinish(record) ? (
               <Button
                 title={l('Continue incomplete workout', 'متابعة التمرين غير المكتمل')}
@@ -1012,20 +1136,25 @@ export function WorkoutsScreen({
               />
             ) : null}
             {record.blocked ? (
-              <Text style={styles.message}>
-                {l(
+              <Notice
+                text={l(
                   'Sending is paused. Saved work is retained.',
                   'الإرسال متوقف. يبقى العمل المحفوظ محفوظاً.',
                 )}
-              </Text>
+                tone="danger"
+                styles={styles}
+              />
             ) : null}
             {!record.session ? (
-              <>
-                <Text style={styles.hint}>
-                  {record.package.starts_at
-                    ? displayDate(record.package.starts_at, language)
-                    : record.package.training_date + ' · ' + record.package.timezone}
-                </Text>
+              <View style={styles.card}>
+                <View style={styles.metaItem}>
+                  <Icon name="time" styles={styles} size={16} muted />
+                  <Text style={styles.label}>
+                    {record.package.starts_at
+                      ? displayDate(record.package.starts_at, language)
+                      : record.package.training_date + ' · ' + record.package.timezone}
+                  </Text>
+                </View>
                 <Text style={styles.hint}>
                   {!record.package.allow_provisional_start
                     ? l(
@@ -1056,9 +1185,9 @@ export function WorkoutsScreen({
                   primary
                   fill
                 />
-              </>
+              </View>
             ) : (
-              <Text style={styles.label}>
+              <Text style={styles.meta}>
                 {record.session.completed_at
                   ? l('Completed · server confirmed', 'مكتمل · أكده الخادم')
                   : record.intent?.complete ||
@@ -1074,25 +1203,36 @@ export function WorkoutsScreen({
               </Text>
             )}
             {record.pending ? (
-              <Text accessibilityLiveRegion="polite" style={styles.hint}>
-                {record.pending.state === 'sending'
-                  ? l('Sending the exact saved request…', 'جارٍ إرسال الطلب المحفوظ نفسه…')
-                  : record.pending.state === 'uncertain'
-                    ? l(
-                        'Confirmation unknown. Retry preserves the exact saved request.',
-                        'التأكيد غير معروف. تحتفظ إعادة المحاولة بالطلب المحفوظ نفسه.',
-                      )
-                    : record.pending.state === 'needs_attention' ||
-                        record.pending.state === 'blocked'
+              <Notice
+                live
+                styles={styles}
+                tone={
+                  record.pending.state === 'needs_attention' || record.pending.state === 'blocked'
+                    ? 'danger'
+                    : record.pending.state === 'uncertain'
+                      ? 'warning'
+                      : 'info'
+                }
+                text={
+                  record.pending.state === 'sending'
+                    ? l('Sending the exact saved request…', 'جارٍ إرسال الطلب المحفوظ نفسه…')
+                    : record.pending.state === 'uncertain'
                       ? l(
-                          'Saved work needs review before sending again.',
-                          'يلزم مراجعة العمل المحفوظ قبل إعادة الإرسال.',
+                          'Confirmation unknown. Retry preserves the exact saved request.',
+                          'التأكيد غير معروف. تحتفظ إعادة المحاولة بالطلب المحفوظ نفسه.',
                         )
-                      : l(
-                          'Queued on this device; not yet confirmed.',
-                          'في قائمة إرسال الجهاز؛ لم يُؤكد بعد.',
-                        )}
-              </Text>
+                      : record.pending.state === 'needs_attention' ||
+                          record.pending.state === 'blocked'
+                        ? l(
+                            'Saved work needs review before sending again.',
+                            'يلزم مراجعة العمل المحفوظ قبل إعادة الإرسال.',
+                          )
+                        : l(
+                            'Queued on this device; not yet confirmed.',
+                            'في قائمة إرسال الجهاز؛ لم يُؤكد بعد.',
+                          )
+                }
+              />
             ) : null}
             {record.session?.completed_at ? (
               <>
@@ -1170,20 +1310,34 @@ export function WorkoutsScreen({
               onMeasure={changeMeasure}
               onToggle={toggleSet}
             />
-            <Text style={styles.label}>
-              {l('Workout note (optional)', 'ملاحظة التمرين (اختيارية)')}
-            </Text>
-            <TextInput
-              accessibilityLabel={l('Workout note', 'ملاحظة التمرين')}
-              multiline
-              maxLength={2000}
-              value={note}
-              editable={editable && !busy}
-              onChangeText={(value) => edit(drafts.current.entries, value)}
-              style={styles.input}
-            />
+            <View style={styles.card}>
+              <Text style={styles.label}>
+                {l('Workout note (optional)', 'ملاحظة التمرين (اختيارية)')}
+              </Text>
+              <Field
+                styles={styles}
+                accessibilityLabel={l('Workout note', 'ملاحظة التمرين')}
+                multiline
+                maxLength={2000}
+                value={note}
+                editable={editable && !busy}
+                onChangeText={(value) => edit(drafts.current.entries, value)}
+                style={{ minHeight: 88, paddingVertical: 12, textAlignVertical: 'top' }}
+              />
+            </View>
             {record.session && !record.session.completed_at ? (
-              <View style={{ gap: 8 }}>
+              <View style={styles.card}>
+                <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
+                  <SectionLabel styles={styles}>{l('Progress', 'التقدم')}</SectionLabel>
+                  <Text style={styles.label}>
+                    {entries.length - remainingSets}/{entries.length} {l('sets', 'مجموعات')}
+                  </Text>
+                </View>
+                <Progress
+                  value={entries.length - remainingSets}
+                  total={entries.length}
+                  styles={styles}
+                />
                 <Text style={styles.cardTitle}>
                   {finishReady
                     ? l('Ready to finish?', 'جاهز للإنهاء؟')
@@ -1205,26 +1359,6 @@ export function WorkoutsScreen({
                           'راجع القيم المسجلة قبل الإنهاء. يبقى تقدمك محفوظاً.',
                         )}
                 </Text>
-                {finishReady ? (
-                  <Button
-                    title={l('Finish workout', 'إنهاء التمرين')}
-                    disabled={
-                      busy ||
-                      persisting ||
-                      invalidInput ||
-                      storageFailed ||
-                      closing ||
-                      !editable ||
-                      !!record.intent?.complete ||
-                      !!record.completionIntent ||
-                      !!record.pending?.payload.complete
-                    }
-                    onPress={() => void act('finish')}
-                    styles={styles}
-                    primary
-                    fill
-                  />
-                ) : null}
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showConnection }}
@@ -1257,18 +1391,18 @@ export function WorkoutsScreen({
               </View>
             ) : null}
             {record.blocked || record.pending?.state === 'needs_attention' ? (
-              <Pressable
-                accessibilityRole="button"
+              <Button
+                title={l('Review saved work', 'مراجعة العمل المحفوظ')}
+                icon="alert"
+                secondary
                 onPress={() => setShowRecovery(true)}
-                style={{ minHeight: 44, justifyContent: 'center' }}
-              >
-                <Text style={styles.link}>{l('Review saved work', 'مراجعة العمل المحفوظ')}</Text>
-              </Pressable>
+                styles={styles}
+              />
             ) : null}
           </>
         ) : null}
         {groupEvent && !eventCompleted ? (
-          <View style={{ gap: 8 }}>
+          <View style={styles.card}>
             <Text style={styles.cardTitle}>
               {l('Ready to close this event?', 'جاهز لإنهاء هذا الموعد؟')}
             </Text>
@@ -1287,12 +1421,34 @@ export function WorkoutsScreen({
               disabled={!eventCanFinish || busy || persisting || closing}
               onPress={() => onFinishEvent?.()}
               styles={styles}
-              primary
+              primary={!!eventCanFinish}
               fill
             />
           </View>
         ) : null}
       </ScrollView>
+      {record?.session && !record.session.completed_at && finishReady ? (
+        <ActionBar styles={styles}>
+          <Button
+            title={l('Finish workout', 'إنهاء التمرين')}
+            disabled={
+              busy ||
+              persisting ||
+              invalidInput ||
+              storageFailed ||
+              closing ||
+              !editable ||
+              !!record.intent?.complete ||
+              !!record.completionIntent ||
+              !!record.pending?.payload.complete
+            }
+            onPress={() => void act('finish')}
+            styles={styles}
+            primary
+            fill
+          />
+        </ActionBar>
+      ) : null}
       {showRecovery && record ? (
         <View style={styles.sheetBackdrop}>
           <Pressable
@@ -1306,26 +1462,22 @@ export function WorkoutsScreen({
               contentContainerStyle={styles.filterSheet}
               keyboardShouldPersistTaps="handled"
             >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Text style={styles.cardTitle}>{l('Workout options', 'خيارات التمرين')}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={l('Close workout options', 'إغلاق خيارات التمرين')}
+              <View style={styles.sheetHandle} />
+              <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
+                <Text style={styles.cardTitle} accessibilityRole="header">
+                  {l('Workout options', 'خيارات التمرين')}
+                </Text>
+                <IconButton
+                  name="close"
+                  label={l('Close workout options', 'إغلاق خيارات التمرين')}
                   onPress={() => setShowRecovery(false)}
-                  style={styles.headerIcon}
-                >
-                  <Icon name="close" styles={styles} />
-                </Pressable>
+                  styles={styles}
+                />
               </View>
               {record.pending && record.pending.state !== 'sending' ? (
                 <Button
                   title={l('Retry exact saved request', 'إعادة إرسال الطلب المحفوظ نفسه')}
+                  icon="refresh"
                   disabled={busy || closing}
                   onPress={() => void act('retry')}
                   styles={styles}
@@ -1338,6 +1490,7 @@ export function WorkoutsScreen({
                 record.localRevision !== record.syncedRevision) ? (
                 <Button
                   title={l('Review current server version', 'مراجعة نسخة الخادم الحالية')}
+                  icon="connection"
                   disabled={busy || persisting || closing}
                   onPress={() => void reviewRejected()}
                   styles={styles}
@@ -1346,6 +1499,7 @@ export function WorkoutsScreen({
               {record.blocked && !record.pending && record.session ? (
                 <Button
                   title={l('Recheck workout access', 'إعادة التحقق من صلاحية التمرين')}
+                  icon="account"
                   disabled={busy || persisting || closing}
                   onPress={() => void act('access')}
                   styles={styles}
@@ -1353,12 +1507,14 @@ export function WorkoutsScreen({
               ) : null}
               <Button
                 title={l('Share recovery copy', 'مشاركة نسخة للاستعادة')}
+                icon="history"
                 disabled={persisting || busy}
                 onPress={() => void share()}
                 styles={styles}
               />
               <Button
                 title={l('Refresh saved workout', 'تحديث التمرين المحفوظ')}
+                icon="refresh"
                 disabled={
                   busy ||
                   persisting ||
@@ -1373,6 +1529,7 @@ export function WorkoutsScreen({
               {!groupEvent ? (
                 <Button
                   title={l('Remove downloaded copy', 'إزالة النسخة المنزّلة')}
+                  icon="close"
                   danger
                   disabled={
                     busy ||
@@ -1386,7 +1543,7 @@ export function WorkoutsScreen({
                   styles={styles}
                 />
               ) : null}
-              <Text style={styles.hint}>
+              <Text style={styles.meta}>
                 {l(
                   'If sync is blocked, keep this copy and review it with authorized staff. Do not start a replacement.',
                   'إذا توقفت المزامنة، احتفظ بهذه النسخة وراجعها مع الموظفين المخولين. لا تبدأ تمريناً بديلاً.',

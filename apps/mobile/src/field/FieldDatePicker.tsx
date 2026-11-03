@@ -12,7 +12,7 @@ for (const [key, locale] of [
     new Intl.DateTimeFormat(locale, { month: length, calendar: 'gregory', timeZone: 'UTC' }).format(
       new Date(Date.UTC(2024, index, 1)),
     )
-  const day = (index: number, length: 'long' | 'short') =>
+  const day = (index: number, length: 'long' | 'short' | 'narrow') =>
     new Intl.DateTimeFormat(locale, {
       weekday: length,
       calendar: 'gregory',
@@ -22,7 +22,10 @@ for (const [key, locale] of [
     monthNames: Array.from({ length: 12 }, (_, index) => month(index, 'long')),
     monthNamesShort: Array.from({ length: 12 }, (_, index) => month(index, 'short')),
     dayNames: Array.from({ length: 7 }, (_, index) => day(index, 'long')),
-    dayNamesShort: Array.from({ length: 7 }, (_, index) => day(index, 'short')),
+    // Arabic short weekday names are full words; the narrow form fits a 7-column grid.
+    dayNamesShort: Array.from({ length: 7 }, (_, index) =>
+      day(index, key === 'ar' ? 'narrow' : 'short'),
+    ),
     today: key === 'ar' ? 'اليوم' : 'Today',
   }
 }
@@ -47,15 +50,15 @@ export function FieldDatePicker({
   }
   return (
     <View style={[styles.calendarSurface, { direction: language === 'ar' ? 'rtl' : 'ltr' }]}>
-      <View style={styles.actionRow}>
+      <View style={[styles.actionRow, { justifyContent: 'space-between' }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={l('Previous year', 'السنة السابقة')}
           onPress={() => year(-1)}
           style={styles.calendarYearAction}
         >
-          <Icon name="back" styles={styles} rtl={language === 'ar'} size={18} />
-          <Text style={styles.link}>{l('Year', 'سنة')}</Text>
+          <Icon name="previous" styles={styles} rtl={language === 'ar'} size={16} />
+          <Text style={[styles.link, { fontSize: 14 }]}>{Number(month.slice(0, 4)) - 1}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -63,8 +66,8 @@ export function FieldDatePicker({
           onPress={() => year(1)}
           style={styles.calendarYearAction}
         >
-          <Text style={styles.link}>{l('Year', 'سنة')}</Text>
-          <Icon name="forward" styles={styles} rtl={language === 'ar'} size={18} />
+          <Text style={[styles.link, { fontSize: 14 }]}>{Number(month.slice(0, 4)) + 1}</Text>
+          <Icon name="forward" styles={styles} rtl={language === 'ar'} size={16} />
         </Pressable>
       </View>
       <Calendar
@@ -75,7 +78,7 @@ export function FieldDatePicker({
         enableSwipeMonths
         onMonthChange={(value) => setMonth(value.dateString.slice(0, 7) + '-01')}
         onDayPress={(value) => onChange(value.dateString)}
-        markedDates={{ [selected]: { selected: true, selectedColor: styles.link.color } }}
+        markedDates={{ [selected]: { selected: true, selectedColor: styles.colors.accent } }}
         theme={{
           calendarBackground: styles.card.backgroundColor,
           backgroundColor: styles.card.backgroundColor,
@@ -85,7 +88,9 @@ export function FieldDatePicker({
           textDisabledColor: styles.hint.color,
           todayTextColor: styles.link.color,
           arrowColor: styles.link.color,
-          selectedDayTextColor: '#ffffff',
+          selectedDayTextColor: styles.colors.onAccent,
+          textDayFontWeight: '500',
+          textMonthFontWeight: '700',
         }}
       />
     </View>

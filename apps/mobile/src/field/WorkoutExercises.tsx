@@ -52,13 +52,28 @@ export function WorkoutExercises({
         : exercise.kind === 'timed'
           ? ['seconds', 'effort']
           : ['metres', 'effort']
+    const sets = entries.filter((entry) => entry.exercise_key === exercise.key)
+    const done = sets.filter((entry) => entry.completed).length
     return (
       <View key={exercise.key} style={styles.card}>
-        <Text style={styles.cardTitle}>{exerciseName}</Text>
+        <View style={styles.rowHeader}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.cardTitle}>{exerciseName}</Text>
+            <Text style={styles.meta}>
+              {sets.length} {l('sets', 'مجموعات')} · {l('Rest', 'الراحة')} {exercise.rest}{' '}
+              {l('sec', 'ثانية')}
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.label,
+              done === sets.length && sets.length ? styles.setCheckDoneText : null,
+            ]}
+          >
+            {done}/{sets.length}
+          </Text>
+        </View>
         {exercise.note ? <Text style={styles.hint}>{exercise.note}</Text> : null}
-        <Text style={styles.hint}>
-          {l('Rest', 'الراحة')}: {exercise.rest} {l('sec', 'ثانية')}
-        </Text>
         {entries.map((entry, index) => {
           if (entry.exercise_key !== exercise.key) return null
           const target = targets.get(entry.exercise_key + ':' + entry.set_index) || entry
@@ -68,47 +83,33 @@ export function WorkoutExercises({
               : exercise.kind === 'timed'
                 ? `${target.seconds ?? '—'} ${l('sec', 'ثانية')}`
                 : `${target.metres ?? '—'} ${l('m', 'م')}`
+          const locked = !editable || busy || invalidInput
           return (
-            <View
-              key={`${entry.exercise_key}:${entry.set_index}`}
-              style={{
-                gap: 8,
-                paddingVertical: 10,
-                borderTopWidth: 1,
-                borderTopColor: styles.input.borderColor,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                }}
-              >
+            <View key={`${entry.exercise_key}:${entry.set_index}`} style={styles.setRow}>
+              <View style={styles.rowHeader}>
                 <Text style={styles.label}>
                   {l('Set', 'مجموعة')} {entry.set_index + 1}
                 </Text>
-                <Text style={[styles.hint, { flexShrink: 1 }]}>
+                <Text style={[styles.meta, { flex: 1 }]} numberOfLines={1}>
                   {l('Target', 'الهدف')}: {targetText}
                 </Text>
               </View>
               {entry.exercise_id ? (
-                <Text style={styles.hint}>
+                <Text style={styles.meta}>
                   {l('Previously chosen alternative retained', 'يُحتفظ بالبديل المختار سابقاً')}
                 </Text>
               ) : null}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                 {fields.map((field) => (
-                  <View
-                    key={field}
-                    style={{ flexGrow: 1, flexBasis: field === 'effort' ? 120 : 100, gap: 5 }}
-                  >
-                    <Text style={styles.label}>{label(field, entry.unit)}</Text>
+                  <View key={field} style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                    <Text style={styles.meta} numberOfLines={1}>
+                      {label(field, entry.unit)}
+                    </Text>
                     <TextInput
                       accessibilityLabel={`${exerciseName}, ${l('set', 'مجموعة')} ${entry.set_index + 1}, ${label(field, entry.unit)}`}
-                      style={styles.input}
+                      style={[styles.input, !editable && styles.inputReadOnly]}
                       keyboardType="decimal-pad"
+                      placeholderTextColor={styles.hint.color}
                       editable={editable && !busy}
                       value={
                         raw[index + ':' + field] ??
@@ -118,30 +119,34 @@ export function WorkoutExercises({
                     />
                   </View>
                 ))}
-              </View>
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{
-                  checked: entry.completed,
-                  disabled: !editable || busy || invalidInput,
-                }}
-                disabled={!editable || busy || invalidInput}
-                onPress={() => onToggle(index)}
-                style={[
-                  styles.setCheck,
-                  entry.completed && styles.setCheckDone,
-                  (!editable || busy || invalidInput) && styles.disabled,
-                ]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  {entry.completed ? <Icon name="check" styles={styles} size={18} inverse /> : null}
-                  <Text style={[styles.buttonText, entry.completed && styles.setCheckDoneText]}>
-                    {entry.completed
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={`${exerciseName}, ${l('set', 'مجموعة')} ${entry.set_index + 1}, ${
+                    entry.completed
                       ? l('Set done', 'اكتملت المجموعة')
-                      : l('Mark set done', 'تأكيد إتمام المجموعة')}
+                      : l('Mark set done', 'تأكيد إتمام المجموعة')
+                  }`}
+                  accessibilityState={{ checked: entry.completed, disabled: locked }}
+                  disabled={locked}
+                  onPress={() => onToggle(index)}
+                  style={[
+                    styles.setCheck,
+                    { alignSelf: 'flex-end', minHeight: 48 },
+                    entry.completed && styles.setCheckDone,
+                    locked && styles.disabled,
+                  ]}
+                >
+                  <Icon
+                    name="check"
+                    styles={styles}
+                    size={18}
+                    color={entry.completed ? styles.setCheckDoneText?.color : styles.hint.color}
+                  />
+                  <Text style={[styles.buttonText, entry.completed && styles.setCheckDoneText]}>
+                    {entry.completed ? l('Done', 'تمت') : l('Mark done', 'تأكيد')}
                   </Text>
-                </View>
-              </Pressable>
+                </Pressable>
+              </View>
             </View>
           )
         })}

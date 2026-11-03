@@ -9,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   useColorScheme,
   View,
 } from 'react-native'
@@ -18,7 +17,18 @@ import { NativeClient, privateStore, type CoachContext } from './native'
 import { ConnectionFailure, failureText } from './model'
 import { selectedInstitution } from './access'
 import type { FieldStore } from './store'
-import { Button, Icon, makeStyles, type Styles } from './ui'
+import {
+  Button,
+  Field,
+  Icon,
+  IconButton,
+  Notice,
+  Segmented,
+  SectionLabel,
+  StatusPill,
+  makeStyles,
+  type Styles,
+} from './ui'
 import { InstitutionScreen } from './InstitutionScreen'
 import { checkCapabilities, type CapabilityCheck } from './capabilities'
 
@@ -85,7 +95,10 @@ export default function Home() {
     return (
       <SafeAreaView style={styles.safe}>
         <LanguageControl styles={styles} />
-        <ActivityIndicator accessibilityLabel={t('Opening encrypted field storage')} />
+        <ActivityIndicator
+          color={styles.link.color}
+          accessibilityLabel={t('Opening encrypted field storage')}
+        />
       </SafeAreaView>
     )
   if (runtime)
@@ -107,65 +120,77 @@ export default function Home() {
   return (
     <SafeAreaView style={styles.safe}>
       <LanguageControl styles={styles} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.kicker}>{t('RAFIK FIELD')}</Text>
-        <Text style={styles.title}>{t('Sign in to your institution')}</Text>
-        <View style={styles.card}>
-          <Text style={styles.label}>{t('Institution API URL')}</Text>
-          <TextInput
-            accessibilityLabel={t('Institution API URL')}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            placeholder="https://rafik.university.edu/api"
-            placeholderTextColor={styles.hint.color}
-            value={base}
-            onChangeText={setBase}
-            style={[styles.input, { direction: 'ltr', writingDirection: 'ltr', textAlign: 'left' }]}
-            editable={!busy}
-          />
-          <Text style={styles.label}>{t('Account email')}</Text>
-          <TextInput
-            accessibilityLabel={t('Account email')}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-            style={[styles.input, { direction: 'ltr', writingDirection: 'ltr', textAlign: 'left' }]}
-            editable={!busy}
-          />
-          <Text style={styles.label}>{t('Password')}</Text>
-          <TextInput
-            accessibilityLabel={t('Password')}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            style={[styles.input, { direction: 'ltr', writingDirection: 'ltr', textAlign: 'left' }]}
-            editable={!busy}
-            onSubmitEditing={() => void login()}
-          />
+      <ScrollView
+        contentContainerStyle={[styles.content, { maxWidth: 520, paddingTop: 8 }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={{ gap: 6, marginBottom: 4 }}>
+          <Text style={styles.kicker}>{t('RAFIK FIELD')}</Text>
+          <Text style={styles.title} accessibilityRole="header">
+            {t('Sign in to your institution')}
+          </Text>
+          <Text style={styles.hint}>
+            {t('Use your institution account. Each server keeps its own data and sign-in.')}
+          </Text>
+        </View>
+        <View style={[styles.card, { gap: 14 }]}>
+          <View style={{ gap: 6 }}>
+            <Text style={styles.label}>{t('Institution API URL')}</Text>
+            <Field
+              styles={styles}
+              icon="connection"
+              accessibilityLabel={t('Institution API URL')}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder="https://rafik.university.edu/api"
+              value={base}
+              onChangeText={setBase}
+              style={{ direction: 'ltr', writingDirection: 'ltr', textAlign: 'left' }}
+              editable={!busy}
+            />
+          </View>
+          <View style={{ gap: 6 }}>
+            <Text style={styles.label}>{t('Account email')}</Text>
+            <Field
+              styles={styles}
+              icon="account"
+              accessibilityLabel={t('Account email')}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              style={{ direction: 'ltr', writingDirection: 'ltr', textAlign: 'left' }}
+              editable={!busy}
+            />
+          </View>
+          <View style={{ gap: 6 }}>
+            <Text style={styles.label}>{t('Password')}</Text>
+            <Field
+              styles={styles}
+              accessibilityLabel={t('Password')}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              style={{ direction: 'ltr', writingDirection: 'ltr', textAlign: 'left' }}
+              editable={!busy}
+              onSubmitEditing={() => void login()}
+            />
+          </View>
+          {message ? <Notice text={t(message)} tone="danger" styles={styles} live /> : null}
           <Button
             title={busy ? 'Signing in…' : 'Sign in'}
             onPress={() => void login()}
             disabled={busy || !base.trim() || !email.trim() || !password}
             styles={styles}
             primary
+            fill
           />
-          <Text style={styles.hint}>
-            {' '}
-            {t('Use your institution account. Each server keeps its own data and sign-in.')}{' '}
-          </Text>
-          <Text style={styles.hint}>
-            {' '}
-            {t('Saved attendance reappears only for the same account and institution server.')}{' '}
-          </Text>
         </View>
-        {message ? (
-          <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {t(message)}
-          </Text>
-        ) : null}
+        <Text style={[styles.meta, { textAlign: 'center' }]}>
+          {t('Saved attendance reappears only for the same account and institution server.')}
+        </Text>
       </ScrollView>
     </SafeAreaView>
   )
@@ -368,30 +393,27 @@ function SignedIn({
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.topbar}>
+      <View style={[styles.rowHeader, { marginBottom: 4 }]}>
         {settingsPage === 'connection' ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Back to settings', 'العودة إلى الإعدادات')}
+          <IconButton
+            name="back"
+            rtl={language === 'ar'}
+            label={l('Back to settings', 'العودة إلى الإعدادات')}
             onPress={() => setSettingsPage('main')}
-            style={styles.headerIcon}
-          >
-            <Icon name="back" styles={styles} rtl={language === 'ar'} />
-          </Pressable>
+            styles={styles}
+          />
         ) : null}
-        <Text style={[styles.title, { flex: 1 }]}>
+        <Text style={[styles.title, { flex: 1 }]} accessibilityRole="header">
           {settingsPage === 'connection'
             ? l('Connection & Sync', 'الاتصال والمزامنة')
             : l('Settings', 'الإعدادات')}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={l('Close settings', 'إغلاق الإعدادات')}
+        <IconButton
+          name="close"
+          label={l('Close settings', 'إغلاق الإعدادات')}
           onPress={() => setAccountOpen(false)}
-          style={styles.headerIcon}
-        >
-          <Icon name="close" styles={styles} />
-        </Pressable>
+          styles={styles}
+        />
       </View>
       {settingsPage === 'connection' ? (
         <>
@@ -405,15 +427,28 @@ function SignedIn({
             <View style={styles.settingsRow}>
               <Icon name="connection" styles={styles} muted />
               <Text style={[styles.label, { flex: 1 }]}>{l('Server', 'الخادم')}</Text>
-              <Text style={styles.hint}>
-                {connectionError
-                  ? l('Could not confirm', 'تعذر التأكد')
-                  : connectionInfo?.state === 'available'
-                    ? l('Reached on last check', 'تم الوصول في آخر تحقق')
-                    : connectionInfo?.state === 'legacy'
-                      ? l('Compatibility unknown', 'التوافق غير معروف')
-                      : l('Checking…', 'جارٍ التحقق…')}
-              </Text>
+              <StatusPill
+                styles={styles}
+                style={{ alignSelf: 'center' }}
+                tone={
+                  connectionError
+                    ? 'danger'
+                    : connectionInfo?.state === 'available'
+                      ? 'success'
+                      : connectionInfo?.state === 'legacy'
+                        ? 'warning'
+                        : 'neutral'
+                }
+                label={
+                  connectionError
+                    ? l('Could not confirm', 'تعذر التأكد')
+                    : connectionInfo?.state === 'available'
+                      ? l('Reached on last check', 'تم الوصول في آخر تحقق')
+                      : connectionInfo?.state === 'legacy'
+                        ? l('Compatibility unknown', 'التوافق غير معروف')
+                        : l('Checking…', 'جارٍ التحقق…')
+                }
+              />
             </View>
             <View style={styles.settingsRow}>
               <Icon name="saved" styles={styles} muted />
@@ -428,14 +463,19 @@ function SignedIn({
             <View style={[styles.settingsRow, { borderBottomWidth: 0 }]}>
               <Icon name="refresh" styles={styles} muted />
               <Text style={[styles.label, { flex: 1 }]}>{l('Uploads', 'عمليات الإرسال')}</Text>
-              <Text style={styles.hint}>
-                {uploadsWaiting
-                  ? l('Saved work waiting', 'عمل محفوظ بانتظار الإرسال')
-                  : l('No queued upload', 'لا توجد عملية معلقة')}
-              </Text>
+              <StatusPill
+                styles={styles}
+                style={{ alignSelf: 'center' }}
+                tone={uploadsWaiting ? 'warning' : 'success'}
+                label={
+                  uploadsWaiting
+                    ? l('Saved work waiting', 'عمل محفوظ بانتظار الإرسال')
+                    : l('No queued upload', 'لا توجد عملية معلقة')
+                }
+              />
             </View>
           </View>
-          {connectionError ? <Text style={styles.message}>{connectionError}</Text> : null}
+          {connectionError ? <Notice text={connectionError} tone="danger" styles={styles} /> : null}
           <Button
             title={
               syncRequested
@@ -449,8 +489,11 @@ function SignedIn({
               void refreshAccess(true)
             }}
             styles={styles}
+            icon="refresh"
+            primary
+            fill
           />
-          <Text style={styles.hint}>
+          <Text style={styles.meta}>
             {l(
               'A failed upload stays on this device for review. Refresh never discards recorded work.',
               'تبقى عملية الإرسال الفاشلة على هذا الجهاز للمراجعة. لا يحذف التحديث العمل المسجل.',
@@ -466,12 +509,13 @@ function SignedIn({
             onPress={confirmClearCompleted}
             styles={styles}
             danger
+            fill
           />
           {clearResult ? <Text style={styles.hint}>{clearResult}</Text> : null}
         </>
       ) : (
         <>
-          <Text style={styles.label}>{l('Account', 'الحساب')}</Text>
+          <SectionLabel styles={styles}>{l('Account', 'الحساب')}</SectionLabel>
           <View style={styles.settingsGroup}>
             <View style={[styles.settingsRow, { borderBottomWidth: 0 }]}>
               <Icon name="account" styles={styles} muted />
@@ -483,7 +527,7 @@ function SignedIn({
               </View>
             </View>
           </View>
-          <Text style={styles.label}>{l('Preferences', 'التفضيلات')}</Text>
+          <SectionLabel styles={styles}>{l('Preferences', 'التفضيلات')}</SectionLabel>
           <View style={styles.settingsGroup}>
             <View
               style={[
@@ -493,17 +537,16 @@ function SignedIn({
             >
               <Icon name="language" styles={styles} muted />
               <Text style={[styles.label, { flex: 1 }]}>{l('Language', 'اللغة')}</Text>
-              <View style={styles.actions}>
-                <Button
-                  title="English"
-                  primary={language === 'en'}
-                  onPress={() => setLanguage('en')}
-                  styles={styles}
-                />
-                <Button
-                  title="العربية"
-                  primary={language === 'ar'}
-                  onPress={() => setLanguage('ar')}
+              <View style={{ width: 190 }}>
+                <Segmented
+                  label={l('Language', 'اللغة')}
+                  reselect
+                  value={language}
+                  onChange={setLanguage}
+                  options={[
+                    { value: 'en', label: 'English' },
+                    { value: 'ar', label: 'العربية' },
+                  ]}
                   styles={styles}
                 />
               </View>
@@ -517,7 +560,7 @@ function SignedIn({
               )}
             </Text>
           ) : null}
-          <Text style={styles.label}>{l('Application', 'التطبيق')}</Text>
+          <SectionLabel styles={styles}>{l('Application', 'التطبيق')}</SectionLabel>
           <View style={styles.settingsGroup}>
             <Pressable
               accessibilityRole="button"
@@ -532,7 +575,7 @@ function SignedIn({
             </Pressable>
           </View>
           {options.length > 1 ? (
-            <Text style={styles.label}>{l('Institution', 'المؤسسة')}</Text>
+            <SectionLabel styles={styles}>{l('Institution', 'المؤسسة')}</SectionLabel>
           ) : null}
           {options.length > 1 ? (
             <View style={styles.settingsGroup}>
@@ -560,17 +603,23 @@ function SignedIn({
               ))}
             </View>
           ) : null}
-          <Pressable
-            accessibilityRole="button"
-            disabled={closing || loading || fieldBusy}
-            onPress={() => void logout()}
-            style={[styles.settingsRow, { marginTop: 12, borderBottomWidth: 0 }]}
-          >
-            <Icon name="logout" styles={styles} />
-            <Text style={styles.dangerText}>
-              {closing ? l('Signing out…', 'جارٍ تسجيل الخروج…') : l('Sign out', 'تسجيل الخروج')}
-            </Text>
-          </Pressable>
+          <View style={[styles.settingsGroup, { marginTop: 8 }]}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={closing || loading || fieldBusy}
+              onPress={() => void logout()}
+              style={[
+                styles.settingsRow,
+                { borderBottomWidth: 0 },
+                (closing || loading || fieldBusy) && styles.disabled,
+              ]}
+            >
+              <Icon name="logout" styles={styles} color={styles.dangerText.color} />
+              <Text style={[styles.label, styles.dangerText]}>
+                {closing ? l('Signing out…', 'جارٍ تسجيل الخروج…') : l('Sign out', 'تسجيل الخروج')}
+              </Text>
+            </Pressable>
+          </View>
         </>
       )}
     </ScrollView>
@@ -579,35 +628,31 @@ function SignedIn({
     <SafeAreaView style={styles.safe}>
       {(!institution || loading) && !accountOpen ? (
         <View style={styles.topbar}>
-          <Text style={styles.kicker}>{t('RAFIK FIELD')}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Open settings', 'فتح الإعدادات')}
-            accessibilityState={{ expanded: accountOpen }}
+          <Text style={styles.brand}>
+            {l('Rafik', 'رفيق')}
+            <Text style={styles.brandDot}>.</Text>
+          </Text>
+          <IconButton
+            name="settings"
+            label={l('Open settings', 'فتح الإعدادات')}
+            expanded={accountOpen}
             onPress={() => setAccountOpen((open) => !open)}
-            style={styles.accountButton}
-          >
-            <Icon name="settings" styles={styles} />
-          </Pressable>
+            styles={styles}
+          />
         </View>
       ) : null}
       {message && !noticeDismissed && !accountOpen ? (
-        <View style={styles.noticeToast}>
-          <Text
-            accessibilityLiveRegion="polite"
-            numberOfLines={2}
-            style={[styles.hint, { flex: 1 }]}
-          >
-            {t(message)}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={l('Dismiss notice', 'إخفاء التنبيه')}
+        <View style={{ marginHorizontal: 16, marginTop: 8 }}>
+          <Notice
+            text={t(message)}
+            tone="warning"
+            styles={styles}
+            lines={3}
+            live
             onPress={() => setNoticeDismissed(true)}
-            style={styles.headerIcon}
-          >
-            <Icon name="close" styles={styles} />
-          </Pressable>
+            actionIcon="close"
+            actionLabel={l('Dismiss notice', 'إخفاء التنبيه')}
+          />
         </View>
       ) : null}
       {institution && !loading ? (
@@ -640,12 +685,23 @@ function SignedIn({
           contentContainerStyle={styles.content}
         >
           {loading ? (
-            <ActivityIndicator accessibilityLabel={t('Checking coach access')} />
+            <ActivityIndicator
+              color={styles.link.color}
+              accessibilityLabel={t('Checking coach access')}
+            />
           ) : (
-            <>
-              <Text style={styles.title}>{t('No coach institution')}</Text>
-              <Button title="Refresh access" onPress={() => void refreshAccess()} styles={styles} />
-            </>
+            <View style={[styles.card, { alignItems: 'center', paddingVertical: 32, gap: 12 }]}>
+              <Text style={[styles.cardTitle, { textAlign: 'center' }]}>
+                {t('No coach institution')}
+              </Text>
+              <Button
+                title="Refresh access"
+                icon="refresh"
+                secondary
+                onPress={() => void refreshAccess()}
+                styles={styles}
+              />
+            </View>
           )}
         </ScrollView>
       )}
