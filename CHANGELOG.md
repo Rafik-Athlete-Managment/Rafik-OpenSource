@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align backend programming and delegated-workout integration cases with the completed-set rule. They now prove that an incomplete Finish is rejected while complete records, history and corrections still work. No product behavior changed.
+
 - Align workout completion across the phone, web and database: all prescribed sets must be recorded before Finish, while partial progress remains editable and can be resumed. Safely reopen only an unsent or definitively rejected incomplete phone Finish; uncertain uploads and confirmed completions still require review. Opening a saved phone workout now reads its local copy without waiting for the online browser, and the Schedule filter uses a bilingual visual calendar. Shared phone action layouts make primary actions full width and paired actions balanced. Physical-device layout and offline acceptance remain pending.
 
 - Restructure the unreleased coach phone navigation into Schedule, Workouts and Saved with one floating bottom bar outside focused field work. Schedule keeps dated events, assessments and plan workouts; Workouts combines available and downloaded solo workouts; Saved groups local events, assessments, solo and group workouts in one filtered list. Settings now groups account and language controls and opens Connection & Sync. Compact shared empty states replace blank lists. The app bar shows the last observed connection state while routine offline use stays quiet; dismissible notices no longer repeat its Refresh action. Existing encrypted records, exact replay and server authority are unchanged; rendered phone acceptance remains pending.

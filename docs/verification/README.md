@@ -1,5 +1,9 @@
 # Verification record
 
+## Completed-workout CI regression — 3 November 2026
+
+GitHub Checks for `8a16ab7` passed the web job and failed two backend integration steps: `test:programming` and `test:delegated-sessions`, both returning `incomplete_entries` for fixtures that attempted to finish with unchecked sets. After updating those cases, the focused local Docker suites passed: programming 4/4 and delegated sessions 1/1. These results cover the affected backend paths; the new GitHub run remains to be checked after push.
+
 ## Phone workout lifecycle and filter source checks — 3 November 2026
 
 Mobile, backend and frontend TypeScript checks passed. The Node SQLite attendance/workout suite passed 22/22, including invalid incomplete Finish rejection, preservation of queued start and logged values during narrowly scoped recovery, exact offline replay, and refusal to reopen confirmed or uncertain records. The focused workout-sequence suite passed 2/2 against a migrated disposable Docker database after its fixed-time fixture was moved away from a seeded event collision; its first attempt reached the new SQL assertion but failed at that unrelated clock-dependent collision. Android JS export bundled 3,671 modules with Hermes; its temporary output was removed. The web production build passed after a sandboxed Vite attempt hit Windows `spawn EPERM`/native-binding access; the same build completed with the required process access. Frontend/backend inventories and the disposable schema catalog were regenerated. Documentation validation passed two fixtures, 2,320 local links and 722 heading links across 83 maintained documents. No physical phone rendering, Arabic/RTL calendar interaction, offline cold start or founder-record recovery has been checked. No Gradle/native rebuild or broad browser suite was run. Use the [canonical walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3).

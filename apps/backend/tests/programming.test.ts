@@ -181,11 +181,22 @@ test("organization publication, actuals, reassignment and exact replay preserve 
       completed: i === 0,
       reps: 8,
     }));
-    const save = operation("save", {
+    const incomplete = operation("save", {
       view: "trainee",
       id: sessionId,
       revision: 1,
       entries,
+      note: "First session",
+      complete: true,
+    });
+    const rejected = await call(client, `/v1/institution/sessions`, incomplete);
+    assert.equal(rejected.status, 400, JSON.stringify(rejected));
+    assert.equal(rejected.data.message, "incomplete_entries");
+    const save = operation("save", {
+      view: "trainee",
+      id: sessionId,
+      revision: 1,
+      entries: entries.map((entry: any) => ({ ...entry, completed: true })),
       note: "First session",
       complete: true,
     });
@@ -226,7 +237,7 @@ test("organization publication, actuals, reassignment and exact replay preserve 
         document: {
           ...session,
           id: historicalId,
-          entries,
+          entries: save.entries,
           status: "completed",
         },
         version: 2,
@@ -234,8 +245,16 @@ test("organization publication, actuals, reassignment and exact replay preserve 
     });
     const previous = await call(client, `/v1/workouts/${sessionId}/previous`);
     assert.equal(previous.status, 200, JSON.stringify(previous));
-    assert.equal(previous.data.length, 1);
-    assert.equal(previous.data[0].entries[0].reps, 8);
+    assert.equal(previous.data.length, session.prescription.exercises.length);
+    assert.equal(
+      previous.data.reduce((count: number, item: any) => count + item.entries.length, 0),
+      save.entries.length,
+    );
+    assert.ok(
+      previous.data.every((item: any) =>
+        item.entries.every((entry: any) => entry.reps === 8),
+      ),
+    );
     await db.institution_sessions.delete({ where: { id: historicalId } });
     const changed = draft();
     changed.days[0].exercises[0].reps = 15;
@@ -304,7 +323,7 @@ test("organization publication, actuals, reassignment and exact replay preserve 
         view: "trainee",
         id: sessionId,
         revision: 3,
-        entries,
+        entries: save.entries,
         note: "Corrected note",
         complete: true,
       }),

@@ -295,18 +295,31 @@ test("delegated workout logging: coach attribution, athlete correction, history,
   );
 
   // The athlete corrects the delegated record; every version stays attributed.
+  const incompleteCorrection = {
+    view: "trainee",
+    id: delegated.data.id,
+    revision: 2,
+    entries: saved.data.entries.map((e: any, i: number) =>
+      i === 0 ? { ...e, completed: false } : e,
+    ),
+    note: "First set needed correction",
+    complete: true,
+  };
+  const rejectedCorrection = await call(
+    athlete,
+    ws + "/sessions",
+    operation("save", incompleteCorrection),
+  );
+  assert.equal(rejectedCorrection.status, 400, JSON.stringify(rejectedCorrection));
+  assert.equal(rejectedCorrection.data.message, "incomplete_entries");
   const corrected = await call(
     athlete,
     ws + "/sessions",
     operation("save", {
-      view: "trainee",
-      id: delegated.data.id,
-      revision: 2,
+      ...incompleteCorrection,
       entries: saved.data.entries.map((e: any, i: number) =>
-        i === 0 ? { ...e, completed: false } : e,
+        i === 0 ? { ...e, reps: 9 } : e,
       ),
-      note: "First set was not completed",
-      complete: true,
     }),
   );
   assert.equal(corrected.status, 200, JSON.stringify(corrected));

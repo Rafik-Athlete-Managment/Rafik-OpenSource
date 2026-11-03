@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Completed-workout CI regression — 3 November 2026
+
+The beta.3 backend CI job failed in the programming and delegated-session integration suites because older cases completed sessions with unchecked entries. The cases now assert the intended rejection, then finish and correct workouts with every prescribed set complete. The web CI job was already green; no web behavior changed. See [verification](../verification/README.md).
+
 ## Phone workout lifecycle and controls — 3 November 2026
 
 The phone now opens a saved workout directly from its encrypted local record instead of waiting for an unrelated online list request. It explains when a downloaded copy lacks provisional-start permission or a scheduled time has not arrived. An incomplete workout keeps its measured values when closed; Finish appears only after every prescribed set is checked. The store rechecks this rule, and a forward SQL migration applies it to web and phone completions. Web athlete and coach loggers use the same completion threshold. A narrowly scoped recovery action clears an invalid unsent or definitively rejected Finish without changing the original start, progress request or measured results. Unknown uploads, blocked records and confirmed completions remain protected. The Schedule filter uses a visual English/Arabic calendar, with shared full-width and paired action layouts. See the [phone audit](../known-issues/mobile-ui-audit.md), [canonical walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3) and [verification](../verification/README.md). This is source behavior awaiting physical-phone acceptance.
