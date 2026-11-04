@@ -2,7 +2,7 @@
 
 ## Beta.3 release candidate — 4 November 2026
 
-The founder reports the coach phone walkthrough complete after checking incomplete group-event Close, narrow progress counts and the server-confirmed Schedule badge. This is founder-reported development-app acceptance, not a signed APK upgrade check. The release candidate bumps all workspace versions and Android versionCode to `1.0.0-beta.3` / `1000003`; PR #142 and the paired landing PR remain draft and unmerged. Follow the [release checklist](../operations/release-checklist.md#squire-beta3-release-candidate--4-november-2026) and [verification](../verification/README.md).
+The founder reports the coach phone walkthrough complete after checking incomplete group-event Close, narrow progress counts and the server-confirmed Schedule badge. This is founder-reported development-app acceptance, not a signed APK upgrade check. The release candidate bumps all workspace versions and Android versionCode to `1.0.0-beta.3` / `1000003`. Source commit `eef8904` passed backend, web and change-notes CI and produced a verified signed local APK/upload ZIP with the existing key; the signed phone smoke and historical upgrade remain separate. PR #142 and the paired English/Arabic landing PR #34 remain draft and unmerged. Follow the [release checklist](../operations/release-checklist.md#squire-beta3-release-candidate--4-november-2026) and [verification](../verification/README.md#signed-beta3-build--4-november-2026).
 
 ## Coach phone Schedule completion state — 4 November 2026
 

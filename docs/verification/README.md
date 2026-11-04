@@ -1,5 +1,11 @@
 # Verification record
 
+## Signed beta.3 build — 4 November 2026
+
+GitHub [Checks run 41768800520](https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource/actions/runs/41768800520) passed backend, web and change-notes jobs on `eef890497d9114da8319a4306680484ae545066d`. The release builder started from that clean commit and completed `app:assembleRelease` in 1h11m15s (622 tasks: 390 executed, 102 from cache, 130 up-to-date), including release lint. Its verifier confirmed package `org.rafik.field`, version `1.0.0-beta.3`, Android versionCode `1000003`, a bundled JavaScript entry, ARM64/x86_64 libraries and the existing signing certificate. No device was installed or reset.
+
+The ignored local bundle is `artifacts/mobile/1.0.0-beta.3.zip`, containing only `build.json`, `SHA256SUMS` and `Rafik-Squire-1.0.0-beta.3-android.apk` under one version folder. The APK hash matches both metadata and checksum file, including the ZIP entry. APK SHA-256: `2c25c5a6acb75b584dd614fb1450eb66685642aba48f06f1d28107006672ebf8`; ZIP SHA-256: `13bfc2766037bc1c2c8920748b429b51c81a0f1b5d0b387e8066a7a4d1f41431`; release-certificate SHA-256: `df1a1bc534b1bd1375aaadce3048416bff65e8a02a7ad534ce7dbd76ef5d9255`. `build.json` records `dirty: false` and the compiled commit above. Android/Expo dependency deprecation warnings did not fail the build. This is package evidence, not signed-install or in-place beta.2 upgrade acceptance.
+
 ## Beta.3 candidate preparation — 4 November 2026
 
 GitHub checks on prior source head `1e0b094` completed successfully: backend, web and change-notes. The candidate metadata now names `1.0.0-beta.3` in the root, four workspaces, lockfile and Expo app, with Android versionCode `1000003`; `npm ls @rafik/shared --all --depth=0` resolved the new workspace version consistently. The local existing signing identity passed `npm run mobile:release -- --prepare-only` after the sandbox initially denied `keytool` process access; preparation performed no Gradle build, installation or Metro start. Documentation validation passed two fixtures, 2,333 local links and 728 headings. These results precede the final candidate commit and APK; exact-head CI and signed-artifact evidence must be recorded separately.
