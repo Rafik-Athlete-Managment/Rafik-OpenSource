@@ -520,6 +520,38 @@ export function SectionLabel({
   )
 }
 
+/** Keep the count visible when its translated label wraps on a narrow phone. */
+export function ProgressHeading({
+  label,
+  count,
+  styles,
+  prominent = false,
+}: {
+  label: string
+  count: string
+  styles: Styles
+  prominent?: boolean
+}) {
+  return (
+    <View style={[styles.rowHeader, { justifyContent: 'space-between', alignItems: 'flex-start' }]}>
+      <Text
+        accessibilityRole="header"
+        style={[prominent ? styles.cardTitle : styles.sectionLabel, { flex: 1, minWidth: 0 }]}
+      >
+        {label}
+      </Text>
+      <Text
+        style={[
+          prominent ? styles.cardTitle : styles.label,
+          { flexShrink: 0, writingDirection: 'ltr' },
+        ]}
+      >
+        {count}
+      </Text>
+    </View>
+  )
+}
+
 /** Thin progress bar; the parent states the counts in text. */
 export function Progress({
   value,

@@ -57,7 +57,7 @@ export function WorkoutExercises({
     return (
       <View key={exercise.key} style={styles.card}>
         <View style={styles.rowHeader}>
-          <View style={{ flex: 1, gap: 2 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
             <Text style={styles.cardTitle}>{exerciseName}</Text>
             <Text style={styles.meta}>
               {sets.length} {l('sets', 'مجموعات')} · {l('Rest', 'الراحة')} {exercise.rest}{' '}
@@ -67,6 +67,7 @@ export function WorkoutExercises({
           <Text
             style={[
               styles.label,
+              { flexShrink: 0, writingDirection: 'ltr' },
               done === sets.length && sets.length ? styles.setCheckDoneText : null,
             ]}
           >

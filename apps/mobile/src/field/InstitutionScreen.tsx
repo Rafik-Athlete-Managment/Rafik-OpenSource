@@ -40,6 +40,7 @@ import {
   IconButton,
   Notice,
   Progress,
+  ProgressHeading,
   Segmented,
   SectionLabel,
   StatusPill,
@@ -169,6 +170,7 @@ export function InstitutionScreen({
   const [showDeviceOptions, setShowDeviceOptions] = useState(false)
   const [workoutPersisting, setWorkoutPersisting] = useState(false)
   const [groupPersisting, setGroupPersisting] = useState(false)
+  const [groupExitRisk, setGroupExitRisk] = useState(false)
   const [search, setSearch] = useState('')
   const [reviewing, setReviewing] = useState(false)
   const [now, setNow] = useState(Date.now)
@@ -855,13 +857,18 @@ export function InstitutionScreen({
   }
   function leaveEvent() {
     if (saving || draftSaving || workoutPersisting || groupPersisting || busy || closing) return
-    if (editor) {
+    if (editor || (groupEvent && groupExitRisk)) {
       Alert.alert(
         l('Leave this event?', 'مغادرة هذا الموعد؟'),
-        l(
-          'Save or submit the open assessment entry first. Work already saved on this phone will stay available.',
-          'احفظ أو أرسل نتيجة التقييم المفتوحة أولاً. سيبقى العمل المحفوظ على الهاتف متاحاً.',
-        ),
+        editor
+          ? l(
+              'Save or submit the open assessment entry first. Work already saved on this phone will stay available.',
+              'احفظ أو أرسل نتيجة التقييم المفتوحة أولاً. سيبقى العمل المحفوظ على الهاتف متاحاً.',
+            )
+          : l(
+              'Some workout values need correction or could not be saved. Your saved work stays on this phone, but unsaved values may be lost if the app closes.',
+              'تحتاج بعض قيم التمرين إلى تصحيح أو تعذر حفظها. سيبقى العمل المحفوظ على هاتفك، لكن قد تضيع القيم غير المحفوظة إذا أُغلق التطبيق.',
+            ),
         [
           { text: l('Keep working', 'متابعة العمل'), style: 'cancel' },
           { text: l('Leave anyway', 'المغادرة رغم ذلك'), onPress: closeEvent },
@@ -1229,6 +1236,7 @@ export function InstitutionScreen({
             styles={styles}
             closing={closing}
             onPersisting={setGroupPersisting}
+            onExitRiskChange={setGroupExitRisk}
             active={groupEvent === groupOpened}
             groupEvent={groupOpened}
             presentAthletes={
@@ -1720,10 +1728,13 @@ export function InstitutionScreen({
               <>
                 {eventStage === 'attendance' && !completed && !beforeStart ? (
                   <View style={styles.card}>
-                    <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
-                      <Text style={styles.cardTitle}>
-                        {markedCount} / {trainees.length} {l('marked', 'محدد')}
-                      </Text>
+                    <View style={{ gap: 8 }}>
+                      <ProgressHeading
+                        label={l('Attendance marked', 'تم تحديد الحضور')}
+                        count={`${markedCount}/${trainees.length}`}
+                        styles={styles}
+                        prominent
+                      />
                       <StatusPill
                         label={`${presentCount} ${l('present', 'حاضر')}`}
                         tone={presentCount ? 'success' : 'neutral'}

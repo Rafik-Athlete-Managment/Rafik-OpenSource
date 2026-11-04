@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Phone group-event Close and progress layout — 4 November 2026
+
+The group recorder previously reported invalid input or a failed local save as if a device write were still running. That flag disabled the event's Close action indefinitely. The parent now blocks Close only during an active write and warns before leaving a group sheet with unsaved or invalid values. The mounted editor and all saved device work remain available when the event is reopened. Shared progress headings reserve space for their numeric count while English/Arabic labels wrap. The [canonical phone walkthrough](../testing/instance-validation.md#native-group-workouts--unreleased-beta3) holds device acceptance; source checks are recorded in [verification](../verification/README.md).
+
 ## Coach phone dark contrast — 3 November 2026
 
 Founder feedback: the revamped dark theme looked washed out next to the previous near-black, and the day switcher and filter segments were hard to separate. The native app uses its own fixed palette, not institution branding; the first revamp copied the web's lighter default dark page (`#171e1a`), and its segmented track (`soft`) was lighter than the selected segment. Dark tokens now step page `#0a0d0b` < card `#141916` < raised `#1e2521`, with tracks/insets (`#0d110f`) below the card, fields (`#1b211d`) above it, a `control`-coloured edge on selected segments, raised dark secondary buttons and stronger dark shadows. Checked with a browser-rendered component preview in both themes; no Android check.

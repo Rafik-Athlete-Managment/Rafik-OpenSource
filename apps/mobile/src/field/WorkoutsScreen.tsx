@@ -36,7 +36,7 @@ import {
   IconButton,
   Notice,
   Progress,
-  SectionLabel,
+  ProgressHeading,
   StatusPill,
   displayDate,
   type Styles,
@@ -52,6 +52,7 @@ export function WorkoutsScreen({
   styles,
   closing,
   onPersisting,
+  onExitRiskChange,
   active,
   groupEvent,
   groupTitle,
@@ -76,6 +77,7 @@ export function WorkoutsScreen({
   styles: Styles
   closing: boolean
   onPersisting: (busy: boolean) => void
+  onExitRiskChange?: (risk: boolean) => void
   active: boolean
   groupEvent?: string
   groupTitle?: string
@@ -333,9 +335,13 @@ export function WorkoutsScreen({
     if (closing) runner.current?.stop()
   }, [closing])
   useEffect(() => {
-    onPersisting(persisting || storageFailed || invalidInput)
+    onPersisting(persisting)
     return () => onPersisting(false)
-  }, [persisting, storageFailed, invalidInput, onPersisting])
+  }, [persisting, onPersisting])
+  useEffect(() => {
+    onExitRiskChange?.(storageFailed || invalidInput)
+    return () => onExitRiskChange?.(false)
+  }, [storageFailed, invalidInput, onExitRiskChange])
   async function open(id: string) {
     if (invalidInput || storageFailed)
       throw Error('Correct or save the current sheet before switching athletes.')
@@ -773,14 +779,11 @@ export function WorkoutsScreen({
                 </View>
               </View>
               <View style={styles.card}>
-                <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
-                  <SectionLabel styles={styles}>
-                    {l('Present athletes', 'الرياضيون الحاضرون')}
-                  </SectionLabel>
-                  <Text style={styles.label}>
-                    {groupDone}/{groupItems.length}
-                  </Text>
-                </View>
+                <ProgressHeading
+                  label={l('Present athletes', 'الرياضيون الحاضرون')}
+                  count={`${groupDone}/${groupItems.length}`}
+                  styles={styles}
+                />
                 <Progress value={groupDone} total={groupItems.length} styles={styles} />
                 {groupItems.map((item) => {
                   const state = recordState(saved.find((r) => r.package.id === item.id))
@@ -1327,12 +1330,11 @@ export function WorkoutsScreen({
             </View>
             {record.session && !record.session.completed_at ? (
               <View style={styles.card}>
-                <View style={[styles.rowHeader, { justifyContent: 'space-between' }]}>
-                  <SectionLabel styles={styles}>{l('Progress', 'التقدم')}</SectionLabel>
-                  <Text style={styles.label}>
-                    {entries.length - remainingSets}/{entries.length} {l('sets', 'مجموعات')}
-                  </Text>
-                </View>
+                <ProgressHeading
+                  label={l('Progress', 'التقدم')}
+                  count={`${entries.length - remainingSets}/${entries.length}`}
+                  styles={styles}
+                />
                 <Progress
                   value={entries.length - remainingSets}
                   total={entries.length}
