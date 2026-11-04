@@ -1,6 +1,6 @@
 {
   "name": "@rafik/backend",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "private": true,
   "scarfSettings": {
     "enabled": false
@@ -76,7 +76,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "@rafik/shared": "1.0.0-beta.2",
+    "@rafik/shared": "1.0.0-beta.3",
     "pg": "8.16.3",
     "prisma": "7.10.1",
     "swagger-ui-dist": "5.33.3",

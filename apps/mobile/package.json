@@ -1,6 +1,6 @@
 {
   "name": "@rafik/mobile",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "private": true,
   "type": "module",
   "main": "expo-router/entry",
@@ -14,7 +14,7 @@
     "test:components": "node --experimental-strip-types --test tests/workout-exercises.test.ts"
   },
   "dependencies": {
-    "@rafik/shared": "1.0.0-beta.2",
+    "@rafik/shared": "1.0.0-beta.3",
     "expo": "~58.0.14",
     "expo-constants": "~58.0.12",
     "expo-crypto": "~58.0.7",

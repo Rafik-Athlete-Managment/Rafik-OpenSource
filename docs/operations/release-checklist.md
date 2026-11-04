@@ -1,10 +1,20 @@
 # Release checklist
 
-**Current release status, 20 October 2026: Squire 1.0.0-beta.1 is published and accepted for beta evaluation, including the coach Android app.** Packaging/signature checks passed, the founder accepted the Galaxy S20+ standalone field/offline walkthrough, and the uploaded Android bundle matches the recorded APK checksum. Broader device/accessibility coverage and historical upgrades are documented follow-up coverage, not unfinished beta.1 release gates. Each institution must approve its own environment and privacy/security arrangements before using real athlete data.
+**Current release status, 4 November 2026:** [Squire 1.0.0-beta.2](https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource/releases/tag/v1.0.0-beta.2) is published. Beta.3 is an unmerged release candidate; no beta.3 tag or downloadable APK exists yet. Each institution must approve its own environment and privacy/security arrangements before using real athlete data.
 
 Use the remaining unchecked deployment items for each installation or future release; they do not reverse the accepted beta.1 decision.
 
-**Next release:** sports/coaching PR #135 is merged and founder-accepted. Squire `1.0.0-beta.2` is in preparation, not published. Follow the [beta.2 upgrade and publication checklist](README.md#beta2-upgrade-and-release-preparation); keep its build/upgrade evidence separate from accepted beta.1.
+**Next release:** follow the beta.3 candidate gates below. Historical beta.1 and beta.2 receipts remain in [verification](../verification/README.md); they do not prove this candidate's signed upgrade.
+
+## Squire beta.3 release candidate — 4 November 2026
+
+- [x] Founder reports the coach phone development walkthrough valid, including offline work, group-event Close, narrow count labels and confirmed Schedule completion. The exact installed development-build revision and device metadata were not supplied.
+- [x] Version candidate is `1.0.0-beta.3` across the workspaces and `1000003` on Android. The existing signing identity is present locally and release preparation passes without building.
+- [ ] Confirm backend, web and change-notes checks on the exact final PR head. Review the cumulative beta.3 migration/client upgrade notes and the final diff; keep [application PR #142](https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource/pull/142) draft until founder release approval.
+- [ ] Build and verify the signed beta.3 APK from a clean committed source revision with the existing key. Record its build metadata, certificate fingerprint and SHA-256 together; do not publish private signing files.
+- [ ] Install that signed candidate for a short sign-in, Schedule, completed-workout and offline-reopen smoke check. A true in-place beta.2 → beta.3 update with retained encrypted work needs a previously signed beta.2 installation and must be recorded separately; do not claim it from a development build.
+- [ ] Review the paired English/Arabic [landing PR #34](https://github.com/KenseiEmam/rafik-landing/pull/34) for exact candidate scope, breaking upgrade, limitations and GitHub-hosted downloads. Keep release links conditional until the beta.3 asset exists.
+- [ ] After founder approval, merge the reviewed source and landing PRs, tag the exact approved source, publish the GitHub release with verified artifacts and update the project release record. Do not move the beta.2 tag.
 
 ## Project beta readiness: 19 October 2026
 

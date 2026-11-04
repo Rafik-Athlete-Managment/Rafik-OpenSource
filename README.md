@@ -12,7 +12,7 @@ Dependency installation includes guarded Expo tooling security backports. If dis
 
 Repository: [`Rafik-Athlete-Managment/Rafik-OpenSource`](https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource).
 
-**Preparing Squire 1.0.0-beta.2; published evaluation beta: Squire 1.0.0-beta.1.** Sports and coaching changes are merged; see the [beta.2 upgrade notes](docs/operations/README.md#beta2-upgrade-and-release-preparation). Standalone Android packaging uses `npm run mobile:release`; follow the [signing, installation and update guide](docs/operations/android-release.md). Release/device acceptance limits are tracked in [verification](docs/verification/README.md).
+**Preparing Squire 1.0.0-beta.3; published evaluation beta: Squire 1.0.0-beta.2.** This source branch remains an unmerged release candidate. Follow the [beta.3 release checklist](docs/operations/release-checklist.md#squire-beta3-release-candidate--4-november-2026) and the [Android signing and update guide](docs/operations/android-release.md). Release/device evidence is tracked in [verification](docs/verification/README.md).
 
 Rafik helps university coaches manage athlete training, attendance and performance in a university-operated instance. It is open source and can be deployed on infrastructure the university controls, without a Rafik software subscription. The Android field app serves coaches; administrators and athletes use the web dashboard. Performance records and limited participation status do not provide medical diagnoses or injury predictions.
 

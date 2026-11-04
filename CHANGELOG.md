@@ -1,6 +1,8 @@
 # Rafik web change history
 
-## Unreleased
+## Squire 1.0.0-beta.3 — release candidate
+
+Version metadata is prepared; the source PR, tag, signed APK and GitHub release are not yet published. The founder accepted the beta.3 coach phone development walkthrough on 4 November 2026. Signed-build smoke and upgrade evidence remain separate.
 
 - Show server-confirmed individual workouts as **Complete** on the coach phone Schedule, with the completed card treatment. Offline finishes awaiting acknowledgment stay labelled **Finished on this device**.
 

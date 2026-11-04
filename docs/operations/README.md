@@ -1,5 +1,7 @@
 # Operations
 
+The current candidate is Squire `1.0.0-beta.3`; beta.2 remains published until the founder approves and publishes the next release. Use the [beta.3 release checklist](release-checklist.md#squire-beta3-release-candidate--4-november-2026) for the signed package, coordinated migration/client upgrade and paired documentation gates. The historical beta.2 preparation steps below are retained as release history.
+
 Unreleased beta.3 workout completion requires the forward migration `202611031200_require_complete_workout_sets` before deploying the matching API and phone/web clients. It replaces the SQL completion validator while retaining existing session IDs, history and partial progress. Apply it through the normal migration deployment after the existing database backup procedure. It does not retroactively reopen completed records; rollback uses the matching backed-up application/database, not a manual deletion of workout data.
 
 ## Native individual workout source rollout — unreleased beta.3

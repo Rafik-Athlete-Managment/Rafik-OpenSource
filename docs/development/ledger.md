@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Beta.3 release candidate — 4 November 2026
+
+The founder reports the coach phone walkthrough complete after checking incomplete group-event Close, narrow progress counts and the server-confirmed Schedule badge. This is founder-reported development-app acceptance, not a signed APK upgrade check. The release candidate bumps all workspace versions and Android versionCode to `1.0.0-beta.3` / `1000003`; PR #142 and the paired landing PR remain draft and unmerged. Follow the [release checklist](../operations/release-checklist.md#squire-beta3-release-candidate--4-november-2026) and [verification](../verification/README.md).
+
 ## Coach phone Schedule completion state — 4 November 2026
 
 The Schedule card already includes a saved individual workout after completion, but displayed only its device-download label. It now reads the saved record's server-confirmed `completed_at` for a **Complete** status and completed card treatment. An offline final intent remains **Finished on this device** until acknowledged, preserving the distinction between local and server state. The [canonical phone walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3) covers the rendered check.

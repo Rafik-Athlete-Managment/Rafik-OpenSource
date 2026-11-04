@@ -1,5 +1,13 @@
 # Verification record
 
+## Beta.3 candidate preparation — 4 November 2026
+
+GitHub checks on prior source head `1e0b094` completed successfully: backend, web and change-notes. The candidate metadata now names `1.0.0-beta.3` in the root, four workspaces, lockfile and Expo app, with Android versionCode `1000003`; `npm ls @rafik/shared --all --depth=0` resolved the new workspace version consistently. The local existing signing identity passed `npm run mobile:release -- --prepare-only` after the sandbox initially denied `keytool` process access; preparation performed no Gradle build, installation or Metro start. Documentation validation passed two fixtures, 2,333 local links and 728 headings. These results precede the final candidate commit and APK; exact-head CI and signed-artifact evidence must be recorded separately.
+
+## Founder beta.3 phone development walkthrough — 4 November 2026
+
+The founder reports the coach phone walkthrough valid on a physical device, including the final group-event Close and progress-count fixes and a server-confirmed workout's **Complete** Schedule status. Earlier founder notes describe offline attendance and workout recording followed by successful server sync. This is owner-reported development-client acceptance; the exact installed build revision, Android version, device log and signed beta.2-to-beta.3 upgrade outcome were not supplied. A signed beta.3 package and its short installation smoke check remain release steps. Do not treat this report as independent device or SQLCipher assurance.
+
 ## Coach phone Schedule completion state — 4 November 2026
 
 The Schedule card now distinguishes a server-confirmed saved individual workout from an offline finish awaiting acknowledgment. Mobile source/test TypeScript, Prettier on the changed phone component and `git diff --check` passed. Documentation checks passed two fixtures, 2,329 local links and 726 heading links. This is source evidence only. The founder still needs to confirm the card's completed appearance on a phone after leaving the read-only workout summary; see the [canonical walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3). No Android rebuild or broad browser suite ran.
