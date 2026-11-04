@@ -1,5 +1,9 @@
 # Verification record
 
+## Founder signed beta.3 phone smoke — 4 November 2026
+
+The founder reports installing the signed beta.3 candidate on a Galaxy S20+ and passing the requested short check: coach sign-in, Schedule, a server-completed workout and reopening saved work offline. This is founder-reported acceptance, not independent device instrumentation; the Android version, device logs and installed APK bytes were not supplied. The APK build, signature and hash evidence are recorded below. The phone check started from a development installation with a different signature, so it does not establish an in-place beta.2-to-beta.3 update or preservation of pending encrypted beta.2 device work.
+
 ## Signed beta.3 build — 4 November 2026
 
 GitHub [Checks run 41768800520](https://github.com/Rafik-Athlete-Managment/Rafik-OpenSource/actions/runs/41768800520) passed backend, web and change-notes jobs on `eef890497d9114da8319a4306680484ae545066d`. The release builder started from that clean commit and completed `app:assembleRelease` in 1h11m15s (622 tasks: 390 executed, 102 from cache, 130 up-to-date), including release lint. Its verifier confirmed package `org.rafik.field`, version `1.0.0-beta.3`, Android versionCode `1000003`, a bundled JavaScript entry, ARM64/x86_64 libraries and the existing signing certificate. No device was installed or reset.
