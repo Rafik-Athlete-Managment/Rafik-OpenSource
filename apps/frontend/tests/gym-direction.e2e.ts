@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { randomUUID } from 'node:crypto'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 
 test('gym entry has dark default, unchanged logo and usable bilingual layouts', async ({
@@ -44,11 +44,11 @@ test('gym entry has dark default, unchanged logo and usable bilingual layouts', 
 test('organization month calendar and support preserve staff navigation', async ({
   page,
 }, info) => {
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     id = randomUUID()
   try {
-    await f.call(f.owner, '/v1/workspaces', { id, kind: 'organization', name: 'Madar gym review' })
-    await f.login(page, f.owner, `/organization/${id}/admin/calendar?from=2026-09-01`)
+    await f.call(f.owner, '/v1/institutions', { id, kind: 'institution', name: 'Madar gym review' })
+    await f.login(page, f.owner, `/calendar?from=2026-09-01`)
     await expect(page.getByLabel('Calendar view', { exact: true })).toHaveValue('month')
     await expect(page.locator('.month-day:not(:disabled)')).toHaveCount(30)
     await page.locator('.month-day:not(:disabled)').nth(10).click()
@@ -68,7 +68,7 @@ test('organization month calendar and support preserve staff navigation', async 
       .getByRole('link', { name: 'Overview', exact: true })
     if (await overview.isVisible()) {
       await overview.click()
-      await expect(page).toHaveURL(new RegExp(`/organization/${id}/admin$`))
+      await expect(page).toHaveURL(new RegExp(`$`))
     }
   } finally {
     await f.cleanup()

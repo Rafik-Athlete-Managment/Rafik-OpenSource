@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-31",
+  "scope": "Unreleased beta.3 individual native workout source; group capture and device acceptance pending",
+  "checks": {
+    "mobileTypecheck": "passed",
+    "backendTypecheck": "passed",
+    "requestSessionInputCases": 10,
+    "sqliteQueueCases": 20,
+    "isolatedNativeApiCases": 1,
+    "swaggerViewerCases": 2,
+    "landingBilingualContentCases": 4,
+    "backendInventory": "58 models / 483 columns / 70 route records"
+  },
+  "coverage": [
+    "Owner isolation and retained existing attendance/assessment queues",
+    "Sending-to-uncertain disk restart and byte-identical lost-start replay",
+    "Frozen save intent bound only after acknowledged start revision",
+    "Newer draft retained during held progress save",
+    "Final-empty-read reentrant sync handoff",
+    "Zero load, fractional distance and Arabic/Persian numeric entry",
+    "Rejected-save replacement, current-resource/version access restoration and 10-record cache pagination",
+    "Real API provisional start/completion: one workout and one sequence advancement; athlete package denial",
+    "Text-only whitelist excludes unrelated response fields"
+  ],
+  "limits": [
+    "No rendered React Native, SQLCipher-on-device, physical offline/process death, accessibility/RTL/theme or signed upgrade acceptance",
+    "No native build, new APK, release tag or full browser suite",
+    "Group recording, media download, native alternative selection and historical unlinked reconciliation remain later scope"
+  ],
+  "cleanup": "API harness removed its disposable database/files; SQLite test directories removed; temporary landing worktree removed",
+  "landing": {
+    "pr": 41,
+    "commit": "c046ee37aa432435a1409684de385d0d659a4594"
+  }
+}

@@ -1,3 +1,4 @@
+<!-- Meal plan editor: creates or changes daily meals and their foods for an athlete. -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { language as l, locale } from '../../lib/i18n'
@@ -117,7 +118,7 @@ function add() {
       </label>
       <button
         type="button"
-        class="text-link"
+        class="text-link danger-action"
         :aria-label="l('Remove ', 'حذف ') + item.name"
         @click="model = model.filter((_, index) => index !== i)"
       >

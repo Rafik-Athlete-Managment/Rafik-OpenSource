@@ -26,14 +26,14 @@ test("organization agenda and assessor-led results preserve each participant, co
       one = await f.person(),
       two = await f.person(),
       outsider = await f.person();
-    const id = await f.create(admin),
-      other = await f.create(outsider),
-      staff = await f.join(admin, id, trainer, ["trainer"]),
+    const id = await f.create(admin);
+    await f.create(outsider);
+    const staff = await f.join(admin, id, trainer, ["trainer"]),
       a = await f.join(admin, id, one, ["trainee"]),
       b = await f.join(admin, id, two, ["trainee"]);
     await call(
       admin,
-      `/v1/workspaces/${id}`,
+      `/v1/institution`,
       operation("assign-trainer", { id: a.id, revision: 1, trainer: staff.id }),
     );
     const drill = field(),
@@ -45,19 +45,54 @@ test("organization agenda and assessor-led results preserve each participant, co
         revision: 0,
         archived: false,
       });
-    let r = await call(admin, `/v1/workspaces/${id}/services`, template);
+    let r = await call(admin, `/v1/institution/services`, template);
     assert.equal(r.status, 200, JSON.stringify(r));
     const group = operation("group", {
       view: "admin",
       id: randomUUID(),
       name: "Morning group",
-      members: [a.id, b.id],
+      members: [a.id, b.id, staff.id],
       revision: 0,
       archived: false,
     });
     assert.equal(
-      (await call(admin, `/v1/workspaces/${id}/services`, group)).status,
+      (await call(admin, `/v1/institution/services`, group)).status,
       200,
+    );
+    const assignedGroups = await call(
+      trainer,
+      `/v1/institution/services?view=trainer&kind=groups`,
+    );
+    assert.equal(assignedGroups.status, 200, JSON.stringify(assignedGroups));
+    assert.equal(
+      assignedGroups.data.items.find(
+        (item: { id: string }) => item.id === group.id,
+      )?.canEdit,
+      false,
+    );
+    const pendingGroups = await call(
+      trainer,
+      `/v1/institution/communication?view=trainer`,
+    );
+    assert.ok(
+      pendingGroups.data.groups.some(
+        (item: { id: string }) => item.id === group.id,
+      ),
+    );
+    const groupChat = await call(
+      trainer,
+      `/v1/institution/communication`,
+      operation("open-group", { id: group.id, view: "trainer" }),
+    );
+    assert.equal(groupChat.status, 200, JSON.stringify(groupChat));
+    const openedGroups = await call(
+      trainer,
+      `/v1/institution/communication?view=trainer`,
+    );
+    assert.ok(
+      !openedGroups.data.groups.some(
+        (item: { id: string }) => item.id === group.id,
+      ),
     );
     const create = operation("create", {
       id: randomUUID(),
@@ -75,16 +110,16 @@ test("organization agenda and assessor-led results preserve each participant, co
       every: 7,
       location: "Training studio",
     });
-    r = await call(admin, `/v1/workspaces/${id}/calendar`, create);
+    r = await call(admin, `/v1/institution/calendar`, create);
     assert.equal(r.status, 200, JSON.stringify(r));
     assert.equal(r.data.length, 2);
     assert.deepEqual(
-      (await call(admin, `/v1/workspaces/${id}/calendar`, create)).data,
+      (await call(admin, `/v1/institution/calendar`, create)).data,
       r.data,
     );
     const event = r.data[0],
       future = r.data[1];
-    const edited = await call(admin, `/v1/workspaces/${id}/services`, {
+    const edited = await call(admin, `/v1/institution/services`, {
       ...template,
       operation: randomUUID(),
       revision: 1,
@@ -95,7 +130,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/calendar?view=trainer&id=${event.id}`,
+          `/v1/institution/calendar?view=trainer&id=${event.id}`,
         )
       ).data.event.definition[0].unit,
       "reps",
@@ -104,23 +139,14 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           outsider,
-          `/v1/workspaces/${id}/calendar?view=admin&id=${event.id}`,
-        )
-      ).status,
-      403,
-    );
-    assert.equal(
-      (
-        await call(
-          one,
-          `/v1/workspaces/${other}/calendar?view=trainee&id=${event.id}`,
+          `/v1/institution/calendar?view=admin&id=${event.id}`,
         )
       ).status,
       403,
     );
     const personal = await call(
       one,
-      `/v1/workspaces/${id}/calendar?view=trainee&id=${event.id}`,
+      `/v1/institution/calendar?view=trainee&id=${event.id}`,
     );
     assert.equal(
       personal.data.people.filter((x: any) => x.duty === "trainee").length,
@@ -134,11 +160,11 @@ test("organization agenda and assessor-led results preserve each participant, co
       attendance: "present",
     });
     assert.equal(
-      (await call(trainer, `/v1/workspaces/${id}/calendar`, early)).status,
+      (await call(trainer, `/v1/institution/calendar`, early)).status,
       400,
     );
     // Move only this test-owned event into the past to exercise attendance/results without waiting a day.
-    await db.organization_events.update({
+    await db.institution_events.update({
       where: { id: event.id },
       data: {
         starts_at: new Date(Date.now() - 7200000),
@@ -150,7 +176,7 @@ test("organization agenda and assessor-led results preserve each participant, co
         (
           await call(
             trainer,
-            `/v1/workspaces/${id}/calendar`,
+            `/v1/institution/calendar`,
             operation("attendance", {
               id: event.id,
               view: "trainer",
@@ -162,6 +188,26 @@ test("organization agenda and assessor-led results preserve each participant, co
         ).status,
         200,
       );
+    assert.equal(
+      (
+        await call(
+          admin,
+          `/v1/institution/calendar`,
+          operation("reschedule", {
+            id: event.id,
+            view: "admin",
+            revision: 1,
+            local:
+              new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10) +
+              "T14:00",
+            zone: "UTC",
+            minutes: 60,
+          }),
+        )
+      ).status,
+      400,
+      "attendance already recorded must keep the event's original time",
+    );
     const result = operation("result", {
       id: event.id,
       view: "trainer",
@@ -170,17 +216,17 @@ test("organization agenda and assessor-led results preserve each participant, co
       values: { [drill.key]: 12 },
       note: "Steady pace",
     });
-    r = await call(trainer, `/v1/workspaces/${id}/calendar`, result);
+    r = await call(trainer, `/v1/institution/calendar`, result);
     assert.equal(r.status, 200, JSON.stringify(r));
     assert.deepEqual(
-      (await call(trainer, `/v1/workspaces/${id}/calendar`, result)).data,
+      (await call(trainer, `/v1/institution/calendar`, result)).data,
       r.data,
     );
     assert.equal(
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/calendar`,
+          `/v1/institution/calendar`,
           operation("finish", { id: event.id, view: "trainer", revision: 1 }),
         )
       ).status,
@@ -191,7 +237,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/calendar`,
+          `/v1/institution/calendar`,
           operation("result", {
             id: event.id,
             view: "trainer",
@@ -208,7 +254,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/calendar`,
+          `/v1/institution/calendar`,
           operation("finish", { id: event.id, view: "trainer", revision: 1 }),
         )
       ).status,
@@ -216,7 +262,7 @@ test("organization agenda and assessor-led results preserve each participant, co
     );
     assert.equal(
       (
-        await call(trainer, `/v1/workspaces/${id}/calendar`, {
+        await call(trainer, `/v1/institution/calendar`, {
           ...result,
           operation: randomUUID(),
           revision: 1,
@@ -227,7 +273,7 @@ test("organization agenda and assessor-led results preserve each participant, co
     );
     const detail = await call(
       admin,
-      `/v1/workspaces/${id}/calendar?view=admin&id=${event.id}`,
+      `/v1/institution/calendar?view=admin&id=${event.id}`,
     );
     assert.equal(detail.data.history.length, 3);
     assert.equal(
@@ -238,7 +284,7 @@ test("organization agenda and assessor-led results preserve each participant, co
     );
     // A long correction trail is paged per authorized participant, not downloaded with the event.
     for (let revision = 2; revision < 29; revision++) {
-      const correction = await call(trainer, `/v1/workspaces/${id}/calendar`, {
+      const correction = await call(trainer, `/v1/institution/calendar`, {
         ...result,
         operation: randomUUID(),
         revision,
@@ -249,10 +295,10 @@ test("organization agenda and assessor-led results preserve each participant, co
     }
     const summary = await call(
       admin,
-      `/v1/workspaces/${id}/calendar?view=admin&id=${event.id}&summary=true`,
+      `/v1/institution/calendar?view=admin&id=${event.id}&summary=true`,
     );
     assert.equal(summary.data.history.length, 0);
-    const historyPath = `/v1/workspaces/${id}/calendar?view=trainee&id=${event.id}&historyMember=${a.id}`;
+    const historyPath = `/v1/institution/calendar?view=trainee&id=${event.id}&historyMember=${a.id}`;
     const firstHistory = await call(one, historyPath);
     assert.equal(firstHistory.data.history.length, 25);
     assert.equal(firstHistory.data.historyNext, 25);
@@ -272,11 +318,11 @@ test("organization agenda and assessor-led results preserve each participant, co
       params = `from=${eventDay}&to=${today}`;
     const adminReport = await call(
         admin,
-        `/v1/workspaces/${id}/analytics?view=admin&${params}`,
+        `/v1/institution/analytics?view=admin&${params}`,
       ),
       trainerReport = await call(
         trainer,
-        `/v1/workspaces/${id}/analytics?view=trainer&${params}`,
+        `/v1/institution/analytics?view=trainer&${params}`,
       );
     assert.equal(adminReport.status, 200, JSON.stringify(adminReport));
     assert.equal(trainerReport.status, 200, JSON.stringify(trainerReport));
@@ -287,7 +333,7 @@ test("organization agenda and assessor-led results preserve each participant, co
     assert.equal(trainerReport.data.workload.length, 0);
     const history = await call(
       one,
-      `/v1/workspaces/${id}/assessment-history?view=trainee&${params}`,
+      `/v1/institution/assessment-history?view=trainee&${params}`,
     );
     assert.equal(history.status, 200, JSON.stringify(history));
     assert.equal(history.data.items[0].values[drill.key], 14);
@@ -295,12 +341,12 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           one,
-          `/v1/workspaces/${id}/assessment-history?view=trainee&member=${b.id}&${params}`,
+          `/v1/institution/assessment-history?view=trainee&member=${b.id}&${params}`,
         )
       ).status,
       403,
     );
-    const exported = await call(one, "/v1/account/organizations");
+    const exported = await call(one, "/v1/account/institution");
     assert.equal(exported.status, 200);
     assert.equal(exported.data.results.length, 1);
     assert.equal(exported.data.results[0].member_id, a.id);
@@ -309,7 +355,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/calendar?view=admin&from=${today}&to=${today}&offset=1.5`,
+          `/v1/institution/calendar?view=admin&from=${today}&to=${today}&offset=1.5`,
         )
       ).status,
       400,
@@ -318,7 +364,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/analytics?view=admin&from=2026-02-30&to=2026-03-01`,
+          `/v1/institution/analytics?view=admin&from=2026-02-30&to=2026-03-01`,
         )
       ).status,
       400,
@@ -327,21 +373,21 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/analytics?view=admin&member=invalid&${params}`,
+          `/v1/institution/analytics?view=admin&member=invalid&${params}`,
         )
       ).status,
       400,
     );
     const replacement = await f.person(),
       replacementMember = await f.join(admin, id, replacement, ["trainer"]);
-    const current = await db.workspace_members.findUniqueOrThrow({
+    const current = await db.institution_members.findUniqueOrThrow({
       where: { id: a.id },
     });
     assert.equal(
       (
         await call(
           admin,
-          `/v1/workspaces/${id}`,
+          `/v1/institution`,
           operation("assign-trainer", {
             id: a.id,
             revision: current.revision,
@@ -352,19 +398,15 @@ test("organization agenda and assessor-led results preserve each participant, co
       200,
     );
     assert.equal(
-      (
-        await call(
-          trainer,
-          `/v1/workspaces/${id}/analytics?view=trainer&${params}`,
-        )
-      ).data.summary.active,
+      (await call(trainer, `/v1/institution/analytics?view=trainer&${params}`))
+        .data.summary.active,
       0,
     );
     assert.equal(
       (
         await call(
           replacement,
-          `/v1/workspaces/${id}/assessment-history?view=trainer&member=${a.id}&${params}`,
+          `/v1/institution/assessment-history?view=trainer&member=${a.id}&${params}`,
         )
       ).data.items[0].values[drill.key],
       14,
@@ -373,7 +415,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/assessment-history?view=trainer&member=${a.id}&${params}`,
+          `/v1/institution/assessment-history?view=trainer&member=${a.id}&${params}`,
         )
       ).status,
       403,
@@ -382,7 +424,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/calendar?view=trainer&id=${event.id}`,
+          `/v1/institution/calendar?view=trainer&id=${event.id}`,
         )
       ).status,
       200,
@@ -392,7 +434,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/calendar`,
+          `/v1/institution/calendar`,
           operation("cancel", { id: event.id, view: "admin", revision: 2 }),
         )
       ).status,
@@ -408,16 +450,66 @@ test("organization agenda and assessor-led results preserve each participant, co
       zone: "UTC",
       minutes: 45,
     });
-    const moved = await call(
-      admin,
-      `/v1/workspaces/${id}/calendar`,
-      reschedule,
-    );
+    const moved = await call(admin, `/v1/institution/calendar`, reschedule);
     assert.equal(moved.status, 200);
     assert.equal(moved.data.revision, 2);
     assert.deepEqual(
-      (await call(admin, `/v1/workspaces/${id}/calendar`, reschedule)).data,
+      (await call(admin, `/v1/institution/calendar`, reschedule)).data,
       moved.data,
+    );
+    const missed = await call(
+      admin,
+      `/v1/institution/calendar`,
+      operation("create", {
+        id: randomUUID(),
+        view: "admin",
+        title: "Missed training",
+        kind: "training",
+        staff: [staff.id],
+        participants: [a.id],
+        local: tomorrow(),
+        zone: "UTC",
+        minutes: 45,
+        count: 1,
+        every: 7,
+        location: "Field",
+      }),
+    );
+    assert.equal(missed.status, 200, JSON.stringify(missed));
+    const missedId = missed.data[0].id;
+    await db.institution_events.update({
+      where: { id: missedId },
+      data: {
+        starts_at: new Date(Date.now() - 7200000),
+        ends_at: new Date(Date.now() - 3600000),
+      },
+    });
+    assert.equal(
+      (await call(admin, `/v1/institution/calendar?view=admin&id=${missedId}`))
+        .data.can_reschedule,
+      true,
+    );
+    const recoveredDay = new Date(Date.now() + 21 * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const recovered = await call(
+      trainer,
+      `/v1/institution/calendar`,
+      operation("reschedule", {
+        id: missedId,
+        view: "trainer",
+        revision: 1,
+        local: recoveredDay + "T14:00",
+        zone: "UTC",
+        minutes: 45,
+      }),
+    );
+    assert.equal(recovered.status, 200, JSON.stringify(recovered));
+    assert.equal(recovered.data.revision, 2);
+    assert.equal(
+      recovered.data.training_date.slice(0, 10),
+      recoveredDay,
+      "the group workout's local training day follows its new slot",
     );
     const cancel = operation("cancel", {
       id: future.id,
@@ -426,16 +518,16 @@ test("organization agenda and assessor-led results preserve each participant, co
       future_series: true,
     });
     assert.equal(
-      (await call(admin, `/v1/workspaces/${id}/calendar`, cancel)).status,
+      (await call(admin, `/v1/institution/calendar`, cancel)).status,
       200,
     );
     assert.equal(
-      (await call(admin, `/v1/workspaces/${id}/calendar`, cancel)).status,
+      (await call(admin, `/v1/institution/calendar`, cancel)).status,
       200,
     );
     await call(
       admin,
-      `/v1/workspaces/${id}`,
+      `/v1/institution`,
       operation("member", {
         id: staff.id,
         revision: staff.revision,
@@ -444,7 +536,7 @@ test("organization agenda and assessor-led results preserve each participant, co
       }),
     );
     assert.equal(
-      (await call(trainer, `/v1/workspaces/${id}/calendar`, result)).status,
+      (await call(trainer, `/v1/institution/calendar`, result)).status,
       403,
       "revoked assessor cannot replay results",
     );
@@ -452,7 +544,7 @@ test("organization agenda and assessor-led results preserve each participant, co
     await f.cleanup();
   }
 });
-test("calendar collisions are atomic across organizations; calendar preview resolves actual timezone occurrences", async () => {
+test("calendar collisions are atomic within the institution; calendar preview resolves actual timezone occurrences", async () => {
   const f = await organizationFixture();
   try {
     const admin = await f.person(),
@@ -460,11 +552,12 @@ test("calendar collisions are atomic across organizations; calendar preview reso
       trainer = await f.person(),
       client = await f.person(),
       id = await f.create(admin),
-      id2 = await f.create(other);
+      id2 = id;
+    await f.join(admin, id, other, ["admin"]);
     const s = await f.join(admin, id, trainer, ["trainer"]),
       m = await f.join(admin, id, client, ["trainee"]),
-      s2 = await f.join(other, id2, trainer, ["trainer"]),
-      m2 = await f.join(other, id2, client, ["trainee"]);
+      s2 = s,
+      m2 = m;
     const base = {
       view: "admin",
       title: "Group training",
@@ -479,7 +572,7 @@ test("calendar collisions are atomic across organizations; calendar preview reso
     const results = await Promise.all([
       call(
         admin,
-        `/v1/workspaces/${id}/calendar`,
+        `/v1/institution/calendar`,
         operation("create", {
           ...base,
           id: randomUUID(),
@@ -489,7 +582,7 @@ test("calendar collisions are atomic across organizations; calendar preview reso
       ),
       call(
         other,
-        `/v1/workspaces/${id2}/calendar`,
+        `/v1/institution/calendar`,
         operation("create", {
           ...base,
           id: randomUUID(),
@@ -504,32 +597,32 @@ test("calendar collisions are atomic across organizations; calendar preview reso
       JSON.stringify(results),
     );
     assert.equal(
-      await db.organization_events.count({
-        where: { workspace_id: { in: [id, id2] } },
+      await db.institution_events.count({
+        where: { institution_id: { in: [id, id2] } },
       }),
       1,
     );
     const foreign = await call(
       admin,
-      `/v1/workspaces/${id}/calendar`,
+      `/v1/institution/calendar`,
       operation("create", {
         ...base,
         id: randomUUID(),
         staff: [s.id],
-        participants: [m2.id],
+        participants: [randomUUID()],
       }),
     );
     assert.equal(foreign.status, 403);
     assert.equal(
       (
-        await call(admin, `/v1/workspaces/${id}/calendar-preview`, {
+        await call(admin, `/v1/institution/calendar-preview`, {
           ...base,
           minutes: true,
         })
       ).status,
       400,
     );
-    const dst = await call(admin, `/v1/workspaces/${id}/calendar-preview`, {
+    const dst = await call(admin, `/v1/institution/calendar-preview`, {
       ...base,
       local: "2027-03-14T02:30",
       zone: "America/New_York",

@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-30",
+  "unit": {
+    "command": "npm run test --workspace @rafik/frontend -- tests/exercise-authoring.test.ts tests/design-controls.test.ts",
+    "passed": 6
+  },
+  "typecheck": "passed",
+  "authenticated": {
+    "command": "node apps/frontend/scripts/isolated-browser.mjs workout-authoring.e2e.ts --project=chromium --max-failures=1",
+    "passed": 1,
+    "productionBuild": true,
+    "cleanup": "runner removed isolated database and files",
+    "scope": "template alternatives, program import/persistence, readonly preview, media dialog and phone action",
+    "limit": "final leading-thumbnail CSS inspected separately after this run"
+  },
+  "componentCases": [
+    {
+      "engine": "chromium",
+      "language": "en",
+      "theme": "light",
+      "width": 1280,
+      "checks": "alternative search/add/remove; visible popup; modal locale, Escape/focus return; nested participant-panel modal; thumbnail only on desktop; no phone poster request; no horizontal overflow"
+    },
+    {
+      "engine": "chromium",
+      "language": "ar",
+      "theme": "dark",
+      "width": 320,
+      "checks": "alternative search/add/remove; visible popup; modal locale, Escape/focus return; nested participant-panel modal; thumbnail only on desktop; no phone poster request; no horizontal overflow"
+    },
+    {
+      "engine": "webkit",
+      "language": "en",
+      "theme": "light",
+      "width": 1280,
+      "checks": "alternative search/add/remove; visible popup; modal locale, Escape/focus return; nested participant-panel modal; thumbnail only on desktop; no phone poster request; no horizontal overflow"
+    },
+    {
+      "engine": "webkit",
+      "language": "ar",
+      "theme": "dark",
+      "width": 320,
+      "checks": "alternative search/add/remove; visible popup; modal locale, Escape/focus return; nested participant-panel modal; thumbnail only on desktop; no phone poster request; no horizontal overflow"
+    }
+  ],
+  "limits": [
+    "synthetic component fixtures are not authenticated participant adaptation",
+    "no full locale/theme matrix or native/device acceptance",
+    "programming.e2e.ts selectors maintained but broad suite not run"
+  ]
+}

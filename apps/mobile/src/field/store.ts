@@ -8,6 +8,7 @@ import type {
   Owner,
 } from './model.ts'
 import { ownerKey, fieldResult, finishProblems, scoreValues } from './model.ts'
+import { WorkoutStore } from './workout-store.ts'
 
 /** Small adapter so queue logic can be checked using real SQLite without a native runtime. */
 export interface Database {
@@ -22,10 +23,12 @@ type CommandRow = Omit<Command, 'payload'> & { payload: string }
 const decode = (row: CommandRow): Command => ({ ...row, payload: JSON.parse(row.payload) })
 
 export class FieldStore {
+  readonly workouts: WorkoutStore
   private tail: Promise<unknown> = Promise.resolve()
   private db: Database
   constructor(db: Database) {
     this.db = db
+    this.workouts = new WorkoutStore((task) => this.serial(() => task(this.db)))
   }
 
   // Every connection operation goes through this lane. No async reads can interleave a transaction.
@@ -40,6 +43,8 @@ export class FieldStore {
       await this.db.execAsync(`
         PRAGMA journal_mode = WAL;
         PRAGMA synchronous = FULL;
+        CREATE TABLE IF NOT EXISTS field_workouts (owner TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(owner,id));
+        UPDATE field_workouts SET payload=json_set(payload,'$.pending.state','uncertain') WHERE json_extract(payload,'$.pending.state')='sending';
         CREATE TABLE IF NOT EXISTS attendance_events (
           owner TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL,
           saved_at TEXT NOT NULL, blocked INTEGER NOT NULL DEFAULT 0,
@@ -76,10 +81,10 @@ export class FieldStore {
     })
   }
 
-  workspaces(instance: string, user: string): Promise<string[]> {
+  institutions(instance: string, user: string): Promise<string[]> {
     return this.serial(async () => {
       const rows = await this.db.getAllAsync<{ owner: string }>(
-        "SELECT DISTINCT owner FROM attendance_events WHERE json_extract(owner,'$[0]')=? AND json_extract(owner,'$[1]')=?",
+        "SELECT DISTINCT owner FROM (SELECT owner FROM attendance_events UNION SELECT owner FROM field_workouts) WHERE json_extract(owner,'$[0]')=? AND json_extract(owner,'$[1]')=?",
         instance,
         user,
       )

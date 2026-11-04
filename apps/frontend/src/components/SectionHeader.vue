@@ -1,3 +1,4 @@
+<!-- Section heading: labels a related block of page content and optional actions. -->
 <script setup lang="ts">
 withDefaults(
   defineProps<{ title: string; description?: string; id?: string; level?: 'h2' | 'h3' }>(),

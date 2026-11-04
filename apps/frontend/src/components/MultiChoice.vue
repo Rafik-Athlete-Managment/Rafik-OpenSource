@@ -1,3 +1,4 @@
+<!-- Shared multi-select control: searches options and returns the selected values. -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { language as l } from '../lib/i18n'
@@ -20,7 +21,7 @@ const visible = computed(() =>
         v-for="value in model"
         :key="value"
         type="button"
-        class="choice-chip"
+        class="choice-chip danger-action"
         @click="model = model.filter((v) => v !== value)"
         :aria-label="
           l('Remove ', 'إزالة ') + (options.find((o) => o.value === value)?.label || value)

@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 test('separate institution roles and reassigns responsibility with recoverable commands', async ({
   page,
   browser,
 }, info) => {
   test.setTimeout(90000)
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     staffContext = await browser.newContext(),
     clientContext = await browser.newContext(),
     staff = await staffContext.newPage(),
@@ -16,10 +16,10 @@ test('separate institution roles and reassigns responsibility with recoverable c
   try {
     // Institutions now come from first-run setup; create one directly for this journey.
     const id = randomUUID(),
-      base = `/organization/${id}/admin`
-    await f.call(f.owner, '/v1/workspaces', {
+      base = ``
+    await f.call(f.owner, '/v1/institutions', {
       id,
-      kind: 'organization',
+      kind: 'institution',
       name: 'Madar test organization',
     })
     await f.login(page, f.owner, base)
@@ -36,13 +36,13 @@ test('separate institution roles and reassigns responsibility with recoverable c
     const link = await page.getByLabel('Invitation link', { exact: true }).inputValue()
     await f.login(staff, f.coach, new URL(link).pathname)
     await staff.getByRole('button', { name: 'Accept invitation', exact: true }).click()
-    await expect(staff).toHaveURL(new RegExp(`/organization/${id}/trainer$`))
+    await expect(staff).toHaveURL(new RegExp(`$`))
     await page.getByLabel('Email address', { exact: true }).fill(f.client.email)
     await page.getByRole('button', { name: 'Create invitation', exact: true }).click()
     const clientLink = await page.getByLabel('Invitation link', { exact: true }).inputValue()
     await f.login(client, f.client, new URL(clientLink).pathname)
     await client.getByRole('button', { name: 'Accept invitation', exact: true }).click()
-    await expect(client).toHaveURL(new RegExp(`/organization/${id}/trainee$`))
+    await expect(client).toHaveURL(new RegExp(`$`))
     // Management lives on each profile's Manage tab, opened from the directory icon.
     const manage = async (tab: string, name: string) => {
       await page.goto(base + '/people')
@@ -57,7 +57,7 @@ test('separate institution roles and reassigns responsibility with recoverable c
       .getByRole('checkbox', { name: /^R4 Coach/ })
       .check()
     let lost = false
-    await page.route('**/v1/workspaces/' + id, async (route) => {
+    await page.route('**/v1/institutions/' + id, async (route) => {
       if (
         !lost &&
         route.request().method() === 'POST' &&
@@ -84,9 +84,9 @@ test('separate institution roles and reassigns responsibility with recoverable c
     await expect(athleteCard).toContainText('Primary coach: R4 Coach')
     // The lost acknowledgement and retry produce exactly one active primary link.
     const roster = async () =>
-      (await f.call(f.owner, `/v1/workspaces/${id}/people?view=admin&role=trainee`)).items[0]
+      (await f.call(f.owner, `/v1/institution/people?view=admin&role=trainee`)).items[0]
     expect((await roster()).coaches.map((c: { kind: string }) => c.kind)).toEqual(['primary'])
-    await staff.goto(`/organization/${id}/trainer/people`)
+    await staff.goto(`/people`)
     await expect(staff.getByRole('heading', { name: 'R4 Athlete', exact: true })).toBeVisible()
     await expect(staff.getByRole('link', { name: /^Manage/ })).toHaveCount(0)
     await expect(staff.getByRole('heading', { name: 'R4 Owner', exact: true })).toHaveCount(0)
@@ -101,8 +101,8 @@ test('separate institution roles and reassigns responsibility with recoverable c
     expect((await roster()).coaches).toEqual([])
     expect((await roster()).trainer_id).toBeNull()
     await staff.reload()
-    // Revoked staff are returned to the workspace chooser; no athlete data remains on screen.
-    await expect(staff).toHaveURL(/\/workspaces/)
+    // Revoked staff are returned to the institution chooser; no athlete data remains on screen.
+    await expect(staff).toHaveURL(/\/institutions/)
     await expect(staff.getByRole('heading', { name: 'R4 Athlete', exact: true })).toHaveCount(0)
     await manage('Administrators', 'R4 Owner')
     await page.getByRole('checkbox', { name: 'Active membership', exact: true }).uncheck()

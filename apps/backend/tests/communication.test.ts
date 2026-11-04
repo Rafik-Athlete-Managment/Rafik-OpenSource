@@ -16,14 +16,14 @@ test("organization conversation scope, participation, read cursors and replay re
       client = await f.person(),
       foreign = await f.person(),
       secondClient = await f.person(),
-      id = await f.create(admin),
-      other = await f.create(foreign),
-      staff = await f.join(admin, id, trainer, ["trainer"]),
+      id = await f.create(admin);
+    await f.create(foreign);
+    const staff = await f.join(admin, id, trainer, ["trainer"]),
       trainee = await f.join(admin, id, client, ["trainee"]),
       second = await f.join(admin, id, secondClient, ["trainee"]);
     await call(
       admin,
-      `/v1/workspaces/${id}`,
+      `/v1/institution`,
       operation("assign-trainer", {
         id: second.id,
         revision: 1,
@@ -32,7 +32,7 @@ test("organization conversation scope, participation, read cursors and replay re
     );
     await call(
       admin,
-      `/v1/workspaces/${id}`,
+      `/v1/institution`,
       operation("assign-trainer", {
         id: trainee.id,
         revision: 1,
@@ -41,7 +41,7 @@ test("organization conversation scope, participation, read cursors and replay re
     );
     const direct = await call(
       trainer,
-      `/v1/workspaces/${id}/communication`,
+      `/v1/institution/communication`,
       operation("create", {
         id: randomUUID(),
         view: "trainer",
@@ -52,7 +52,7 @@ test("organization conversation scope, participation, read cursors and replay re
     );
     const duplicateDirect = await call(
       trainer,
-      `/v1/workspaces/${id}/communication`,
+      `/v1/institution/communication`,
       operation("create", {
         id: randomUUID(),
         view: "trainer",
@@ -64,17 +64,92 @@ test("organization conversation scope, participation, read cursors and replay re
     assert.equal(direct.status, 200);
     assert.equal(duplicateDirect.status, 200);
     assert.equal(duplicateDirect.data.id, direct.data.id);
+    const athleteContacts = await call(
+      client,
+      `/v1/institution/communication?view=trainee&contacts=true`,
+    );
+    assert.equal(athleteContacts.status, 200);
+    assert.deepEqual(
+      athleteContacts.data.members.map((p: { id: string }) => p.id),
+      [staff.id],
+    );
+    const athleteDirect = await call(
+      client,
+      `/v1/institution/communication`,
+      operation("create", {
+        id: randomUUID(),
+        view: "trainee",
+        title: "My coach",
+        members: [trainee.id, staff.id],
+        managers: [staff.id],
+      }),
+    );
+    assert.equal(athleteDirect.status, 200, JSON.stringify(athleteDirect));
+    assert.equal(athleteDirect.data.id, direct.data.id);
+    const wrongAthlete = await call(
+      client,
+      `/v1/institution/communication`,
+      operation("create", {
+        id: randomUUID(),
+        view: "trainee",
+        title: "Other athlete",
+        members: [trainee.id, second.id],
+        managers: [trainee.id],
+      }),
+    );
+    assert.ok([400, 403].includes(wrongAthlete.status));
     const directList = await call(
       trainer,
-      `/v1/workspaces/${id}/communication?view=trainer`,
+      `/v1/institution/communication?view=trainer`,
     );
     assert.ok(directList.data.directPeople.includes(trainee.id));
+    const oneAthleteGroup = randomUUID();
+    assert.equal(
+      (
+        await call(
+          trainer,
+          `/v1/institution/services`,
+          operation("group", {
+            id: oneAthleteGroup,
+            view: "trainer",
+            name: "Individual squad discussion",
+            members: [trainee.id],
+            revision: 0,
+            archived: false,
+          }),
+        )
+      ).status,
+      200,
+    );
+    const groupPair = await call(
+      trainer,
+      `/v1/institution/communication`,
+      operation("open-group", { id: oneAthleteGroup, view: "trainer" }),
+    );
+    assert.equal(groupPair.status, 200, JSON.stringify(groupPair));
+    assert.notEqual(groupPair.data.id, direct.data.id);
+    assert.equal(groupPair.data.private_pair, false);
+    const groupPairAgain = await call(
+      trainer,
+      `/v1/institution/communication`,
+      operation("open-group", { id: oneAthleteGroup, view: "trainer" }),
+    );
+    assert.equal(groupPairAgain.data.id, groupPair.data.id);
+    const afterGroup = await call(
+      trainer,
+      `/v1/institution/communication?view=trainer`,
+    );
+    assert.ok(
+      !afterGroup.data.groups.some(
+        (group: { id: string }) => group.id === oneAthleteGroup,
+      ),
+    );
     const groupId = randomUUID();
     assert.equal(
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/services`,
+          `/v1/institution/services`,
           operation("group", {
             id: groupId,
             view: "trainer",
@@ -89,12 +164,12 @@ test("organization conversation scope, participation, read cursors and replay re
     );
     const groupConversation = await call(
       trainer,
-      `/v1/workspaces/${id}/communication`,
+      `/v1/institution/communication`,
       operation("open-group", { id: groupId, view: "trainer" }),
     );
     const repeatedGroupConversation = await call(
       trainer,
-      `/v1/workspaces/${id}/communication`,
+      `/v1/institution/communication`,
       operation("open-group", { id: groupId, view: "trainer" }),
     );
     assert.equal(
@@ -108,7 +183,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           trainer,
-          `/v1/workspaces/${id}/communication?view=trainer&id=${groupConversation.data.id}`,
+          `/v1/institution/communication?view=trainer&id=${groupConversation.data.id}`,
         )
       ).data.people.length,
       3,
@@ -121,10 +196,10 @@ test("organization conversation scope, participation, read cursors and replay re
         members: [staff.id, trainee.id, second.id],
         managers: [staff.id],
       });
-    let r = await call(trainer, `/v1/workspaces/${id}/communication`, create);
+    let r = await call(trainer, `/v1/institution/communication`, create);
     assert.equal(r.status, 200, JSON.stringify(r));
     assert.deepEqual(
-      (await call(trainer, `/v1/workspaces/${id}/communication`, create)).data,
+      (await call(trainer, `/v1/institution/communication`, create)).data,
       r.data,
     );
     const send = operation("send", {
@@ -133,18 +208,18 @@ test("organization conversation scope, participation, read cursors and replay re
       message: randomUUID(),
       body: "We will review the technique together.",
     });
-    r = await call(trainer, `/v1/workspaces/${id}/communication`, send);
+    r = await call(trainer, `/v1/institution/communication`, send);
     assert.equal(r.status, 200, JSON.stringify(r));
     const message = r.data;
     assert.deepEqual(
-      (await call(trainer, `/v1/workspaces/${id}/communication`, send)).data,
+      (await call(trainer, `/v1/institution/communication`, send)).data,
       message,
     );
     assert.equal(
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/communication?view=admin&id=${channel}`,
+          `/v1/institution/communication?view=admin&id=${channel}`,
         )
       ).status,
       403,
@@ -152,20 +227,20 @@ test("organization conversation scope, participation, read cursors and replay re
     );
     const discovery = await call(
       admin,
-      `/v1/workspaces/${id}/communication?view=admin&manage=true`,
+      `/v1/institution/communication?view=admin&manage=true`,
     );
     assert.equal(discovery.data.items[0].last_body, null);
     assert.equal(discovery.data.items[0].unread, 0);
     const inbox = await call(
       client,
-      `/v1/workspaces/${id}/communication?view=trainee`,
+      `/v1/institution/communication?view=trainee`,
     );
     assert.equal(inbox.data.items[0].unread, 1);
     assert.equal(
       (
         await call(
           client,
-          `/v1/workspaces/${id}/communication`,
+          `/v1/institution/communication`,
           operation("read", {
             id: channel,
             view: "trainee",
@@ -176,15 +251,15 @@ test("organization conversation scope, participation, read cursors and replay re
       200,
     );
     assert.equal(
-      (await call(client, `/v1/workspaces/${id}/communication?view=trainee`))
-        .data.items[0].unread,
+      (await call(client, `/v1/institution/communication?view=trainee`)).data
+        .items[0].unread,
       0,
     );
     assert.equal(
       (
         await call(
           foreign,
-          `/v1/workspaces/${other}/communication?view=admin&id=${channel}`,
+          `/v1/institution/communication?view=admin&id=${channel}`,
         )
       ).status,
       403,
@@ -193,7 +268,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           client,
-          `/v1/workspaces/${id}/communication`,
+          `/v1/institution/communication`,
           operation("archive", {
             id: channel,
             view: "trainee",
@@ -208,7 +283,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/communication`,
+          `/v1/institution/communication`,
           operation("join", { id: channel, view: "admin" }),
         )
       ).status,
@@ -216,7 +291,7 @@ test("organization conversation scope, participation, read cursors and replay re
     );
     const joined = await call(
       admin,
-      `/v1/workspaces/${id}/communication?view=admin&id=${channel}`,
+      `/v1/institution/communication?view=admin&id=${channel}`,
     );
     assert.equal(joined.data.people.length, 4);
     assert.equal(joined.data.messages.length, 1);
@@ -225,7 +300,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/communication`,
+          `/v1/institution/communication`,
           operation("members", {
             id: channel,
             view: "admin",
@@ -238,7 +313,7 @@ test("organization conversation scope, participation, read cursors and replay re
       200,
     );
     assert.equal(
-      (await call(trainer, `/v1/workspaces/${id}/communication`, send)).status,
+      (await call(trainer, `/v1/institution/communication`, send)).status,
       403,
       "removed sender cannot replay or read",
     );
@@ -246,7 +321,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           admin,
-          `/v1/workspaces/${id}/communication`,
+          `/v1/institution/communication`,
           operation("archive", {
             id: channel,
             view: "admin",
@@ -261,7 +336,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           client,
-          `/v1/workspaces/${id}/communication`,
+          `/v1/institution/communication`,
           operation("send", {
             id: channel,
             view: "trainee",
@@ -276,14 +351,14 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           client,
-          `/v1/workspaces/${id}/communication?view=trainee&id=${channel}`,
+          `/v1/institution/communication?view=trainee&id=${channel}`,
         )
       ).data.messages.length,
       1,
     );
     await call(
       admin,
-      `/v1/workspaces/${id}`,
+      `/v1/institution`,
       operation("member", {
         id: trainee.id,
         revision: 2,
@@ -295,7 +370,7 @@ test("organization conversation scope, participation, read cursors and replay re
       (
         await call(
           client,
-          `/v1/workspaces/${id}/communication?view=trainee&id=${channel}`,
+          `/v1/institution/communication?view=trainee&id=${channel}`,
         )
       ).status,
       403,

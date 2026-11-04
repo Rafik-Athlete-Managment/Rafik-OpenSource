@@ -1,5 +1,9 @@
 # Architecture decisions
 
+Latest workflow decision: [0036 — provisional native individual workouts](ADR-0036-provisional-native-individual-workouts.md).
+
+Latest dependency decision: [0035 — Expo tooling security backports](ADR-0035-expo-tooling-security-backports.md).
+
 These numbered records explain consequential design and dependency choices, including their trade-offs and status. The [architecture page](../architecture/README.md) describes current behavior; this index is the entry point for decision history, not a competing implementation guide.
 
 | ADR                                                     | Decision                                                                       |
@@ -28,3 +32,18 @@ These numbered records explain consequential design and dependency choices, incl
 | [0025](ADR-0025-coaching-team.md)                       | Give athletes one primary coach and scoped supporting coaches                  |
 
 ADR 0004 (gym-first timing), ADR 0014 (session packages) and ADR 0016 (former Supabase runtime) are superseded. Their records are retained under [archived decisions](../archive/decisions/README.md) for provenance and are not current guidance. Gaps in numbering are intentional; do not renumber accepted decisions. New decisions use `ADR-NNNN-short-title.md`, a date, context, options, decision and trade-offs. Link the current implementation or superseding decision where relevant.
+
+- [0026 — Single-institution routing and Tasks retirement](ADR-0026-single-institution-routing-and-task-retirement.md)
+
+- [0027 — Additive workout storage before API cutover](ADR-0027-additive-workout-storage.md)
+
+- [0029 — Institution identifiers](ADR-0029-institution-identifiers.md)
+- [0030 — Retire standalone storage and APIs](ADR-0030-retire-standalone-storage-and-apis.md)
+
+- [ADR 0031](ADR-0031-coach-completion-of-athlete-started-workouts.md): authorized coach completion of athlete-started work, preserved attribution, protected completed actuals and optional review feedback.
+
+- [ADR 0032 — Opt-in workout preparation](ADR-0032-opt-in-workout-preparation.md): weekly rules, day-only work, DST resolution and worker boundaries.
+
+- [ADR 0033 — Assignment-local adaptations](ADR-0033-assignment-local-adaptations.md): update one athlete plan without library copies or rewriting current work.
+
+- [ADR 0034 — Workout templates and separate group results](ADR-0034-workout-templates-and-group-results.md): reusable copied prescriptions, coach-only participant recording and independent plan progression.

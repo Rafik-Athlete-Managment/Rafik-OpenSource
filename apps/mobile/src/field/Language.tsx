@@ -9,6 +9,7 @@ type Locale = {
 }
 const Context = createContext<Locale | null>(null)
 const preference = 'rafik.field.language.v1'
+/** Shares the saved English or Arabic choice with all phone screens. */
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, update] = useState<Language>(() =>
     Intl.DateTimeFormat().resolvedOptions().locale.startsWith('ar') ? 'ar' : 'en',
@@ -54,6 +55,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     </Context.Provider>
   )
 }
+/** Gives a screen the current language and helpers for translated labels. */
 export function useLanguage() {
   const locale = useContext(Context)
   if (!locale) throw Error('LanguageProvider is required')

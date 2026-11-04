@@ -63,6 +63,7 @@ export type Actor = {
   email: string | null;
   user_metadata: Record<string, unknown>;
 };
+/** Runs database work with the actor's row-level security identity inside a transaction. */
 export async function asActor<T>(
   actor: Actor | null,
   run: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -78,6 +79,7 @@ export async function asActor<T>(
     { timeout: 15000 },
   );
 }
+/** Creates the account profile inside an existing actor-scoped transaction if needed. */
 export async function ensureProfileInTransaction(
   tx: Prisma.TransactionClient,
   actor: Actor,
@@ -96,6 +98,7 @@ export class ApiError extends Error {
     super(message);
   }
 }
+/** Returns the signed-in actor or stops the request with an authentication error. */
 export const requireActor = (actor: Actor | null): Actor => {
   if (!actor) throw new ApiError(401, "unauthenticated");
   return actor;

@@ -19,6 +19,7 @@ export const instanceBranding = ref<InstanceBranding>({
   updated_at: '',
 })
 
+/** Applies the saved brand colors and chooses readable accent text for the page. */
 export function syncAccentContrast() {
   const root = document.documentElement
   const palette = instanceBranding.value
@@ -79,6 +80,7 @@ export function syncAccentContrast() {
   root.style.setProperty('--on-accent', luminance(accessibleAccent) > 0.179 ? '#17211b' : '#ffffff')
 }
 
+/** Saves the current branding values and refreshes the CSS theme colors. */
 export function applyBranding(value: InstanceBranding) {
   instanceBranding.value = value
   document.documentElement.style.setProperty('--instance-accent', value.accent)
@@ -86,8 +88,10 @@ export function applyBranding(value: InstanceBranding) {
   document.title = `${value.name} | Training, connected`
 }
 
+/** Loads the installation's branding from the API before the page is themed. */
 export async function loadBranding() {
   applyBranding(await request<InstanceBranding>('/v1/instance/branding', { feedback: 'none' }))
 }
 
+/** Returns the cache-aware URL for the institution's current logo. */
 export const brandingLogoUrl = () => instanceLogo(instanceBranding.value.updated_at)

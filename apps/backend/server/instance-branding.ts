@@ -1,5 +1,5 @@
 import { db, ApiError, type Actor } from "./db.ts";
-import { scoped, uuid, type Tx } from "./workspaces.ts";
+import { scoped, uuid, type Tx } from "./institution.ts";
 
 export type Branding = {
   name: string;
@@ -9,6 +9,7 @@ export type Branding = {
   logo_mime: string | null;
 };
 
+/** Loads the public name, colors and logo metadata configured for this installation. */
 export async function readBranding(): Promise<Branding> {
   const rows = await db.$queryRaw<
     Branding[]
@@ -25,6 +26,7 @@ export async function readBranding(): Promise<Branding> {
   );
 }
 
+/** Loads the configured logo bytes for the public branding endpoint. */
 export async function readBrandingLogo() {
   const rows = await db.$queryRaw<
     { logo: Buffer | null; mime: string | null }[]
@@ -34,12 +36,13 @@ export async function readBrandingLogo() {
   return { bytes: rows[0].logo, mime: rows[0].mime };
 }
 
+/** Saves institution branding after validating the requested colors, name and logo. */
 export async function updateBranding(
   actor: Actor,
-  workspaceId: string,
+  institutionId: string,
   input: Record<string, unknown>,
 ) {
-  uuid(workspaceId);
+  uuid(institutionId);
   const name = typeof input.name === "string" ? input.name.trim() : "";
   const accent = typeof input.accent === "string" ? input.accent : "";
   const backgroundLight =
@@ -76,7 +79,7 @@ export async function updateBranding(
       throw new ApiError(400, "invalid_request");
     mime = detected;
   }
-  return scoped(actor, workspaceId, ["admin"], async (tx: Tx) => {
+  return scoped(actor, institutionId, ["admin"], async (tx: Tx) => {
     const result = await tx.$queryRaw<Branding[]>`
       SELECT * FROM public.update_instance_branding(
         ${actor.id}::uuid, ${name}, ${accent.toLowerCase()}, ${backgroundLight.toLowerCase()}, ${backgroundDark.toLowerCase()}, ${logo ?? null}, ${mime ?? null}, ${logo === undefined}
@@ -85,9 +88,10 @@ export async function updateBranding(
   });
 }
 
-export async function canManageBranding(actor: Actor, workspaceId: string) {
-  uuid(workspaceId);
-  return scoped(actor, workspaceId, ["admin"], async (tx: Tx) => {
+/** Checks whether this signed-in member can change the selected institution's branding. */
+export async function canManageBranding(actor: Actor, institutionId: string) {
+  uuid(institutionId);
+  return scoped(actor, institutionId, ["admin"], async (tx: Tx) => {
     const rows = await tx.$queryRaw<{ allowed: boolean }[]>`
       SELECT public.can_manage_instance_branding(${actor.id}::uuid) allowed`;
     return { allowed: rows[0]?.allowed === true };

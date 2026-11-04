@@ -3,11 +3,12 @@ import { Text, View } from 'react-native'
 import type { NativeClient } from './native'
 import { attendance, failureText, ApiFailure, type FieldDrill } from './model'
 import { useLanguage } from './Language'
-import { Button, displayDate, type Styles } from './ui'
+import { Button, Notice, Segmented, displayDate, type Styles } from './ui'
 
 type Entry = import('@rafik/shared/contracts').FieldHistoryEntry
 type Page = import('@rafik/shared/contracts').FieldHistoryPage
 function page(input: unknown, member: string, kind: string): Page {
+  // Validate the response before rendering; each history page must still match this athlete and selected tab.
   const p = input as Page
   if (
     !p ||
@@ -46,9 +47,9 @@ function page(input: unknown, member: string, kind: string): Page {
   }
   return p
 }
+/** Shows one athlete's saved attendance or assessment history for the selected event. */
 export function EventHistory({
   client,
-  workspace,
   event,
   member,
   name,
@@ -59,7 +60,7 @@ export function EventHistory({
   onDenied,
 }: {
   client: NativeClient
-  workspace: string
+  institution: string
   event: string
   member: string
   name: string
@@ -85,6 +86,10 @@ export function EventHistory({
       generation.current++
     }
   }, [])
+  // The row's history control already expressed intent; read the first page immediately.
+  useEffect(() => {
+    void load('attendance')
+  }, [])
   async function load(nextKind = kind, more = false) {
     if (flight.current || disabled) return
     flight.current = true
@@ -105,11 +110,7 @@ export function EventHistory({
         historyMember: member,
         historyOffset: String(more ? data?.next || 0 : 0),
       })
-      const result = page(
-        await client.request(`/workspaces/${workspace}/calendar?${query}`),
-        member,
-        nextKind,
-      )
+      const result = page(await client.request(`/institution/calendar?${query}`), member, nextKind)
       if (!alive.current || stamp !== generation.current) return
       setData((prior) =>
         more && prior
@@ -140,46 +141,29 @@ export function EventHistory({
       />
     )
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>
+    <View style={styles.inset}>
+      <Text style={styles.label}>
         {name} · {l('Correction history', 'سجل التصحيحات')}
       </Text>
-      <Text style={styles.hint}>
+      <Text style={styles.meta}>
         {l(
           'Online only. Includes the original entry and later corrections; newer entries appear first.',
           'أثناء الاتصال فقط. يشمل الإدخال الأصلي والتصحيحات اللاحقة، والأحدث أولاً.',
         )}
       </Text>
-      <View style={styles.actions}>
-        <Button
-          title={l('Attendance history', 'سجل الحضور')}
+      {assessment ? (
+        <Segmented
+          label={l('History type', 'نوع السجل')}
+          value={kind}
           disabled={busy || disabled}
-          onPress={() => void load('attendance')}
+          onChange={(value) => void load(value)}
+          options={[
+            { value: 'attendance', label: l('Attendance', 'الحضور') },
+            { value: 'results', label: l('Scores', 'النتائج') },
+          ]}
           styles={styles}
-          primary={open && kind === 'attendance'}
         />
-        {assessment ? (
-          <Button
-            title={l('Score history', 'سجل النتائج')}
-            disabled={busy || disabled}
-            onPress={() => void load('results')}
-            styles={styles}
-            primary={open && kind === 'results'}
-          />
-        ) : null}
-        {open ? (
-          <Button
-            title={l('Hide history', 'إخفاء السجل')}
-            disabled={busy}
-            onPress={() => {
-              setOpen(false)
-              setData(null)
-              setError('')
-            }}
-            styles={styles}
-          />
-        ) : null}
-      </View>
+      ) : null}
       {open ? (
         <>
           {busy ? (
@@ -187,11 +171,7 @@ export function EventHistory({
               {l('Loading history…', 'جارٍ تحميل السجل…')}
             </Text>
           ) : null}
-          {error ? (
-            <Text accessibilityLiveRegion="polite" style={styles.message}>
-              {t(error)}
-            </Text>
-          ) : null}
+          {error ? <Notice text={t(error)} tone="danger" styles={styles} live /> : null}
           {data ? (
             <>
               {!data.items.length ? (
@@ -234,6 +214,8 @@ export function EventHistory({
               ))}
               {data.next !== null ? (
                 <Button
+                  small
+                  secondary
                   title={l('Earlier entries', 'إدخالات أقدم')}
                   disabled={busy || disabled}
                   onPress={() => void load(kind, true)}

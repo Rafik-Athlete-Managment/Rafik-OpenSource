@@ -19,9 +19,10 @@ export type {
   FieldResult,
   FieldCommand,
 }
-export type Owner = { instance: string; user: string; workspace: string }
+export type Owner = { instance: string; user: string; institution: string }
+/** Builds the storage key that keeps one account's saved records separate. */
 export const ownerKey = (owner: Owner) =>
-  JSON.stringify([owner.instance, owner.user, owner.workspace])
+  JSON.stringify([owner.instance, owner.user, owner.institution])
 export type CommandState =
   'queued' | 'sending' | 'uncertain' | 'acknowledged' | 'needs_attention' | 'blocked'
 export type Command = {
@@ -52,6 +53,7 @@ export class ConnectionFailure extends Error {
   }
 }
 
+/** Turns an API or device error into plain language for the coach. */
 export function failureText(error: unknown): string {
   if (error instanceof ApiFailure) {
     const messages: Record<string, string> = {
@@ -66,8 +68,27 @@ export function failureText(error: unknown): string {
       invalid_mobile_session:
         'Sign in again to the same account and institution to send saved work.',
       event_not_started: 'The event has not started or was cancelled. Review the server event.',
+      group_workout_results_required:
+        'Finish each present participant sheet, or explicitly skip them in the web app, before completing this event. Sync saved phone results first.',
       results_required: 'Assessment results are required. Complete this correction in the web app.',
       attendance_required: 'Confirm attendance before saving scores or completing this event.',
+      participation_unavailable:
+        'Training is currently restricted. Keep the recording and ask authorized staff to review it.',
+      workout_not_actionable:
+        'This workout is no longer actionable. Keep saved work and review its current status online.',
+      workout_not_started_yet:
+        'This workout has not reached its scheduled start. Keep saved work and check the booking time.',
+      sequence_conflict:
+        'The plan sequence changed. Keep this recording and review the current workout online.',
+      workout_started_elsewhere:
+        'This workout was already started on the web or another device. Keep this recording and ask authorized staff to reconcile it online.',
+      assignment_unavailable:
+        'This athlete plan is no longer available for recording. Keep saved work for review.',
+      previous_workout_unresolved:
+        'Finish or explicitly resolve the previous workout in this plan first.',
+      invalid_session: 'Check the workout results and completion checks before sending again.',
+      native_workout_upgrade_required:
+        'Workout capture needs a matching app and server update. Saved work is retained.',
       invalid_results: 'Check every assessment value and its limits before correcting this record.',
     }
     return (
@@ -90,11 +111,13 @@ const revision = (value: unknown): number => {
   if (!Number.isSafeInteger(value) || (value as number) < 0) throw Error('Invalid server revision.')
   return value as number
 }
+/** Accepts only attendance values supported by the field app. */
 export function attendance(value: unknown): FieldAttendance {
   if (!['unmarked', 'present', 'absent', 'excused'].includes(String(value)))
     throw Error('Invalid attendance data.')
   return value as FieldAttendance
 }
+/** Checks an API event response before the phone stores or displays it. */
 export function fieldEvent(input: unknown): FieldEvent {
   const e = record(input)
   if (
@@ -114,6 +137,7 @@ export function fieldEvent(input: unknown): FieldEvent {
     location: string(e.location),
   }
 }
+/** Checks one roster member before the phone uses its role or attendance. */
 export function fieldPerson(input: unknown): FieldPerson {
   const p = record(input)
   if (!['staff', 'trainee'].includes(String(p.duty)) || typeof p.active !== 'boolean')
@@ -127,6 +151,7 @@ export function fieldPerson(input: unknown): FieldPerson {
     active: p.active,
   }
 }
+/** Checks that a downloaded roster belongs to the event the coach opened. */
 export function fieldRoster(input: unknown, id: string): FieldRoster {
   const data = record(input)
   const event = fieldEvent(data.event)
@@ -159,6 +184,7 @@ export function fieldRoster(input: unknown, id: string): FieldRoster {
   return { event, people, definition, results }
 }
 
+/** Checks that saved assessment results belong to the selected event. */
 export function fieldResult(input: unknown, event: string): FieldResult {
   const r = record(input)
   if (r.event_id !== event) throw Error('Invalid assessment event.')
@@ -211,6 +237,7 @@ export function scoreValues(definition: FieldDrill[], draft: ScoreDraft): FieldR
   return values
 }
 
+/** Lists the attendance problems that must be fixed before an event can finish. */
 export function finishProblems(roster: FieldRoster): string[] {
   const athletes = roster.people.filter((p) => p.duty === 'trainee')
   const problems: string[] = []

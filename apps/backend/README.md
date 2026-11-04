@@ -24,3 +24,7 @@ Start the web app separately with `npm run dev`. The single Compose definition i
 - Shared API request/response types are in `packages/shared/src/contracts.ts`.
 
 Use the single [contributor guide](../../CONTRIBUTING.md), [current architecture](../../docs/architecture/README.md), [maintainer guide](../../docs/development/maintainer-guide.md), [runbook](../../docs/operations/README.md) and [verification record](../../docs/verification/README.md). Root scripts provide workspace commands such as `npm run backend:typecheck`, `npm run test:api`, and `npm run content:check`.
+
+## Schema and route reference
+
+See the [backend inventory](../../docs/reference/backend/README.md). Root commands: `npm run backend:inventory`, `npm run backend:inventory:check`, and `npm run backend:inventory:database` after migrations. The database command creates and removes only its own disposable database.

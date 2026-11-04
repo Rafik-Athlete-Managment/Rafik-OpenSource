@@ -1,7 +1,10 @@
+import { secureTooling } from '../../../scripts/tooling-security.mjs'
 import { spawn, execFileSync } from 'node:child_process'
 import { randomBytes, createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+
+secureTooling({ check: true })
 
 const mobile = resolve(import.meta.dirname, '..')
 const repo = resolve(mobile, '../..')

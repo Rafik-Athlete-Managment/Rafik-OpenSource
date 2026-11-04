@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-26",
+  "scope": "Program defaults for new automatic-preparation assignments; unreleased beta.3",
+  "checks": {
+    "scheduler": "3 passed in disposable database; explicit opt-out against enabled default, immutable versions, atomic policy and receipt, date/timezone validation, existing scheduling regressions",
+    "browser": "2 passed: desktop Chromium and phone WebKit; English/dark and Arabic/light program/assignment controls; layout-contract and Axe in captured states",
+    "types": "backend/frontend passed",
+    "docs": "2025 local links, 626 heading links in 75 maintained documents passed before receipt addition; external URLs not fetched",
+    "inventory": "92 Vue files, 47 screens,45 routes,204 navigation references"
+  },
+  "inspected": [
+    "corrected desktop program preference",
+    "phone assignment viewport/full page",
+    "Arabic/light desktop and phone preference",
+    "Arabic/light phone assignment"
+  ],
+  "limits": [
+    "No new Android build or physical-device acceptance",
+    "No full browser suite or complete release acceptance",
+    "Program edits affect new immutable versions only; existing assignments/policies stay unchanged"
+  ],
+  "landing_commit": "13ab86fbdbd135796dd4ea9ec43e403004a8fac2",
+  "source_sha256": {
+    "apps/backend/server/programming.ts": "7c3a4f2735ab0aa0e50746ba69efa2952e921ae63cf41ecd46aa420fe45cc1d4",
+    "apps/backend/tests/workout-scheduler.test.ts": "7b8f0f0d636baa1cdf324ec97ca2225b7829eda983de0e6f2bc91cb2d01dd16e",
+    "apps/frontend/src/features/coaching/PlanEditor.vue": "d50af48013c10cd76fc5edbdd3d8e22e874d75b3441cc112bbb8f6608288bed9",
+    "apps/frontend/src/features/coaching/DeliverPlan.vue": "f434be190ce1ec01bc1342e2fb129786b7c0977cd5988ff5f2633fc987a7a078",
+    "apps/frontend/src/lib/domain.ts": "1859ebdd0feb0c60051e2386398e8e7de13d4842095b3cee995c42702f397636",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "ac777ce2b88d13bb6af60879c15953dc8641e993f7bb1902d285ca8db94080d6"
+  }
+}

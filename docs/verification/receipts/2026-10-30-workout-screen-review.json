@@ -1,0 +1,223 @@
+{
+  "date": "2026-10-30",
+  "scope": [
+    "WorkoutTemplatesPage",
+    "WorkoutTemplateEditor",
+    "WorkoutFields",
+    "WorkoutPreview",
+    "WorkoutTemplatePicker",
+    "GroupWorkoutPanel"
+  ],
+  "reference": "Founder People toolbar screenshot and Programs authoring conventions",
+  "sourceReviewedIntegrations": [
+    "PlanEditor template import side panel",
+    "EventComposer group template selection",
+    "EventDetail group result panel"
+  ],
+  "checks": {
+    "typecheck": {
+      "command": "npm run typecheck --workspace @rafik/frontend",
+      "exit": 0
+    },
+    "rendered": {
+      "method": "Actual Vue components and application font/style layers inside a synthetic dashboard scope, with mocked reads and isolated browser storage; no user records or writes",
+      "cases": [
+        {
+          "engine": "chromium",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "editor/new",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "editor/saved",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "picker",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "group",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "list",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "editor/new",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "editor/saved",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "picker",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "group",
+          "overflow": false
+        },
+        {
+          "engine": "chromium",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "list",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "editor/new",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "editor/saved",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "picker",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "group",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "en",
+          "theme": "light",
+          "width": 1280,
+          "screen": "list",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "editor/new",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "editor/saved",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "picker",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "group",
+          "overflow": false
+        },
+        {
+          "engine": "webkit",
+          "language": "ar",
+          "theme": "dark",
+          "width": 320,
+          "screen": "list",
+          "overflow": false
+        }
+      ],
+      "additionalStates": [
+        "Empty editor with Add exercise inside the card",
+        "Two populated exercise cards",
+        "Group participant adaptation panel"
+      ],
+      "assertions": [
+        "No document horizontal overflow in 20 page cases",
+        "8px exercise-picker label spacing",
+        "One-column phone workout identity fields"
+      ],
+      "visualInspection": [
+        "English light editor/preview/picker/group results and participant adaptation",
+        "Arabic dark empty editor, populated prescription and participant adaptation",
+        "Final WebKit Arabic directory, saved preview, picker and group rows; English empty editor"
+      ],
+      "limits": [
+        "No authenticated API/database recording journey rerun for visual-only changes",
+        "EventComposer and PlanEditor insertion points inspected in source; reusable picker rendered independently",
+        "English/light and Arabic/dark combinations are covered; the complete locale/theme matrix is not",
+        "No Android or native build"
+      ]
+    },
+    "inventory": {
+      "command": "npm run frontend:inventory",
+      "exit": 0,
+      "vueFiles": 102,
+      "screenFiles": 49,
+      "routeRecords": 47
+    },
+    "docs": {
+      "command": "npm run docs:check",
+      "exit": 0,
+      "links": 2194,
+      "headingLinks": 662,
+      "maintainedDocuments": 78
+    }
+  }
+}

@@ -1,4 +1,4 @@
-# ADR 0012 — Organization nutrition with explicit diary sharing
+# ADR 0012 — Institution nutrition with explicit diary sharing
 
 Date: 23 September 2026. Status: accepted for local implementation.
 
@@ -24,7 +24,7 @@ A server-only date projection returns the membership subject's local date withou
 
 ## Consequences
 
-Organization nutrition has a separate, understandable audience and staff handoff lifecycle. Stopping sharing hides all diary data on subsequent authorized reads but cannot recall copies already viewed. History is append-only through supported commands; generic browser database queries cannot access these tables. The API contract can serve the later native app, but native rendering, offline diary sync, hosting and qualified nutrition advice remain separate work.
+Institution nutrition has a separate, understandable audience and staff handoff lifecycle. Stopping sharing hides all diary data on subsequent authorized reads but cannot recall copies already viewed. History is append-only through supported commands; generic browser database queries cannot access these tables. The API contract can serve the later native app, but native rendering, offline diary sync, hosting and qualified nutrition advice remain separate work.
 
 The local UI separates plan, diary and history, with one chosen trainee and explicit publish review. Device drafts are scoped by actor, organization, role, member and date; commands retain the original request. Source-backed portions retain their basis rather than overwriting nutrient density with consumed quantities.
 

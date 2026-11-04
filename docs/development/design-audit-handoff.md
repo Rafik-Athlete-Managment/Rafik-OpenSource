@@ -18,10 +18,10 @@ You are taking over Rafik's web UI/UX audit and refinement from Codex. The found
 - Vue 3/TypeScript with current shared components and semantic theme tokens; no new global store, UI framework or gratuitous dependency. Preserve English/Arabic, RTL and custom institutional themes.
 - Admins, coaches and athletes have distinct authorized dashboards. Every role has a full profile; profile tabs switch visible content. Preserve sport-specific invitations (not for admins), coach assignment scope and health/privacy rules.
 - Full-width standalone panels; no orphan half-width forms or empty companion columns. Limit prose measure inside the full-width surface. Avoid unnecessary nested cards.
-- Substantial assessment-template, group, exercise and task forms use dedicated create/edit pages. Small settings and invitations stay inline. Natural document scrolling must work.
+- Substantial assessment-template, group and exercise forms use dedicated create/edit pages. Small settings and invitations stay inline. Natural document scrolling must work.
 - Saving uses action-specific, short existing SweetAlert toasts; no duplicate success cards. Messages/navigation need no success toast. Preserve durable error/retry and uncertain-write recovery, draft status and generated invitation links.
 - Back preserves a record-scoped draft; explicit discard removes it. Save navigation happens only after acknowledgement and pending-command cleanup. A delayed request must not navigate away from a newer screen or permit concurrent replay after remount.
-- Lists have consistent pagination and records-per-page controls. Defaults: 10 for directories/history/nutrition/tasks; program/exercise grids retain their established grid size. Options are URL-persisted; changing size resets offset. Inputs must not be squeezed by pagination.
+- Lists have consistent pagination and records-per-page controls. Defaults: 10 for directories/history/nutrition; program/exercise grids retain their established grid size. Options are URL-persisted; changing size resets offset. Inputs must not be squeezed by pagination.
 - Nutrition, athlete programs and session history share AthleteSearch: athlete-name search, same labels/placeholders, no second expandable athlete-picker filter. Keep plan status. Keep subject selection for creating a nutrition plan. Old member-filter URLs must not invisibly constrain the index.
 - Search fills available width; search and pagination may share a row when comfortable, wrapping on phones. Search labels persist and placeholders explain what can be searched.
 - Use the shared FileDropzone for standalone uploads; keep validations, keyboard chooser, file privacy and existing retry lifecycle. Program-cover upload is the visual reference. Messaging keeps compact photo/file SVG actions.
@@ -34,7 +34,7 @@ You are taking over Rafik's web UI/UX audit and refinement from Codex. The found
 
 ### Audit and refine
 
-Inspect real populated, empty, searching, loading, error and permission states across People/profiles/settings, programs/exercises/assignment, athlete plans/history, nutrition, Schedule/events/assessments, messages/tasks/resources, reports, account and Help. Prioritize the primary/supporting coach hierarchy, sport/specialty management, list toolbars, orphan cards, substantial editors and final calendar alignment. Check all important tabs, modals, open dropdowns, upload controls and long bilingual names.
+Inspect real populated, empty, searching, loading, error and permission states across People/profiles/settings, programs/exercises/assignment, athlete plans/history, nutrition, Schedule/events/assessments, messages/resources, reports, account and Help. Prioritize the primary/supporting coach hierarchy, sport/specialty management, list toolbars, orphan cards, substantial editors and final calendar alignment. Check all important tabs, modals, open dropdowns, upload controls and long bilingual names.
 
 Improve spacing, typography, borders, radii, surface contrast and responsive grouping systematically through shared tokens/components. Use subtle gradients, blur and transitions only where they improve hierarchy. Preserve useful density and discoverable actions. Do not hide overflow to disguise broken layouts or remove business features for a cleaner screenshot.
 
@@ -58,6 +58,6 @@ Coordinate the paired English/Arabic landing guidance through https://github.com
 
 ## Last founder steering
 
-Simple filters stay inline on desktop. Review final toolbar alignment in People, Programs, athlete plans, nutrition, session history, Schedule list, groups and assessment templates. People retains role tabs above its search/filter/pagination row. Shared pagination now removes inherited block margins. Do not spend time polishing Tasks further; the founder may remove it later.
+Simple filters stay inline on desktop. Review final toolbar alignment in People, Programs, athlete plans, nutrition, session history, Schedule list, groups and assessment templates. People retains role tabs above its search/filter/pagination row. Shared pagination now removes inherited block margins. Tasks is retired in the upcoming release.
 
 Assessment templates now use a responsive card grid (24-record default); groups remain rows. Inspect the final grid and all last alignment changes; they are source changes without final rendered acceptance.

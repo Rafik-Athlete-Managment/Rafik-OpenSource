@@ -1,0 +1,523 @@
+import type { Database } from './store.ts'
+import { ApiFailure, ownerKey, type Owner } from './model.ts'
+import {
+  workoutPackage,
+  canResumeIncompleteFinish,
+  validateEntries,
+  startTimeReached,
+  type FieldWorkoutEntry,
+  type FieldWorkoutPackage,
+  type WorkoutRecord,
+} from './workout-model.ts'
+type Lane = <T>(task: (db: Database) => Promise<T>) => Promise<T>
+const copy = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T
+export class WorkoutStore {
+  private lane: Lane
+  constructor(lane: Lane) {
+    this.lane = lane
+  }
+  private async read(db: Database, owner: Owner, id: string) {
+    const row = await db.getFirstAsync<{ payload: string }>(
+      'SELECT payload FROM field_workouts WHERE owner=? AND id=?',
+      ownerKey(owner),
+      id,
+    )
+    if (!row) throw Error('Download this workout online first.')
+    return JSON.parse(row.payload) as WorkoutRecord
+  }
+  private write(db: Database, owner: Owner, r: WorkoutRecord) {
+    return db.runAsync(
+      'INSERT OR REPLACE INTO field_workouts(owner,id,payload) VALUES(?,?,?)',
+      ownerKey(owner),
+      r.package.id,
+      JSON.stringify(r),
+    )
+  }
+  list(owner: Owner, offset = 0, search = '') {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL AND instr(lower(json_extract(payload,'$.package.member_name')),lower(?))>0 ORDER BY id LIMIT 10 OFFSET ?",
+          ownerKey(owner),
+          search,
+          offset,
+        )
+      ).map((x) => JSON.parse(x.payload) as WorkoutRecord),
+    )
+  }
+  /** Lists every locally downloaded sheet for Saved, including group participants. */
+  listAll(owner: Owner, offset = 0, limit = 20) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? ORDER BY json_extract(payload,'$.package.training_date') DESC, id LIMIT ? OFFSET ?",
+          ownerKey(owner),
+          limit,
+          offset,
+        )
+      ).map((item) => JSON.parse(item.payload) as WorkoutRecord),
+    )
+  }
+  countAll(owner: Owner) {
+    return this.lane(
+      async (db) =>
+        (
+          await db.getFirstAsync<{ n: number }>(
+            'SELECT count(*) AS n FROM field_workouts WHERE owner=?',
+            ownerKey(owner),
+          )
+        )?.n || 0,
+    )
+  }
+  /** Removes only server-confirmed finishes with no unsent edits or active group event. */
+  clearCompleted(owner: Owner) {
+    return this.lane(async (db) => {
+      const key = ownerKey(owner)
+      const result = (await db.runAsync(
+        `DELETE FROM field_workouts WHERE owner=?
+         AND json_type(payload,'$.session.completed_at')='text'
+         AND json_extract(payload,'$.pending') IS NULL
+         AND json_extract(payload,'$.intent') IS NULL
+         AND json_extract(payload,'$.completionIntent') IS NULL
+         AND json_extract(payload,'$.blocked')=0
+         AND json_extract(payload,'$.localRevision')=json_extract(payload,'$.syncedRevision')
+         AND NOT EXISTS (
+           SELECT 1 FROM attendance_events e WHERE e.owner=field_workouts.owner
+           AND e.id=json_extract(field_workouts.payload,'$.package.group.event_id')
+         )`,
+        key,
+      )) as { changes: number }
+      return result.changes
+    })
+  }
+  groupEventIds(owner: Owner) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ event_id: string }>(
+          "SELECT DISTINCT json_extract(payload,'$.package.group.event_id') AS event_id FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group.event_id')='text'",
+          ownerKey(owner),
+        )
+      ).map((row) => row.event_id),
+    )
+  }
+  /** Saved solo workouts for one schedule day remain visible without a server connection. */
+  dayList(owner: Owner, day: string) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL AND json_extract(payload,'$.package.training_date')=? ORDER BY id",
+          ownerKey(owner),
+          day,
+        )
+      ).map((item) => JSON.parse(item.payload) as WorkoutRecord),
+    )
+  }
+  /** Saved participant sheets remain discoverable when the event cannot be fetched. */
+  groupList(owner: Owner, event: string) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ payload: string }>(
+          "SELECT payload FROM field_workouts WHERE owner=? AND json_extract(payload,'$.package.group.event_id')=? ORDER BY json_extract(payload,'$.package.member_name')",
+          ownerKey(owner),
+          event,
+        )
+      ).map((x) => JSON.parse(x.payload) as WorkoutRecord),
+    )
+  }
+  count(owner: Owner, search = '') {
+    return this.lane(
+      async (db) =>
+        (
+          await db.getFirstAsync<{ n: number }>(
+            "SELECT count(*) AS n FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL AND instr(lower(json_extract(payload,'$.package.member_name')),lower(?))>0",
+            ownerKey(owner),
+            search,
+          )
+        )?.n || 0,
+    )
+  }
+  ids(owner: Owner) {
+    return this.lane(async (db) =>
+      (
+        await db.getAllAsync<{ id: string }>(
+          "SELECT id FROM field_workouts WHERE owner=? AND json_type(payload,'$.package.group') IS NULL",
+          ownerKey(owner),
+        )
+      ).map((r) => r.id),
+    )
+  }
+  get(owner: Owner, id: string) {
+    return this.lane((db) => this.read(db, owner, id))
+  }
+  put(owner: Owner, input: FieldWorkoutPackage) {
+    return this.lane(async (db) => {
+      const p = workoutPackage(input)
+      if (p.institution_id !== owner.institution)
+        throw Error('This workout belongs to another institution.')
+      const old = await db.getFirstAsync<{ payload: string }>(
+        'SELECT payload FROM field_workouts WHERE owner=? AND id=?',
+        ownerKey(owner),
+        p.id,
+      )
+      if (old) {
+        const r = JSON.parse(old.payload) as WorkoutRecord
+        if (r.pending || r.intent || r.localRevision !== r.syncedRevision)
+          throw Error('Resolve saved workout changes before downloading a newer package.')
+        if (r.session && p.session?.id === r.session.id && p.session.version < r.session.version)
+          throw Error('A newer workout is already saved on this device.')
+        if (r.session && !p.session) throw Error('A newer workout is already saved on this device.')
+        if (r.session && p.session && r.session.id !== p.session.id)
+          throw Error('The server workout identity changed. Keep the recovery copy for review.')
+      }
+      const r: WorkoutRecord = {
+        package: p,
+        entries: copy(p.entries).map((e) =>
+          p.session || e.completed ? e : { ...e, seconds: null, metres: null },
+        ),
+        note: p.session?.note || '',
+        session: p.session
+          ? { id: p.session.id, version: p.session.version, completed_at: p.session.completed_at }
+          : null,
+        localRevision: 0,
+        syncedRevision: 0,
+        pending: null,
+        intent: null,
+        blocked: false,
+        error: '',
+        saved_at: new Date().toISOString(),
+      }
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  start(owner: Owner, id: string, session: string, operation: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id),
+        p = r.package
+      if (r.blocked || r.session || r.pending)
+        throw Error('Review this saved workout before starting it again.')
+      if (!p.occurrence_id || !p.allow_provisional_start)
+        throw Error(
+          'This workout was not authorized to start when downloaded. Update it online first.',
+        )
+      if (!startTimeReached(p))
+        throw Error('Recording opens at the scheduled workout time or date.')
+      r.session = { id: session, version: 0, completed_at: null }
+      r.pending = {
+        state: 'queued',
+        payload: p.group
+          ? {
+              action: 'start',
+              view: 'trainer',
+              id: session,
+              operation,
+              event: p.group.event_id,
+              member_id: p.member_id,
+              revision: p.group.roster_revision,
+            }
+          : {
+              action: 'start',
+              view: 'trainer',
+              id: session,
+              operation,
+              assignment_id: p.assignment_id,
+              day_id: p.day_id,
+              occurrence_id: p.occurrence_id,
+            },
+      }
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  edit(owner: Owner, id: string, entries: FieldWorkoutEntry[], note: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (
+        r.blocked ||
+        !r.session ||
+        r.session.completed_at ||
+        r.intent?.complete ||
+        r.completionIntent ||
+        r.pending?.payload.complete
+      )
+        throw Error('This workout is read-only until its saved change is resolved.')
+      if (!r.package.can_record && r.session.version > 0) throw Error('This workout is read-only.')
+      if (note.length > 2000) throw Error('Keep workout notes within 2000 characters.')
+      validateEntries(r.package, entries, false)
+      r.entries = copy(entries)
+      r.note = note
+      r.localRevision++
+      r.saved_at = new Date().toISOString()
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  save(owner: Owner, id: string, complete: boolean, operation: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (
+        r.blocked ||
+        !r.session ||
+        r.session.completed_at ||
+        r.intent ||
+        r.pending?.payload.action === 'save'
+      )
+        throw Error('Resolve the saved workout change first.')
+      validateEntries(r.package, r.entries, complete)
+      r.intent = {
+        entries: copy(r.entries),
+        note: r.note,
+        complete,
+        operation,
+        localRevision: r.localRevision,
+      }
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  /** Queue final results after a prior save, or directly if that save already settled. */
+  queueFinish(owner: Owner, id: string, operation: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (
+        r.blocked ||
+        !r.session ||
+        r.session.completed_at ||
+        r.intent?.complete ||
+        r.completionIntent ||
+        (r.pending?.payload.action === 'save' &&
+          ['needs_attention', 'blocked'].includes(r.pending.state))
+      )
+        throw Error('Resolve the saved workout change first.')
+      validateEntries(r.package, r.entries, true)
+      const final = {
+        entries: copy(r.entries),
+        note: r.note,
+        complete: true as const,
+        localRevision: r.localRevision,
+        operation,
+      }
+      if (r.intent) r.completionIntent = final
+      else if (r.pending?.payload.action === 'save')
+        throw Error('Resolve the saved workout change first.')
+      else r.intent = final
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  /** Thaw only a provably invalid Finish; keep measured values and any earlier start/progress request. */
+  resumeIncompleteFinish(owner: Owner, id: string) {
+    return this.lane(async (db) => {
+      const record = await this.read(db, owner, id)
+      if (!canResumeIncompleteFinish(record))
+        throw Error('This workout needs review before recording can resume.')
+      if (record.pending?.payload.complete === true) {
+        record.pending = null
+        record.error = ''
+      }
+      if (record.completionIntent) record.completionIntent = null
+      else record.intent = null
+      await this.write(db, owner, record)
+      return record
+    })
+  }
+  next(owner: Owner) {
+    return this.lane(async (db) => {
+      const row = await db.getFirstAsync<{ payload: string }>(
+        "SELECT payload FROM field_workouts WHERE owner=? AND json_extract(payload,'$.blocked')=0 AND (json_extract(payload,'$.pending.state') IN ('queued','uncertain') OR (json_type(payload,'$.pending')='null' AND json_type(payload,'$.intent')='object' AND json_extract(payload,'$.session.version')>0)) ORDER BY id LIMIT 1",
+        ownerKey(owner),
+      )
+      if (!row) return null
+      const r = JSON.parse(row.payload) as WorkoutRecord
+      if (r.pending) return r
+      if (!r.intent || !r.session) return null
+      const i = r.intent
+      r.pending = {
+        state: 'queued',
+        payload: {
+          action: 'save',
+          view: 'trainer',
+          id: r.session.id,
+          revision: r.session.version,
+          operation: i.operation,
+          entries: copy(i.entries),
+          note: i.note,
+          complete: i.complete,
+        },
+      }
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  /** Only one mounted recorder may claim an exact queued command for dispatch. */
+  claim(owner: Owner, id: string, operation: unknown) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (
+        !r.pending ||
+        r.pending.payload.operation !== operation ||
+        !['queued', 'uncertain'].includes(r.pending.state)
+      )
+        return false
+      r.pending.state = 'sending'
+      await this.write(db, owner, r)
+      return true
+    })
+  }
+  state(
+    owner: Owner,
+    id: string,
+    operation: unknown,
+    state: NonNullable<WorkoutRecord['pending']>['state'],
+    error = '',
+  ) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (!r.pending || r.pending.payload.operation !== operation)
+        throw Error('The saved workout command changed.')
+      r.pending.state = state
+      r.error = error
+      if (state === 'blocked') r.blocked = true
+      await this.write(db, owner, r)
+    })
+  }
+  acknowledge(owner: Owner, id: string, operation: unknown, input: unknown) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id),
+        p = r.pending,
+        doc = input as { id: string; version: number; completed_at?: string | null }
+      // The server returns the occurrence's existing session when staff already started it on
+      // the web or another device. Its stored receipt makes that answer permanent, so treat it
+      // as a definitive conflict (needs review, not replayed) and never adopt the other session.
+      if (
+        p &&
+        p.payload.operation === operation &&
+        p.payload.action === 'start' &&
+        typeof doc?.id === 'string' &&
+        doc.id !== r.session?.id
+      )
+        throw new ApiFailure(409, 'workout_started_elsewhere')
+      if (
+        !p ||
+        p.payload.operation !== operation ||
+        doc?.id !== r.session?.id ||
+        !Number.isInteger(doc.version) ||
+        doc.version < 1 ||
+        (doc.completed_at !== undefined &&
+          doc.completed_at !== null &&
+          !Number.isFinite(Date.parse(doc.completed_at))) ||
+        (p.payload.action === 'start' && (doc.version !== 1 || !!doc.completed_at)) ||
+        (p.payload.action === 'save' && doc.version !== Number(p.payload.revision) + 1)
+      )
+        throw Error('Invalid workout acknowledgment. Saved work is retained.')
+      if (p.payload.action === 'save' && !!p.payload.complete !== !!doc.completed_at)
+        throw Error('Invalid workout acknowledgment. Saved work is retained.')
+      r.session = { id: doc.id, version: doc.version, completed_at: doc.completed_at || null }
+      if (p.payload.action === 'save') {
+        r.syncedRevision = r.intent!.localRevision
+        r.intent = r.completionIntent || null
+        r.completionIntent = null
+      }
+      r.package.can_record = !r.session.completed_at
+      r.pending = null
+      r.error = ''
+      await this.write(db, owner, r)
+      return r
+    })
+  }
+  block(owner: Owner, id?: string) {
+    return this.lane(async (db) => {
+      await db.runAsync(
+        "UPDATE field_workouts SET payload=json_set(payload,'$.blocked',json('true')) WHERE owner=? AND (? IS NULL OR id=?)",
+        ownerKey(owner),
+        id || null,
+        id || null,
+      )
+    })
+  }
+  remove(owner: Owner, id: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (r.pending || r.intent || r.localRevision !== r.syncedRevision)
+        throw Error('Resolve saved workout changes before removing this package.')
+      await db.runAsync('DELETE FROM field_workouts WHERE owner=? AND id=?', ownerKey(owner), id)
+    })
+  }
+  retry(owner: Owner, id: string) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id)
+      if (!r.pending || r.pending.state === 'sending')
+        throw Error('Wait for the saved request to settle.')
+      r.pending.state = 'queued'
+      r.blocked = false
+      r.error = ''
+      await this.write(db, owner, r)
+    })
+  }
+  replaceRejected(owner: Owner, id: string, input: unknown) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id),
+        doc = input as {
+          id: string
+          version: number
+          completed_at: string | null
+          note: string
+          entries: FieldWorkoutEntry[]
+          can_record: boolean
+        }
+      if (
+        (r.pending &&
+          (r.pending.state !== 'needs_attention' || r.pending.payload.action !== 'save')) ||
+        doc?.id !== r.session?.id ||
+        doc.version < r.session.version ||
+        typeof doc.can_record !== 'boolean'
+      )
+        throw Error(
+          'Only a rejected save can be replaced after reviewing the current server version.',
+        )
+      const p = workoutPackage({
+        ...r.package,
+        allow_provisional_start: false,
+        can_record: doc.can_record,
+        entries: doc.entries,
+        session: {
+          id: doc.id,
+          version: doc.version,
+          note: doc.note,
+          completed_at: doc.completed_at,
+        },
+      })
+      const replacement: WorkoutRecord = {
+        package: p,
+        entries: copy(p.entries),
+        note: doc.note,
+        session: p.session,
+        localRevision: 0,
+        syncedRevision: 0,
+        pending: null,
+        intent: null,
+        blocked: false,
+        error: '',
+        saved_at: new Date().toISOString(),
+      }
+      await this.write(db, owner, replacement)
+      return replacement
+    })
+  }
+  restoreAccess(owner: Owner, id: string, input: unknown) {
+    return this.lane(async (db) => {
+      const r = await this.read(db, owner, id),
+        doc = input as { id: string; version: number; can_record: boolean }
+      if (
+        r.pending ||
+        doc?.id !== r.session?.id ||
+        doc.version !== r.session.version ||
+        doc.can_record !== true
+      )
+        throw Error('Review the changed server workout before restoring this device draft.')
+      r.blocked = false
+      r.package.can_record = true
+      await this.write(db, owner, r)
+    })
+  }
+}

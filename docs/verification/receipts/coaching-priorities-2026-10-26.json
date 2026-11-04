@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-26",
+  "baseCommit": "50802d4",
+  "scope": "Incremental coaching priorities, semantic status colors, coach recorder and review completion flow",
+  "checks": [
+    {
+      "command": "npm run test:workout-sequence",
+      "passed": true,
+      "cases": 1
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach schedules from a plan|coach finishes athlete-started|timed and distance\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 6
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach records a session on|coach finishes athlete-started|timed and distance\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 6
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach finishes athlete-started\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 2
+    },
+    {
+      "command": "npm run test --workspace @rafik/frontend -- tests/design-controls.test.ts",
+      "passed": true,
+      "cases": 2
+    },
+    {
+      "command": "Frontend/backend typechecks, both inventory checks and docs:check",
+      "passed": true
+    }
+  ],
+  "limits": [
+    "Representative web states only; no whole-platform visual acceptance",
+    "No native or physical-device check",
+    "No new delayed-completion SPA departure fault test",
+    "Balanced dashboard redesign remains a proposal",
+    "No user data reset or schema migration"
+  ],
+  "sourceSha256": {
+    "apps/backend/server/programming.ts": "ead3ff061566dc9659a165abd95e31d1c06f00d291ab004fc44586db44996c61",
+    "apps/backend/openapi.json": "c7b77c211de2e846b710c5829c77173d3de6330f47f3f3257468db1c0fed92fa",
+    "apps/frontend/src/components/CommandStatus.vue": "e2fb7d006e825ec300f703350b15bf37721bac056ddf62f3d11e2801553d2cf4",
+    "apps/frontend/src/features/institution/DashboardPage.vue": "5c32eb89567edf9f2ee24b3476ce9f7c3c0fb33448ebf6753d9a743ced9818d4",
+    "apps/frontend/src/features/institution/FollowUpPanel.vue": "6bcda8b60d4de2f50b6976962600323db10b8bde74baec39eb0ecba7998ef58f",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "cea131cadeabae5e62fc2bd17f14c166ea58382b18632a3a1598243e183bc52c",
+    "apps/frontend/src/features/institution/DelegatedWorkout.vue": "74a41c737ad65f9cdfb2d040ad3476396e082f3b1f0d8c4dc1899e0866ef1a23",
+    "apps/frontend/src/features/coaching/ReviewPage.vue": "aed6e0c762b72bd3140cfb385fb9cb1fe5e912b37b30e1cd336af34d6fb89e5c",
+    "apps/frontend/src/styles/design-system.css": "a9453898ff9cca928fffc0d29651e45459b0c72ab91ef76899412f2278ad6d50",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "de6aa85093b5ad64a46d796ef5ce615d5f5c4d967ff7ac5efbc30bc47a665d66"
+  }
+}

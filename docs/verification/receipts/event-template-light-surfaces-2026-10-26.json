@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-26",
+  "scope": "Event template selection and light-theme card/text separation; unreleased beta.3",
+  "checks": {
+    "browser": "2 passed: desktop Chromium, phone WebKit; populated, later-batch selection, no match, step advancement, restored draft, English/dark and Arabic/light states; scoped layout and Axe",
+    "tokens": "1 passed owned UI token definitions; unrelated timezone case skipped",
+    "types": "frontend passed",
+    "inventory": "92 Vue files,47 screens,45 routes,204 navigation references",
+    "docs": "2025 local links,626 heading links in75 maintained documents passed; external URLs not fetched"
+  },
+  "default_light_contrast": {
+    "primary_card": 14.41014655871102,
+    "muted_card": 7.23960901834849,
+    "muted_soft": 6.661488520994443,
+    "card_canvas": 1.1463443808366267
+  },
+  "limits": [
+    "No full browser or group-assessment suite rerun",
+    "No exhaustive custom-palette or whole-product visual acceptance",
+    "No Android or physical-device evidence"
+  ],
+  "source_sha256": {
+    "apps/frontend/src/features/institution/EventComposer.vue": "59ba3bf3c9ab36cc964042bcabe2f1461fcc384eb04d40ec9886d457ae79d2e0",
+    "apps/frontend/src/style.css": "a5180f6556d9ad57baeadb8cb73cdbeffe8f80de76273ff01b00ebd33253c6ef",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "78555fdf84ac1089d60d6607161474f8fe7ebd70794bc3c109d244692343e2a8",
+    "apps/frontend/tests/organization-services.e2e.ts": "e03c00814857e5ac3e6e2bd37d1554591bc5524a14e1bd7a2e91f1a439f93190"
+  }
+}

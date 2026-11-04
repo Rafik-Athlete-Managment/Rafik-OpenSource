@@ -1,3 +1,4 @@
+import { apiOrigin } from "./test-target.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -17,32 +18,32 @@ const png = Buffer.from(
 async function media(
   p: Person,
   id: string,
-  workspace?: string,
+  institution?: string,
   bytes = png,
   type = "image/png",
 ) {
   return fetch(
-    `http://127.0.0.1:55331/v1/program-media/${id}${workspace ? "?workspace=" + workspace : ""}`,
+    `${apiOrigin}/v1/program-media/${id}${institution ? "?institution=" + institution : ""}`,
     {
-      method: workspace ? "PUT" : "GET",
+      method: institution ? "PUT" : "GET",
       headers: {
         Cookie: p.cookie,
         "x-rafik-client": "web",
         "Content-Type": type,
       },
-      body: workspace ? bytes : undefined,
+      body: institution ? bytes : undefined,
     },
   );
 }
-test("private program imagery has immutable bytes, workspace publication and revoked audience checks", async () => {
+test("private program imagery has immutable bytes, institution publication and revoked audience checks", async () => {
   const f = await organizationFixture();
   try {
     const admin = await f.person(),
       client = await f.person(),
       outsider = await f.person(),
-      id = await f.create(admin),
-      other = await f.create(outsider),
-      member = await f.join(admin, id, client, ["trainee"]),
+      id = await f.create(admin);
+    await f.create(outsider);
+    const member = await f.join(admin, id, client, ["trainee"]),
       image = randomUUID();
     assert.equal((await media(admin, image, id)).status, 200);
     assert.equal((await media(admin, image, id)).status, 200);
@@ -90,14 +91,14 @@ test("private program imagery has immutable bytes, workspace publication and rev
         draft,
         revision: null,
       });
-    let r = await call(admin, `/v1/workspaces/${id}/programs`, publish);
+    let r = await call(admin, `/v1/institution/programs`, publish);
     assert.equal(r.status, 200, JSON.stringify(r));
-    const foreign = await call(outsider, `/v1/workspaces/${other}/programs`, {
+    const foreign = await call(outsider, `/v1/institution/programs`, {
       ...publish,
       operation: randomUUID(),
       id: randomUUID(),
     });
-    assert.equal(foreign.status, 400);
+    assert.equal(foreign.status, 403);
     const downloaded = await media(client, image);
     assert.equal(downloaded.status, 200);
     assert.ok(Buffer.from(await downloaded.arrayBuffer()).equals(png));
@@ -106,7 +107,7 @@ test("private program imagery has immutable bytes, workspace publication and rev
       (
         await call(
           admin,
-          `/v1/workspaces/${id}`,
+          `/v1/institution`,
           operation("member", {
             id: member.id,
             revision: 1,
@@ -118,7 +119,7 @@ test("private program imagery has immutable bytes, workspace publication and rev
       200,
     );
     assert.equal((await media(client, image)).status, 403);
-    const exported = await call(client, "/v1/account/organizations");
+    const exported = await call(client, "/v1/account/institution");
     assert.equal(exported.status, 200);
     assert.equal(exported.data.memberships.length, 1);
     assert.equal(exported.data.sessions.length, 0);

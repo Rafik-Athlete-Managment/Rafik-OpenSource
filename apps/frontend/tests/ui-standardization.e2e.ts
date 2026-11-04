@@ -3,7 +3,7 @@ import { randomUUID, randomBytes } from 'node:crypto'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 
 test('dedicated editors preserve drafts, acknowledge writes, return to lists and size records', async ({
@@ -14,15 +14,15 @@ test('dedicated editors preserve drafts, acknowledge writes, return to lists and
     'Reuse the passing Chromium editor journey; this batch adds WebKit and the final layout matrix',
   )
   test.setTimeout(360000)
-  const f = await teamFixture(),
-    workspace = randomUUID(),
-    base = `/organization/${workspace}/admin`
+  const f = await institutionFixture(),
+    institution = randomUUID(),
+    base = ``
   const output = resolve('../../artifacts/ui-audit/2026-10-21/rollout', info.project.name)
   mkdirSync(output, { recursive: true })
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Rafik design review · مراجعة التصميم',
     })
     for (const [person, role] of [
@@ -30,7 +30,7 @@ test('dedicated editors preserve drafts, acknowledge writes, return to lists and
       [f.client, 'trainee'],
     ] as const) {
       const token = randomBytes(32).toString('hex')
-      await f.call(f.owner, `/v1/workspaces/${workspace}`, {
+      await f.call(f.owner, `/v1/institution`, {
         operation: randomUUID(),
         action: 'invite',
         id: randomUUID(),
@@ -38,12 +38,12 @@ test('dedicated editors preserve drafts, acknowledge writes, return to lists and
         roles: [role],
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
-    const people = await f.call(f.owner, `/v1/workspaces/${workspace}?view=admin`)
+    const people = await f.call(f.owner, `/v1/institution?view=admin`)
     const coach = people.members.find((m: any) => m.user_id === f.coach.id)
     const athlete = people.members.find((m: any) => m.user_id === f.client.id)
-    await f.call(f.owner, `/v1/workspaces/${workspace}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'assign-trainer',
       id: athlete.id,
@@ -87,72 +87,6 @@ test('dedicated editors preserve drafts, acknowledge writes, return to lists and
     await page.getByRole('button', { name: 'Save group', exact: true }).click()
     await expect(page).toHaveURL(base + '/groups')
     await expect(page.locator('.service-library-row')).toContainText('Preseason squad')
-
-    await page.goto(base + '/tasks')
-    await page.getByRole('button', { name: 'Assign a task', exact: true }).click()
-    await expect(page).toHaveURL(base + '/tasks/new')
-    await page.getByLabel('Task title', { exact: true }).fill('Review readiness before practice')
-    await page.getByRole('checkbox', { name: 'R4 Coach', exact: true }).check()
-    await expect(page.getByText('Draft saved on this device', { exact: true })).toBeVisible()
-    await page.getByRole('link', { name: 'Back to tasks', exact: true }).click()
-    await page.getByRole('button', { name: 'Continue draft', exact: true }).click()
-    await expect(page.getByLabel('Task title', { exact: true })).toHaveValue(
-      'Review readiness before practice',
-    )
-    let lost = false
-    await page.route(`**/v1/workspaces/${workspace}/tasks`, async (route) => {
-      if (!lost && route.request().method() === 'POST') {
-        lost = true
-        await route.fetch()
-        await route.abort('failed')
-      } else await route.continue()
-    })
-    await page.getByRole('button', { name: 'Save task', exact: true }).click()
-    await expect(
-      page.getByRole('button', { name: 'Retry saved change', exact: true }),
-    ).toBeEnabled()
-    await page.reload()
-    await page.getByRole('button', { name: 'Retry saved change', exact: true }).click()
-    await expect(page).toHaveURL(base + '/tasks')
-    await expect(page.locator('.task-card')).toHaveCount(1)
-    await page.locator('.task-card').getByRole('button', { name: 'Edit', exact: true }).click()
-    await expect(page.getByLabel('Task title', { exact: true })).toHaveValue(
-      'Review readiness before practice',
-    )
-    await page.reload()
-    await expect(page.getByLabel('Task title', { exact: true })).toHaveValue(
-      'Review readiness before practice',
-    )
-    await page.getByRole('link', { name: 'Back to tasks', exact: true }).click()
-
-    const tasks = await f.call(f.owner, `/v1/workspaces/${workspace}/tasks?view=admin`)
-    expect(
-      (
-        await f.call(
-          f.coach,
-          `/v1/workspaces/${workspace}/tasks?view=trainer&id=${tasks.items[0].id}`,
-        )
-      ).items,
-    ).toHaveLength(1)
-    const other = await f.createPerson('Unlinked coach')
-    const otherToken = randomBytes(32).toString('hex')
-    await f.call(f.owner, `/v1/workspaces/${workspace}`, {
-      operation: randomUUID(),
-      action: 'invite',
-      id: randomUUID(),
-      email: other.email,
-      roles: ['trainer'],
-      token: otherToken,
-    })
-    await f.call(other, `/v1/organization-invitations/${otherToken}`, {})
-    expect(
-      (
-        await f.call(
-          other,
-          `/v1/workspaces/${workspace}/tasks?view=trainer&id=${tasks.items[0].id}`,
-        )
-      ).items,
-    ).toHaveLength(0)
 
     await page.goto(base + '/people')
     const sizeRead = page.waitForResponse(

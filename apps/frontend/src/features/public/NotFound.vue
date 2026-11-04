@@ -1,3 +1,4 @@
+<!-- Explains that the requested page does not exist and offers a safe route back. -->
 <script setup lang="ts">
 import { PhTray } from '@phosphor-icons/vue'
 import { language } from '../../lib/i18n'
@@ -10,8 +11,8 @@ import { language } from '../../lib/i18n'
     <p>
       {{
         language(
-          'Return to Rafik to continue in your workspace.',
-          'عد إلى رفيق للمتابعة في مساحة عملك.',
+          'Return to Rafik to continue in your institution.',
+          'عد إلى رفيق للمتابعة في مؤسستك.',
         )
       }}
     </p>

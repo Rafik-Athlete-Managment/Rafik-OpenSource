@@ -15,6 +15,7 @@ import type { FieldStore } from './store'
 import { useLanguage } from './Language'
 import { Button, displayDate, type Styles } from './ui'
 
+/** Shows saved field work that needs review, retry or access recovery before syncing. */
 export function RecoveryPanel({
   owner,
   snapshot,
@@ -56,9 +57,7 @@ export function RecoveryPanel({
     setError('')
     try {
       const fresh = fieldRoster(
-        await client.request(
-          `/workspaces/${owner.workspace}/calendar?view=trainer&id=${event}&summary=true`,
-        ),
+        await client.request(`/institution/calendar?view=trainer&id=${event}&summary=true`),
         event,
       )
       if (alive.current) {

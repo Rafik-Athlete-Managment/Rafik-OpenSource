@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 
 async function inspect(page: Page, name: string, info: { project: { name: string } }) {
@@ -21,16 +21,16 @@ test('coach adds a concurrent goal-specific plan, the athlete sees both, then pl
   browser,
 }, info) => {
   test.setTimeout(180000)
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     athleteContext = await browser.newContext(),
     athletePage = await athleteContext.newPage(),
-    workspace = randomUUID(),
-    endpoint = `/v1/workspaces/${workspace}`,
+    institution = randomUUID(),
+    endpoint = `/v1/institution`,
     today = new Date().toISOString().slice(0, 10)
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Madar concurrent plans',
     })
     for (const [person, roles] of [
@@ -46,7 +46,7 @@ test('coach adds a concurrent goal-specific plan, the athlete sees both, then pl
         roles,
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
     let people = await f.call(f.owner, `${endpoint}?view=admin`)
     const coach = people.members.find((m: any) => m.user_id === f.coach.id)
@@ -101,7 +101,7 @@ test('coach adds a concurrent goal-specific plan, the athlete sees both, then pl
     })
 
     // Coach adds a second plan; the existing one is kept by default.
-    const base = `/organization/${workspace}/trainer`
+    const base = ``
     await f.login(page, f.coach, `${base}/deliver/${strength}?member=${athlete.id}`)
     await expect(
       page.getByText('Speed block · Match speed · Football', { exact: true }),
@@ -130,7 +130,7 @@ test('coach adds a concurrent goal-specific plan, the athlete sees both, then pl
     await expect(page.getByRole('button', { name: /^Review assignment/ })).toBeDisabled()
 
     // The athlete sees both plans, their labels and a same-day notice.
-    await f.login(athletePage, f.client, `/organization/${workspace}/trainee/training`)
+    await f.login(athletePage, f.client, `/training`)
     await expect(athletePage.getByRole('heading', { name: 'Speed block' })).toBeVisible()
     await expect(athletePage.getByRole('heading', { name: 'Strength block' })).toBeVisible()
     await expect(athletePage.getByText('Match speed', { exact: true })).toBeVisible()
@@ -144,14 +144,18 @@ test('coach adds a concurrent goal-specific plan, the athlete sees both, then pl
     await inspect(athletePage, 'athlete-two-plans', info)
 
     // End one plan from the staff plan detail.
-    await page.goto(`/organization/${workspace}/trainer/training?status=active`)
-    const card = page.locator('.athlete-plan-card').filter({ hasText: 'Speed block' })
-    await expect(card.getByText('Match speed · Football')).toBeVisible()
-    await card.getByRole('button', { name: 'View assigned plan' }).click()
-    await page.getByRole('button', { name: 'End plan', exact: true }).click()
-    await expect(page.locator('.athlete-plan-card').filter({ hasText: 'Speed block' })).toHaveCount(
-      0,
-    )
+    await page.goto(`/training?status=active`)
+    const card = page.locator('.athlete-plan-list .record-row').filter({ hasText: 'Speed block' })
+    await expect(card.getByText(/Match speed · Football/)).toBeVisible()
+    await card.locator('.record-title a').click()
+    await page.getByRole('button', { name: 'More plan actions', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'End plan…' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'End plan', exact: true }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await page.goto(`/training?status=active`)
+    await expect(
+      page.locator('.athlete-plan-list .record-row').filter({ hasText: 'Speed block' }),
+    ).toHaveCount(0)
 
     // Replacing is an explicit per-athlete choice.
     await page.goto(`${base}/deliver/${mobility}?member=${athlete.id}`)

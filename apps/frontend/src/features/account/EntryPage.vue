@@ -1,3 +1,4 @@
+<!-- Chooses first-run setup or sign-in based on whether this installation has an administrator. -->
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -14,7 +15,7 @@ async function openEntry() {
     await ready()
     if (user.value) {
       await refreshContexts()
-      await router.replace(contexts.value[0]?.path || '/workspaces')
+      await router.replace(contexts.value[0]?.path || '/access')
       return
     }
     const status = await request<{ initialized: boolean }>('/v1/auth/setup-status')

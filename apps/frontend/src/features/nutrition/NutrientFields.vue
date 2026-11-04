@@ -1,3 +1,4 @@
+<!-- Edits the nutrition values attached to a food entry. -->
 <script setup lang="ts">
 import { language as l } from '../../lib/i18n'
 import { nutrientKeys, type Nutrients } from './model'

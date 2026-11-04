@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-30",
+  "scope": "Calendar lifecycle presentation and login progress; sealing is planned after beta.3, not implemented.",
+  "componentCases": [
+    {
+      "engine": "chromium",
+      "lang": "en",
+      "theme": "light",
+      "width": 1280,
+      "calendar": "passed"
+    },
+    {
+      "engine": "chromium",
+      "lang": "en",
+      "theme": "light",
+      "width": 1280,
+      "login": "held request, duplicate-submit guard, failure/retry, held profile and success passed"
+    },
+    {
+      "engine": "chromium",
+      "lang": "ar",
+      "theme": "dark",
+      "width": 390,
+      "calendar": "passed"
+    },
+    {
+      "engine": "chromium",
+      "lang": "ar",
+      "theme": "dark",
+      "width": 390,
+      "login": "held request, duplicate-submit guard, failure/retry, held profile and success passed"
+    },
+    {
+      "engine": "webkit",
+      "lang": "en",
+      "theme": "light",
+      "width": 1280,
+      "calendar": "passed"
+    },
+    {
+      "engine": "webkit",
+      "lang": "en",
+      "theme": "light",
+      "width": 1280,
+      "login": "held request, duplicate-submit guard, failure/retry, held profile and success passed"
+    },
+    {
+      "engine": "webkit",
+      "lang": "ar",
+      "theme": "dark",
+      "width": 390,
+      "calendar": "passed"
+    },
+    {
+      "engine": "webkit",
+      "lang": "ar",
+      "theme": "dark",
+      "width": 390,
+      "login": "held request, duplicate-submit guard, failure/retry, held profile and success passed"
+    }
+  ],
+  "inspectedCaptures": [
+    "chromium-en-calendar.png",
+    "webkit-ar-calendar.png",
+    "chromium-ar-login.png"
+  ],
+  "isolatedRegression": {
+    "command": "node apps/frontend/scripts/isolated-browser.mjs calendar-login-feedback.e2e.ts --project=chromium --max-failures=1",
+    "result": "1 passed (33.3s)",
+    "productionBuild": "passed",
+    "cleanup": "complete"
+  },
+  "checks": {
+    "frontendTypecheck": "passed",
+    "sharedControlTokens": "2 passed",
+    "frontendInventory": "passed",
+    "documentation": "2225 local links and 671 heading links; 79 maintained documents"
+  },
+  "limits": [
+    "Calendar states are mocked read projections; no new server completion authority is tested.",
+    "Synthetic login success/profile loading is not real authenticated persistence.",
+    "No physical device, native build or full locale/theme/breakpoint matrix.",
+    "No sealing schema, server policy or client capability introduced."
+  ],
+  "note": "Shared-control tests initially could not spawn Vite in the sandbox; the same focused command passed outside it."
+}

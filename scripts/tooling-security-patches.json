@@ -1,0 +1,253 @@
+{
+  "sources": [
+    "https://github.com/TehShrike/deepmerge/issues/273",
+    "https://github.com/colinhacks/zod/pull/6652"
+  ],
+  "files": [
+    {
+      "package": "deepmerge",
+      "version": "4.3.1",
+      "path": "index.js",
+      "originalSha256": "12440c84957c1990ea2d5e33dc0091722dc1dc1585c6d20e0c780e568ffa9d30",
+      "patchedSha256": "d520c20939ddeada9794941571e3115e9fe73678df1633b993038d41c1b10db2",
+      "changes": [
+        {
+          "before": "function mergeObject(target, source, options) {",
+          "after": "function keyIsForbidden(key) {\n\treturn key === '__proto__' || key === 'constructor' || key === 'prototype'\n}\n\nfunction mergeObject(target, source, options) {"
+        },
+        {
+          "before": "getKeys(target).forEach(function(key) {",
+          "after": "getKeys(target).forEach(function(key) {\n\t\t\tif (keyIsForbidden(key)) return"
+        },
+        {
+          "before": "getKeys(source).forEach(function(key) {",
+          "after": "getKeys(source).forEach(function(key) {\n\t\t\tif (keyIsForbidden(key)) return"
+        },
+        {
+          "before": "destination[key] = cloneUnlessOtherwiseSpecified(target[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(target[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "destination[key] = getMergeFunction(key, options)(target[key], source[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: getMergeFunction(key, options)(target[key], source[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "destination[key] = cloneUnlessOtherwiseSpecified(source[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "} catch(_) {\n\t\treturn false",
+          "after": "} catch(_) {\n\t\tthrow new TypeError('Cannot inspect merge target')"
+        }
+      ]
+    },
+    {
+      "package": "deepmerge",
+      "version": "4.3.1",
+      "path": "dist/cjs.js",
+      "originalSha256": "2e5160f84a1141bd927264afe4d15766f1e6cf07daef182b37ff53fea121de7d",
+      "patchedSha256": "d6d4e27ad0569004f67483e934452e777d90c055b468a922eca2d68f82768b51",
+      "changes": [
+        {
+          "before": "function mergeObject(target, source, options) {",
+          "after": "function keyIsForbidden(key) {\n\treturn key === '__proto__' || key === 'constructor' || key === 'prototype'\n}\n\nfunction mergeObject(target, source, options) {"
+        },
+        {
+          "before": "getKeys(target).forEach(function(key) {",
+          "after": "getKeys(target).forEach(function(key) {\n\t\t\tif (keyIsForbidden(key)) return"
+        },
+        {
+          "before": "getKeys(source).forEach(function(key) {",
+          "after": "getKeys(source).forEach(function(key) {\n\t\t\tif (keyIsForbidden(key)) return"
+        },
+        {
+          "before": "destination[key] = cloneUnlessOtherwiseSpecified(target[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(target[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "destination[key] = getMergeFunction(key, options)(target[key], source[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: getMergeFunction(key, options)(target[key], source[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "destination[key] = cloneUnlessOtherwiseSpecified(source[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "} catch(_) {\n\t\treturn false",
+          "after": "} catch(_) {\n\t\tthrow new TypeError('Cannot inspect merge target')"
+        }
+      ]
+    },
+    {
+      "package": "deepmerge",
+      "version": "4.3.1",
+      "path": "dist/umd.js",
+      "originalSha256": "f33e6596482d1fb5c7c427f8ef92f2aa849eea9223acd974176b2fb27ddbf73a",
+      "patchedSha256": "1d7f98f46468b561f0fc2552ae3600d4289c9f6c1e40fc9a4d5e75414e976c2d",
+      "changes": [
+        {
+          "before": "\tfunction mergeObject(target, source, options) {",
+          "after": "\tfunction keyIsForbidden(key) {\n\t\treturn key === '__proto__' || key === 'constructor' || key === 'prototype'\n\t}\n\n\tfunction mergeObject(target, source, options) {"
+        },
+        {
+          "before": "getKeys(target).forEach(function(key) {",
+          "after": "getKeys(target).forEach(function(key) {\n\t\t\t\tif (keyIsForbidden(key)) return"
+        },
+        {
+          "before": "getKeys(source).forEach(function(key) {",
+          "after": "getKeys(source).forEach(function(key) {\n\t\t\t\tif (keyIsForbidden(key)) return"
+        },
+        {
+          "before": "destination[key] = cloneUnlessOtherwiseSpecified(target[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(target[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "destination[key] = getMergeFunction(key, options)(target[key], source[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: getMergeFunction(key, options)(target[key], source[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "destination[key] = cloneUnlessOtherwiseSpecified(source[key], options)",
+          "after": "Object.defineProperty(destination, key, { value: cloneUnlessOtherwiseSpecified(source[key], options), enumerable: true, configurable: true, writable: true })"
+        },
+        {
+          "before": "} catch(_) {\n\t\t\treturn false",
+          "after": "} catch(_) {\n\t\t\tthrow new TypeError('Cannot inspect merge target')"
+        }
+      ]
+    },
+    {
+      "package": "zod",
+      "version": "3.25.76",
+      "path": "v3/types.cjs",
+      "originalSha256": "06487cc05ed45c5dd29789bf0aa75734d1ce06592a7f2665ba4ca90a68e8a3e1",
+      "patchedSha256": "85f95aae03eff7a6828a25fc796be3b15c80339bd4406256067592a578929ca6",
+      "changes": [
+        {
+          "before": "message: def.exactLength.message,\n                });\n                status.dirty();",
+          "after": "message: def.exactLength.message,\n                });\n                if (tooBig) return parseUtil_js_1.INVALID;"
+        },
+        {
+          "before": "message: def.maxLength.message,\n                });\n                status.dirty();",
+          "after": "message: def.maxLength.message,\n                });\n                return parseUtil_js_1.INVALID;"
+        },
+        {
+          "before": "message: def.maxSize.message,\n                });\n                status.dirty();",
+          "after": "message: def.maxSize.message,\n                });\n                return parseUtil_js_1.INVALID;"
+        }
+      ]
+    },
+    {
+      "package": "zod",
+      "version": "3.25.76",
+      "path": "v3/types.js",
+      "originalSha256": "9763a2938f0e7f983363ef4bf6530e7583e3f2d54f8a4a6684efad58febc6e8e",
+      "patchedSha256": "2576a10090108139c6048df1d07953202ac895b5f16e5ec9d9056c4c6818e0c3",
+      "changes": [
+        {
+          "before": "message: def.exactLength.message,\n                });\n                status.dirty();",
+          "after": "message: def.exactLength.message,\n                });\n                if (tooBig) return INVALID;"
+        },
+        {
+          "before": "message: def.maxLength.message,\n                });\n                status.dirty();",
+          "after": "message: def.maxLength.message,\n                });\n                return INVALID;"
+        },
+        {
+          "before": "message: def.maxSize.message,\n                });\n                status.dirty();",
+          "after": "message: def.maxSize.message,\n                });\n                return INVALID;"
+        }
+      ]
+    },
+    {
+      "package": "zod",
+      "version": "3.25.76",
+      "path": "src/v3/types.ts",
+      "originalSha256": "70309a0877c35d036842e291fe7c8a4439d5db49411d233f8a22bf8a59c41419",
+      "patchedSha256": "9591dd0847e18f33bfdf24b993ea827c8d58fd4c4d91b4029f685df936447749",
+      "changes": [
+        {
+          "before": "message: def.exactLength.message,\n        });\n        status.dirty();",
+          "after": "message: def.exactLength.message,\n        });\n        if (tooBig) return INVALID;"
+        },
+        {
+          "before": "message: def.maxLength.message,\n        });\n        status.dirty();",
+          "after": "message: def.maxLength.message,\n        });\n        return INVALID;"
+        },
+        {
+          "before": "message: def.maxSize.message,\n        });\n        status.dirty();",
+          "after": "message: def.maxSize.message,\n        });\n        return INVALID;"
+        }
+      ]
+    },
+    {
+      "package": "@expo/cli",
+      "version": "58.1.11",
+      "path": "build/src/start/server/DevToolsPlugin.schema.js",
+      "originalSha256": "22c5eaac593a317f3319b5941d43aeffd17fcf0ea9ad3720ba0cde6ddd298b94",
+      "patchedSha256": "47a913299ac1ea3f7611ee637cda7c17a2a70ea31c125356ff4805adc49046c3",
+      "changes": [
+        {
+          "before": "])).readonly(),",
+          "after": "])).max(2).readonly(),"
+        },
+        {
+          "before": "z.array(CommandParameterSchema).optional()",
+          "after": "z.array(CommandParameterSchema).max(64).optional()"
+        },
+        {
+          "before": "z.array(CommandSchema).min(1)",
+          "after": "z.array(CommandSchema).min(1).max(128)"
+        },
+        {
+          "before": "z.array(DevToolsPluginOutputLinesSchema);",
+          "after": "z.array(DevToolsPluginOutputLinesSchema).max(1024);"
+        }
+      ]
+    },
+    {
+      "package": "@expo/cli",
+      "version": "58.1.11",
+      "path": "build/src/start/server/DevToolsPluginCliExtensionResults.js",
+      "originalSha256": "669294947c9a2573b9c637eba5d0d5cd4048fa8da16723a7f761d1cb2eb2d7e7",
+      "patchedSha256": "feeb5ad6e54c6d8bbc41bd7fee686735394fa3b4581dc552358f49ee5b69faa2",
+      "changes": [
+        {
+          "before": "// Cap accumulated output at V8's max single-string length to bound heap growth.\nconst MAX_OUTPUT_LENGTH = _nodebuffer().constants.MAX_STRING_LENGTH;",
+          "after": "// Rafik tooling budget: reject before JSON parsing or unbounded issue allocation.\nconst MAX_OUTPUT_LENGTH = 1024 * 1024;\nconst MAX_OUTPUT_RECORDS = 1024;"
+        },
+        {
+          "before": "if (this._totalLength + output.length > MAX_OUTPUT_LENGTH)",
+          "after": "if (this._totalLength + _nodebuffer().Buffer.byteLength(output) > MAX_OUTPUT_LENGTH || this._output.length >= MAX_OUTPUT_RECORDS)"
+        },
+        {
+          "before": "Output truncated: plugin exceeded V8's max string length (${MAX_OUTPUT_LENGTH} chars).",
+          "after": "Output truncated: plugin exceeded the tooling output budget (${MAX_OUTPUT_LENGTH} bytes / ${MAX_OUTPUT_RECORDS} records)."
+        },
+        {
+          "before": "this._totalLength += output.length;",
+          "after": "this._totalLength += _nodebuffer().Buffer.byteLength(output);"
+        },
+        {
+          "before": "this._output.push(...results);",
+          "after": "this._output.push(...results.slice(0, MAX_OUTPUT_RECORDS - this._output.length));"
+        },
+        {
+          "before": "// Validate against schema",
+          "after": "// Bound direct callers too, before JSON.parse.\n        if (_nodebuffer().Buffer.byteLength(txt) > MAX_OUTPUT_LENGTH) return [{ type: 'text', text: 'Plugin output exceeds the tooling output budget.', level: 'error' }];\n        // Validate against schema"
+        },
+        {
+          "before": "const lines = txt.split('\\n');",
+          "after": "const lines = txt.split('\\n', MAX_OUTPUT_RECORDS + 1);\n            if (lines.length > MAX_OUTPUT_RECORDS) return [{ type: 'text', text: 'Plugin output exceeds the tooling record budget.', level: 'error' }];"
+        },
+        {
+          "before": "const results = this.parseOutputText(output, level);",
+          "after": "let results = this.parseOutputText(output, level);\n        if (this._output.length + results.length > MAX_OUTPUT_RECORDS) {\n            this._truncated = true;\n            results = [{ type: 'text', text: 'Plugin output exceeds the tooling record budget.', level: 'error' }];\n        }"
+        }
+      ]
+    }
+  ],
+  "licenses": {
+    "deepmerge": "The MIT License (MIT)\n\nCopyright (c) 2012 James Halliday, Josh Duff, and other contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n",
+    "zod": "MIT License\n\nCopyright (c) 2025 Colin McDonnell\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+    "@expo/cli": "The MIT License (MIT)\n\nCopyright (c) 2015-present 650 Industries, Inc. (aka Expo)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+  }
+}

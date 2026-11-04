@@ -1,3 +1,4 @@
+<!-- Lets an invited user choose a password before joining the institution. -->
 <script setup lang="ts">
 import PasswordField from '../../components/PasswordField.vue'
 import { ref } from 'vue'
@@ -29,7 +30,7 @@ async function save() {
   try {
     user.value = await api.completePasswordSetup(String(route.params.token), password.value)
     await refreshProfile()
-    await router.replace(contexts.value[0]?.path || '/workspaces')
+    await router.replace(contexts.value[0]?.path || '/access')
   } catch (e) {
     error.value = errorMessage(e)
   } finally {

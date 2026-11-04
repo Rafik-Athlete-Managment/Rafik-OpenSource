@@ -1,21 +1,26 @@
 import { test, expect } from '@playwright/test'
 import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 test('organization program authoring, reviewed delivery, recording and feedback stay in one scope', async ({
   page,
   browser,
 }, info) => {
-  test.setTimeout(90000)
-  const f = await teamFixture(),
+  // Two publications/assignments plus offline/reload/review; individual expectations remain bounded.
+  test.setTimeout(150000)
+  const f = await institutionFixture(),
     clientContext = await browser.newContext(),
     client = await clientContext.newPage(),
     id = randomUUID()
   try {
-    await f.call(f.owner, '/v1/workspaces', { id, kind: 'organization', name: 'Madar performance' })
+    await f.call(f.owner, '/v1/institutions', {
+      id,
+      kind: 'institution',
+      name: 'Madar performance',
+    })
     const token = randomBytes(32).toString('hex')
-    await f.call(f.owner, `/v1/workspaces/${id}`, {
+    await f.call(f.owner, `/v1/institution`, {
       operation: randomUUID(),
       action: 'invite',
       id: randomUUID(),
@@ -23,11 +28,11 @@ test('organization program authoring, reviewed delivery, recording and feedback 
       roles: ['trainee'],
       token,
     })
-    await f.call(f.client, `/v1/organization-invitations/${token}`, {})
-    const base = `/organization/${id}/admin`
+    await f.call(f.client, `/v1/invitations/${token}`, {})
+    const base = ``
     await f.login(page, f.owner, base + '/plans/new')
-    await expect(page.locator('.editor-exercise')).toHaveCount(0)
-    await expect(page.locator('.program-empty-exercises')).toBeVisible()
+    await expect(page.locator('.workout-exercise')).toHaveCount(0)
+    await expect(page.locator('.program-workout-empty')).toBeVisible()
     await page.getByLabel('Program name', { exact: true }).fill('Three-day foundation')
     await expect(page.getByLabel('Main goal', { exact: true })).toBeVisible()
     await page.getByLabel('Main goal', { exact: true }).fill('Build a steady training habit')
@@ -77,7 +82,7 @@ test('organization program authoring, reviewed delivery, recording and feedback 
       fullPage: true,
     })
     let lost = false
-    await page.route(`**/v1/workspaces/${id}/delivery`, async (route) => {
+    await page.route(`**/v1/institution/delivery`, async (route) => {
       if (!lost && route.request().method() === 'POST') {
         lost = true
         await route.fetch()
@@ -93,14 +98,14 @@ test('organization program authoring, reviewed delivery, recording and feedback 
     await expect(
       page.getByRole('heading', { name: 'Ready for their next session.', exact: true }),
     ).toBeVisible()
-    await f.login(client, f.client, `/organization/${id}/trainee/training`)
+    await f.login(client, f.client, `/training`)
     await client
       .getByRole('button', { name: /^Open session/ })
       .first()
       .click()
     await expect(client.getByRole('spinbutton', { name: 'Set 1 load', exact: true })).toBeVisible()
     let offline = true
-    await client.route(`**/v1/workspaces/${id}/sessions`, async (r) => {
+    await client.route(`**/v1/institution/sessions`, async (r) => {
       if (offline && r.request().method() === 'POST') await r.abort('failed')
       else await r.continue()
     })
@@ -118,7 +123,7 @@ test('organization program authoring, reviewed delivery, recording and feedback 
     await expect(client.getByRole('status')).toContainText('Synced with your account')
     const workout = client.url()
     // Staff review recorded workouts from Session history; /training is the plan index.
-    await page.goto(base + '/session-history')
+    await page.goto(base + '/workouts')
     await page
       .getByRole('link')
       .filter({ hasText: 'R4 Athlete' })
@@ -132,11 +137,11 @@ test('organization program authoring, reviewed delivery, recording and feedback 
     await expect(client.getByText('Keep the same load next time.', { exact: true })).toBeVisible()
     await page.goto(base + '/training')
     await page
-      .locator('.athlete-plan-card')
+      .locator('.athlete-plan-list .record-row')
       .filter({ hasText: 'Three-day foundation' })
-      .getByRole('button', { name: 'View assigned plan' })
+      .locator('.record-title a')
       .click()
-    await page.getByRole('link', { name: 'Adapt this program', exact: true }).click()
+    await page.getByRole('button', { name: 'Adapt this program', exact: true }).click()
     await expect(page.getByLabel('Program name', { exact: true })).toHaveValue(
       'Three-day foundation adapted',
     )

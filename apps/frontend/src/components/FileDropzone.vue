@@ -1,3 +1,4 @@
+<!-- Shared file picker: accepts drag-and-drop or button selection and reports chosen files. -->
 <script setup lang="ts">
 import { ref, useId } from 'vue'
 import { PhUploadSimple } from '@phosphor-icons/vue'

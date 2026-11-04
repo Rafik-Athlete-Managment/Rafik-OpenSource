@@ -30,7 +30,7 @@ test("organization nutrition respects subject, sharing, reassignment, replay and
       outsider = await f.person();
     const id = await f.create(admin),
       other = await f.create(outsider),
-      endpoint = `/v1/workspaces/${id}/nutrition`;
+      endpoint = `/v1/institution/nutrition`;
     const staff = await f.join(admin, id, trainer, ["trainer"]),
       member = await f.join(admin, id, client, ["trainee"]),
       next = await f.join(admin, id, replacement, ["trainer"]);
@@ -39,7 +39,7 @@ test("organization nutrition respects subject, sharing, reassignment, replay and
       (
         await call(
           admin,
-          `/v1/workspaces/${id}`,
+          `/v1/institution`,
           operation("assign-trainer", {
             id: member.id,
             revision: 1,
@@ -186,7 +186,7 @@ test("organization nutrition respects subject, sharing, reassignment, replay and
       (
         await call(
           admin,
-          `/v1/workspaces/${id}`,
+          `/v1/institution`,
           operation("assign-trainer", {
             id: member.id,
             revision: 2,
@@ -235,9 +235,8 @@ test("organization nutrition respects subject, sharing, reassignment, replay and
     assert.equal(shared.meals.length, 0);
     assert.equal(shared.corrections.length, 0);
     assert.equal(
-      (await call(client, `/v1/workspaces/${other}/nutrition?view=trainee`))
-        .data.meals.length,
-      0,
+      (await call(outsider, `/v1/institution/nutrition?view=trainee`)).status,
+      403,
     );
     assert.equal(
       (
@@ -272,27 +271,24 @@ test("organization nutrition respects subject, sharing, reassignment, replay and
       ).data.removed.length,
       0,
     );
-    const exported = (await call(client, "/v1/account/organizations")).data;
+    const exported = (await call(client, "/v1/account/institution")).data;
     assert.equal(exported.nutritionPlans.length, 1);
-    assert.equal(
-      exported.nutritionMeals[0].organization_meal_history.length,
-      3,
-    );
+    assert.equal(exported.nutritionMeals[0].institution_meal_history.length, 3);
     assert.equal(exported.nutritionMeals[0].removed, true);
     assert.equal(
-      (await call(outsider, "/v1/account/organizations")).data.nutritionMeals
+      (await call(outsider, "/v1/account/institution")).data.nutritionMeals
         .length,
       0,
     );
     assert.equal(
-      (await call(client, "/v1/queries/organization_meals")).status,
-      400,
+      (await call(client, "/v1/queries/institution_meals")).status,
+      404,
     );
     assert.equal(
       (
         await call(
           admin,
-          `/v1/workspaces/${id}`,
+          `/v1/institution`,
           operation("member", {
             id: member.id,
             revision: 3,
@@ -320,7 +316,7 @@ test("nutrition plan revisions serialize; dates, expiry, content validation and 
       client = await f.person(),
       id = await f.create(admin),
       member = await f.join(admin, id, client, ["trainee"]),
-      endpoint = `/v1/workspaces/${id}/nutrition`;
+      endpoint = `/v1/institution/nutrition`;
     const publish = () =>
       operation("publish", {
         view: "admin",

@@ -1,4 +1,4 @@
-# ADR 0013: Organization exercise ownership and private media
+# ADR 0013: Institution exercise ownership and private media
 
 Date: 28 September 2026. Status: implemented locally; acceptance is recorded separately in the ledger.
 

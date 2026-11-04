@@ -1,3 +1,4 @@
+<!-- Exercise video: plays a reviewed demonstration and displays its source attribution. -->
 <script setup lang="ts">
 import { nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { PhPlay, PhPause, PhArrowClockwise } from '@phosphor-icons/vue'

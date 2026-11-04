@@ -1,6 +1,6 @@
 {
   "name": "@rafik/mobile",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "private": true,
   "type": "module",
   "main": "expo-router/entry",
@@ -9,10 +9,12 @@
     "android": "node scripts/android.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
     "test:queue": "node --experimental-strip-types --test tests/attendance.test.ts",
-    "test:request": "node --experimental-transform-types --experimental-test-module-mocks --test --test-isolation=none tests/request.test.ts tests/native.test.ts"
+    "test:request": "node --experimental-transform-types --experimental-test-module-mocks --test --test-isolation=none tests/request.test.ts tests/native.test.ts",
+    "prestart": "node ../../scripts/tooling-security.mjs --check",
+    "test:components": "node --experimental-strip-types --test tests/workout-exercises.test.ts"
   },
   "dependencies": {
-    "@rafik/shared": "1.0.0-beta.2",
+    "@rafik/shared": "1.0.0-beta.3",
     "expo": "~58.0.14",
     "expo-constants": "~58.0.12",
     "expo-crypto": "~58.0.7",
@@ -23,12 +25,15 @@
     "expo-splash-screen": "~58.0.10",
     "expo-sqlite": "~58.0.13",
     "expo-status-bar": "~58.0.3",
+    "lucide-react-native": "^1.66.0",
     "react": "19.3.0",
     "react-native": "0.88.0",
+    "react-native-calendars": "^1.1314.0",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
+    "react-native-svg": "^15.16.0",
     "react-native-worklets": "0.13.0"
   },
   "devDependencies": {

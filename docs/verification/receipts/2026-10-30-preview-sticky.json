@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-30",
+  "scope": "Shared preview state and sticky group athlete roster",
+  "cases": [
+    {
+      "engine": "chromium",
+      "lang": "en",
+      "theme": "light",
+      "width": 1280,
+      "height": 800,
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "lang": "ar",
+      "theme": "dark",
+      "width": 1280,
+      "height": 500,
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "lang": "en",
+      "theme": "light",
+      "width": 390,
+      "height": 700,
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "lang": "en",
+      "theme": "light",
+      "width": 1280,
+      "height": 800,
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "lang": "ar",
+      "theme": "dark",
+      "width": 1280,
+      "height": 500,
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "lang": "en",
+      "theme": "light",
+      "width": 390,
+      "height": 700,
+      "passed": true
+    }
+  ],
+  "checks": [
+    "preview defaults closed",
+    "open choice survives selecting pending and recording athletes",
+    "open choice restores on component remount with event router retained",
+    "closed choice survives selecting another athlete",
+    "desktop roster top remains at 80px in a 64px-header nested main scroller after main scroll changes",
+    "search and pagination remain within the viewport at 800px and 500px heights",
+    "bounded athlete names support keyboard ArrowDown scrolling",
+    "phone hides the desktop roster and retains selector",
+    "no document horizontal overflow"
+  ],
+  "fixture": "Actual GroupWorkoutPanel and delegated recorder with mocked 12-person roster and 20-set record; isolated browser storage; no authenticated database writes.",
+  "limits": [
+    "not an authenticated whole-shell or physical-device check",
+    "new assertions added to group-workouts.e2e.ts; full group suite not repeated for this correction"
+  ],
+  "correction": "Rendered preflight caught formatter-sensitive inline multi-statement handler; moved it into toggleAdaptation before final six-case pass.",
+  "cleanup": "Temporary harness and captures removed after inspection."
+}

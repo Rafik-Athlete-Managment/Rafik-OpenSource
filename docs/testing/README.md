@@ -1,5 +1,50 @@
 # Testing
 
+## Code quality gates
+
+Run from the repository root after the normal npm ci. All four workspace compilers enforce unused locals/parameters; root format:check checks the web formatter and build includes Vue typechecking. CI also checks the shared package separately.
+
+- `npm run test:workout-document` checks unfinished prescribed entries, zero load, per-set targets and nullable time/distance measures without a database.
+- `npm run test:components --workspace @rafik/mobile` checks controlled TSX element/callback contracts with explicit host stubs. It does not establish native layout or device persistence.
+- `npm run test:backend-inventory` and `npm run test:frontend-inventory` compare LF/CRLF source behavior. Backend coverage also rejects a deliberately stale reference; temporary fixture trees are removed.
+- The existing queue/request tests and disposable API journeys validate persistence, permissions, retries and current-server authority. Browser/device scope is recorded separately in verification.
+
+The legacy operations/cohesion layout npm aliases now run maintained isolated browser specs; they no longer require an existing dev server or use old role-prefixed navigation.
+
+## Native individual workouts
+
+From the root, `npm run test:native-workouts` creates/removes a disposable database and runs the actual native SQLite queue against the API: trainer package download, provisional start, measured completion, simulated lost start acknowledgment, exact replay and one sequence advancement. Athlete field-package access is rejected; ordinary agenda reads omit full packages. Existing test fixtures affect only that disposable database.
+
+`npm run test:queue --workspace @rafik/mobile` covers SQLite restart, owner boundaries, edits during a held request, rejection/recovery, access restoration and cached pagination. `npm run test:request --workspace @rafik/mobile` covers numeric entry and unsupported-server preflight. These Node/API checks do not establish rendered Android, native SQLCipher, physical offline/process death or signed upgrade acceptance. Use the [single role walkthrough](instance-validation.md#native-individual-workouts--unreleased-beta3) for those manual checks; do not reset/reseed an instance.
+
+## Manual instance validation
+
+The [instance validation walkthrough](instance-validation.md) is the single source of truth for manual administrator, coach and athlete checks. Update its steps in place; handoffs and landing link to it instead of maintaining copies. It separates implemented fixes from scheduling/attendance/content follow-up. Automated focused coverage and remaining rendered/device limits are recorded in [verification](../verification/README.md).
+
+Messaging/nutrition request-fault browser specs use the frozen preview and block service workers so Playwright can intercept the actual requests in both engines. Their result does not establish service-worker/offline-shell behavior, which requires its separate acceptance.
+
+## Calendar and sign-in feedback
+
+From the repository root, with Node 24 (or 22.16+) and the local Docker database running:
+
+```sh
+node apps/frontend/scripts/isolated-browser.mjs calendar-login-feedback.e2e.ts --project=chromium --max-failures=1
+```
+
+This creates and removes its own disposable database and files. It checks completed calendar markers/cards at desktop and phone sizes using a mocked authorized read projection, then holds/rejects a sign-in request to check progress, reduced motion, duplicate-submit protection and retry. It does not establish server completion authority, real authentication success or sealing. Manual steps stay in the [canonical walkthrough](instance-validation.md#sign-in-and-calendar-feedback--unreleased-beta3).
+
+## Individual sequence API
+
+`npm run test:workout-sequence` uses the isolated API harness. Coverage includes concurrent binding, independent assignments, unchanged exact retries, athlete denial of staff scheduling, bound-start requirements, completion/correction, explicit skip reasons, cycle repetition, rescheduling without consumption, cancellation/pause on assignment end, a generic participation restriction and revoked receipt access. The existing delegated-session regression covers unaffected unlinked coach logging/corrections. These are server checks; no browser/native acceptance or recurring-worker/DST claim follows.
+
+## Additive workout migration
+
+`npm run test:workout-foundation` exercises a populated forward upgrade and source backfill, old-client inserts, private database grants and recurrence/position constraints in an owned disposable database. It generates client/transport types. This does not establish worker concurrency, API progression, Android queue upgrade or rendered UX acceptance; those require the later implementation slices.
+
+## Next-release cleanup checks
+
+Use the isolated browser wrapper for `tests/institution-routing.e2e.ts`. It covers flat routes, rejection of retired bookmarks, server-derived roles and Tasks retirement. Privileged fixture setup replaces the removed runtime creation endpoint and must use a disposable test database. Current fixtures create one installation; outsider and invalid record IDs test authorization without restoring an institution chooser.
+
 ## Opt-in web design audit
 
 From the repository root, with Node 24 (or 22.16+) and the local Docker database running:
@@ -56,7 +101,7 @@ For direct `test:e2e:running` diagnostics, first start the local API and web dev
 ## Coverage boundaries
 
 - Browser emulation does not prove physical phone behavior, native app behavior or assistive technology behavior on hardware.
-- Automated checks do not establish that a coach or athlete can complete a task without help. Use the [local coach walkthrough](coach-walkthrough.md) for a personal first pass; it is not a substitute for university review or external user observation.
+- Automated checks do not establish that a coach or athlete can complete a task without help. Use the [instance validation walkthrough](instance-validation.md) for a personal first pass; it is not a substitute for university review or external user observation.
 - Local Compose results do not establish remote CI, production alert delivery, or safe hosted upgrades/rollback.
 - Current workflow acceptance and its exact source/device limits are in [verification](../verification/README.md); machine-readable outputs stay under [`../verification/receipts/`](../verification/receipts/). The former R-phase feature map is preserved in the [archive](../archive/README.md).
 - Still needed outside automated local tests: physical phone and assistive-technology checks, university coach/athlete task observation, alert delivery, and a disposable production-profile upgrade/rollback rehearsal. See [known issues](../known-issues/README.md).
@@ -72,3 +117,41 @@ From the repository root, set `RAFIK_UI_AUDIT=1` and run `npm run test:e2e --wor
 ### Remaining web standardization checks
 
 `ui-standardization.e2e.ts` checks dedicated template/group/task/exercise routes, record drafts, acknowledgement/uncertain retry, upload and page-size persistence. The opt-in audit collector’s `RAFIK_UI_AUDIT_ROLLOUT=1` mode adds populated task, attendance and private-conversation fixtures to representative planning/nutrition/reporting layouts. With that variable, the Chromium functional journey is skipped to reuse its recorded passing evidence; WebKit adds the missing engine coverage. Run the wrapper serially and inspect screenshots. `command-navigation.test.ts` covers active-command remount/replay and legacy draft isolation. None of these checks resets preview data or establishes Android/device acceptance.
+
+Backend `test:*` integration commands now use `apps/backend/scripts/prisma/isolated-api.mjs`: a fresh migrated database and API on port 55343, with cleanup on completion. Do not point fixture setup at preview. `npm run test:institution-cleanup` checks migration stop/deletion/preservation and regenerates shared database types from its disposable database.
+
+## Frontend inventory coverage
+
+Run ``npm run test:frontend-inventory`` after changing the analyzer. It generates the actual inventories in isolated CRLF and LF source fixtures, compares every generated document, checks freshness in both and removes its fixtures. This is also a web CI step; it does not start browsers, the API or a database.
+
+Run `npm run frontend:inventory:check` for the maintained [view/component/route reference](../reference/frontend/README.md). The analyzer detects missing descriptions, orphan Vue files, missing rendered consumers, unknown navigation targets and generated-document drift. Review dynamic destinations and role/state-specific branches, not just the command result. It does not execute route guards or prove server authorization.
+
+The obsolete `core.e2e.ts` guest/standalone journeys were retired with those screens. Current institutional recording coverage lives in `programming.e2e.ts`; `consolidated-views.e2e.ts` covers the guest-route rejection and supported Resources/Nutrition entry. This audit does not claim fresh offline/concurrent-device acceptance from the removed historical spec.
+
+## Backend audit coverage
+
+The audit used a populated disposable migration and eleven API checks for auth/actor boundaries, private file recovery, retired endpoints, own export, institutional scheduling and progression. Older standalone browser fixtures need migration before whole-release acceptance. See [audit limits](../reference/backend/README.md).
+
+## Institution naming regressions
+
+From the repository root with local Docker running:
+
+```bash
+npm run test:institution-names
+npm run test:institution-api
+npm run mobile:acceptance
+```
+
+These use owned disposable databases/APIs. They cover populated identifier preservation, old/canonical transport and authorization, own export, scalar serialization, and the native bearer/SQLite command queue. They do not migrate/reset preview or establish physical APK upgrade acceptance. The focused browser command is `node apps/frontend/scripts/isolated-browser.mjs --empty-database institution-names.e2e.ts --project=chromium`; keep application/generated sources frozen during that run.
+
+## Retired-domain boundary
+
+`npm run test:retired-domains` migrates a populated disposable database and compares complete current institution snapshots/receipts. `npm run test:institution-api` covers removed gateways/aliases and explicit account/support privacy and replay. `npm run backend:test` uses current institution SQL assertions, not retired personal/team suites. Recovery checks upload current institution assets. Neither command resets preview data. Published beta.2 clients require the matching beta.3 upgrade; historical multi-institution browser journeys are not current acceptance.
+
+Scheduling changes: `npm run test:workout-scheduler` uses an owned disposable migrated database for policy/worker/DST checks; `npm run test:workout-sequence` covers progression, and `npm run test:workout-foundation` checks populated migration preservation. Do not combine stateful fixture files into one seeded database. The focused browser case is “plan scheduling switches” in delegated-sessions.e2e.ts, using the web isolation wrapper.
+
+`npm run test:plan-adaptation` uses a disposable migrated database to check assignment-local snapshots, current authority, stale/exact retries, scheduled-prescription preservation, progression and ordinary library edit identity.
+
+## Workout templates and group results
+
+From the repository root, `npm run test:group-workouts` checks template scope/revisions, shared exercise selection, frozen baselines, separate measured actuals, athlete-own reads, designated-coach writes, exact retries, restrictions, completion/skip, revocation and no individual progression. `node apps/backend/scripts/prisma/verify-group-workouts.mjs` verifies the additive migration against populated prior storage. Both use disposable Docker databases. Run seed-dependent sequence checks in their own isolated invocation; institution-replacing fixture suites cannot share that seeded state. `npm run test:e2e --workspace @rafik/frontend -- group-workouts.e2e.ts` covers the new web author/import/participant/review journey in the configured browser projects. Run these resource-heavy checks serially on small development machines. Actual evidence/limits are in [verification](../verification/README.md); manual steps remain only in the [instance walkthrough](instance-validation.md).

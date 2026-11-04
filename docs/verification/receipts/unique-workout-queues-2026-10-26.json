@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-26",
+  "checks": {
+    "backend_typecheck": "passed",
+    "frontend_typecheck": "passed",
+    "isolated_workout_sequence": "1 passed",
+    "isolated_coach_desk": "2 passed: Chromium desktop and WebKit phone"
+  },
+  "rendered_inspection": [
+    "English light desktop single resumed workout",
+    "Arabic dark phone planning and status"
+  ],
+  "limits": [
+    "Status presentation uses synthetic responses",
+    "No new native or whole-product acceptance",
+    "Local backend staleness not established"
+  ],
+  "sha256": {
+    "apps/backend/server/programming.ts": "b91b9e2e957c8cd26952ede2f9d10f954cbef95ed882480aff448c973d65c3db",
+    "apps/frontend/src/features/institution/CoachDesk.vue": "80705318ed6a53a9109e16f542d01747be9f464f6787256098599697c748ba73",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "f1dc74f832e1106da265b39c504817a56aa219cd6996aee63fc12916c2401c23",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "99c576f0f8d55cdfc7991aa3c72d0e29c108a93419580d2712366b17b5958675"
+  }
+}

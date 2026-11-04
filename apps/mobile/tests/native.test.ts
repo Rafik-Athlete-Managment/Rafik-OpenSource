@@ -34,11 +34,11 @@ test('authorized responses recheck access after offline failure without treating
     return Response.json({
       contexts: [
         {
-          workspace_id: 'w',
+          institution_id: 'w',
           member_id: 'm',
           name: 'University',
           role: 'trainer',
-          kind: 'organization',
+          kind: 'institution',
         },
       ],
     })
@@ -54,14 +54,14 @@ test('authorized responses recheck access after offline failure without treating
   const unsubscribe = client.onAuthorizedResponse(() => {
     recoveries++
   })
-  await assert.rejects(client.request('/contexts'))
+  await assert.rejects(client.request('/institution/context'))
   assert.equal(recoveries, 0, 'failed requests cannot announce recovery')
   offline = false
   denied = true
-  await assert.rejects(client.request('/contexts'))
+  await assert.rejects(client.request('/institution/context'))
   assert.equal(recoveries, 0, 'denial cannot announce recovery')
   denied = false
-  assert.equal((await client.refreshContexts())[0].workspace_id, 'w')
+  assert.equal((await client.refreshContexts())[0].institution_id, 'w')
   assert.equal(recoveries, 1)
   const stopBrokenObserver = client.onAuthorizedResponse(() => {
     throw Error('UI observer failed')
@@ -70,10 +70,45 @@ test('authorized responses recheck access after offline failure without treating
   assert.equal(recoveries, 2, 'observer errors must not turn success into uncertain replay')
   stopBrokenObserver()
   unsubscribe()
-  await client.request('/contexts')
+  await client.request('/institution/context')
   assert.equal(recoveries, 2, 'an unmounted account no longer receives callbacks')
   t.mock.method(globalThis, 'fetch', async () => Response.json({ contexts: [null] }))
   await assert.rejects(client.refreshContexts(), /invalid institution access/)
-  assert.equal(client.contexts[0].workspace_id, 'w', 'bad data cannot replace known context')
+  assert.equal(client.contexts[0].institution_id, 'w', 'bad data cannot replace known context')
   storage.clear()
+})
+
+test('restoring published credentials retains the institution ID and v1 owner identity', async () => {
+  const context = {
+    workspace_id: 'retained-id',
+    member_id: 'retained-member',
+    name: 'Institution',
+    role: 'trainer',
+  }
+  storage.set(
+    'rafik.field.credentials.v1',
+    JSON.stringify({
+      instance: 'https://institution.test/api',
+      session: {
+        user: { id: 'retained-user', email: null },
+        access_token: 'a'.repeat(64),
+        refresh_token: 'b'.repeat(64),
+        access_expires_at: new Date(Date.now() + 600000).toISOString(),
+        refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+      },
+      contexts: [context],
+    }),
+  )
+  const restored = await NativeClient.restore()
+  assert.ok(restored)
+  assert.equal(restored.contexts[0].institution_id, context.workspace_id)
+  const { ownerKey } = await import('../src/field/model.ts')
+  assert.equal(
+    ownerKey({
+      instance: restored.instance,
+      user: restored.user.id,
+      institution: restored.contexts[0].institution_id,
+    }),
+    JSON.stringify(['https://institution.test/api', 'retained-user', 'retained-id']),
+  )
 })

@@ -1,4 +1,4 @@
-import { api, rpc, request } from './backend'
+import { api, request } from './backend'
 import { clone, type Session, type LocalSession, type PlanDay } from './domain'
 import {
   editLocalSession,
@@ -11,15 +11,17 @@ import {
   removeDraft,
 } from './storage'
 const syncing = new Map<string, Promise<LocalSession | undefined>>()
+/** Creates a local workout record from a plan day so the athlete can begin logging. */
 export async function startWorkout(
   day: PlanDay,
-  title: string,
+  _title: string,
   versionId: string,
   owner: string,
   assignmentId?: string,
   scheduledDate?: string,
-  workspace?: string,
+  institution?: string,
 ) {
+  if (owner === 'guest' || !institution) throw new Error('institution_required')
   const existing = (await localSessions(owner)).find(
     (x) =>
       x.session.status === 'in_progress' &&
@@ -32,55 +34,17 @@ export async function startWorkout(
   const startKey = `start:${owner}:${assignmentId || versionId}:${day.id}:${scheduledDate || 'flexible'}`
   const id = (await getDraft<string>(startKey)) || crypto.randomUUID()
   await storeDraft(startKey, id)
-  let session: Session
-  if (owner === 'guest')
-    session = {
+  const session = await request<Session>(`/v1/institution/sessions`, {
+    method: 'POST',
+    body: JSON.stringify({
+      operation: id,
+      action: 'start',
+      view: 'trainee',
       id,
-      client_id: 'guest',
-      coach_id: null,
-      assignment_id: null,
-      version_id: versionId,
+      assignment_id: assignmentId,
       day_id: day.id,
-      title,
-      prescription: clone(day),
-      status: 'in_progress',
-      entries: day.exercises.flatMap((e) =>
-        Array.from({ length: e.sets }, (_, i) => ({
-          exercise_key: e.key,
-          set_index: i,
-          reps: e.reps,
-          load: e.load,
-          unit: e.unit,
-          completed: false,
-        })),
-      ),
-      note: '',
-      coach_note: '',
-      reviewed_at: null,
-      started_at: new Date().toISOString(),
-      completed_at: null,
-      version: 1,
-    }
-  else if (workspace)
-    session = await request<Session>(`/v1/workspaces/${workspace}/sessions`, {
-      method: 'POST',
-      body: JSON.stringify({
-        operation: id,
-        action: 'start',
-        view: 'trainee',
-        id,
-        assignment_id: assignmentId,
-        day_id: day.id,
-      }),
-    })
-  else
-    session = await rpc<Session>('start_session', {
-      p_id: id,
-      p_version_id: versionId,
-      p_day_id: day.id,
-      p_assignment_id: assignmentId || null,
-      p_scheduled_date: scheduledDate || null,
-    })
+    }),
+  })
   const current = await getLocalSession(session.id)
   if (current?.owner === owner) return current
   const row: LocalSession = {
@@ -96,18 +60,15 @@ export async function startWorkout(
   await event('session_started', session.id)
   return row
 }
-export async function loadWorkout(id: string, owner: string, workspace?: string) {
+/** Loads an athlete's local workout and refreshes it from the server when allowed. */
+export async function loadWorkout(id: string, owner: string, institution?: string) {
   const local = await getLocalSession(id)
-  if (local && (local.owner === owner || local.owner === 'guest')) {
-    if (
-      local.owner === 'guest' ||
-      local.pending ||
-      local.localRevision > local.syncedRevision ||
-      !navigator.onLine
-    )
+  if (local && local.owner === owner) {
+    if (local.session.source_kind === 'additional') throw Error('group_workout_read_only')
+    if (local.pending || local.localRevision > local.syncedRevision || !navigator.onLine)
       return local
     try {
-      const remote = await readSession(id, workspace || local.session.workspace_id)
+      const remote = await readSession(id, institution || local.session.institution_id)
       if (remote?.client_id === owner)
         return editLocalSession(id, (current) => {
           // Another tab may have edited while this read was in flight.
@@ -124,8 +85,9 @@ export async function loadWorkout(id: string, owner: string, workspace?: string)
     return local
   }
   if (owner === 'guest') throw new Error('unauthenticated')
-  const session = await readSession(id, workspace)
+  const session = await readSession(id, institution)
   if (!session) throw new Error('forbidden')
+  if (session.source_kind === 'additional') throw Error('group_workout_read_only')
   // Coach review reads server data separately; this is the client's editing store.
   if (session.client_id !== owner) throw new Error('forbidden')
   return putLocalSession({
@@ -137,6 +99,7 @@ export async function loadWorkout(id: string, owner: string, workspace?: string)
     updatedAt: new Date().toISOString(),
   })
 }
+/** Saves an edit to the local workout draft and marks it as needing synchronization. */
 export async function changeWorkout(id: string, fn: (s: Session) => void) {
   const row = await editLocalSession(id, (r) => {
     fn(r.session)
@@ -149,6 +112,7 @@ export async function changeWorkout(id: string, fn: (s: Session) => void) {
   )
   return row
 }
+/** Sends one saved workout to the server, preventing two uploads for the same workout. */
 export async function syncWorkout(id: string, owner: string) {
   if (owner === 'guest') return getLocalSession(id)
   if (syncing.has(id)) return syncing.get(id)!
@@ -176,28 +140,20 @@ export async function syncWorkout(id: string, owner: string) {
         })
       const op = row.pending!
       try {
-        const result = row.session.workspace_id
-          ? await request<Session>(`/v1/workspaces/${row.session.workspace_id}/sessions`, {
-              method: 'POST',
-              body: JSON.stringify({
-                operation: op.id,
-                action: 'save',
-                view: 'trainee',
-                id,
-                revision: op.expectedVersion,
-                entries: op.entries,
-                note: op.note,
-                complete: op.complete,
-              }),
-            })
-          : await rpc<Session>('save_session', {
-              p_id: id,
-              p_expected_version: op.expectedVersion,
-              p_operation_id: op.id,
-              p_entries: op.entries,
-              p_note: op.note,
-              p_complete: op.complete,
-            })
+        if (!row.session.institution_id) throw new Error('retired_workout')
+        const result = await request<Session>(`/v1/institution/sessions`, {
+          method: 'POST',
+          body: JSON.stringify({
+            operation: op.id,
+            action: 'save',
+            view: 'trainee',
+            id,
+            revision: op.expectedVersion,
+            entries: op.entries,
+            note: op.note,
+            complete: op.complete,
+          }),
+        })
         row = await editLocalSession(id, (r) => {
           if (r.pending?.id !== op.id) return
           r.session.version = result.version
@@ -230,27 +186,11 @@ export async function syncWorkout(id: string, owner: string) {
     syncing.delete(id)
   }
 }
-export async function adoptGuest(id: string, owner: string) {
-  const row = await getLocalSession(id)
-  if (!row || row.owner !== 'guest') throw new Error('invalid_session')
-  const remote = await rpc<Session>('start_session', {
-    p_id: id,
-    p_version_id: row.session.version_id,
-    p_day_id: row.session.day_id,
-  })
-  await editLocalSession(id, (r) => {
-    r.owner = owner
-    r.session.client_id = owner
-    r.session.version = remote.version
-    r.localRevision++
-    r.pending = undefined
-  })
-  return syncWorkout(id, owner)
-}
+/** Replaces a rejected local workout with the current server version after access checks. */
 export async function reloadServerSession(id: string, owner: string) {
   const previous = await getLocalSession(id)
   if (!previous || previous.owner !== owner) throw new Error('forbidden')
-  const remote = await readSession(id, previous.session.workspace_id)
+  const remote = await readSession(id, previous.session.institution_id)
   if (!remote) throw Error('session_missing')
   await storeDraft('conflict-backup:' + owner + ':' + id, previous)
   return putLocalSession({
@@ -262,12 +202,12 @@ export async function reloadServerSession(id: string, owner: string) {
     updatedAt: new Date().toISOString(),
   })
 }
+/** Tries to upload every pending workout draft belonging to the signed-in account. */
 export async function syncPending(owner: string) {
   for (const row of await localSessions(owner)) await syncWorkout(row.id, owner)
 }
 
-async function readSession(id: string, workspace?: string) {
-  return workspace
-    ? request<Session>(`/v1/organization-sessions/${id}`)
-    : rpc<Session | null>('session_document', { p_id: id })
+async function readSession(id: string, institution?: string) {
+  if (!institution) throw new Error('retired_workout')
+  return request<Session>(`/v1/workouts/${id}`)
 }

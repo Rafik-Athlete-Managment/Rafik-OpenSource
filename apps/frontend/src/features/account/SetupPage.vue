@@ -1,3 +1,4 @@
+<!-- Creates the first administrator and institution on a new installation. -->
 <script setup lang="ts">
 import PasswordField from '../../components/PasswordField.vue'
 import { onMounted, ref } from 'vue'
@@ -52,9 +53,9 @@ async function setup() {
     })
     await refreshProfile()
     const admin = contexts.value.find(
-      (context) => context.kind === 'organization' && context.role === 'admin',
+      (context) => context.kind === 'institution' && context.role === 'admin',
     )
-    await router.replace(admin?.path || '/workspaces')
+    await router.replace(admin?.path || '/access')
   } catch (e) {
     error.value = errorMessage(e)
   } finally {
@@ -70,7 +71,7 @@ async function setup() {
       <p>
         {{
           language(
-            'Create the first administrator account and your university or training institution workspace.',
+            'Create the first administrator account for your university or training institution.',
             'أنشئ حساب المشرف الأول ومساحة عمل الجامعة أو المؤسسة التدريبية.',
           )
         }}

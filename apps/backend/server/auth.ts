@@ -13,7 +13,7 @@ import {
   ensureProfileInTransaction,
   type Actor,
 } from "./db.ts";
-import { acceptInvitationSignup } from "./workspaces.ts";
+import { acceptInvitationSignup } from "./institution.ts";
 import { strongPassword } from "@rafik/shared/password";
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -37,6 +37,7 @@ function derive(password: string, salt: Buffer) {
     );
   });
 }
+/** Checks an unknown password against Rafik's shared password rules before saving it. */
 export function validatePassword(value: unknown) {
   if (!strongPassword(value)) throw new ApiError(400, "password_length");
   return value;
@@ -46,11 +47,13 @@ function validateLoginPassword(value: unknown) {
     throw new ApiError(400, "password_length");
   return value;
 }
+/** Converts a password into the salted scrypt value stored by the account system. */
 export async function passwordHash(password: string) {
   const salt = randomBytes(16),
     key = await derive(password, salt);
   return `scrypt$32768$8$1$${salt.toString("hex")}$${key.toString("hex")}`;
 }
+// Verify a dummy hash for unknown emails so login timing reveals less about account existence.
 const dummyPasswordHash = passwordHash(randomBytes(32).toString("hex"));
 async function verifyPassword(password: string, encoded: string | null) {
   if (!encoded) return false;
@@ -87,6 +90,7 @@ function institutionName(value: unknown) {
     throw new ApiError(400, "invalid_institution_name");
   return value.trim();
 }
+/** Finds the signed-in account from the browser session or Android bearer token. */
 export async function identify(req: IncomingMessage): Promise<Actor | null> {
   if (req.headers["x-rafik-client"] === "android") {
     const token = req.headers.authorization?.match(
@@ -195,6 +199,7 @@ async function createMobileSession(user: Actor, deviceName: string) {
   };
 }
 function remoteKey(req: IncomingMessage) {
+  // Trust forwarded addresses only when the operator explicitly enables proxy handling.
   const forwarded =
     process.env.RAFIK_TRUST_PROXY === "true"
       ? req.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim()
@@ -202,7 +207,7 @@ function remoteKey(req: IncomingMessage) {
   return forwarded || req.socket.remoteAddress || "unknown";
 }
 async function setupStatus() {
-  const institutions = await db.workspaces.count({
+  const institutions = await db.institutions.count({
     where: { kind: "organization" },
   });
   return { initialized: institutions > 0 };
@@ -215,12 +220,13 @@ async function initialSetup(
   await rateLimit(`setup:${remoteKey(req)}`, 10, 600);
   const email = emailOf(body.email),
     name = nameOf(body.name),
-    workspaceName = institutionName(body.institution),
+    institutionLabel = institutionName(body.institution),
     password = validatePassword(body.password),
     encoded = await passwordHash(password);
   const user = await db.$transaction(async (tx) => {
+    // Serialize first-run claims so only one request can create the installation's administrator.
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(1179406164,3)::text`;
-    if ((await tx.workspaces.count({ where: { kind: "organization" } })) > 0)
+    if ((await tx.institutions.count({ where: { kind: "organization" } })) > 0)
       throw new ApiError(409, "setup_already_complete");
     const created = await tx.users.create({
       data: {
@@ -230,29 +236,29 @@ async function initialSetup(
       },
     });
     await ensureProfileInTransaction(tx, actor(created), name);
-    const institution = await tx.workspaces.create({
+    const institution = await tx.institutions.create({
       data: {
         id: randomUUID(),
         kind: "organization",
-        name: workspaceName,
+        name: institutionLabel,
         created_by: created.id,
       },
     });
-    await tx.workspace_members.create({
+    await tx.institution_members.create({
       data: {
         id: randomUUID(),
-        workspace_id: institution.id,
+        institution_id: institution.id,
         user_id: created.id,
         roles: ["admin"],
         name,
       },
     });
-    await tx.workspace_events.create({
+    await tx.institution_audit_events.create({
       data: {
-        workspace_id: institution.id,
+        institution_id: institution.id,
         actor_id: created.id,
         kind: "organization_created",
-        detail: { name: workspaceName, setup: true },
+        detail: { name: institutionLabel, setup: true },
       },
     });
     await tx.$queryRaw`SELECT public.claim_instance_branding(${created.id}::uuid)`;
@@ -260,6 +266,7 @@ async function initialSetup(
   });
   return session(res, actor(user));
 }
+/** Handles browser setup, sign-in, sign-out and session requests. */
 export async function authRoute(
   path: string,
   body: Record<string, unknown>,
@@ -312,7 +319,7 @@ export async function authRoute(
       accepted = await acceptInvitationSignup(token, email, name, encoded);
     return {
       ...(await session(res, actor(accepted.user))),
-      workspace_id: accepted.workspace_id,
+      institution_id: accepted.institution_id,
       role: ["admin", "trainer", "trainee"].find((r) =>
         accepted.roles.includes(r),
       ),
@@ -328,34 +335,40 @@ export async function authRoute(
         {
           token_hash: string;
           user_id: string;
-          workspace_id: string;
+          institution_id: string;
           created_by: string;
           expires_at: Date;
         }[]
-      >`SELECT token_hash,user_id,workspace_id,created_by,expires_at FROM identity.password_setup_tokens WHERE token_hash=${hash(body.token as string)} FOR UPDATE`;
+      >`SELECT token_hash,user_id,institution_id,created_by,expires_at FROM identity.password_setup_tokens WHERE token_hash=${hash(body.token as string)} FOR UPDATE`;
       const link = links[0];
       if (!link || link.expires_at <= new Date())
         throw new ApiError(404, "password_setup_unavailable");
-      const [member, creator, workspace, account] = await Promise.all([
-        tx.workspace_members.findFirst({
+      const [member, creator, institution, account] = await Promise.all([
+        tx.institution_members.findFirst({
           where: {
-            workspace_id: link.workspace_id,
+            institution_id: link.institution_id,
             user_id: link.user_id,
             active: true,
           },
         }),
-        tx.workspace_members.findFirst({
+        tx.institution_members.findFirst({
           where: {
-            workspace_id: link.workspace_id,
+            institution_id: link.institution_id,
             user_id: link.created_by,
             active: true,
             roles: { has: "admin" },
           },
         }),
-        tx.workspaces.findUnique({ where: { id: link.workspace_id } }),
+        tx.institutions.findUnique({ where: { id: link.institution_id } }),
         tx.users.findUnique({ where: { id: link.user_id } }),
       ]);
-      if (!member || !creator || !workspace || workspace.archived || !account)
+      if (
+        !member ||
+        !creator ||
+        !institution ||
+        institution.archived ||
+        !account
+      )
         throw new ApiError(404, "password_setup_unavailable");
       await tx.users.update({
         where: { id: account.id },
@@ -397,6 +410,7 @@ export async function authRoute(
   throw new ApiError(404, "not_found");
 }
 
+/** Handles Android sign-in and refresh-token requests without using browser cookies. */
 export async function mobileAuthRoute(
   path: string,
   body: Record<string, unknown>,
@@ -449,6 +463,7 @@ export async function mobileAuthRoute(
       >`SELECT id,user_id,refresh_token_hash,previous_refresh_token_hash,absolute_expires_at,expires_at,revoked_at FROM identity.mobile_sessions WHERE refresh_token_hash=${incomingHash} OR previous_refresh_token_hash=${incomingHash} FOR UPDATE`;
       const session = rows[0];
       if (!session || session.revoked_at) return null;
+      // A reused previous token signals replay or a competing refresh; revoke instead of forking a session.
       if (
         session.previous_refresh_token_hash === incomingHash ||
         session.expires_at <= now ||

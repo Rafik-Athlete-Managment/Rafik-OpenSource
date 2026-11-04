@@ -10,8 +10,10 @@ import {
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { composeFile, dockerCompose } from "./docker.mjs";
+import { localStorageTarget } from "./local-storage-target.mjs";
+const target = localStorageTarget();
 const root = resolve(import.meta.dirname, "../.."),
-  dir = resolve(root, ".local/files"),
+  dir = target.files,
   apply = process.argv.includes("--apply");
 if (
   !readFileSync(composeFile, "utf8").startsWith(
@@ -30,9 +32,9 @@ const referenced = () =>
         "-U",
         "rafik_migrate",
         "-d",
-        "rafik",
+        target.database,
         "-Atc",
-        "select object_path from public.resources union select 'program/'||workspace_id||'/'||id from public.program_media union select 'organization/'||workspace_id||'/'||id from public.organization_assets",
+        "select 'program/'||institution_id||'/'||id from public.program_media union select 'organization/'||institution_id||'/'||id from public.institution_assets",
       ],
       { encoding: "utf8" },
     )

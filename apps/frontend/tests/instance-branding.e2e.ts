@@ -29,7 +29,7 @@ test.afterEach(({}, info) => {
     ],
     {
       cwd: backend,
-      input: `DELETE FROM public.workspaces WHERE created_by IN (SELECT id FROM identity.users WHERE email='${email}'); DELETE FROM identity.users WHERE email='${email}'; UPDATE public.instance_branding SET owner_id=NULL,name='Rafik',accent='#285943',background_light='#f8f8f3',background_dark='#171e1a',logo=NULL,logo_mime=NULL WHERE id=true;`,
+      input: `DELETE FROM public.institutions WHERE created_by IN (SELECT id FROM identity.users WHERE email='${email}'); DELETE FROM identity.users WHERE email='${email}'; UPDATE public.instance_branding SET owner_id=NULL,name='Rafik',accent='#285943',background_light='#f8f8f3',background_dark='#171e1a',logo=NULL,logo_mime=NULL WHERE id=true;`,
       stdio: 'pipe',
     },
   )
@@ -51,9 +51,9 @@ test('the first super admin can set persistent and safe instance branding', asyn
   await page.getByRole('button', { name: 'Create institution and account' }).click()
   expect((await setup).status()).toBe(200)
   await expect(page).toHaveURL(/\/organization\/[a-f0-9-]{36}\/admin/)
-  const workspaceId = page.url().match(/\/organization\/([a-f0-9-]{36})\//)?.[1]
-  expect(workspaceId).toBeTruthy()
-  await page.goto(`/organization/${workspaceId}/admin/settings`)
+  const institutionId = page.url().match(/\/organization\/([a-f0-9-]{36})\//)?.[1]
+  expect(institutionId).toBeTruthy()
+  await page.goto(`/settings`)
   if (arabic) await page.getByRole('button', { name: 'Switch to Arabic' }).click()
   await expect(
     page.getByRole('heading', { name: arabic ? 'هوية التثبيت' : 'Instance branding' }),

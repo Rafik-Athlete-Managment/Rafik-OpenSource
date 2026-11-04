@@ -1,3 +1,4 @@
+<!-- Shared empty state: explains why a list has no results and shows its next action. -->
 <script setup lang="ts">
 import { PhTray } from '@phosphor-icons/vue'
 withDefaults(defineProps<{ title: string; description?: string; compact?: boolean }>(), {

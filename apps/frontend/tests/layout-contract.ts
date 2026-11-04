@@ -44,6 +44,7 @@ export async function layoutIssues(page: Page) {
   })
 }
 
+/** Checks that the conversation list is populated and fits without overlapping the footer. */
 export async function expectUsableInbox(page: Page) {
   await expect.poll(() => page.locator('.conversation-person').count()).toBeGreaterThan(1)
   expect(await layoutIssues(page)).toEqual([])

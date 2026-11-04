@@ -1,3 +1,4 @@
+<!-- Draws one analytics measure over time with labels for its values and period. -->
 <script setup lang="ts">
 import { computed, ref, watch, useId } from 'vue'
 import {
@@ -21,6 +22,8 @@ const props = defineProps<{
   description: string
   items: Item[]
   unit?: string
+  /** Singular form of `unit`, used when a value is exactly 1. */
+  unitOne?: string
   timeline?: boolean
   donut?: boolean
   counts?: boolean
@@ -72,10 +75,11 @@ const tick = (value: number | Date) => {
   return label.length > 14 ? label.slice(0, 13) + '…' : label
 }
 const colors = ['var(--accent)', '#b5793b', '#648892', 'var(--muted)']
+const unitFor = (value: number) => (value === 1 && props.unitOne) || props.unit || ''
 function tip(point: Point) {
   const el = document.createElement('div')
   el.className = 'metric-tooltip'
-  el.textContent = `${point.label}: ${number(point.value)} ${props.unit || ''}`
+  el.textContent = `${point.label}: ${number(point.value)} ${unitFor(point.value)}`
   return el
 }
 function track(_x?: number | Date, _point?: Point, index?: number) {
@@ -114,7 +118,7 @@ function track(_x?: number | Date, _point?: Point, index?: number) {
               :arc-width="26"
               :pad-angle="0.025"
               :central-label="number(total)"
-              :central-sub-label="l('records', 'سجل')"
+              :central-sub-label="total === 1 ? l('record', 'سجل') : l('records', 'سجل')"
               :duration="0"
             />
           </VisSingleContainer>
@@ -234,7 +238,7 @@ function track(_x?: number | Date, _point?: Point, index?: number) {
         <div class="chart-inspector" v-if="current">
           <span
             ><span>{{ current.label }}</span
-            ><strong>{{ number(current.value) }} {{ unit }}</strong></span
+            ><strong>{{ number(current.value) }} {{ unitFor(current.value) }}</strong></span
           >
           <div>
             <button

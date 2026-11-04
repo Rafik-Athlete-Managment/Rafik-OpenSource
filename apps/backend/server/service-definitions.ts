@@ -1,5 +1,5 @@
 import { ApiError } from "./db.ts";
-import { textValue, uuid } from "./workspaces.ts";
+import { textValue, uuid } from "./institution.ts";
 export type Drill = {
   key: string;
   name: string;
@@ -8,6 +8,7 @@ export type Drill = {
   min?: number;
   max?: number;
 };
+/** Reads and validates the assessment fields stored with a template. */
 export function definition(value: unknown): Drill[] {
   if (!Array.isArray(value) || !value.length || value.length > 12)
     throw new ApiError(400, "invalid_assessment");
@@ -43,6 +44,7 @@ export function definition(value: unknown): Drill[] {
     throw new ApiError(400, "invalid_assessment");
   return items;
 }
+/** Checks that submitted results match the template's assessment fields. */
 export function assessmentValues(drills: Drill[], value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new ApiError(400, "invalid_results");
@@ -65,6 +67,7 @@ export function assessmentValues(drills: Drill[], value: unknown) {
     }),
   );
 }
+/** Validates a list of record IDs and enforces its allowed size. */
 export function ids(value: unknown, max: number, min = 1): string[] {
   if (!Array.isArray(value) || value.length < min || value.length > max)
     throw new ApiError(400, "invalid_recipients");
@@ -73,6 +76,7 @@ export function ids(value: unknown, max: number, min = 1): string[] {
     throw new ApiError(400, "invalid_recipients");
   return list;
 }
+/** Parses a date-only value without shifting it through a timezone conversion. */
 export function calendarDate(value: unknown) {
   if (
     typeof value !== "string" ||
@@ -84,6 +88,7 @@ export function calendarDate(value: unknown) {
   return value;
 }
 
+/** Converts an optional paging value to a safe non-negative offset. */
 export function pageOffset(value: string | null) {
   if (value === null) return 0;
   if (

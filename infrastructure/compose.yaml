@@ -65,6 +65,7 @@ services:
       NODE_ENV: production
       RAFIK_RUNTIME_MODE: self-hosted-university
       RAFIK_TRUST_PROXY: 'true'
+      RAFIK_DISABLE_WORKOUT_SCHEDULER: ${RAFIK_DISABLE_WORKOUT_SCHEDULER:-false}
       HOST: 0.0.0.0
       PORT: 55331
       DATABASE_URL: postgresql://rafik_api:${RAFIK_API_PASSWORD:-}@db:5432/rafik

@@ -1,3 +1,4 @@
+<!-- Food picker: searches the catalog and adds a selected food to a meal. -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { request } from '../../lib/backend'

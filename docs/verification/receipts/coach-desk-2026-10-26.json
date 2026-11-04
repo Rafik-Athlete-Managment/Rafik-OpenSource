@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-26",
+  "baseCommit": "690981f",
+  "scope": "Approved balanced web coach overview; Field launch reserved for tablet",
+  "checks": [
+    {
+      "command": "npm run test:workout-sequence",
+      "passed": true,
+      "cases": 1,
+      "coverage": [
+        "disjoint recording/today/planning predicates",
+        "counts before pagination",
+        "scheduling/start movement",
+        "existing progression/retry/restrictions"
+      ]
+    },
+    {
+      "command": "node apps/frontend/scripts/isolated-browser.mjs delegated-sessions.e2e.ts --grep \"coach desk shows\" --project=chromium --project=webkit-phone --max-failures=1",
+      "passed": true,
+      "cases": 2,
+      "coverage": [
+        "real planning response and acknowledged scheduling",
+        "English/light and Arabic/dark",
+        "layout and Axe",
+        "synthetic long status presentation",
+        "failed-refresh retention and recovery"
+      ]
+    },
+    {
+      "command": "Frontend/backend typechecks, both source inventories and docs:check",
+      "passed": true
+    }
+  ],
+  "limits": [
+    "Mocked status presentation is not authorization evidence",
+    "Populated event streams, later queue pages and supporting-only roster usability need founder checks",
+    "Former due-command recovery retains the exact durable scope; no new stored-replay browser fault case",
+    "No native build, full browser suite, schema migration or preview reset"
+  ],
+  "sourceSha256": {
+    "apps/backend/server/programming.ts": "e3f5463ef8ccf40a4010b45afa3eb404d59d5f68b235004ee4374e0a92488a0f",
+    "apps/backend/openapi.json": "dec70f6568ba4dcbd65782a03394a4b4fcd80c9d06992d89542ac87673aa6efe",
+    "apps/frontend/src/features/institution/CoachDesk.vue": "a23939de25f3ec1843d6bb6010c3304edd3d3d25ce0faccaab2da36c075f8e98",
+    "apps/frontend/src/features/institution/DashboardPage.vue": "7e7d8290fad316376960792ccf99838858da5b629b28d75b812f44e6d7d54ee1",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "d1dc7f65fe336e5c5be537cd36e0ba8c240bba82ea415c2b9b3cc9a1fe06430a",
+    "apps/frontend/src/features/institution/FollowUpPanel.vue": "1afac13aa38c10b46e015e75edc2dcc5cb80904c6bcde3d369ed1b662d2b0219",
+    "apps/frontend/src/features/institution/UpcomingSessions.vue": "f47aa0f6f23a6d1a9037ac81038560e7d5f74ef2222214550d9ac7e5b7b8144b",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "89e4296606790ce9c54bf9837ec502d73e32cbe1ba780151ff6b88bceb300bb3"
+  }
+}

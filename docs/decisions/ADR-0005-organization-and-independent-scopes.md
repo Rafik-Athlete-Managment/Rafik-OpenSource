@@ -13,8 +13,8 @@ Use one authentication identity and explicit business contexts. The original all
 Use a small fixed role model, not a configurable permission-builder:
 
 - Independent practice: coach and enrolled trainee access, with existing explicit coaching relationships.
-- Organization: organization admin, organization trainer and organization trainee. The combined-role allowance in the original decision is superseded by ADR 0019.
-- Platform administrator: separate operator grant. Organization admins cannot grant it or act on other organizations. Platform support access is an explicit, audited operational capability, not ambient access to every private message.
+- Institution: organization admin, organization trainer and organization trainee. The combined-role allowance in the original decision is superseded by ADR 0019.
+- Platform administrator: separate operator grant. Institution admins cannot grant it or act on other organizations. Platform support access is an explicit, audited operational capability, not ambient access to every private message.
 
 Represent a workspace as the isolation/ownership boundary with a fixed kind (`independent` or `organization`), not as a generic hierarchy. The term workspace is an implementation detail; the UI names the actual practice/organization. An independent practice has a responsible coach; an organization has active administrator memberships. No mandatory sole-owner organizational role is introduced.
 
@@ -22,7 +22,7 @@ The target relational model comprises identity, workspace, membership, membershi
 
 Programs, organization-delivered trainee records, groups, assessments and calendar events retain their owning workspace through staff changes. Authorship (`createdBy`/`reviewedBy`) is separate from ownership. Shared UI/domain logic can support both kinds, but authorization and recipient queries explicitly use the current context. An organization's trainer assignment links memberships in that organization. Start with one responsible trainer per trainee; do not add arbitrary supervisory hierarchies or configurable workflow engines.
 
-Organization admins administer their organization's memberships, assignments, catalog, scheduling and organizational training/assessment oversight. Organization trainers act on assigned trainees, authored/authorized programs and assigned assessor duties. Organization trainees see their own delivery/results and the authorized internal catalog. Organization-admin authority does not expose a person's independent coaching, personal self-tracking or unrelated private conversations. Files and messages have explicit audiences within the scope; membership alone is not a blanket read grant.
+Institution admins administer their organization's memberships, assignments, catalog, scheduling and organizational training/assessment oversight. Institution trainers act on assigned trainees, authored/authorized programs and assigned assessor duties. Institution trainees see their own delivery/results and the authorized internal catalog. Institution-admin authority does not expose a person's independent coaching, personal self-tracking or unrelated private conversations. Files and messages have explicit audiences within the scope; membership alone is not a blanket read grant.
 
 An internal trainer reassignment changes responsibility while preserving organization-owned history; it does not copy the trainee into a new independent coaching relationship. Preserve started immutable prescriptions and authorship; remove the previous trainer's access as appropriate and make open duties visible. Organizational enrollment acceptance and notice of staff changes are distinct from a repeated consent ceremony for every internal staff reassignment. Removing the final active admin is rejected unless using an explicit audited organization-closure/recovery operation.
 

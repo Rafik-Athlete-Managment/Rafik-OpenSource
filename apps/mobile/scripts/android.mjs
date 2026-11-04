@@ -1,8 +1,11 @@
+import { secureTooling } from '../../../scripts/tooling-security.mjs'
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { spawn, spawnSync } from 'node:child_process'
+
+secureTooling({ check: true })
 
 const mobile = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)

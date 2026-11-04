@@ -1,0 +1,386 @@
+{
+  "App.vue": {
+    "purpose": "Shell, theme initialization, global account utilities, responsive sidebar/drawer and RouterView."
+  },
+  "components/AppUpdates.vue": {
+    "purpose": "Service-worker update status and explicit check; postpones activation until existing tabs close."
+  },
+  "components/TimezoneClock.vue": {
+    "purpose": "Account-timezone digital clock linking to settings, shown in the desktop header and phone navigation menu."
+  },
+  "components/AthleteSearch.vue": {
+    "purpose": "Shared bilingual athlete-name search input with a model binding."
+  },
+  "components/CommandStatus.vue": {
+    "purpose": "Exact-command persistence, uncertain outcome, retry and rejection feedback."
+  },
+  "components/EmptyState.vue": {
+    "purpose": "Shared icon-led empty/no-match state with optional action slot."
+  },
+  "components/ExerciseDemo.vue": {
+    "purpose": "Movement demonstration using authorized media or the maintained reference illustration/video."
+  },
+  "components/ExercisePicker.vue": {
+    "purpose": "Searchable exercise library popup with equipment/body-area filters and stable selection."
+  },
+  "components/ExerciseVideo.vue": {
+    "purpose": "Accessible motion playback with pause, loading/error recovery and reduced-motion handling."
+  },
+  "components/FileDropzone.vue": {
+    "purpose": "Shared file-selection/drop surface; emits chosen files while the caller owns validation and upload."
+  },
+  "components/ListPagination.vue": {
+    "purpose": "Record totals, page actions and bounded records-per-page selection."
+  },
+  "components/MonthCalendar.vue": {
+    "purpose": "Keyboard-operable month grid and selected-date emission."
+  },
+  "components/MultiChoice.vue": {
+    "purpose": "Reusable searchable multi-select with selected items and clearing."
+  },
+  "components/OverflowMenu.vue": {
+    "purpose": "Labelled menu for secondary or destructive record actions and the coach New menu; items navigate or emit a key while the caller owns the action."
+  },
+  "components/PageHeading.vue": {
+    "purpose": "Semantic page-heading layout and action slots."
+  },
+  "components/PageState.vue": {
+    "purpose": "Loading/error/retry wrapper that retains responsibility for data in its parent."
+  },
+  "components/PasswordField.vue": {
+    "purpose": "Password input with an accessible show/hide action."
+  },
+  "components/ResourceAsset.vue": {
+    "purpose": "Authorized private-media preview/download with object-URL lifecycle cleanup."
+  },
+  "components/ResourceUpload.vue": {
+    "purpose": "Institution-file upload, including batch composer mode and exact uncertain-upload retry."
+  },
+  "components/ScheduleViewSwitch.vue": {
+    "purpose": "Calendar/list route switch preserving query state with a short transition."
+  },
+  "components/SectionHeader.vue": {
+    "purpose": "Shared section heading, description and action grouping."
+  },
+  "components/SidePanel.vue": {
+    "purpose": "Contextual side panel dialog for in-place tasks (scheduling, record history) with locked dismissal during writes and explicit focus return."
+  },
+  "components/TimezonePicker.vue": {
+    "purpose": "Searchable IANA timezone selection."
+  },
+  "features/account/AccessPage.vue": {
+    "purpose": "Membership/connection recovery with explicit refresh and sign-out.",
+    "access": "Signed-in accounts; no institution membership is required to show recovery.",
+    "entry": "Router membership/network failure guard; retry or sign out."
+  },
+  "features/account/EntryPage.vue": {
+    "purpose": "Dispatch root to first-run setup, sign-in or the current institution dashboard.",
+    "access": "Public entry; setup status is read without creating an account.",
+    "entry": "Root URL, brand link and missing-page recovery."
+  },
+  "features/account/HelpPage.vue": {
+    "purpose": "Institution workflow help, scope/privacy explanation and reference-media credits.",
+    "access": "Public help; shell utilities vary with session state."
+  },
+  "features/account/LocalPreview.vue": {
+    "purpose": "Synthetic administrator/coach/athlete/operator entry for explicitly enabled local development.",
+    "access": "Development build only, plus local-preview API configuration; never production acquisition.",
+    "entry": "DEV-only shell utility; requires explicit local-preview backend flag."
+  },
+  "features/account/LoginPage.vue": {
+    "purpose": "Password sign-in with safe next-path handling and current-context redirect.",
+    "access": "Public; successful identity still needs current institution or operator authority."
+  },
+  "features/account/PasswordSetupPage.vue": {
+    "purpose": "Choose a password through an administrator-issued expiring single-use reset/setup token.",
+    "access": "Public token entry; backend validates the token, expiry and password rules.",
+    "entry": "Administrator-issued password setup/reset URL shared out of band; not a sidebar item."
+  },
+  "features/account/SettingsPage.vue": {
+    "purpose": "Own profile/preferences, session diagnostics, updates, export, sign-out and account-deletion recovery.",
+    "access": "Signed-in account; own data only. Institution-wide settings use a separate route."
+  },
+  "features/account/SetupPage.vue": {
+    "purpose": "First-run institution and initial super-admin creation.",
+    "access": "Public only while the instance is uninitialized; backend atomically closes setup after success.",
+    "entry": "Root setup-status dispatch only before initialization."
+  },
+  "features/analytics/AnalyticsPage.vue": {
+    "purpose": "Institution/coaching analytics with activity, delivery and experience tabs and scoped filters.",
+    "access": "Administrator institution totals; coaches current authorized responsibility. Athlete reads are refused by the API."
+  },
+  "features/analytics/ExperienceReport.vue": {
+    "purpose": "Separately labelled athlete session experience and coach workplace satisfaction summaries."
+  },
+  "features/analytics/MetricChart.vue": {
+    "purpose": "Responsive metrics chart with tooltip, table equivalent and optional server-authorized record links."
+  },
+  "features/analytics/TrainerDelivery.vue": {
+    "purpose": "Coach workload/delivery comparisons with labelled activity measures."
+  },
+  "features/coaching/DeliverPlan.vue": {
+    "purpose": "Published-program assignment, athlete selection, concurrent-plan conflict review and replacement choices.",
+    "access": "Administrators and authorized coaches; recipients and program/version access are checked server-side."
+  },
+  "features/coaching/ExercisesPage.vue": {
+    "purpose": "Exercise library discovery plus dedicated new/edit route modes, taxonomy and private-media authoring.",
+    "access": "Administrator/coach catalog authority; editability depends on institution/private ownership. Athletes cannot author the catalog."
+  },
+  "features/coaching/PlanEditor.vue": {
+    "purpose": "Program draft editor and immutable-version preview, prescription structure, cover, publication and assignment links.",
+    "access": "Administrators/coaches edit within program ownership rules; athletes read only their own assigned immutable versions, not staff drafts or unassigned versions."
+  },
+  "features/coaching/PlansPage.vue": {
+    "purpose": "Paginated/searchable program library and entry to create, preview or edit.",
+    "access": "Current institutional members; athletes receive only their own assigned immutable versions, staff authoring remains gated."
+  },
+  "features/coaching/PrescriptionFields.vue": {
+    "purpose": "Measurement-aware sets, reps, load, duration, distance, effort and per-set prescription controls."
+  },
+  "features/coaching/ProgramCover.vue": {
+    "purpose": "Published program-cover image with unavailable-image fallback, lazy loading and reset when the ID changes."
+  },
+  "features/coaching/ReviewPage.vue": {
+    "purpose": "Recorded-workout review, actual results, correction/version information and coach feedback.",
+    "access": "Administrators and authorized coaches for the referenced institutional workout; API decides subject scope."
+  },
+  "features/institution/AssessmentHistory.vue": {
+    "purpose": "Athlete assessment result history with comparable drill charts and versioned results.",
+    "access": "Athlete own results; staff only within current subject/event authority."
+  },
+  "features/institution/AthletePlans.vue": {
+    "purpose": "Paginated staff assignment directory with dedicated detail routes; no embedded editor/detail below filters.",
+    "access": "Administrators and training-authorized coaches; supporting links follow the training-scope contract.",
+    "screen": true
+  },
+  "features/institution/AthleteProfile.vue": {
+    "purpose": "Person profile with real overview/plans/workouts/assessments/nutrition/participation/manage tabs according to subject role.",
+    "access": "Administrators can inspect/manage institutional people. Coaches can inspect their authorized athletes, not a staff directory; sensitive sections retain separate API restrictions."
+  },
+  "features/institution/AthleteTraining.vue": {
+    "purpose": "Athlete next-workout agenda and access to unsynced device records; no arbitrary plan-day chooser.",
+    "access": "Athlete self through TrainingRoute; authorization for any subject remains server-owned.",
+    "screen": true
+  },
+  "features/institution/BrandingSettings.vue": {
+    "purpose": "Instance name, accent, theme backgrounds and logo editing with authorized capability check.",
+    "access": "Initial super admin only, inside administrator institution settings.",
+    "screen": true
+  },
+  "features/institution/ChannelEditor.vue": {
+    "purpose": "Conversation participant/group editing with authorized roster selection.",
+    "access": "Current channel authority; private-pair and group membership rules are enforced by communication API.",
+    "screen": true
+  },
+  "features/institution/ChannelsPage.vue": {
+    "purpose": "Conversation directory, unified people/thread search and selection without a separate start page.",
+    "access": "Institution members see their own channels; staff can initiate authorized conversations and athletes can initiate pairs with active assigned coaches. Administrators do not gain unrelated private-pair access."
+  },
+  "features/institution/ChannelThread.vue": {
+    "purpose": "Message timeline, pagination, per-thread draft, attachment staging, send and participant controls.",
+    "access": "Authorized participants only; byte and mutation permissions are rechecked server-side.",
+    "screen": true
+  },
+  "features/institution/CoachingTeam.vue": {
+    "purpose": "Coach-first supporting selection with immediate acknowledged writes, optional filters, explicit access scope when ambiguous and revision-safe link removal."
+  },
+  "features/institution/DashboardPage.vue": {
+    "purpose": "Role dashboard and route-selected People, Activity and Institution settings sections, invitations and close-institution confirmation.",
+    "access": "Dashboard: all members. People: administrators and coaches with scoped roster. Activity/settings: administrator router gate; branding has a stricter initial-admin check."
+  },
+  "features/institution/DelegatedWorkout.vue": {
+    "purpose": "Coach recording of an assigned athlete workout with actual measurement-aware results.",
+    "access": "Administrators or training-authorized coaches; selected assignment/session permission is checked by API."
+  },
+  "features/institution/EventComposer.vue": {
+    "purpose": "Plan-workout scheduling through the shared agenda, plus separate custom-event and assessment creation with people, timezone and template handoff.",
+    "access": "Staff with schedule authority; server validates people, template and event scope."
+  },
+  "features/institution/EventDetail.vue": {
+    "purpose": "Scheduled event detail, roster attendance, assessment scores, completion, correction history and makeup links.",
+    "access": "Administrators, designated coach staff and participating athletes receive different authorized projections/actions."
+  },
+  "features/institution/FeedbackPage.vue": {
+    "purpose": "Athlete session ratings or coach workplace feedback with prior submissions.",
+    "access": "Athlete self or coach self; administrators use analytics instead of submitting personal feedback here."
+  },
+  "features/institution/FollowUpPanel.vue": {
+    "purpose": "Derived dashboard follow-ups for missed events, unreviewed workouts, overdue outcomes and unplanned athletes; no Task records."
+  },
+  "features/institution/InjuryStatus.vue": {
+    "purpose": "Consent-gated participation status, reporting/correction/closure, policy configuration and athlete export.",
+    "access": "Athletes manage their own sensitive record; designated primary coaches receive limited status; administrators configure policy, not unrestricted injury details."
+  },
+  "features/institution/InvitationPage.vue": {
+    "purpose": "Accept a seven-day institution invitation and create/sign into the invited account.",
+    "access": "Public single-use token entry; backend checks expiry, recipient identity and role before membership creation.",
+    "entry": "Administrator-generated invitation URL shared out of band; not a sidebar item."
+  },
+  "features/institution/MemberManagement.vue": {
+    "purpose": "Profile management of identity/access, active state, coach links, sports and password reset issuance.",
+    "access": "Administrators only through the profile Manage tab; each write is authorized and revision checked.",
+    "screen": true
+  },
+  "features/institution/MemberPicker.vue": {
+    "purpose": "Server-searchable authorized roster picker preserving selected identities across result pages."
+  },
+  "features/institution/MemberSports.vue": {
+    "purpose": "Selectable sport/specialty buttons for role-relevant institutional metadata."
+  },
+  "features/institution/PersonActionIcon.vue": {
+    "purpose": "Decorative SVG profile/message/manage action glyphs; the owning button/link supplies the accessible label."
+  },
+  "features/institution/RatingForm.vue": {
+    "purpose": "Reusable scored feedback form with draft recovery, save and discard."
+  },
+  "features/institution/ScheduleCalendar.vue": {
+    "purpose": "Timezone-aware calendar plus selected-day booked cards, pagination, month/week/day controls and list switch.",
+    "access": "Members receive authorized events; staff create and view assigned/institution events, athletes only their participation."
+  },
+  "features/institution/ScheduledEvents.vue": {
+    "purpose": "Paginated/searchable Schedule list for training events and assessments, paired with calendar mode.",
+    "access": "Administrators institution-wide; coaches designated events; no unrestricted athlete event index."
+  },
+  "features/institution/ServiceCatalog.vue": {
+    "purpose": "Shared group and assessment-template library with distinct list/create/edit route modes.",
+    "access": "Staff; server differentiates group and template commands and validates staff/participant scope."
+  },
+  "features/institution/SessionHistory.vue": {
+    "purpose": "Searchable paginated recorded solo-workout history; separate from scheduled group events.",
+    "access": "Administrators institution-wide, coaches training-authorized subjects, athletes own results where delivery permits."
+  },
+  "features/institution/SessionNote.vue": {
+    "purpose": "Institution session/event note editor with acknowledged revision and uncertain-command recovery."
+  },
+  "features/institution/SportsSettings.vue": {
+    "purpose": "Institution sport and coaching-specialty taxonomy creation, editing and archival.",
+    "access": "Administrator settings only; linked historical metadata is retained by server lifecycle rules.",
+    "screen": true
+  },
+  "features/institution/TrainingRoute.vue": {
+    "purpose": "Role dispatcher to athlete training or staff athlete-plan index.",
+    "access": "Institution members; athlete self screen versus authorized staff browse screen."
+  },
+  "features/institution/UpcomingSessions.vue": {
+    "purpose": "Current role's bounded upcoming-event dashboard summary and detail links."
+  },
+  "features/navigation/DashboardNav.vue": {
+    "purpose": "Single role-aware sidebar/phone drawer navigation, grouped collapse and active-section highlighting."
+  },
+  "features/notifications/NotificationPreferences.vue": {
+    "purpose": "Own in-app/email preference and quiet-hour controls; configuration is distinct from delivery."
+  },
+  "features/notifications/NotificationsPage.vue": {
+    "purpose": "Authorized notification inbox, mark/read navigation and embedded preference editing.",
+    "access": "Signed-in recipient only; API resolves and reauthorizes every destination."
+  },
+  "features/nutrition/FoodPicker.vue": {
+    "purpose": "Source-backed food search and selection with nutrition/provenance details."
+  },
+  "features/nutrition/MacroPlanner.vue": {
+    "purpose": "Nutrition target planning from source kcal and macros without treating unknown values as zero."
+  },
+  "features/nutrition/MealFields.vue": {
+    "purpose": "Consumed-food amount/unit/nutrient controls; keeps source and manual quantities distinct."
+  },
+  "features/nutrition/MealPlanEditor.vue": {
+    "purpose": "Published-guidance example-day authoring with food search, manual items and nutrient controls."
+  },
+  "features/nutrition/NutrientFields.vue": {
+    "purpose": "Shared numeric energy/macro input group preserving source precision and unknown values."
+  },
+  "features/nutrition/NutritionPage.vue": {
+    "purpose": "Athlete nutrition detail, staff guidance authoring/publication, example meals, diary sharing, actual intake and version/history recovery.",
+    "access": "Athlete own diary; administrator/primary coach guidance within scoped API rules. Supporting coaches do not acquire nutrition access merely through training links.",
+    "screen": true
+  },
+  "features/nutrition/NutritionPlans.vue": {
+    "purpose": "Browse-first paginated nutrition-guidance index and selected-athlete create/open actions.",
+    "access": "Administrators and authorized primary coaches; summaries do not grant diary visibility.",
+    "screen": true
+  },
+  "features/nutrition/NutritionRoute.vue": {
+    "purpose": "Dispatch staff nutrition index versus own/selected-athlete detail using member/plan query state.",
+    "access": "Current institution member; underlying detail and list endpoints separately enforce subject/diary permissions."
+  },
+  "features/platform/PlatformPage.vue": {
+    "purpose": "Local operator support queue, retention/operation retry, diagnostics and authorized audit reads.",
+    "access": "Separate platform-administrator grant; institutional administrator role alone is insufficient."
+  },
+  "features/public/NotFound.vue": {
+    "purpose": "Ordinary missing-route state with root recovery action.",
+    "access": "Public fallback; not a retired-feature landing page.",
+    "entry": "Router fallback for unsupported and deleted URLs."
+  },
+  "features/public/PrivacyPage.vue": {
+    "purpose": "Instance-local privacy statement and link to Help.",
+    "access": "Public; deployment-specific legal acceptance remains the institution's responsibility."
+  },
+  "features/resources/ResourcesPage.vue": {
+    "purpose": "One searchable institution upload/resource library with preview, archive and restore.",
+    "access": "Authorized staff; ownership/scope controls mutation and every private-byte read is checked."
+  },
+  "features/support/SupportPage.vue": {
+    "purpose": "Local support request creation, own case history and resolve/reopen; no automatic external email.",
+    "access": "Signed-in reporter sees own requests; separate authorized platform operators handle responses."
+  },
+  "features/training/WorkoutPage.vue": {
+    "purpose": "Athlete's institutional workout recorder with measured actuals, local persistence, exact sync, conflict recovery and completion summary.",
+    "access": "Signed-in institutional athlete owning the workout; server and local owner/workspace checks remain authoritative."
+  },
+  "features/institution/WorkoutAgenda.vue": {
+    "purpose": "Shared read-only next-workout projection, fixed-time scheduling/reschedule/skip and occurrence-bound start/resume with durable command recovery."
+  },
+  "features/institution/AssignedPlanPage.vue": {
+    "purpose": "Dedicated assigned-plan review, scoped workout scheduling and adaptation from the assigned immutable snapshot using the shared editor.",
+    "access": "Administrators and authorized primary/sport-supporting coaches; athletes redirected before rendering."
+  },
+  "features/institution/CoachDesk.vue": {
+    "purpose": "Balanced coach dashboard: disjoint recording/due/planning queues, today events, limited primary-roster participation status and compact follow-up.",
+    "access": "Coach dashboard only; all reads retain existing server primary/sport authority and limited injury-status visibility."
+  },
+  "features/institution/ActivityLog.vue": {
+    "purpose": "Administrator activity log: institution audit events in plain words, grouped by day, with acting and affected member names. Administrators only."
+  },
+  "features/institution/AdminOverview.vue": {
+    "purpose": "Administrator overview: existing institution activity/attendance reporting, current roster coverage and operational navigation. No clinical data."
+  },
+  "features/institution/AthleteDay.vue": {
+    "purpose": "Athlete daily dashboard: own workout agenda, upcoming events, food-diary entry and assigned coach messaging."
+  },
+  "features/institution/WorkoutRuleSettings.vue": {
+    "purpose": "Staff plan scheduling policy: bounded weekly appointments or opt-in day-only preparation, diagnostics, exact-command recovery and future-rule stop/edit."
+  },
+  "features/coaching/WorkoutFields.vue": {
+    "purpose": "Single-workout authoring wrapper using the same exercise cards as Programs; duration, add/remove/order and empty state.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutPreview.vue": {
+    "purpose": "Read-only prescribed workout preview; no inferred readiness/load claims.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutTemplatePicker.vue": {
+    "purpose": "Searchable paginated shared workout selection with retained identity and stale-revision warning.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutTemplatesPage.vue": {
+    "purpose": "Institution-shared workout library, archive filter and dedicated create/preview/edit entry.",
+    "access": "Active institution staff; calling API preserves current authority."
+  },
+  "features/coaching/WorkoutTemplateEditor.vue": {
+    "purpose": "Scoped recoverable single-workout editor and readonly preview, exact save/archive and independent imports.",
+    "access": "Active staff read; creator/administrator edits."
+  },
+  "features/institution/GroupWorkoutPanel.vue": {
+    "purpose": "Shared event prescription, paginated participant outcomes, individual adaptation/start and explicit skip with durable command recovery.",
+    "access": "Event staff record; administrators review; athletes see only their own results."
+  },
+  "components/ExerciseMediaPreview.vue": {
+    "purpose": "On-demand exercise-media dialog with retained source credits, public reference thumbnails on large screens and authorized private media reads through ExerciseDemo.",
+    "access": "Consumers supply already-authorized catalog or snapshot metadata; asset endpoints retain authority."
+  },
+  "features/coaching/WorkoutExerciseCard.vue": {
+    "purpose": "Shared program/template/group-participant exercise authoring card: ordering, grouping, targets, same-type alternatives, coaching notes and on-demand media.",
+    "access": "Staff editors only; save/record authority remains in their existing server services."
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-29",
+  "baseline": "945e030",
+  "before": {
+    "command": "npm audit --offline=false --json",
+    "exitCode": 1,
+    "counts": {
+      "total": 10,
+      "high": 4,
+      "moderate": 1,
+      "low": 5
+    },
+    "advisoryRoots": [
+      "node-forge",
+      "fast-uri",
+      "zod",
+      "deepmerge"
+    ]
+  },
+  "changed": {
+    "node-forge": [
+      "1.4.0",
+      "1.4.2"
+    ],
+    "fast-uri": [
+      "3.1.8",
+      "3.1.9"
+    ]
+  },
+  "after": {
+    "command": "npm audit --offline=false --json",
+    "exitCode": 1,
+    "counts": {
+      "total": 8,
+      "high": 3,
+      "moderate": 0,
+      "low": 5
+    },
+    "advisoryRoots": [
+      "zod",
+      "deepmerge"
+    ]
+  },
+  "productionAudits": {
+    "backend": {
+      "command": "npm audit --offline=false --omit=dev --workspace @rafik/backend --json",
+      "exitCode": 0,
+      "total": 0
+    },
+    "frontend": {
+      "command": "npm audit --offline=false --omit=dev --workspace @rafik/frontend --json",
+      "exitCode": 0,
+      "total": 0
+    }
+  },
+  "lockfileSha256": "897b181081283684ed666da74cc1edeb16e9b02243127bf9f4642a92a38d6200",
+  "limits": [
+    "No Android build/device test",
+    "No framework upgrade or forced override",
+    "Main and GitHub alert state unchanged"
+  ]
+}

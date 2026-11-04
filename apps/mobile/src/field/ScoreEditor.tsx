@@ -1,12 +1,13 @@
 import { useLanguage } from './Language'
 import { useRef, useState } from 'react'
-import { Text, TextInput, View } from 'react-native'
+import { Text, View } from 'react-native'
 import type { FieldResult, FieldResultCommand } from '@rafik/shared/contracts'
 import { failureText, scoreValues, type FieldDrill, type Owner, type ScoreDraft } from './model'
 import type { FieldStore } from './store'
 import { operationId } from './native'
-import { Button, type Styles } from './ui'
+import { Button, Field, Notice, SectionLabel, type Styles } from './ui'
 
+/** Lets a coach enter, save and retry one athlete's assessment results on the device. */
 export function ScoreEditor({
   owner,
   event,
@@ -60,11 +61,14 @@ export function ScoreEditor({
   const sequence = useRef(0)
   const commandBusy = useRef(false)
   const flight = useRef<Promise<void>>(Promise.resolve())
-  const [status, setStatus] = useState(savedDraft ? 'Draft restored from this device.' : '')
+  const [status, setStatus] = useState(
+    savedDraft ? 'Unsynced draft restored from this device.' : '',
+  )
   const [persisting, setPersisting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  // Keep typed values as strings and finish their device write before creating a server command.
   function edit(next: ScoreDraft) {
     if (locked || commandBusy.current) return
     draftRef.current = next
@@ -72,7 +76,7 @@ export function ScoreEditor({
     setError('')
     setPersisting(true)
     onPersisting(true)
-    setStatus('Saving score draft on this device…')
+    setStatus('')
     const version = ++sequence.current
     const write = store.saveDraft(owner, event, next)
     flight.current = write
@@ -81,7 +85,7 @@ export function ScoreEditor({
         if (version !== sequence.current) return
         setPersisting(false)
         onPersisting(false)
-        setStatus('Score draft saved on this device. Not yet submitted.')
+        setStatus('')
         void onDraftSaved().catch((error) => onError(failureText(error)))
       })
       .catch((e) => {
@@ -140,13 +144,12 @@ export function ScoreEditor({
     }
   }
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>
+    <View style={[styles.inset, { gap: 12 }]}>
+      <SectionLabel styles={styles}>
         {name} {t('· Assessment scores')}
-      </Text>
-      <Text style={styles.hint}>
-        {' '}
-        {t('Assessor-led performance measurements. These are not clinical findings.')}{' '}
+      </SectionLabel>
+      <Text style={styles.meta}>
+        {t('Assessor-led performance measurements. These are not clinical findings.')}
       </Text>
       {definition.map((drill) => (
         <View key={drill.key} style={{ gap: 6 }}>
@@ -154,13 +157,13 @@ export function ScoreEditor({
             {drill.name}
             {drill.unit ? ` (${drill.unit})` : ''}
           </Text>
-          <TextInput
+          <Field
+            styles={styles}
             accessibilityLabel={`${drill.name}${drill.unit ? ` (${drill.unit})` : ''}`}
             value={draft.values[drill.key] || ''}
             editable={!locked && !submitting}
             keyboardType={drill.kind === 'number' ? 'decimal-pad' : 'default'}
             maxLength={drill.kind === 'number' ? 40 : 1000}
-            style={styles.input}
             onChangeText={(value) =>
               edit({
                 ...draftRef.current,
@@ -169,8 +172,7 @@ export function ScoreEditor({
             }
           />
           {drill.min !== undefined || drill.max !== undefined ? (
-            <Text style={styles.hint}>
-              {' '}
+            <Text style={styles.meta}>
               {t('Allowed:')} {drill.min ?? t('no minimum')} {t('to')}{' '}
               {drill.max ?? t('no maximum')}
               {drill.unit ? ` ${drill.unit}` : ''}
@@ -179,13 +181,14 @@ export function ScoreEditor({
         </View>
       ))}
       <Text style={styles.label}>{t('Assessor note (optional)')}</Text>
-      <TextInput
+      <Field
+        styles={styles}
         accessibilityLabel={t('Assessor note')}
         value={draft.note}
         editable={!locked && !submitting}
         multiline
         maxLength={2000}
-        style={[styles.input, { minHeight: 90, paddingVertical: 12 }]}
+        style={{ minHeight: 90, paddingVertical: 12, textAlignVertical: 'top' }}
         onChangeText={(note) => edit({ ...draftRef.current, note })}
       />
       {status ? (
@@ -193,30 +196,36 @@ export function ScoreEditor({
           {t(status)}
         </Text>
       ) : null}
-      {error ? (
-        <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {t(error)}
-        </Text>
-      ) : null}
+      {error ? <Notice text={t(error)} tone="danger" styles={styles} live /> : null}
+      <View style={styles.actionRow}>
+        <View style={styles.actionCell}>
+          <Button
+            title={submitting ? 'Saving scores…' : result ? 'Save score correction' : 'Save scores'}
+            disabled={locked || persisting || submitting}
+            onPress={() => void submit()}
+            styles={styles}
+            primary
+            fill
+          />
+        </View>
+        <View style={styles.actionCell}>
+          <Button
+            title="Close editor"
+            disabled={persisting || submitting}
+            onPress={() => {
+              void flight.current.then(onClose).catch((e) => setError(failureText(e)))
+            }}
+            styles={styles}
+            fill
+          />
+        </View>
+      </View>
       <View style={styles.actions}>
-        <Button
-          title={submitting ? 'Saving scores…' : result ? 'Save score correction' : 'Save scores'}
-          disabled={locked || persisting || submitting}
-          onPress={() => void submit()}
-          styles={styles}
-          primary
-        />
-        <Button
-          title="Close editor"
-          disabled={persisting || submitting}
-          onPress={() => {
-            void flight.current.then(onClose).catch((e) => setError(failureText(e)))
-          }}
-          styles={styles}
-        />
         {savedDraft || sequence.current > 0 ? (
           <Button
             title="Discard draft"
+            small
+            danger
             disabled={persisting || submitting}
             onPress={() => void discard()}
             styles={styles}
@@ -225,6 +234,7 @@ export function ScoreEditor({
         {error && !locked ? (
           <Button
             title="Retry device save"
+            small
             disabled={persisting || submitting}
             onPress={() => edit(draftRef.current)}
             styles={styles}

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { randomUUID, randomBytes } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 
 async function inspect(page: Page, name: string, info: { project: { name: string } }) {
@@ -19,15 +19,15 @@ test('admin defines sports and specialties, links people, and the coach filter s
   browser,
 }, info) => {
   test.setTimeout(180000)
-  const f = await teamFixture(),
+  const f = await institutionFixture(),
     coachContext = await browser.newContext(),
     coachPage = await coachContext.newPage(),
-    workspace = randomUUID(),
-    endpoint = `/v1/workspaces/${workspace}`
+    institution = randomUUID(),
+    endpoint = `/v1/institution`
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Madar sports',
     })
     const other = await f.createPerson('Second Athlete With A Long Family Name')
@@ -45,7 +45,7 @@ test('admin defines sports and specialties, links people, and the coach filter s
         roles,
         token,
       })
-      await f.call(person, `/v1/organization-invitations/${token}`, {})
+      await f.call(person, `/v1/invitations/${token}`, {})
     }
     const people = await f.call(f.owner, `${endpoint}?view=admin`),
       athlete = people.members.find((m: any) => m.user_id === f.client.id),
@@ -59,13 +59,19 @@ test('admin defines sports and specialties, links people, and the coach filter s
     })
 
     // Settings: add a sport, a specialty and a long Arabic sport; rename one and archive one.
-    const base = `/organization/${workspace}/admin`
-    await f.login(page, f.owner, base + '/settings')
+    const base = ``
+    await f.login(page, f.owner, base + '/institution-settings')
     const settings = page.getByRole('region', { name: 'Sports and specialties' })
     const add = async (name: string, kind: 'Sport' | 'Coaching specialty') => {
-      await settings.getByLabel('Name', { exact: true }).first().fill(name)
+      // Type first; the Add button names what it adds.
       await settings.getByRole('radio', { name: kind, exact: true }).check()
-      await settings.getByRole('button', { name: 'Add', exact: true }).click()
+      await settings.getByLabel('Name', { exact: true }).first().fill(name)
+      await settings
+        .getByRole('button', {
+          name: kind === 'Sport' ? 'Add sport' : 'Add specialty',
+          exact: true,
+        })
+        .click()
       await expect(settings.getByText(name, { exact: true })).toBeVisible()
     }
     await add('Footbal', 'Sport')
@@ -142,7 +148,7 @@ test('admin defines sports and specialties, links people, and the coach filter s
       ],
       previous: [],
     })
-    await f.login(coachPage, f.coach, `/organization/${workspace}/trainer/people`)
+    await f.login(coachPage, f.coach, `/people`)
     await coachPage.getByLabel('Sport or specialty').selectOption({ label: 'Football' })
     await expect(coachPage.locator('.organization-person')).toHaveCount(1)
     await expect(coachPage.locator('.organization-person')).toContainText('R4 Athlete')
@@ -150,7 +156,7 @@ test('admin defines sports and specialties, links people, and the coach filter s
 
     // English light keeps chips and archived labels readable.
     await page.evaluate(() => localStorage.setItem('rafik.theme', 'light'))
-    await page.goto(base + '/settings')
+    await page.goto(base + '/institution-settings')
     await expect(page.getByText('Football', { exact: true })).toBeVisible()
     await inspect(page, 'settings-light', info)
 
@@ -160,7 +166,7 @@ test('admin defines sports and specialties, links people, and the coach filter s
       localStorage.setItem('rafik.theme', 'dark')
     })
     await page.setViewportSize({ width: 320, height: 740 })
-    await page.goto(base + '/settings')
+    await page.goto(base + '/institution-settings')
     await expect(page.getByText('كرة الطائرة الشاطئية للفرق الجامعية المتقدمة')).toBeVisible()
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
     await inspect(page, 'settings-ar-dark-320', info)

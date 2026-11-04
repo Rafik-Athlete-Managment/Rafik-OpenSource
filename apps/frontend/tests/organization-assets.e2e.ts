@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import AxeBuilder from '@axe-core/playwright'
-import { teamFixture } from './team-fixture'
+import { institutionFixture } from './institution-fixture'
 import { layoutIssues } from './layout-contract'
 const png = readFileSync(
   resolve(
@@ -15,13 +15,13 @@ test('organization author uploads, categorizes, filters, reuses and archives an 
   page,
 }, info) => {
   test.setTimeout(90000)
-  const f = await teamFixture(),
-    workspace = randomUUID(),
-    base = `/organization/${workspace}/admin`
+  const f = await institutionFixture(),
+    institution = randomUUID(),
+    base = ``
   try {
-    await f.call(f.owner, '/v1/workspaces', {
-      id: workspace,
-      kind: 'organization',
+    await f.call(f.owner, '/v1/institutions', {
+      id: institution,
+      kind: 'institution',
       name: 'Exercise studio',
     })
     await f.login(page, f.owner, base + '/exercises')
@@ -45,7 +45,7 @@ test('organization author uploads, categorizes, filters, reuses and archives an 
       await group.locator('summary').click()
     }
     let lost = false
-    await page.route('**/v1/organization-assets/*', async (route) => {
+    await page.route('**/v1/assets/*', async (route) => {
       if (!lost && route.request().method() === 'PUT') {
         lost = true
         await route.fetch()
@@ -62,7 +62,7 @@ test('organization author uploads, categorizes, filters, reuses and archives an 
     await expect(
       page.getByRole('status').filter({ hasText: 'Exercise library updated' }),
     ).toBeVisible()
-    const records = await f.call(f.owner, `/v1/workspaces/${workspace}/catalog?view=admin`)
+    const records = await f.call(f.owner, `/v1/institution/catalog?view=admin`)
     const exercise = records.find((e: any) => e.name === 'Studio row and brace')
     expect(exercise.body_parts).toEqual(['back', 'waist'])
     expect(exercise.muscles).toEqual(['lats', 'abdominals'])
@@ -83,7 +83,7 @@ test('organization author uploads, categorizes, filters, reuses and archives an 
     await expect(
       page.getByRole('status').filter({ hasText: 'Exercise library updated' }),
     ).toBeVisible()
-    const cleared = (await f.call(f.owner, `/v1/workspaces/${workspace}/catalog?view=admin`)).find(
+    const cleared = (await f.call(f.owner, `/v1/institution/catalog?view=admin`)).find(
       (e: any) => e.id === exercise.id,
     )
     expect(cleared.body_parts).toEqual([])
@@ -105,10 +105,7 @@ test('organization author uploads, categorizes, filters, reuses and archives an 
     await page.getByRole('button', { name: 'Restore file', exact: true }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible()
     await expect
-      .poll(
-        async () =>
-          (await f.call(f.owner, `/v1/workspaces/${workspace}/assets?view=admin`)).items.length,
-      )
+      .poll(async () => (await f.call(f.owner, `/v1/institution/assets?view=admin`)).items.length)
       .toBe(1)
     await page.getByRole('combobox', { name: 'Show', exact: true }).selectOption('false')
     await expect(page.getByRole('button', { name: /row-demo.webp/ })).toBeVisible()

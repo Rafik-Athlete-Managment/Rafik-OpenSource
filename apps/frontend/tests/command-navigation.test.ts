@@ -26,8 +26,8 @@ vi.mock('../src/lib/feedback', () => ({
   notifySuccess: fixture.success,
   notifyErrorOnce: fixture.error,
 }))
-vi.mock('../src/features/ongoing/helpers', () => ({ commandRejected: () => false }))
-import { useCommand } from '../src/features/teams/commands'
+vi.mock('../src/lib/command-errors', () => ({ commandRejected: () => false }))
+import { useCommand } from '../src/lib/commands'
 import { loadEditorDraft } from '../src/lib/editor-draft'
 
 beforeEach(() => {

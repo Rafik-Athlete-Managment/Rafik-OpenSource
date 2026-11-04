@@ -1,4 +1,4 @@
-# ADR 0021: Organization workspaces are the supported web experience
+# ADR 0021: Institution workspaces are the supported web experience
 
 Date: 17 October 2026  
 Status: Accepted
@@ -9,7 +9,7 @@ The founder has confirmed that Rafik's web product now serves institutions. The 
 
 ## Decision
 
-- Organization workspaces are the supported coaching, administration and athlete experience.
+- Institution workspaces are the supported coaching, administration and athlete experience.
 - Retire the standalone `/coach` route tree. Old `/coach` URLs redirect to the closest organization staff page, preferring a trainer context and then an administrator context. If no organization context exists, send the user to organization setup.
 - Workspace setup creates organizations only. Local preview offers organization roles and the separate platform operator, not independent coach/client identities.
 - Preserve legacy independent APIs and stored data during this UI transition. This decision does not migrate, merge or delete existing independent records. Any later data retirement requires a scoped migration and recovery plan.

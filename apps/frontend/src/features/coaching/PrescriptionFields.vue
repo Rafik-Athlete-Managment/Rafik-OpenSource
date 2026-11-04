@@ -1,3 +1,4 @@
+<!-- Edits the sets, targets, rest and effort values for one prescribed exercise. -->
 <script setup lang="ts">
 import { watch } from 'vue'
 import type { PrescriptionExercise, Target } from '../../lib/domain'

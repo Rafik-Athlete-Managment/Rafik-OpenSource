@@ -1,3 +1,4 @@
+<!-- Selects and previews the image attached to a program. -->
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { programImage } from '../../lib/backend'

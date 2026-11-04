@@ -1,3 +1,4 @@
+<!-- Shared loading/error state: explains when page content is loading or cannot be shown. -->
 <script setup lang="ts">
 import { t } from '../lib/i18n'
 defineProps<{ loading?: boolean; error?: string }>()

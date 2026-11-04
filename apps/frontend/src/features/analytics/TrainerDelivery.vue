@@ -1,3 +1,4 @@
+<!-- Shows coach workload and assigned-athlete delivery information. -->
 <script setup lang="ts">
 import { language as l } from '../../lib/i18n'
 import MetricChart from './MetricChart.vue'
@@ -18,9 +19,10 @@ defineProps<{
         )
       "
       :items="
-        items.map((x) => ({ label: x.name, value: x.completed_sessions, href: base + '/calendar' }))
+        items.map((x) => ({ label: x.name, value: x.completed_sessions, href: base + '/schedule' }))
       "
       :unit="l('sessions', 'جلسة')"
+      :unit-one="l('session', 'جلسة')"
     />
     <details>
       <summary>{{ l('Attendance by coach', 'الحضور حسب المدرب') }}</summary>

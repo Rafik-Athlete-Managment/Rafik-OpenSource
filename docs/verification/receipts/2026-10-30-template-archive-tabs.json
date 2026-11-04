@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-30",
+  "scope": "Workout template directory archive tabs and Programs-style search spacing",
+  "typecheck": {
+    "command": "npm run typecheck --workspace @rafik/frontend",
+    "exit": 0
+  },
+  "browser": {
+    "method": "Temporary Vite harness rendering the actual WorkoutTemplatesPage/shared styles with mocked API responses; no real account/database fixture",
+    "cases": [
+      {
+        "engine": "chromium",
+        "locale": "en",
+        "theme": "light",
+        "width": 1280,
+        "checks": "active/archive, pagination reset, stale-row hiding, keyboard, search/empty, overflow"
+      },
+      {
+        "engine": "chromium",
+        "locale": "ar",
+        "theme": "dark",
+        "width": 320,
+        "checks": "active/archive, pagination reset, stale-row hiding, keyboard, search/empty, overflow"
+      },
+      {
+        "engine": "webkit",
+        "locale": "en",
+        "theme": "light",
+        "width": 1280,
+        "checks": "active/archive, pagination reset, stale-row hiding, keyboard, search/empty, overflow"
+      },
+      {
+        "engine": "webkit",
+        "locale": "ar",
+        "theme": "dark",
+        "width": 320,
+        "checks": "active/archive, pagination reset, stale-row hiding, keyboard, search/empty, overflow"
+      }
+    ],
+    "spacing": {
+      "sharedPattern": "Programs .list-controls > label.plan-search",
+      "gap": "8px",
+      "labelMarginTop": "0px",
+      "inputMarginTop": "0px"
+    },
+    "visualInspection": [
+      "Chromium English/light 1280px viewport",
+      "WebKit Arabic/dark 320px viewport"
+    ],
+    "limits": [
+      "No authenticated live template request was made",
+      "Full database-backed group workout spec extended but not rerun",
+      "Synthetic page does not validate the full application shell or every theme/locale combination"
+    ]
+  },
+  "api": {
+    "cause": "Verified repository tsx server/index.ts process PID 22144, started 28 October, held port 55331 before template endpoints existed",
+    "action": "Stopped only verified stale API and started current source",
+    "healthStatus": 200,
+    "templateRequestWithoutCookies": {
+      "status": 401,
+      "message": "unauthenticated"
+    },
+    "limits": "Authenticated founder refresh still needed; no database reset or blanket Node termination"
+  }
+}

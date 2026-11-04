@@ -1,3 +1,4 @@
+<!-- Splits daily nutrition targets across meals and displays the resulting macro totals. -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { language as l } from '../../lib/i18n'

@@ -1,3 +1,4 @@
+import { apiOrigin } from "./test-target.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -16,17 +17,17 @@ const png = Buffer.from(
 const asset = (
   p: Person,
   id: string,
-  workspace?: string,
+  institution?: string,
   view = "admin",
   channel?: string,
   bytes = png,
 ) =>
   fetch(
-    `http://127.0.0.1:55331/v1/organization-assets/${id}` +
-      (workspace
+    `${apiOrigin}/v1/assets/${id}` +
+      (institution
         ? "?" +
           new URLSearchParams({
-            workspace,
+            institution,
             view,
             purpose: channel ? "message" : "exercise",
             filename: "demo.png",
@@ -34,13 +35,13 @@ const asset = (
           })
         : ""),
     {
-      method: workspace ? "PUT" : "GET",
+      method: institution ? "PUT" : "GET",
       headers: {
         Cookie: p.cookie,
         "x-rafik-client": "web",
         "Content-Type": "image/png",
       },
-      body: workspace ? bytes : undefined,
+      body: institution ? bytes : undefined,
     },
   );
 test("organization exercises preserve private ownership, multi-category snapshots and authorized uploaded media", async () => {
@@ -51,14 +52,14 @@ test("organization exercises preserve private ownership, multi-category snapshot
       peer = await f.person(),
       foreign = await f.person(),
       trainee = await f.person(),
-      workspace = await f.create(admin);
-    const owner = await f.join(admin, workspace, trainer, ["trainer"]);
-    await f.join(admin, workspace, peer, ["trainer"]);
-    const member = await f.join(admin, workspace, trainee, ["trainee"]);
+      institution = await f.create(admin);
+    const owner = await f.join(admin, institution, trainer, ["trainer"]);
+    await f.join(admin, institution, peer, ["trainer"]);
+    const member = await f.join(admin, institution, trainee, ["trainee"]);
     await f.create(foreign);
     await call(
       admin,
-      `/v1/workspaces/${workspace}`,
+      `/v1/institution`,
       operation("assign-trainer", {
         id: member.id,
         revision: 1,
@@ -67,11 +68,11 @@ test("organization exercises preserve private ownership, multi-category snapshot
     );
     const media = randomUUID();
     assert.equal(
-      (await asset(trainer, media, workspace, "trainer")).status,
+      (await asset(trainer, media, institution, "trainer")).status,
       200,
     );
     assert.equal(
-      (await asset(trainer, media, workspace, "trainer")).status,
+      (await asset(trainer, media, institution, "trainer")).status,
       200,
     );
     assert.equal(
@@ -79,7 +80,7 @@ test("organization exercises preserve private ownership, multi-category snapshot
         await asset(
           trainer,
           media,
-          workspace,
+          institution,
           "trainer",
           undefined,
           Buffer.concat([png, Buffer.from("x")]),
@@ -105,7 +106,7 @@ test("organization exercises preserve private ownership, multi-category snapshot
       revision: 0,
       data,
     });
-    let r = await call(trainer, `/v1/workspaces/${workspace}/catalog`, save);
+    let r = await call(trainer, `/v1/institution/catalog`, save);
     assert.equal(r.status, 200, JSON.stringify(r));
     assert.deepEqual(r.data.data.body_parts, ["back", "waist"]);
     for (const p of [admin, peer, trainee, foreign])
@@ -114,14 +115,11 @@ test("organization exercises preserve private ownership, multi-category snapshot
       [admin, "admin"],
       [peer, "trainer"],
     ] as const) {
-      const list = await call(
-        p,
-        `/v1/workspaces/${workspace}/catalog?view=${view}`,
-      );
+      const list = await call(p, `/v1/institution/catalog?view=${view}`);
       assert.ok(!list.data.some((e: any) => e.id === id));
       assert.equal(
         (
-          await call(p, `/v1/workspaces/${workspace}/catalog`, {
+          await call(p, `/v1/institution/catalog`, {
             ...save,
             operation: randomUUID(),
             view,
@@ -133,7 +131,7 @@ test("organization exercises preserve private ownership, multi-category snapshot
     }
     assert.equal(
       (
-        await call(trainer, `/v1/workspaces/${workspace}/catalog`, {
+        await call(trainer, `/v1/institution/catalog`, {
           ...save,
           operation: randomUUID(),
           revision: 1,
@@ -169,7 +167,7 @@ test("organization exercises preserve private ownership, multi-category snapshot
     };
     r = await call(
       trainer,
-      `/v1/workspaces/${workspace}/programs`,
+      `/v1/institution/programs`,
       operation("publish", {
         view: "trainer",
         id: program,
@@ -191,7 +189,7 @@ test("organization exercises preserve private ownership, multi-category snapshot
     );
     r = await call(
       trainer,
-      `/v1/workspaces/${workspace}/delivery`,
+      `/v1/institution/delivery`,
       operation("assign", {
         view: "trainer",
         version_id: version.id,
@@ -211,10 +209,10 @@ test("organization exercises preserve private ownership, multi-category snapshot
     assert.deepEqual(Buffer.from(await libraryMedia.arrayBuffer()), png);
     // Organization-created media and exercises are visible to staff in that tenant only.
     const sharedMedia = randomUUID();
-    assert.equal((await asset(admin, sharedMedia, workspace)).status, 200);
+    assert.equal((await asset(admin, sharedMedia, institution)).status, 200);
     r = await call(
       admin,
-      `/v1/workspaces/${workspace}/catalog`,
+      `/v1/institution/catalog`,
       operation("exercise", {
         id: "org-" + randomUUID(),
         view: "admin",
@@ -226,7 +224,7 @@ test("organization exercises preserve private ownership, multi-category snapshot
     assert.equal((await asset(peer, sharedMedia)).status, 200);
     assert.equal((await asset(foreign, sharedMedia)).status, 403);
     assert.equal((await asset(trainee, sharedMedia)).status, 403);
-    r = await call(trainer, `/v1/workspaces/${workspace}/catalog`, {
+    r = await call(trainer, `/v1/institution/catalog`, {
       ...save,
       operation: randomUUID(),
       revision: 1,
@@ -246,19 +244,16 @@ test("organization exercises preserve private ownership, multi-category snapshot
       2,
       "published categories do not change",
     );
-    const list = await call(
-      peer,
-      `/v1/workspaces/${workspace}/assets?view=trainer`,
-    );
+    const list = await call(peer, `/v1/institution/assets?view=trainer`);
     assert.equal(list.data.items.length, 1);
     assert.equal(list.data.items[0].id, sharedMedia);
     // Revocation applies even to a repeated upload that was previously accepted.
-    await db.workspace_members.update({
+    await db.institution_members.update({
       where: { id: owner.id },
       data: { active: false },
     });
     assert.equal(
-      (await asset(trainer, media, workspace, "trainer")).status,
+      (await asset(trainer, media, institution, "trainer")).status,
       403,
     );
   } finally {
@@ -271,12 +266,12 @@ test("private pair history and attachments exclude admins, other channels and un
     const admin = await f.person(),
       trainer = await f.person(),
       trainee = await f.person(),
-      workspace = await f.create(admin),
-      staff = await f.join(admin, workspace, trainer, ["trainer"]),
-      member = await f.join(admin, workspace, trainee, ["trainee"]);
+      institution = await f.create(admin),
+      staff = await f.join(admin, institution, trainer, ["trainer"]),
+      member = await f.join(admin, institution, trainee, ["trainee"]);
     await call(
       admin,
-      `/v1/workspaces/${workspace}`,
+      `/v1/institution`,
       operation("assign-trainer", {
         id: member.id,
         revision: 1,
@@ -284,7 +279,7 @@ test("private pair history and attachments exclude admins, other channels and un
       }),
     );
     const channel = randomUUID(),
-      endpoint = `/v1/workspaces/${workspace}/communication`;
+      endpoint = `/v1/institution/communication`;
     const make = (id: string) =>
       call(
         trainer,
@@ -315,7 +310,7 @@ test("private pair history and attachments exclude admins, other channels and un
     );
     const media = randomUUID();
     assert.equal(
-      (await asset(trainer, media, workspace, "trainer", channel)).status,
+      (await asset(trainer, media, institution, "trainer", channel)).status,
       200,
     );
     assert.equal((await asset(trainee, media)).status, 403);
@@ -359,7 +354,7 @@ test("private pair history and attachments exclude admins, other channels and un
       ).status,
       403,
     );
-    await db.workspace_members.update({
+    await db.institution_members.update({
       where: { id: member.id },
       data: { active: false },
     });

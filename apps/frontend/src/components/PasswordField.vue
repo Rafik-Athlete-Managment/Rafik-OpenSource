@@ -1,3 +1,4 @@
+<!-- Password field: reveals or hides the entered password and exposes its validation hint. -->
 <script setup lang="ts">
 import { computed, ref, useAttrs } from 'vue'
 import { PhEye, PhEyeSlash } from '@phosphor-icons/vue'

@@ -1,16 +1,15 @@
-import type { Database } from '@rafik/shared/database.types'
 export type Nutrients = Partial<Record<'kcal' | 'protein_g' | 'carb_g' | 'fat_g', number | null>>
-export type Food = Omit<Database['public']['Tables']['saved_foods']['Row'], 'nutrients'> & {
+export type Meal = {
+  name: string
+  meal: string
+  quantity: number
+  basis: number
+  unit: string
   nutrients: Nutrients
+  source: string
 }
-export type Meal = Omit<Database['public']['Tables']['meal_entries']['Row'], 'nutrients'> & {
-  nutrients: Nutrients
-}
-export type Guidance = Omit<
-  Database['public']['Tables']['nutrition_guidance']['Row'],
-  'targets' | 'meals'
-> & { targets: Nutrients; meals: PlannedFood[] }
 export const nutrientKeys = ['kcal', 'protein_g', 'carb_g', 'fat_g'] as const
+/** Adds each meal's scaled nutrients to show the day's totals. */
 export function nutrientTotals(meals: Pick<Meal, 'quantity' | 'basis' | 'nutrients'>[]) {
   return Object.fromEntries(
     nutrientKeys.map((k) => {
@@ -54,11 +53,13 @@ export type CatalogFood = {
   sourceUrl: string
   portions: { name: string; name_ar?: string; grams: number }[]
 }
+/** Estimates calories from protein, carbohydrate and fat when all values are present. */
 export function macroEnergy(n: Nutrients): number | null {
   if (['protein_g', 'carb_g', 'fat_g'].some((k) => typeof n[k as keyof Nutrients] !== 'number'))
     return null
   return Math.round((n.protein_g! * 4 + n.carb_g! * 4 + n.fat_g! * 9) * 10) / 10
 }
+/** Splits a daily nutrition target across meals using the chosen percentages. */
 export function allocateMacros(
   kcal: number,
   proteinPercent: number,

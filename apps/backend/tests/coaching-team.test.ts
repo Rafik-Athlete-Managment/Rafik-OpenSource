@@ -1,85 +1,22 @@
+import {
+  institutionTestHelpers,
+  type Person,
+} from "./institution-test-helpers.ts";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID, randomBytes, createHash } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { db } from "../server/db.ts";
-const base = "http://127.0.0.1:55331",
-  people: string[] = [],
+const people: string[] = [],
   spaces: string[] = [];
-type Person = { id: string; email: string; cookie: string };
+
+const { person, call, operation, institution, join, member } =
+  institutionTestHelpers(people, spaces, "coaching");
 after(async () => {
-  await db.workspaces.deleteMany({ where: { id: { in: spaces } } });
+  await db.institutions.deleteMany({ where: { id: { in: spaces } } });
   await db.users.deleteMany({ where: { id: { in: people } } });
   await db.$disconnect();
 });
-async function person(name: string): Promise<Person> {
-  const id = randomUUID(),
-    email = `coaching-${id}@rafik.test`,
-    token = randomBytes(32).toString("hex");
-  people.push(id);
-  await db.users.create({
-    data: { id, email, email_confirmed_at: new Date() },
-  });
-  await db.identity_sessions.create({
-    data: {
-      token_hash: createHash("sha256").update(token).digest("hex"),
-      user_id: id,
-      expires_at: new Date(Date.now() + 3600000),
-    },
-  });
-  const p = { id, email, cookie: "rafik_session=" + token };
-  await call(p, "/v1/commands/ensure_profile", { p_name: name });
-  return p;
-}
-async function call(p: Person, path: string, input?: unknown) {
-  const r = await fetch(base + path, {
-    method: input === undefined ? "GET" : "POST",
-    headers: {
-      Cookie: p.cookie,
-      "x-rafik-client": "web",
-      "Content-Type": "application/json",
-    },
-    body: input === undefined ? undefined : JSON.stringify(input),
-  });
-  return { status: r.status, data: await r.json() };
-}
-const operation = (action: string, args: object = {}) => ({
-  operation: randomUUID(),
-  action,
-  ...args,
-});
-async function institution(admin: Person, name: string) {
-  const id = randomUUID();
-  spaces.push(id);
-  assert.equal(
-    (await call(admin, "/v1/workspaces", { id, kind: "organization", name }))
-      .status,
-    200,
-  );
-  return id;
-}
-async function join(admin: Person, id: string, p: Person, role: string) {
-  const token = randomBytes(32).toString("hex");
-  const r = await call(
-    admin,
-    "/v1/workspaces/" + id,
-    operation("invite", {
-      id: randomUUID(),
-      email: p.email,
-      roles: [role],
-      token,
-    }),
-  );
-  assert.equal(r.status, 200, JSON.stringify(r));
-  assert.equal(
-    (await call(p, "/v1/organization-invitations/" + token, {})).status,
-    200,
-  );
-}
-async function member(admin: Person, id: string, p: Person) {
-  const r = await call(admin, `/v1/workspaces/${id}?view=admin`);
-  return r.data.members.find((m: { user_id: string }) => m.user_id === p.id);
-}
 const sport = (id: string, name: string, kind = "sport") =>
   operation("sport", {
     view: "admin",
@@ -97,8 +34,7 @@ test("primary and supporting coaches: scoped reads, primary-only sensitive data,
     outsider = await person("Team Outsider"),
     athlete = await person("Team Athlete"),
     id = await institution(admin, "Coaching team institution"),
-    other = await institution(admin, "Other team institution"),
-    ws = `/v1/workspaces/${id}`;
+    ws = `/v1/institution`;
   for (const [p, role] of [
     [primary, "trainer"],
     [support, "trainer"],
@@ -123,16 +59,7 @@ test("primary and supporting coaches: scoped reads, primary-only sensitive data,
     ).status,
     200,
   );
-  assert.equal(
-    (
-      await call(
-        admin,
-        `/v1/workspaces/${other}/sports`,
-        sport(foreign, "Fencing"),
-      )
-    ).status,
-    200,
-  );
+  // One institution per installation: a sport ID it does not own stands in for another institution's.
   let a = await member(admin, id, athlete);
   const p = await member(admin, id, primary),
     s = await member(admin, id, support),
@@ -355,7 +282,7 @@ test("primary and supporting coaches: scoped reads, primary-only sensitive data,
     ).status,
     200,
   );
-  const active = await db.organization_coaching_links.findMany({
+  const active = await db.institution_coaching_links.findMany({
     where: { athlete_member_id: a.id, ended_at: null },
   });
   assert.deepEqual(
@@ -389,14 +316,14 @@ test("primary and supporting coaches: scoped reads, primary-only sensitive data,
     200,
   );
   assert.equal(
-    await db.organization_coaching_links.count({
-      where: { workspace_id: id, coach_member_id: s.id, ended_at: null },
+    await db.institution_coaching_links.count({
+      where: { institution_id: id, coach_member_id: s.id, ended_at: null },
     }),
     0,
   );
   // trainer_id mirrors the active primary link for every athlete in the institution.
-  const athletes = await db.workspace_members.findMany({
-    where: { workspace_id: id, roles: { has: "trainee" } },
+  const athletes = await db.institution_members.findMany({
+    where: { institution_id: id, roles: { has: "trainee" } },
     include: {
       coaching_as_athlete: { where: { kind: "primary", ended_at: null } },
     },
@@ -406,9 +333,9 @@ test("primary and supporting coaches: scoped reads, primary-only sensitive data,
       m.trainer_id,
       m.coaching_as_athlete[0]?.coach_member_id || null,
     );
-  const events = await db.workspace_events.findMany({
+  const events = await db.institution_audit_events.findMany({
     where: {
-      workspace_id: id,
+      institution_id: id,
       kind: { in: ["coach_linked", "coach_link_ended"] },
     },
   });

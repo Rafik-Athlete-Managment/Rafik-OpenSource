@@ -1,3 +1,4 @@
+<!-- Shared list controls: changes page and page size while reporting the current range. -->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { language as l, locale } from '../lib/i18n'

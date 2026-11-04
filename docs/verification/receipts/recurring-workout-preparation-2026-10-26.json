@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-26",
+  "scope": "Unreleased individual weekly/day-only preparation; group/native workout capture remains pending",
+  "checks": {
+    "worker": "2 cases passed: DST, policy receipts/auth, concurrency, independent plans, rest/restriction, timed collision and recovery, same-day skip, timezone-boundary projection, revoked creator and one-shot operator entrypoint",
+    "sequence": "1 existing individual-sequence regression passed on its own disposable database",
+    "populated_migration": "passed preservation, constraints, private grants and generated client/transport types",
+    "swagger": "2 bundled API-reference cases passed",
+    "browser": "2 passed on final frozen production preview: desktop Chromium and phone WebKit",
+    "catalog": "57 models, 471 columns, 67 reviewed route records; 92 Vue files, 47 screens, 45 route records",
+    "compose": "config --quiet passed",
+    "types": "backend/frontend passed",
+    "documentation": "2024 local links and 626 heading links in 75 maintained documents passed",
+    "formatting": "changed source and maintained guides passed; generated contract/catalog/reference formatting remains generator-owned"
+  },
+  "inspected": [
+    "English light desktop weekly form after fixing label wrapping",
+    "English light phone day-only calendar and event entry",
+    "Arabic dark phone automatic settings and plan actions"
+  ],
+  "limits": [
+    "No native build, cache migration, physical-device or native bearer regression claim",
+    "Default timed-only calendar shape was checked using authenticated HTTP; new native UI not enabled",
+    "Timezone-boundary agenda check uses an injected service clock and authorized profile service",
+    "No production throughput, multi-process deployment soak or whole beta.3 release acceptance",
+    "Weekly policies materialize one actionable next workout; no full future-slot calendar or missed-date backfill",
+    "Stored browser uncertain-rule-command recovery and long-running worker crash/host restart need wider acceptance"
+  ],
+  "source_sha256": {
+    "apps/backend/prisma/migrations/202610261200_workout_scheduling_worker/migration.sql": "5e1a92de830d9389e695bc2723bedb0e2072b40b490949c252ebe36decb04169",
+    "apps/backend/prisma/schema.prisma": "1e9e9f44ebe542be156f1e10f6f868442365beea54f81881a01da9c986ba90c6",
+    "apps/backend/server/workout-scheduler.ts": "805427a5550b7f553ffb48ecff4a3f11eda6e31ec0a7457b00aa37c67524ba9a",
+    "apps/backend/server/workout-sequence.ts": "bbf05f9828e5b17023adb740f619fe2f83e374749ad5321b7962ec5d0a8f270b",
+    "apps/backend/server/programming.ts": "4b2fb1d4128786752a23de1e75b15c1b13c3dbe0bc07c1c05c90d0c174d74205",
+    "apps/backend/server/calendar.ts": "bdead5d6a97251e5b4dd602f61ee9b05f747a9c66053393a8e91df0305a7b223",
+    "apps/backend/server/analytics.ts": "f2c2dd416fb589f219339de23df18a0e3b11efb50f5ab7e31d9a07b3d9f7a9d9",
+    "apps/backend/openapi.json": "cb39df83cd0a01ce6f312e4e113d8f498043ba4cd47c2a444ce76cb55f366b09",
+    "apps/backend/tests/workout-scheduler.test.ts": "3312ad9e6706d68e5152f9c977309283fe17d4e1e90e2218f12aaad2c865662a",
+    "apps/backend/scripts/prepare-workouts.ts": "d54579703b6d5c614e90e197f53af4bb0c2fc2242e0b86feba9a0e258cd7fb8f",
+    "apps/frontend/src/features/institution/WorkoutRuleSettings.vue": "0adf500cfae38b4b5d553e6c799c42bcd2628581f22aba761182f890b28d7f85",
+    "apps/frontend/src/features/institution/AssignedPlanPage.vue": "420ad1a71598d833f2cc2b256753fbad1d9115c2c920c4c00fcb00c4533247ee",
+    "apps/frontend/src/features/institution/WorkoutAgenda.vue": "c934f4333ec83a2beb7023adab2e057e4ca0601b0a458b26b8c722eec322050e",
+    "apps/frontend/src/features/institution/ScheduleCalendar.vue": "a3740b97030cc06a0ce2d0b5c831bab64bb66fab9b21cdb97961484c50fed37e",
+    "apps/frontend/src/features/institution/ScheduledEvents.vue": "00bb99abd750be76dd8289872e4a4c4a8a54f5bce44c3defcdfe38161613ecc0",
+    "apps/frontend/src/features/institution/EventDetail.vue": "b583099aef91ce5c6d2bf3ec99d2336a88200a3ccd7f322f7a6b697cb844cf84",
+    "apps/frontend/src/components/MonthCalendar.vue": "3bf750d77bd604a2a10cbe1dc260ad3ed946e764a60005c0b03ec449734636d9",
+    "apps/frontend/tests/delegated-sessions.e2e.ts": "0795d3d86e1ff8862936a26d78be9a558b00cf96c5b3e8b9109dc4185e831554"
+  },
+  "landing_commit": "684d81cbe63cedf7f9b2f75dd0f9499d05b2b11a"
+}
