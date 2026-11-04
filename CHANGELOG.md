@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show server-confirmed individual workouts as **Complete** on the coach phone Schedule, with the completed card treatment. Offline finishes awaiting acknowledgment stay labelled **Finished on this device**.
+
 - Keep attendance and workout progress counts inside narrow phone screens in English and Arabic. A group event's Close action now waits only for an active device write; incomplete workouts remain resumable, and invalid or unsaved values prompt a warning instead of leaving Close permanently disabled.
 
 - Coach phone dark mode is darker and higher-contrast: a near-black green page and cards, switcher tracks and insets darker than their card, raised selected segments with a visible edge, fields one step lighter than their card, and raised secondary buttons. Light mode is unchanged.

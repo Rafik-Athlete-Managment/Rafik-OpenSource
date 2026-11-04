@@ -1,5 +1,9 @@
 # Verification record
 
+## Coach phone Schedule completion state — 4 November 2026
+
+The Schedule card now distinguishes a server-confirmed saved individual workout from an offline finish awaiting acknowledgment. Mobile source/test TypeScript, Prettier on the changed phone component and `git diff --check` passed. Documentation checks passed two fixtures, 2,329 local links and 726 heading links. This is source evidence only. The founder still needs to confirm the card's completed appearance on a phone after leaving the read-only workout summary; see the [canonical walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3). No Android rebuild or broad browser suite ran.
+
 ## Phone group-event Close and count source checks — 4 November 2026
 
 Mobile source/test TypeScript passed after separating active device writes from invalid or failed-save draft state. The focused workout component checks passed 3/3 using Node's in-process test mode; the usual runner first hit Windows sandbox `spawn EPERM`. Prettier checked the changed phone TSX files, `git diff --check` passed, and documentation validation passed two fixtures, 2,327 local links and 724 heading links. The attendance and workout count rows now reserve space for numbers while labels can wrap. These are source checks only; the founder's narrow-screen English/Arabic rendering and Close/reopen test in the [canonical walkthrough](../testing/instance-validation.md#native-group-workouts--unreleased-beta3) remains pending. No Android rebuild, broad browser suite or offline device replay was run.

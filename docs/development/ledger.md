@@ -1,5 +1,9 @@
 # Current delivery ledger
 
+## Coach phone Schedule completion state — 4 November 2026
+
+The Schedule card already includes a saved individual workout after completion, but displayed only its device-download label. It now reads the saved record's server-confirmed `completed_at` for a **Complete** status and completed card treatment. An offline final intent remains **Finished on this device** until acknowledged, preserving the distinction between local and server state. The [canonical phone walkthrough](../testing/instance-validation.md#phone-workout-recovery-and-controls--unreleased-beta3) covers the rendered check.
+
 ## Phone group-event Close and progress layout — 4 November 2026
 
 The group recorder previously reported invalid input or a failed local save as if a device write were still running. That flag disabled the event's Close action indefinitely. The parent now blocks Close only during an active write and warns before leaving a group sheet with unsaved or invalid values. The mounted editor and all saved device work remain available when the event is reopened. Shared progress headings reserve space for their numeric count while English/Arabic labels wrap. The [canonical phone walkthrough](../testing/instance-validation.md#native-group-workouts--unreleased-beta3) holds device acceptance; source checks are recorded in [verification](../verification/README.md).

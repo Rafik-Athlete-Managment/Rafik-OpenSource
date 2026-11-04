@@ -1550,6 +1550,19 @@ export function InstitutionScreen({
               const offline = event
                 ? cached.some((c) => c.event.id === entry.id)
                 : savedWorkoutIds.has(entry.id)
+              const savedWorkout = workout
+                ? savedDayWorkouts.find((item) => item.package.id === workout.id)
+                : null
+              const workoutComplete = !!(
+                savedWorkout?.session?.completed_at || workout?.session?.completed_at
+              )
+              const workoutAwaitingConfirmation =
+                !workoutComplete &&
+                !!(
+                  savedWorkout?.intent?.complete ||
+                  savedWorkout?.completionIntent?.complete ||
+                  savedWorkout?.pending?.payload.complete
+                )
               return (
                 <Pressable
                   key={`${entry.kind}:${entry.id}`}
@@ -1570,7 +1583,7 @@ export function InstitutionScreen({
                   }}
                   style={({ pressed }) => [
                     styles.card,
-                    event?.state === 'completed' && styles.completedCard,
+                    (event?.state === 'completed' || workoutComplete) && styles.completedCard,
                     pressed && styles.cardPressed,
                   ]}
                 >
@@ -1627,6 +1640,17 @@ export function InstitutionScreen({
                           <StatusPill
                             label={eventStateLabel(event)}
                             tone={eventStateTone(event)}
+                            styles={styles}
+                          />
+                        ) : null}
+                        {workoutComplete || workoutAwaitingConfirmation ? (
+                          <StatusPill
+                            label={
+                              workoutComplete
+                                ? l('Complete', 'مكتمل')
+                                : l('Finished on this device', 'انتهى على هذا الجهاز')
+                            }
+                            tone={workoutComplete ? 'success' : 'warning'}
                             styles={styles}
                           />
                         ) : null}
